@@ -1,5 +1,7 @@
 package com.example.realworldkotlinspringbootjdbc.controller
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonRootName
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
@@ -12,13 +14,16 @@ import org.springframework.web.bind.annotation.RestController
 class DefaultController {
     @GetMapping("/tags")
     fun list(): ResponseEntity<String> {
+        val tags = Tags(
+            listOf("dragons", "training"),
+        )
         return ResponseEntity(
-            ObjectMapper().writeValueAsString(
-                mapOf(
-                    "tags" to listOf("dragons", "training"),
-                ),
-            ),
-            HttpStatus.valueOf(200)
+            ObjectMapper().writeValueAsString(tags),
+            HttpStatus.valueOf(200),
         )
     }
+
+    data class Tags(
+        @JsonProperty("tags") val tags: List<String>,
+    )
 }
