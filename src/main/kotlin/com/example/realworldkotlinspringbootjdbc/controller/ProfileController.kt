@@ -1,6 +1,7 @@
 package com.example.realworldkotlinspringbootjdbc.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -9,8 +10,9 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
+@Tag(name = "Profile")
 class ProfileController {
-    @GetMapping("/api/profiles/{username}")
+    @GetMapping("/profiles/{username}")
     fun showProfile(): ResponseEntity<String> {
         return ResponseEntity(
             ObjectMapper().writeValueAsString(
@@ -27,7 +29,7 @@ class ProfileController {
         )
     }
 
-    @PostMapping("/api/profiles/{username}/follow")
+    @PostMapping("/profiles/{username}/follow")
     fun follow(): ResponseEntity<String> {
         return ResponseEntity(
             ObjectMapper().writeValueAsString(
@@ -44,7 +46,7 @@ class ProfileController {
         )
     }
 
-    @DeleteMapping("/api/profiles/{username}/follow")
+    @DeleteMapping("/profiles/{username}/follow")
     fun unfollow(): ResponseEntity<String> {
         return ResponseEntity(
             ObjectMapper().writeValueAsString(
