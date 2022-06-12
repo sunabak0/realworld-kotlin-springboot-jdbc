@@ -25,7 +25,9 @@ class CommentController {
                         ),
                     ),
                 )
-            ), HttpStatus.valueOf(200))
+            ),
+            HttpStatus.valueOf(200)
+        )
     }
 
     @PostMapping("/api/articles/{slug}/comments")
@@ -41,12 +43,13 @@ class CommentController {
                         "author" to "hoge-author",
                     ),
                 )
-            ), HttpStatus.valueOf(200))
+            ),
+            HttpStatus.valueOf(200)
+        )
     }
 
     @DeleteMapping("/api/articles/{slug}/comments/{id}")
     fun delete(): ResponseEntity<String> {
         return ResponseEntity("", HttpStatus.valueOf(200))
     }
-
 }

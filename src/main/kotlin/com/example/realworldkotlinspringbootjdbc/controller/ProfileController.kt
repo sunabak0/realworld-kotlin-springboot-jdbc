@@ -14,30 +14,34 @@ class ProfileController {
     fun showProfile(): ResponseEntity<String> {
         return ResponseEntity(
             ObjectMapper().writeValueAsString(
-            mapOf(
-                "profile" to mapOf(
-                    "username" to "hoge",
-                    "bio" to "hoge-bio",
-                    "image" to "hoge-image",
-                    "following" to true,
-                ),
-            )
-        ), HttpStatus.valueOf(200))
+                mapOf(
+                    "profile" to mapOf(
+                        "username" to "hoge",
+                        "bio" to "hoge-bio",
+                        "image" to "hoge-image",
+                        "following" to true,
+                    ),
+                )
+            ),
+            HttpStatus.valueOf(200)
+        )
     }
 
     @PostMapping("/api/profiles/{username}/follow")
     fun follow(): ResponseEntity<String> {
         return ResponseEntity(
             ObjectMapper().writeValueAsString(
-            mapOf(
-                "profile" to mapOf(
-                    "username" to "hoge",
-                    "bio" to "hoge-bio",
-                    "image" to "hoge-image",
-                    "following" to true,
-                ),
-            )
-        ), HttpStatus.valueOf(200))
+                mapOf(
+                    "profile" to mapOf(
+                        "username" to "hoge",
+                        "bio" to "hoge-bio",
+                        "image" to "hoge-image",
+                        "following" to true,
+                    ),
+                )
+            ),
+            HttpStatus.valueOf(200)
+        )
     }
 
     @DeleteMapping("/api/profiles/{username}/follow")
@@ -52,8 +56,8 @@ class ProfileController {
                         "following" to false,
                     ),
                 )
-            ), HttpStatus.valueOf(200))
+            ),
+            HttpStatus.valueOf(200)
+        )
     }
-
-
 }

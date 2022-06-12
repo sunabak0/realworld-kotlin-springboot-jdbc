@@ -12,9 +12,11 @@ class TagController {
     fun list(): ResponseEntity<String> {
         return ResponseEntity(
             ObjectMapper().writeValueAsString(
-            mapOf(
-                "tags" to listOf("dragons", "training"),
+                mapOf(
+                    "tags" to listOf("dragons", "training"),
+                ),
             ),
-        ), HttpStatus.valueOf(200))
+            HttpStatus.valueOf(200)
+        )
     }
 }
