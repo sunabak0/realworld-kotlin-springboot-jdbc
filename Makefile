@@ -6,6 +6,10 @@ up: ## サーバー起動
 test: ## テスト実行
 	./gradlew test
 
+.PHONY: test.e2e
+test.e2e: ## e2eテスト実行
+	bash e2e/run-api-tests.sh
+
 .PHONY: fmt
 fmt: ## format and lint
 	./gradlew ktlintFormat

@@ -35,3 +35,11 @@ out/
 
 ### VS Code ###
 .vscode/
+
+#
+# jqwiki導入後、テストをすると勝手にできる
+# .jqwik-database
+# よくわかってないのでとりあえずignore
+# 用途がわかって、必要そうであれば、ignorelistから削除する
+#
+.jqwik-database
