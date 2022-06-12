@@ -104,13 +104,13 @@ class UserAndAuthenticationController {
             HttpStatus.valueOf(200)
         )
     }
-}
 
-@JsonRootName(value = "user")
-private data class User(
-    @JsonProperty("email") val email: String,
-    @JsonProperty("username") val username: String,
-    @JsonProperty("bio") val bio: String,
-    @JsonProperty("image") val image: String,
-    @JsonProperty("token") val token: String,
-)
+    @JsonRootName(value = "user")
+    data class User(
+        @JsonProperty("email") val email: String,
+        @JsonProperty("username") val username: String,
+        @JsonProperty("bio") val bio: String,
+        @JsonProperty("image") val image: String,
+        @JsonProperty("token") val token: String,
+    )
+}

@@ -1,6 +1,10 @@
 package com.example.realworldkotlinspringbootjdbc.controller
 
+import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonRootName
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -10,128 +14,119 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import java.text.SimpleDateFormat
+import java.util.Date
 
 @RestController
 @Tag(name = "Articles")
 class ArticleController {
     @GetMapping("/articles")
     fun filter(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
-        return ResponseEntity(
-            ObjectMapper().writeValueAsString(
-                mapOf(
-                    "articlesCount" to 1,
-                    "articles" to listOf(
-                        mapOf(
-                            "title" to "hoge-title",
-                            "slug" to "hoge-slug",
-                            "body" to "hoge-body",
-                            "createdAt" to "2022-01-01T00:00:00.0+09:00",
-                            "updatedAt" to "2022-01-01T00:00:00.0+09:00",
-                            "description" to "hoge-description",
-                            "tagList" to listOf("dragons", "training"),
-                            "author" to "hoge-author",
-                            "favorited" to true,
-                            "favoritesCount" to 1,
-                        )
-                    ),
+        val articles = Articles(
+            1,
+            listOf(
+                Article(
+                    "hoge-title",
+                    "hoge-slug",
+                    "hoge-body",
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                    "hoge-description",
+                    listOf("dragons", "training"),
+                    "hoge-author",
+                    true,
+                    1,
                 )
-            ),
+            )
+        )
+        return ResponseEntity(
+            ObjectMapper().writeValueAsString(articles),
             HttpStatus.valueOf(200)
         )
     }
 
     @PostMapping("/articles")
     fun create(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
+        val article = Article(
+            "hoge-title",
+            "hoge-slug",
+            "hoge-body",
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+            "hoge-description",
+            listOf("dragons", "training"),
+            "hoge-author",
+            true,
+            1,
+        )
         return ResponseEntity(
-            ObjectMapper().writeValueAsString(
-                mapOf(
-                    "article" to mapOf(
-                        "title" to "hoge-title",
-                        "slug" to "hoge-slug",
-                        "body" to "hoge-body",
-                        "createdAt" to "2022-01-01T00:00:00.0+09:00",
-                        "updatedAt" to "2022-01-01T00:00:00.0+09:00",
-                        "description" to "hoge-description",
-                        "tagList" to listOf("dragons", "training"),
-                        "author" to "hoge-author",
-                        "favorited" to false,
-                        "favoritesCount" to 0,
-                    ),
-                )
-            ),
-            HttpStatus.valueOf(200)
+            ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
+            HttpStatus.valueOf(200),
         )
     }
 
     @GetMapping("/articles/feed")
     fun feed(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
-        return ResponseEntity(
-            ObjectMapper().writeValueAsString(
-                mapOf(
-                    "articlesCount" to 1,
-                    "articles" to listOf(
-                        mapOf(
-                            "title" to "hoge-title",
-                            "slug" to "hoge-slug",
-                            "body" to "hoge-body",
-                            "createdAt" to "2022-01-01T00:00:00.0+09:00",
-                            "updatedAt" to "2022-01-01T00:00:00.0+09:00",
-                            "description" to "hoge-description",
-                            "tagList" to listOf("dragons", "training"),
-                            "author" to "hoge-author",
-                            "favorited" to true,
-                            "favoritesCount" to 1,
-                        )
-                    ),
+        val articles = Articles(
+            1,
+            listOf(
+                Article(
+                    "hoge-title",
+                    "hoge-slug",
+                    "hoge-body",
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                    "hoge-description",
+                    listOf("dragons", "training"),
+                    "hoge-author",
+                    true,
+                    1,
                 )
-            ),
+            )
+        )
+        return ResponseEntity(
+            ObjectMapper().writeValueAsString(articles),
             HttpStatus.valueOf(200)
         )
     }
 
     @GetMapping("/articles/{slug}")
     fun show(): ResponseEntity<String> {
+        val article = Article(
+            "hoge-title",
+            "hoge-slug",
+            "hoge-body",
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+            "hoge-description",
+            listOf("dragons", "training"),
+            "hoge-author",
+            true,
+            1,
+        )
         return ResponseEntity(
-            ObjectMapper().writeValueAsString(
-                mapOf(
-                    "article" to mapOf(
-                        "title" to "hoge-title",
-                        "slug" to "hoge-slug",
-                        "body" to "hoge-body",
-                        "createdAt" to "2022-01-01T00:00:00.0+09:00",
-                        "updatedAt" to "2022-01-01T00:00:00.0+09:00",
-                        "description" to "hoge-description",
-                        "tagList" to listOf("dragons", "training"),
-                        "author" to "hoge-author",
-                        "favorited" to false,
-                        "favoritesCount" to 0,
-                    ),
-                )
-            ),
-            HttpStatus.valueOf(200)
+            ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
+            HttpStatus.valueOf(200),
         )
     }
 
     @PutMapping("/articles/{slug}")
     fun update(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
+        val article = Article(
+            "hoge-title",
+            "hoge-slug",
+            "hoge-body",
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+            "hoge-description",
+            listOf("dragons", "training"),
+            "hoge-author",
+            true,
+            1,
+        )
         return ResponseEntity(
-            ObjectMapper().writeValueAsString(
-                mapOf(
-                    "article" to mapOf(
-                        "title" to "hoge-title",
-                        "slug" to "hoge-slug",
-                        "body" to "hoge-body",
-                        "createdAt" to "2022-01-01T00:00:00.0+09:00",
-                        "updatedAt" to "2022-01-01T00:00:00.0+09:00",
-                        "description" to "hoge-description",
-                        "tagList" to listOf("dragons", "training"),
-                        "author" to "hoge-author",
-                        "favorited" to false,
-                        "favoritesCount" to 0,
-                    ),
-                )
-            ),
-            HttpStatus.valueOf(200)
+            ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
+            HttpStatus.valueOf(200),
         )
     }
 
@@ -139,4 +134,27 @@ class ArticleController {
     fun delete(): ResponseEntity<String> {
         return ResponseEntity("", HttpStatus.valueOf(200))
     }
+
+    @JsonRootName(value = "article")
+    data class Article(
+        @JsonProperty("title") val title: String,
+        @JsonProperty("slug") val slug: String,
+        @JsonProperty("body") val body: String,
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+        @JsonProperty("createdAt")
+        val createdAt: Date,
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+        @JsonProperty("updatedAt")
+        val updatedAt: Date,
+        @JsonProperty("description") val description: String,
+        @JsonProperty("tagList") val tagList: List<String>,
+        @JsonProperty("author") val author: String,
+        @JsonProperty("favorited") val favorited: Boolean,
+        @JsonProperty("favoritesCount") val favoritesCount: Int,
+    )
+
+    data class Articles(
+        @JsonProperty("articlesCount") val articlesCount: Int,
+        @JsonProperty("articles") val articles: List<Article>,
+    )
 }

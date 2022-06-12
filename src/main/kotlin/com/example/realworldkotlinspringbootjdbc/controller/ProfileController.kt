@@ -1,6 +1,9 @@
 package com.example.realworldkotlinspringbootjdbc.controller
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonRootName
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -14,52 +17,57 @@ import org.springframework.web.bind.annotation.RestController
 class ProfileController {
     @GetMapping("/profiles/{username}")
     fun showProfile(): ResponseEntity<String> {
+        val profile = Profile(
+            "hoge-username",
+            "hoge-bio",
+            "hoge-image",
+            true
+        )
         return ResponseEntity(
-            ObjectMapper().writeValueAsString(
-                mapOf(
-                    "profile" to mapOf(
-                        "username" to "hoge",
-                        "bio" to "hoge-bio",
-                        "image" to "hoge-image",
-                        "following" to true,
-                    ),
-                )
-            ),
+            ObjectMapper()
+                .enable(SerializationFeature.WRAP_ROOT_VALUE)
+                .writeValueAsString(profile),
             HttpStatus.valueOf(200)
         )
     }
 
     @PostMapping("/profiles/{username}/follow")
     fun follow(): ResponseEntity<String> {
+        val profile = Profile(
+            "hoge-username",
+            "hoge-bio",
+            "hoge-image",
+            true
+        )
         return ResponseEntity(
-            ObjectMapper().writeValueAsString(
-                mapOf(
-                    "profile" to mapOf(
-                        "username" to "hoge",
-                        "bio" to "hoge-bio",
-                        "image" to "hoge-image",
-                        "following" to true,
-                    ),
-                )
-            ),
+            ObjectMapper()
+                .enable(SerializationFeature.WRAP_ROOT_VALUE)
+                .writeValueAsString(profile),
             HttpStatus.valueOf(200)
         )
     }
 
     @DeleteMapping("/profiles/{username}/follow")
     fun unfollow(): ResponseEntity<String> {
+        val profile = Profile(
+            "hoge-username",
+            "hoge-bio",
+            "hoge-image",
+            false
+        )
         return ResponseEntity(
-            ObjectMapper().writeValueAsString(
-                mapOf(
-                    "profile" to mapOf(
-                        "username" to "hoge",
-                        "bio" to "hoge-bio",
-                        "image" to "hoge-image",
-                        "following" to false,
-                    ),
-                )
-            ),
+            ObjectMapper()
+                .enable(SerializationFeature.WRAP_ROOT_VALUE)
+                .writeValueAsString(profile),
             HttpStatus.valueOf(200)
         )
     }
+
+    @JsonRootName(value = "profile")
+    data class Profile(
+        @JsonProperty("username") val username: String,
+        @JsonProperty("bio") val bio: String,
+        @JsonProperty("image") val image: String,
+        @JsonProperty("following") val following: Boolean,
+    )
 }
