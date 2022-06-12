@@ -1,0 +1,41 @@
+name: Test
+
+#
+# workflow_dispatch
+#
+# ワークフローを手動で実行できるようにする
+#
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      #
+      # actions/checkout@v3
+      #
+      # URL
+      # - https://github.com/actions/checkout
+      - name: checkout
+        uses: actions/checkout@v3
+
+      #
+      # actions/setup-java@v3
+      #
+      # URL
+      # - https://github.com/actions/setup-java
+      - name: Setup JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      #
+      # test
+      #
+      - name: test
+        run: make test
