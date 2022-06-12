@@ -7,12 +7,13 @@ import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class ArticleController {
     @GetMapping("/api/articles")
-    fun filter(): ResponseEntity<String> {
+    fun filter(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
         return ResponseEntity(
             ObjectMapper().writeValueAsString(
                 mapOf(
@@ -38,7 +39,7 @@ class ArticleController {
     }
 
     @PostMapping("/api/articles")
-    fun create(): ResponseEntity<String> {
+    fun create(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
         return ResponseEntity(
             ObjectMapper().writeValueAsString(
                 mapOf(
@@ -61,7 +62,7 @@ class ArticleController {
     }
 
     @GetMapping("/api/articles/feed")
-    fun feed(): ResponseEntity<String> {
+    fun feed(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
         return ResponseEntity(
             ObjectMapper().writeValueAsString(
                 mapOf(
@@ -110,7 +111,7 @@ class ArticleController {
     }
 
     @PutMapping("/api/articles/{slug}")
-    fun update(): ResponseEntity<String> {
+    fun update(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
         return ResponseEntity(
             ObjectMapper().writeValueAsString(
                 mapOf(

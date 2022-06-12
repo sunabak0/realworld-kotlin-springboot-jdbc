@@ -6,12 +6,13 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class UserController {
     @PostMapping("/api/users")
-    fun register(): ResponseEntity<String> {
+    fun register(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
         return ResponseEntity(
             ObjectMapper().writeValueAsString(
                 mapOf(
@@ -29,7 +30,7 @@ class UserController {
     }
 
     @PostMapping("/api/users/login")
-    fun login(): ResponseEntity<String> {
+    fun login(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
         return ResponseEntity(
             ObjectMapper().writeValueAsString(
                 mapOf(
@@ -65,7 +66,7 @@ class UserController {
     }
 
     @PutMapping("/api/user")
-    fun update(): ResponseEntity<String> {
+    fun update(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
         return ResponseEntity(
             ObjectMapper().writeValueAsString(
                 mapOf(
