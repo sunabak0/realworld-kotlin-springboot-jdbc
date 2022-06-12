@@ -88,6 +88,25 @@ dependencies {
     //
     testImplementation("net.jqwik:jqwik:1.6.5")
     testImplementation("net.jqwik:jqwik-kotlin:1.6.5")
+
+    //
+    // Springdoc Openapi
+    //
+    // URL
+    // - https://springdoc.org/
+    // MavenCentral
+    // - https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-ui
+    // - https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-webmvc-core
+    // Main用途
+    // - SpringBootとswagger-uiの統合
+    // 概要
+    // - SpringBootのサーバ起動するとswagger-uiでOpenAPIが見える
+    // - http://localhost:8080/swagger-ui.html でswagger uiが見える
+    // - http://localhost:8080/api-docs でjsonのOpenAPI
+    // - http://localhost:8080/api-docs.yaml でyaml版
+    //
+    implementation("org.springdoc:springdoc-openapi-ui:1.6.9")
+    implementation("org.springdoc:springdoc-openapi-webmvc-core:1.6.9")
 }
 
 tasks.withType<KotlinCompile> {
