@@ -7,5 +7,5 @@ import org.springframework.boot.runApplication
 class RealworldKotlinSpringbootJdbcApplication
 
 fun main(args: Array<String>) {
-	runApplication<RealworldKotlinSpringbootJdbcApplication>(*args)
+    runApplication<RealworldKotlinSpringbootJdbcApplication>(*args)
 }
