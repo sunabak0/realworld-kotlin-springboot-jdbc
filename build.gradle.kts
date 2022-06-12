@@ -89,7 +89,6 @@ dependencies {
     testImplementation("net.jqwik:jqwik:1.6.5")
     testImplementation("net.jqwik:jqwik-kotlin:1.6.5")
 
-
     //
     // Springdoc Openapi
     //

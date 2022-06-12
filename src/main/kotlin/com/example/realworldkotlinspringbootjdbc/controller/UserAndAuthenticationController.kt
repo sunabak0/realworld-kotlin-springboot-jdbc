@@ -25,16 +25,18 @@ class UserAndAuthenticationController {
         summary = "Register a new user",
         description = "Register a new user"
     )
-    @ApiResponses(value = [
-        ApiResponse(
-            description = "OK",
-            responseCode = "201",
-            content = [
-                Content(mediaType = "application/json", schema = Schema(implementation = User::class))
-            ]
-        ),
-        ApiResponse(description = "入力チェックエラー", responseCode = "405")
-    ])
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                description = "OK",
+                responseCode = "201",
+                content = [
+                    Content(mediaType = "application/json", schema = Schema(implementation = User::class))
+                ]
+            ),
+            ApiResponse(description = "入力チェックエラー", responseCode = "405")
+        ]
+    )
     @PostMapping("/users")
     private fun register(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
         val user = User(
