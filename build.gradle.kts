@@ -18,8 +18,7 @@ plugins {
     // Sub用途
     // - 無し
     // 概要
-    // $ ./gradlew ktlintFormat
-    // でできる
+    // KotlinのLinter/Formatter
     //
     id("org.jlleitschuh.gradle.ktlint") version "10.3.0"
 }
@@ -38,6 +37,57 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+    //
+    // Arrow Core
+    //
+    // URL
+    // - https://arrow-kt.io/docs/core/
+    // MavenCentral
+    // - https://mvnrepository.com/artifact/io.arrow-kt/arrow-core
+    // Main用途
+    // - Eitherを使ったRailway Oriented Programming
+    // Sub用途
+    // - Optionを使ったletの代替
+    // 概要
+    // - Kotlinで関数型プログラミングをするときに便利なライブラリ
+    //
+    implementation("io.arrow-kt:arrow-core:1.1.2")
+
+    //
+    // AssertJ
+    //
+    // URL
+    // - https://assertj.github.io/doc/
+    // MavenCentral
+    // - https://mvnrepository.com/artifact/org.assertj/assertj-core
+    // Main用途
+    // - JUnitでassertThat(xxx).isEqualTo(yyy)みたいな感じで比較時に使う
+    // Sub用途
+    // - 特になし
+    // 概要
+    // - JUnit等を直感的に利用するためのライブラリ
+    //
+    testImplementation("org.assertj:assertj-core:3.23.1")
+
+    //
+    // jqwik
+    //
+    // URL
+    // - https://jqwik.net/
+    // MavenCentral
+    // - https://mvnrepository.com/artifact/net.jqwik/jqwik
+    // - https://mvnrepository.com/artifact/net.jqwik/jqwik-kotlin
+    // Main用途
+    // - Property Based Testing(pbt)
+    // 概要
+    // - Property Based Testingをするのに便利なライブラリ
+    // 参考
+    // - https://medium.com/criteo-engineering/introduction-to-property-based-testing-f5236229d237
+    // - https://johanneslink.net/property-based-testing-in-kotlin/#jqwiks-kotlin-support
+    //
+    testImplementation("net.jqwik:jqwik:1.6.5")
+    testImplementation("net.jqwik:jqwik-kotlin:1.6.5")
 }
 
 tasks.withType<KotlinCompile> {
@@ -49,4 +99,8 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    this.testLogging {
+        // Test時に標準出力を出力させる
+        this.showStandardStreams = true
+    }
 }
