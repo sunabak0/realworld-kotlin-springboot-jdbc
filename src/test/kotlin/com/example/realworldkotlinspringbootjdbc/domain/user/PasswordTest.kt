@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 
 class PasswordTest {
     @Test
-    fun `Passwordは必須項目`() {
+    fun `Userのpasswordは必須項目`() {
         val invalid = Password.ValidationError.Required.check(null)
         val valid = Password.ValidationError.Required.check("")
         assertThat(invalid).isEqualTo(Validated.Invalid(Password.ValidationError.Required))
