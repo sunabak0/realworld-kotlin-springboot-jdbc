@@ -6,7 +6,7 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface Email {
     val value: String
-    data class ValidationErrors(override val errors: List<ValidationError>) : MyError.ValidationErrors<ValidationError>
+    data class ValidationErrors(override val errors: List<ValidationError>) : MyError.ValidationErrors
     sealed interface ValidationError : MyError.ValidationError {
         object Required : ValidationError {
             override val message: String get() = "必須項目です"
