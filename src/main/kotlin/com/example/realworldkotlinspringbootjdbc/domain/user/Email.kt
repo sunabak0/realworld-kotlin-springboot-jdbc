@@ -8,7 +8,7 @@ interface Email {
     val value: String
     data class ValidationErrors(override val errors: List<ValidationError>) : MyError.ValidationErrors<ValidationError>
     sealed interface ValidationError : MyError.ValidationError {
-        object Required : Password.ValidationError {
+        object Required : ValidationError {
             override val message: String get() = "必須項目です"
             fun check(password: String?): Validated<Required, String> =
                 Option.fromNullable(password).fold(
@@ -33,4 +33,22 @@ interface Email {
             }
         }
     }
+
+    companion object {
+        fun new(email: String?): Validated<ValidationErrors, Email> {
+            val existedEmail = when (val it = ValidationError.Required.check(email)) {
+                is Validated.Invalid -> { return Validated.Invalid(ValidationErrors(listOf(it.value))) }
+                is Validated.Valid -> it.value
+            }
+            val errors = mutableListOf<ValidationError>()
+            when (val it = ValidationError.InvalidFormat.check(existedEmail)) {
+                is Validated.Invalid -> { errors.add(it.value) }
+                is Validated.Valid -> {}
+            }
+            return if (errors.size == 0) { Validated.Valid(EmailImpl(existedEmail)) }
+            else { Validated.Invalid(ValidationErrors(errors)) }
+        }
+    }
+
+    private data class EmailImpl(override val value: String) : Email
 }
