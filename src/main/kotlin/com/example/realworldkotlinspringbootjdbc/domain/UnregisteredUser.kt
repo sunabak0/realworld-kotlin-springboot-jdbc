@@ -25,6 +25,24 @@ interface UnregisteredUser {
             val validatedPassword = Password.new(password)
             val validatedUsername = Username.new(username)
             when (validatedEmail) {
+                is Validated.Valid -> when (validatedPassword) {
+                    is Validated.Valid -> when (validatedUsername) {
+                        is Validated.Valid -> {
+                            val user = UnregisteredUserImpl(
+                                validatedEmail.value,
+                                validatedPassword.value,
+                                validatedUsername.value,
+                            )
+                            return Validated.Valid(user)
+                        }
+                        is Validated.Invalid -> {}
+                    }
+                    is Validated.Invalid -> {}
+                }
+                is Validated.Invalid -> {}
+            }
+            // TODO: Too Bad
+            when (validatedEmail) {
                 is Validated.Invalid -> { errors.addAll(validatedEmail.value.errors) }
                 is Validated.Valid -> {}
             }
@@ -36,28 +54,7 @@ interface UnregisteredUser {
                 is Validated.Invalid -> { errors.addAll(validatedUsername.value.errors) }
                 is Validated.Valid -> {}
             }
-
-            if (errors.isNotEmpty()) {
-                return Validated.Invalid(ValidationErrors(errors))
-            }
-            // TODO: Too bad
-            return when (validatedEmail) {
-                is Validated.Valid -> when (validatedPassword) {
-                    is Validated.Valid -> when (validatedUsername) {
-                        is Validated.Valid -> {
-                            val user = UnregisteredUserImpl(
-                                validatedEmail.value,
-                                validatedPassword.value,
-                                validatedUsername.value,
-                            )
-                            Validated.Valid(user)
-                        }
-                        is Validated.Invalid -> { Validated.Invalid(ValidationErrors(listOf())) }
-                    }
-                    is Validated.Invalid -> { Validated.Invalid(ValidationErrors(listOf())) }
-                }
-                is Validated.Invalid -> { Validated.Invalid(ValidationErrors(listOf())) }
-            }
+            return Validated.Invalid(ValidationErrors(errors))
         }
     }
 
