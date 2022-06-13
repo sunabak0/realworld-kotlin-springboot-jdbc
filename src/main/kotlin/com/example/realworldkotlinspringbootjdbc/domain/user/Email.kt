@@ -45,8 +45,7 @@ interface Email {
                 is Validated.Invalid -> { errors.add(it.value) }
                 is Validated.Valid -> {}
             }
-            return if (errors.size == 0) { Validated.Valid(EmailImpl(existedEmail)) }
-            else { Validated.Invalid(ValidationErrors(errors)) }
+            return if (errors.size == 0) { Validated.Valid(EmailImpl(existedEmail)) } else { Validated.Invalid(ValidationErrors(errors)) }
         }
     }
 
