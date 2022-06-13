@@ -31,7 +31,7 @@ interface Username {
             override val message: String get() = "${minimum}文字以上にしてください"
         }
 
-        data class TooLong(val usernmae: String) : ValidationError {
+        data class TooLong(val username: String) : ValidationError {
             companion object {
                 private const val maximum: Int = 32
                 fun check(username: String): Validated<TooLong, String> =
