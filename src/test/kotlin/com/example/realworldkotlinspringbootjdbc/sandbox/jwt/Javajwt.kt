@@ -19,7 +19,7 @@ class Javajwt {
     fun `【GitHubのQuickstart】 Create and Sign a Token`() {
         val encodedToken = try {
             JWT.create()
-                .withIssuer("sandbox")
+                .withIssuer("auth0")
                 .sign(Algorithm.HMAC256("secret"))
         } catch (e: JWTCreationException) {
             // Invalid Signing configuration / Couldn't convert Claims.
@@ -34,7 +34,7 @@ class Javajwt {
         val token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXUyJ9.eyJpc3MiOiJhdXRoMCJ9.AbIJTDMFc7yUa5MhvcP03nJPyCPzZtQcGEp-zWfOkEE"
         val algorithm = Algorithm.HMAC256("secret") // use more secure key
         val verifier = JWT.require(algorithm)
-            .withIssuer("sandbox")
+            .withIssuer("auth0")
             .build(); // Reusable verifier instance
         val jwt = try {
             verifier.verify(token)
@@ -42,7 +42,7 @@ class Javajwt {
             // Invalid signature/claims
             throw e
         }
-        assertThat(jwt.issuer).isEqualTo("sandbox")
+        assertThat(jwt.issuer).isEqualTo("auth0")
     }
 
     @Test
@@ -54,7 +54,7 @@ class Javajwt {
             // Invalid token
             throw e
         }
-        assertThat(decodedToken.issuer).isEqualTo("sandbox")
+        assertThat(decodedToken.issuer).isEqualTo("auth0")
     }
 
     @Test

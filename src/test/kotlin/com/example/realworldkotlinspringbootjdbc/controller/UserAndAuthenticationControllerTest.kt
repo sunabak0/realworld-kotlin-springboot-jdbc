@@ -9,6 +9,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.service.UserService
 import com.example.realworldkotlinspringbootjdbc.util.MyError
+import com.example.realworldkotlinspringbootjdbc.util.MySessionJwtImpl
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -41,8 +42,9 @@ class UserAndAuthenticationControllerTest {
                     return Either.Right(registeredUser)
                 }
             }
-            val actual = UserAndAuthenticationController(registerReturnRegisteredUser).register(requestBody)
-            val expected = ResponseEntity("""{"user":{"email":"dummy@example.com","username":"dummy-name","bio":"dummy-bio","image":"dummy-image","token":"hoge-token"}}""", HttpStatus.valueOf(201))
+            // TODO: Use MySessionJwt mock
+            val actual = UserAndAuthenticationController(registerReturnRegisteredUser, MySessionJwtImpl).register(requestBody)
+            val expected = ResponseEntity("""{"user":{"email":"dummy@example.com","username":"dummy-name","bio":"dummy-bio","image":"dummy-image","token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJSZWFsV29ybGQiLCJ1c2VySWQiOjEsImVtYWlsIjoiZHVtbXlAZXhhbXBsZS5jb20ifQ.3O4HqKP1eC70_PaXjRE8IIQsLT1WZU_WaSwtY5EfcmM"}}""", HttpStatus.valueOf(201))
             assertThat(actual).isEqualTo(expected)
         }
         @Test
@@ -60,7 +62,7 @@ class UserAndAuthenticationControllerTest {
                     return Either.Left(UserService.RegisterError.ValidationErrors(listOf(dummyValidationError)))
                 }
             }
-            val actual = UserAndAuthenticationController(registerReturnValidationError).register(requestBody)
+            val actual = UserAndAuthenticationController(registerReturnValidationError, MySessionJwtImpl).register(requestBody)
             val expected = ResponseEntity("""{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError"}]}}""", HttpStatus.valueOf(422))
             assertThat(actual).isEqualTo(expected)
         }
@@ -76,7 +78,7 @@ class UserAndAuthenticationControllerTest {
                     return Either.Left(UserService.RegisterError.FailedRegister(DummyError))
                 }
             }
-            val actual = UserAndAuthenticationController(registerReturnFailedRegisterError).register(requestBody)
+            val actual = UserAndAuthenticationController(registerReturnFailedRegisterError, MySessionJwtImpl).register(requestBody)
             val expected = ResponseEntity("", HttpStatus.valueOf(500))
             assertThat(actual).isEqualTo(expected)
         }
