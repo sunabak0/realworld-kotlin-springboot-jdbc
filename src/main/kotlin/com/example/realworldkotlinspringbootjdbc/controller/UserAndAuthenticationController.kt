@@ -63,15 +63,7 @@ class UserAndAuthenticationController(
                 }
                 is UserService.RegisterError.FailedRegister -> {
                     ResponseEntity(
-                        ObjectMapper()
-                            .writeValueAsString(
-                                mapOf(
-                                    "errors" to mapOf(
-                                        "body" to listOf(usecaseError.cause.javaClass.simpleName)
-                                    )
-                                )
-                            ),
-                        HttpStatus.valueOf(500)
+                        "", HttpStatus.valueOf(500)
                     )
                 }
                 else -> {
