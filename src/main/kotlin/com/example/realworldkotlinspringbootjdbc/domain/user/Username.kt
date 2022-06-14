@@ -8,8 +8,9 @@ interface Username {
     val value: String
     data class ValidationErrors(override val errors: List<ValidationError>) : MyError.ValidationErrors
     sealed interface ValidationError : MyError.ValidationError {
+        override val key: String get() = "username"
         object Required : ValidationError {
-            override val message: String get() = "必須項目です"
+            override val message: String get() = "ユーザ名を入力してください。"
             fun check(username: String?): Validated<Required, String> =
                 Option.fromNullable(username).fold(
                     { Validated.Invalid(Required) },
@@ -28,7 +29,7 @@ interface Username {
                     }
             }
 
-            override val message: String get() = "${minimum}文字以上にしてください"
+            override val message: String get() = "ユーザー名は${minimum}文字以上にしてください。"
         }
 
         data class TooLong(val username: String) : ValidationError {
@@ -42,7 +43,7 @@ interface Username {
                     }
             }
 
-            override val message: String get() = "${maximum}文字以下にしてください"
+            override val message: String get() = "ユーザー名は${maximum}文字以下にしてください。"
         }
     }
 

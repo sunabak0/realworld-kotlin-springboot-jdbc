@@ -8,8 +8,9 @@ interface Email {
     val value: String
     data class ValidationErrors(override val errors: List<ValidationError>) : MyError.ValidationErrors
     sealed interface ValidationError : MyError.ValidationError {
+        override val key: String get() = "email"
         object Required : ValidationError {
-            override val message: String get() = "必須項目です"
+            override val message: String get() = "メールアドレスを入力してください。"
             fun check(password: String?): Validated<Required, String> =
                 Option.fromNullable(password).fold(
                     { Validated.Invalid(Required) },
@@ -17,7 +18,7 @@ interface Email {
                 )
         }
         data class InvalidFormat(val email: String) : ValidationError {
-            override val message: String get() = "不正です"
+            override val message: String get() = "メールアドレスが不正な形式です。(正しい形式例：john@example.com)"
             companion object {
                 // emailPattern
                 // https://android.googlesource.com/platform/frameworks/base/+/81aa097/core/java/android/util/Patterns.java#146
@@ -31,6 +32,9 @@ interface Email {
                 fun check(email: String): Validated<InvalidFormat, String> =
                     if (email.matches(emailPattern.toRegex())) { Validated.Valid(email) } else { Validated.Invalid(InvalidFormat(email)) }
             }
+        }
+        data class AlreadyUsedError(val email: String) : ValidationError {
+            override val message: String get() = "登録済みのメールアドレスです。他のメールアドレスを利用してください。"
         }
     }
 

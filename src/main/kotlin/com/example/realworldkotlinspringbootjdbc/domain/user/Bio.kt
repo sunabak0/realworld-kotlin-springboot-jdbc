@@ -8,8 +8,9 @@ interface Bio {
     val value: String
     data class ValidationErrors(override val errors: List<ValidationError>) : MyError.ValidationErrors
     sealed interface ValidationError : MyError.ValidationError {
+        override val key: String get() = "bio"
         object Required : ValidationError {
-            override val message: String get() = "必須項目です"
+            override val message: String get() = "bioを入力してください。"
             fun check(bio: String?): Validated<Required, String> =
                 Option.fromNullable(bio).fold(
                     { Validated.Invalid(Required) },
@@ -28,7 +29,7 @@ interface Bio {
                     }
             }
 
-            override val message: String get() = "${maximum}文字以下にしてください"
+            override val message: String get() = "bioは${maximum}文字以下にしてください。"
         }
     }
 

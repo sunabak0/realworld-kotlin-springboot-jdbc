@@ -10,17 +10,19 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 
 class UserAndAuthenticationControllerTest {
-    object DummyValidationError : MyError.ValidationError { override val message: String get() = "DummyValidation" }
-    // TODO Pass Test
     @Test
     fun `ユーザー登録時、バリデーションエラーの場合、それらを表示するレスポンスを返す`() {
+        val dummyValidationError = object : MyError.ValidationError {
+            override val message: String get() = "DummyValidation"
+            override val key: String get() = "DummyKey"
+        }
         class DummyUserService() : UserService {
             override fun register(
                 email: String?,
                 password: String?,
                 username: String?
             ): Either<UserService.RegisterError, RegisteredUser> {
-                return Either.Left(UserService.RegisterError.ValidationErrors(listOf(DummyValidationError)))
+                return Either.Left(UserService.RegisterError.ValidationErrors(listOf(dummyValidationError)))
             }
         }
         val requestBody = """
@@ -28,8 +30,9 @@ class UserAndAuthenticationControllerTest {
                 "user": {}
             }
         """.trimIndent()
+
         val actual = UserAndAuthenticationController(DummyUserService()).register(requestBody)
-        val expected = ResponseEntity("""{"errors":{"body":["DummyValidation"]}}""", HttpStatus.valueOf(422))
+        val expected = ResponseEntity("""{"errors":{"body":[{"key":"DummyKey","message":"DummyValidation"}]}}""", HttpStatus.valueOf(422))
         assertThat(actual).isEqualTo(expected)
     }
 }

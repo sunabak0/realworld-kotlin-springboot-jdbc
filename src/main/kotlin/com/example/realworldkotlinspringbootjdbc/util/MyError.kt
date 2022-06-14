@@ -3,6 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.util
 interface MyError {
     interface ValidationError : MyError {
         val message: String
+        val key: String
     }
     interface MyErrorWithThrowable : MyError { val cause: Throwable }
 

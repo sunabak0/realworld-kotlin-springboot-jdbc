@@ -8,8 +8,9 @@ interface Password {
     val value: String
     data class ValidationErrors(override val errors: List<ValidationError>) : MyError.ValidationErrors
     sealed interface ValidationError : MyError.ValidationError {
+        override val key: String get() = "password"
         object Required : ValidationError {
-            override val message: String get() = "必須項目です"
+            override val message: String get() = "パスワードを入力してください。"
             fun check(password: String?): Validated<Required, String> =
                 Option.fromNullable(password).fold(
                     { Validated.Invalid(Required) },
@@ -26,7 +27,7 @@ interface Password {
                         Validated.Invalid(TooShort(password))
                     }
             }
-            override val message: String get() = "${minimum}文字以上にしてください"
+            override val message: String get() = "パスワードは${minimum}文字以上にしてください。"
         }
         data class TooLong(val password: String) : ValidationError {
             companion object {
@@ -38,7 +39,7 @@ interface Password {
                         Validated.Invalid(TooLong(password))
                     }
             }
-            override val message: String get() = "${maximum}文字以下にしてください"
+            override val message: String get() = "パスワードは${maximum}文字以下にしてください。"
         }
     }
 

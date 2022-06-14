@@ -8,8 +8,9 @@ interface Image {
     val value: String
     data class ValidationErrors(override val errors: List<ValidationError>) : MyError.ValidationErrors
     sealed interface ValidationError : MyError.ValidationError {
+        override val key: String get() = "image"
         object Required : ValidationError {
-            override val message: String get() = "必須項目です"
+            override val message: String get() = "imageを入力してください。"
             fun check(image: String?): Validated<Required, String> =
                 Option.fromNullable(image).fold(
                     { Validated.Invalid(Required) },
@@ -28,7 +29,7 @@ interface Image {
                     }
             }
 
-            override val message: String get() = "${maximum}文字以下にしてください"
+            override val message: String get() = "imageは${maximum}文字以下にしてください。"
         }
     }
 

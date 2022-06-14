@@ -9,11 +9,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.readValue
-import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.media.Content
-import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.responses.ApiResponse
-import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -28,38 +23,23 @@ import org.springframework.web.bind.annotation.RestController
 class UserAndAuthenticationController(
     val userService: UserService
 ) {
-    @Operation(
-        summary = "Register a new user",
-        description = "Register a new user"
-    )
-    @ApiResponses(
-        value = [
-            ApiResponse(
-                description = "OK",
-                responseCode = "201",
-                content = [
-                    Content(mediaType = "application/json", schema = Schema(implementation = User::class))
-                ]
-            ),
-            ApiResponse(description = "入力チェックエラー", responseCode = "405")
-        ]
-    )
     @PostMapping("/users")
     fun register(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
         // TODO: try/catch
         val user = ObjectMapper()
             .enable(DeserializationFeature.UNWRAP_ROOT_VALUE)
             .readValue<NullableUser>(rawRequestBody!!)
-        val registeredUser = userService.register(user.email, user.password, user.username)
-        val currentUser = User(
-            "hoge@example.com",
-            "hoge-username",
-            "hoge-bio",
-            "hoge-image",
-            "hoge-token",
-        )
-        return when (registeredUser) {
+        return when (val result = userService.register(user.email, user.password, user.username)) {
             is Either.Right -> {
+                val registeredUser = result.value
+                val token = "hoge-token"
+                val currentUser = User(
+                    registeredUser.email.value,
+                    registeredUser.username.value,
+                    registeredUser.bio.value,
+                    registeredUser.image.value,
+                    token,
+                )
                 ResponseEntity(
                     ObjectMapper()
                         .enable(SerializationFeature.WRAP_ROOT_VALUE)
@@ -67,13 +47,37 @@ class UserAndAuthenticationController(
                     HttpStatus.valueOf(201)
                 )
             }
-            is Either.Left -> {
-                ResponseEntity(
-                    ObjectMapper()
-                        .enable(SerializationFeature.WRAP_ROOT_VALUE)
-                        .writeValueAsString(currentUser),
-                    HttpStatus.valueOf(201)
-                )
+            is Either.Left -> when (val usecaseError = result.value) {
+                is UserService.RegisterError.ValidationErrors -> {
+                    ResponseEntity(
+                        ObjectMapper()
+                            .writeValueAsString(
+                                mapOf(
+                                    "errors" to mapOf(
+                                        "body" to usecaseError.errors
+                                    )
+                                )
+                            ),
+                        HttpStatus.valueOf(422)
+                    )
+                }
+                is UserService.RegisterError.FailedRegister -> {
+                    ResponseEntity(
+                        ObjectMapper()
+                            .writeValueAsString(
+                                mapOf(
+                                    "errors" to mapOf(
+                                        "body" to listOf(usecaseError.cause.javaClass.simpleName)
+                                    )
+                                )
+                            ),
+                        HttpStatus.valueOf(500)
+                    )
+                }
+                else -> {
+                    val responseBody = "予期せぬエラーが発生しました${usecaseError.javaClass.simpleName}"
+                    ResponseEntity(responseBody, HttpStatus.valueOf(500))
+                }
             }
         }
     }
