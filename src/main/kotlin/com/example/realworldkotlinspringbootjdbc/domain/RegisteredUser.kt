@@ -1,7 +1,11 @@
 package com.example.realworldkotlinspringbootjdbc.domain
 
 import arrow.core.Validated
-import com.example.realworldkotlinspringbootjdbc.domain.user.*
+import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
+import com.example.realworldkotlinspringbootjdbc.domain.user.Email
+import com.example.realworldkotlinspringbootjdbc.domain.user.Image
+import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
+import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface RegisteredUser {
