@@ -1,7 +1,11 @@
 package com.example.realworldkotlinspringbootjdbc.service
 
 import arrow.core.Either
+import arrow.core.Invalid
+import arrow.core.Valid
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
+import com.example.realworldkotlinspringbootjdbc.domain.UnregisteredUser
+import com.example.realworldkotlinspringbootjdbc.repository.UserRepository
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
@@ -15,8 +19,13 @@ interface UserService {
 }
 
 @Service
-class UserServiceImpl : UserService {
+class UserServiceImpl(
+    val userRepository: UserRepository
+) : UserService {
     override fun register(email: String?, password: String?, username: String?): Either<UserService.RegisterError, RegisteredUser> {
-        return Either.Left(UserService.RegisterError.NotImplemented)
+        return when (val it = UnregisteredUser.new(email, password, username)) {
+            is Invalid -> Either.Left(UserService.RegisterError.ValidationErrors(it.value.errors))
+            is Valid -> userRepository.register(it.value)
+        }
     }
 }
