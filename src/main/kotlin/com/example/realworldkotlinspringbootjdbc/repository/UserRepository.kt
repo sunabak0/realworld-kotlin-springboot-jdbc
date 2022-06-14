@@ -34,7 +34,7 @@ class UserRepositoryImpl : UserRepository {
             return Either.Left(UserService.RegisterError.FailedRegister(error))
         }
         val registeredUser = object : RegisteredUser {
-            override val id: UserId get() = userId
+            override val userId: UserId get() = userId
             override val email: Email get() = user.email
             override val username: Username get() = user.username
             override val bio: Bio get() = object : Bio { override val value: String get() = "" }

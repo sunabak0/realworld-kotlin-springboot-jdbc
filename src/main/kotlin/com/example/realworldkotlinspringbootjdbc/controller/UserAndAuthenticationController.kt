@@ -2,6 +2,7 @@ package com.example.realworldkotlinspringbootjdbc.controller
 
 import arrow.core.Either
 import com.example.realworldkotlinspringbootjdbc.service.UserService
+import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonRootName
@@ -21,7 +22,8 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @Tag(name = "User and Authentication")
 class UserAndAuthenticationController(
-    val userService: UserService
+    val userService: UserService,
+    val mySessionJwt: MySessionJwt,
 ) {
     @PostMapping("/users")
     fun register(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
@@ -32,20 +34,27 @@ class UserAndAuthenticationController(
         return when (val result = userService.register(user.email, user.password, user.username)) {
             is Either.Right -> {
                 val registeredUser = result.value
-                val token = "hoge-token"
-                val currentUser = User(
-                    registeredUser.email.value,
-                    registeredUser.username.value,
-                    registeredUser.bio.value,
-                    registeredUser.image.value,
-                    token,
-                )
-                ResponseEntity(
-                    ObjectMapper()
-                        .enable(SerializationFeature.WRAP_ROOT_VALUE)
-                        .writeValueAsString(currentUser),
-                    HttpStatus.valueOf(201)
-                )
+                when (val token = mySessionJwt.encode(registeredUser)) {
+                    is Either.Right -> {
+                        val currentUser = User(
+                            registeredUser.email.value,
+                            registeredUser.username.value,
+                            registeredUser.bio.value,
+                            registeredUser.image.value,
+                            token.value,
+                        )
+                        ResponseEntity(
+                            ObjectMapper()
+                                .enable(SerializationFeature.WRAP_ROOT_VALUE)
+                                .writeValueAsString(currentUser),
+                            HttpStatus.valueOf(201)
+                        )
+                    }
+                    is Either.Left -> {
+                        // JWTにencodeする時に失敗
+                        ResponseEntity("", HttpStatus.valueOf(500))
+                    }
+                }
             }
             is Either.Left -> when (val usecaseError = result.value) {
                 is UserService.RegisterError.ValidationErrors -> {

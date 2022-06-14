@@ -7,10 +7,11 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
+import com.example.realworldkotlinspringbootjdbc.util.MySession
 
-interface RegisteredUser {
-    val id: UserId
-    val email: Email
+interface RegisteredUser : MySession {
+    override val userId: UserId
+    override val email: Email
     val username: Username
     val bio: Bio
     val image: Image
@@ -81,7 +82,7 @@ interface RegisteredUser {
     }
 
     private data class RegisteredUserImpl(
-        override val id: UserId,
+        override val userId: UserId,
         override val email: Email,
         override val username: Username,
         override val bio: Bio,

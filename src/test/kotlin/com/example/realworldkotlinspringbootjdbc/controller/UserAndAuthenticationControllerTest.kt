@@ -26,7 +26,7 @@ class UserAndAuthenticationControllerTest {
         @Test
         fun `ユーザー登録時、Serivceが「RegisteredUser」を返す場合、201レスポンスを返す`() {
             val registeredUser = object : RegisteredUser {
-                override val id: UserId get() = UserId(1)
+                override val userId: UserId get() = UserId(1)
                 override val email: Email get() = object : Email { override val value: String get() = "dummy@example.com" }
                 override val username: Username get() = object : Username { override val value: String get() = "dummy-name" }
                 override val bio: Bio get() = object : Bio { override val value: String get() = "dummy-bio" }

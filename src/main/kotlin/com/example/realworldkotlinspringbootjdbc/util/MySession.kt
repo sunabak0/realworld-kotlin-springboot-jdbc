@@ -7,6 +7,7 @@ import com.auth0.jwt.exceptions.JWTCreationException
 import com.auth0.jwt.exceptions.JWTDecodeException
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
+import org.springframework.stereotype.Component
 
 interface MySession {
     val userId: UserId
@@ -33,6 +34,7 @@ interface MySessionJwt {
     }
 }
 
+@Component
 object MySessionJwtImpl : MySessionJwt {
     override fun decode(token: String): Either<MySessionJwt.DecodeError, MySession> {
         val decodedToken = try {
