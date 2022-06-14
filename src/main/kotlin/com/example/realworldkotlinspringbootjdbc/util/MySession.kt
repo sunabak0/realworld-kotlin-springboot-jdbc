@@ -9,10 +9,10 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import org.springframework.stereotype.Component
 
-interface MySession {
-    val userId: UserId
+data class MySession(
+    val userId: UserId,
     val email: Email
-}
+)
 
 interface MySessionJwt {
     companion object {
@@ -45,10 +45,10 @@ object MySessionJwtImpl : MySessionJwt {
         return try {
             val userId = decodedToken.getClaim(MySessionJwt.USER_ID_KEY).asInt()
             val email = decodedToken.getClaim(MySessionJwt.EMAIL_KEY).asString()
-            val session = object : MySession {
-                override val userId: UserId get() = UserId(userId)
-                override val email: Email get() = object : Email { override val value: String get() = email }
-            }
+            val session = MySession(
+                UserId(userId),
+                object : Email { override val value: String get() = email }
+            )
             Either.Right(session)
         } catch (e: NullPointerException) {
             Either.Left(MySessionJwt.DecodeError.NothingRequiredClaim(token))

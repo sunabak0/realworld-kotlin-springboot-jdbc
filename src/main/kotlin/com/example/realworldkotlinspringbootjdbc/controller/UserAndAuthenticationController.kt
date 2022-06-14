@@ -2,6 +2,7 @@ package com.example.realworldkotlinspringbootjdbc.controller
 
 import arrow.core.Either
 import com.example.realworldkotlinspringbootjdbc.service.UserService
+import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -34,7 +35,8 @@ class UserAndAuthenticationController(
         return when (val result = userService.register(user.email, user.password, user.username)) {
             is Either.Right -> {
                 val registeredUser = result.value
-                when (val token = mySessionJwt.encode(registeredUser)) {
+                val session = MySession(registeredUser.userId, registeredUser.email)
+                when (val token = mySessionJwt.encode(session)) {
                     is Either.Right -> {
                         val currentUser = User(
                             registeredUser.email.value,

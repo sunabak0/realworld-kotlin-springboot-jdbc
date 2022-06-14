@@ -7,11 +7,10 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
-import com.example.realworldkotlinspringbootjdbc.util.MySession
 
-interface RegisteredUser : MySession {
-    override val userId: UserId
-    override val email: Email
+interface RegisteredUser {
+    val userId: UserId
+    val email: Email
     val username: Username
     val bio: Bio
     val image: Image
