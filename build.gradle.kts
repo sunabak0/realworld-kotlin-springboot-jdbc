@@ -107,6 +107,19 @@ dependencies {
     //
     implementation("org.springdoc:springdoc-openapi-ui:1.6.9")
     implementation("org.springdoc:springdoc-openapi-webmvc-core:1.6.9")
+
+    //
+    // Java JWT
+    //
+    // URL
+    // - https://github.com/auth0/java-jwt
+    // MavenCentral
+    // - https://mvnrepository.com/artifact/com.auth0/java-jwt
+    // Main用途
+    // - JWTでセッションIDっぽく振る舞わせる
+    // 概要
+    // - 特になし
+    implementation("com.auth0:java-jwt:3.19.0")
 }
 
 tasks.withType<KotlinCompile> {
