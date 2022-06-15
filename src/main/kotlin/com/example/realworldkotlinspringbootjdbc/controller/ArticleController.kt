@@ -1,5 +1,7 @@
 package com.example.realworldkotlinspringbootjdbc.controller
 
+import arrow.core.Either
+import com.example.realworldkotlinspringbootjdbc.service.ArticleService
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonRootName
@@ -19,7 +21,9 @@ import java.util.Date
 
 @RestController
 @Tag(name = "Articles")
-class ArticleController {
+class ArticleController(
+    val articleService: ArticleService,
+) {
     @GetMapping("/articles")
     fun filter(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
         val articles = Articles(
@@ -92,6 +96,13 @@ class ArticleController {
 
     @GetMapping("/articles/{slug}")
     fun show(): ResponseEntity<String> {
+        val result = articleService.show("hoge-slug")
+        when (result) {
+            is Either.Right -> {
+                println(result.value)
+            }
+            is Either.Left -> {}
+        }
         val article = Article(
             "hoge-title",
             "hoge-slug",
