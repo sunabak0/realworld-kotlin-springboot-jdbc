@@ -8,6 +8,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.interfaces.DecodedJWT
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 //
 // auth0/java-jwt
@@ -121,6 +122,8 @@ class Javajwt {
             // Invalid token
             throw e
         }
-        // println(decodedToken.getClaim("email").asInt())
+        assertThrows<NullPointerException> {
+            println(decodedToken.getClaim("email").asInt())
+        }
     }
 }
