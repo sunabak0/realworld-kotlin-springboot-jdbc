@@ -1,0 +1,40 @@
+---
+
+version: '3.8'
+
+services:
+  #
+  # PostgreSQL
+  #
+  realworld-pg:
+    image: postgres:14-bullseye
+    container_name: realworld-pg
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: realworld-user
+      POSTGRES_PASSWORD: realworld-pass
+      POSTGRES_DB: realworld-db
+      POSTGRES_INIT_DB_ARGS: --encoding=UTF-8
+    volumes:
+      - type: bind
+        source: ${PWD}/docker/db/sql/
+        target: /docker-entrypoint-initdb.d/
+  #
+  # pgweb
+  # PostgreSQLのGUIクライアント(ブラウザで見える)
+  #
+  pg-web:
+    image: sosedoff/pgweb
+    container_name: pg-web
+    ports:
+      - 8081:8081
+    environment:
+      DATABASE_URL: postgres://realworld-user:realworld-pass@realworld-pg:5432/realworld-db?sslmode=disable
+    depends_on:
+      - realworld-pg
+    restart: always # realworld-pgのコンテナではなくてDB起動するまでrestartしている
+
+#networks:
+#  default:
+#    name: realworld-network

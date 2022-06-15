@@ -46,7 +46,7 @@ dependencies {
     // MavenCentral
     // - https://mvnrepository.com/artifact/io.arrow-kt/arrow-core
     // Main用途
-    // - Eitherを使ったRailway Oriented Programming
+    // - Either/Validatedを使ったRailway Oriented Programming
     // Sub用途
     // - Optionを使ったletの代替
     // 概要
@@ -120,6 +120,35 @@ dependencies {
     // 概要
     // - 特になし
     implementation("com.auth0:java-jwt:3.19.0")
+
+    //
+    // Spring JDBC
+    //
+    // URL
+    // - https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/package-summary.html
+    // MavenCentral
+    // - https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-jdbc
+    // Main用途
+    // - DBへ保存
+    // 概要
+    // - 特になし
+    //
+    // これを入れるだけで、application.properties/yamlや@ConfigurationによるDB接続設定が必要になる
+    implementation("org.springframework.boot:spring-boot-starter-jdbc")
+
+    //
+    // postgresql
+    //
+    // URL
+    // - https://jdbc.postgresql.org/
+    // MavenCentral
+    // - https://mvnrepository.com/artifact/org.postgresql/postgresql
+    // Main用途
+    // - DBつなぐ時のドライバ
+    // 概要
+    // - 特になし
+    //
+    implementation("org.postgresql:postgresql")
 }
 
 tasks.withType<KotlinCompile> {
@@ -129,8 +158,26 @@ tasks.withType<KotlinCompile> {
     }
 }
 
+//
+// ./gradlew test
+//
 tasks.withType<Test> {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags("WithLocalDb")
+    }
+    this.testLogging {
+        // Test時に標準出力を出力させる
+        this.showStandardStreams = true
+    }
+}
+
+//
+// ./gradlew test withLocalDb
+//
+task<Test>("withLocalDb") {
+    useJUnitPlatform {
+        includeTags("WithLocalDb")
+    }
     this.testLogging {
         // Test時に標準出力を出力させる
         this.showStandardStreams = true

@@ -2,9 +2,21 @@
 up: ## サーバー起動
 	./gradlew bootRun
 
+.PHONY: up.db
+up.db: ## db起動
+	docker-compose up
+
+.PHONY: down.db
+down.db: ## dbを落とす
+	docker-compose down
+
 .PHONY: test
 test: ## テスト実行
 	./gradlew test
+
+.PHONY: test.withLocalDb
+test.withLocalDb: ## テスト(with local db)実行
+	./gradlew test withLocalDb
 
 .PHONY: test.e2e
 test.e2e: ## e2eテスト実行
