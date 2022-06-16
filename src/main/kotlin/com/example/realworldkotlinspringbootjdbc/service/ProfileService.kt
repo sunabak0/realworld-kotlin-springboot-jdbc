@@ -22,7 +22,7 @@ interface ProfileService {
 }
 
 @Service
-class ProfileServiceImpl(): ProfileService {
+class ProfileServiceImpl() : ProfileService {
     override fun showProfile(username: String?): Either<ProfileService.ShowProfileError, Profile> {
         return when (val it = Username.new(username)) {
             is Invalid -> Either.Left(ProfileService.ShowProfileError.ValidationErrors(it.value.errors))
