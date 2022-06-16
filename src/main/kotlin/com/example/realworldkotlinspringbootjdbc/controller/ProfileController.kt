@@ -1,5 +1,7 @@
 package com.example.realworldkotlinspringbootjdbc.controller
 
+import arrow.core.Either
+import com.example.realworldkotlinspringbootjdbc.service.ProfileService
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonRootName
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -14,9 +16,18 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @Tag(name = "Profile")
-class ProfileController {
+class ProfileController(
+    val profileService: ProfileService
+) {
     @GetMapping("/profiles/{username}")
     fun showProfile(): ResponseEntity<String> {
+        val result = profileService.showProfile("hoge-username")
+        when (result) {
+            is Either.Right -> {
+                println(result.value)
+            }
+            is Either.Left -> {}
+        }
         val profile = Profile(
             "hoge-username",
             "hoge-bio",
