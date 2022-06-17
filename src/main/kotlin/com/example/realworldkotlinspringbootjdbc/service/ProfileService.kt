@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.Invalid
 import arrow.core.Valid
 import com.example.realworldkotlinspringbootjdbc.domain.profile.Profile
+import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
@@ -30,8 +31,8 @@ class ProfileServiceImpl() : ProfileService {
                 val a = object : Profile {
                     override val username: Username
                         get() = it.value
-                    override val bio: String
-                        get() = "hoge-bio"
+                    override val bio: Bio
+                        get() = object : Bio{override val value: String get() = "hoge-bio"}
                     override val image: String
                         get() = "hoge-image"
                     override val following: Boolean
