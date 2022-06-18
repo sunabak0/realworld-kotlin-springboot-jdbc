@@ -2,9 +2,8 @@ package com.example.realworldkotlinspringbootjdbc.controller
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import com.example.realworldkotlinspringbootjdbc.controller.response.Profile
 import com.example.realworldkotlinspringbootjdbc.service.ProfileService
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.annotation.JsonRootName
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -74,11 +73,4 @@ class ProfileController(
         )
     }
 
-    @JsonRootName(value = "profile")
-    data class Profile(
-        @JsonProperty("username") val username: String,
-        @JsonProperty("bio") val bio: String,
-        @JsonProperty("image") val image: String,
-        @JsonProperty("following") val following: Boolean,
-    )
 }

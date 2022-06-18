@@ -127,7 +127,7 @@ class UserAndAuthenticationController(
         //
         //    }
         // }
-        val currentUser = User(
+        val currentUser = CurrentUser(
             "hoge@example.com",
             "hoge-username",
             "hoge-bio",
@@ -144,7 +144,7 @@ class UserAndAuthenticationController(
 
     @GetMapping("/user")
     fun showCurrentUser(): ResponseEntity<String> {
-        val user = User(
+        val user = CurrentUser(
             "hoge@example.com",
             "hoge-username",
             "hoge-bio",
@@ -161,7 +161,7 @@ class UserAndAuthenticationController(
 
     @PutMapping("/user")
     fun update(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
-        val user = User(
+        val user = CurrentUser(
             "hoge@example.com",
             "hoge-username",
             "hoge-bio",
@@ -175,15 +175,6 @@ class UserAndAuthenticationController(
             HttpStatus.valueOf(200)
         )
     }
-
-    @JsonRootName(value = "user")
-    data class User(
-        @JsonProperty("email") val email: String,
-        @JsonProperty("username") val username: String,
-        @JsonProperty("bio") val bio: String,
-        @JsonProperty("image") val image: String,
-        @JsonProperty("token") val token: String,
-    )
 
     @JsonIgnoreProperties(ignoreUnknown = true) // デシリアライズ時、利用していないkeyがあった時、それを無視する
     @JsonRootName(value = "user")

@@ -1,5 +1,6 @@
 package com.example.realworldkotlinspringbootjdbc.controller
 
+import com.example.realworldkotlinspringbootjdbc.controller.response.Tags
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -21,8 +22,4 @@ class DefaultController {
             HttpStatus.valueOf(200),
         )
     }
-
-    data class Tags(
-        @JsonProperty("tags") val tags: List<String>,
-    )
 }

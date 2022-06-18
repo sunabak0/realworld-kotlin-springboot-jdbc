@@ -2,6 +2,7 @@ package com.example.realworldkotlinspringbootjdbc.controller
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import com.example.realworldkotlinspringbootjdbc.controller.response.Comment
 import com.example.realworldkotlinspringbootjdbc.service.CommentService
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -78,16 +79,4 @@ class CommentController(val commentService: CommentService) {
     fun delete(): ResponseEntity<String> {
         return ResponseEntity("", HttpStatus.valueOf(200))
     }
-
-    data class Comment(
-        @JsonProperty("id") val id: Int,
-        @JsonProperty("body") val body: String,
-        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
-        @JsonProperty("createdAt")
-        val createdAt: Date,
-        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
-        @JsonProperty("updatedAt")
-        val updatedAt: Date,
-        @JsonProperty("author") val author: String,
-    )
 }

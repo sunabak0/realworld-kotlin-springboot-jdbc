@@ -1,5 +1,6 @@
 package com.example.realworldkotlinspringbootjdbc.controller
 
+import com.example.realworldkotlinspringbootjdbc.controller.response.Article
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -15,7 +16,7 @@ import java.text.SimpleDateFormat
 class FavoriteController {
     @PostMapping("/articles/{slug}/favorite")
     fun favorite(): ResponseEntity<String> {
-        val article = ArticleController.Article(
+        val article = Article(
             "hoge-title",
             "hoge-slug",
             "hoge-body",
@@ -35,7 +36,7 @@ class FavoriteController {
 
     @DeleteMapping("/articles/{slug}/favorite")
     fun unfavorite(): ResponseEntity<String> {
-        val article = ArticleController.Article(
+        val article = Article(
             "hoge-title",
             "hoge-slug",
             "hoge-body",
