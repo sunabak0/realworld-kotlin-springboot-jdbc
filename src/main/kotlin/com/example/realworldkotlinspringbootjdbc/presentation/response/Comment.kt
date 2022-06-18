@@ -2,7 +2,7 @@ package com.example.realworldkotlinspringbootjdbc.presentation.response
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonProperty
-import java.util.*
+import java.util.Date
 
 data class Comment(
     @JsonProperty("id") val id: Int,
