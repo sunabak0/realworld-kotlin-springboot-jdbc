@@ -53,8 +53,8 @@ class UserAndAuthenticationController(
                         )
                     }
                     is Either.Left -> {
-                        // JWTにencodeする時に失敗
-                        ResponseEntity("", HttpStatus.valueOf(500))
+                        val responseBody = "予期せぬエラーが発生しました(cause: ${mySessionJwt::class.simpleName.toString()})"
+                        ResponseEntity(responseBody, HttpStatus.valueOf(500))
                     }
                 }
             }
@@ -78,7 +78,7 @@ class UserAndAuthenticationController(
                     )
                 }
                 else -> {
-                    val responseBody = "予期せぬエラーが発生しました${usecaseError.javaClass.simpleName}"
+                    val responseBody = "予期せぬエラーが発生しました(cause: ${usecaseError::class.simpleName.toString()})"
                     ResponseEntity(responseBody, HttpStatus.valueOf(500))
                 }
             }
