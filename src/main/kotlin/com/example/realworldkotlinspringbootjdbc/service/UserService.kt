@@ -24,7 +24,7 @@ class UserServiceImpl(
 ) : UserService {
     override fun register(email: String?, password: String?, username: String?): Either<UserService.RegisterError, RegisteredUser> {
         return when (val it = UnregisteredUser.new(email, password, username)) {
-            is Invalid -> Either.Left(UserService.RegisterError.ValidationErrors(it.value.errors))
+            is Invalid -> Either.Left(UserService.RegisterError.ValidationErrors(it.value))
             is Valid -> userRepository.register(it.value)
         }
     }
