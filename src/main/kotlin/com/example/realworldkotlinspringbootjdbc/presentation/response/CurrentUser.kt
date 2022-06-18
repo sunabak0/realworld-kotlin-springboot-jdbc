@@ -1,4 +1,4 @@
-package com.example.realworldkotlinspringbootjdbc.controller.response
+package com.example.realworldkotlinspringbootjdbc.presentation.response
 
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.fasterxml.jackson.annotation.JsonProperty

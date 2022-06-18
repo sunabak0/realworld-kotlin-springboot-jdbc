@@ -1,4 +1,4 @@
-package com.example.realworldkotlinspringbootjdbc.controller
+package com.example.realworldkotlinspringbootjdbc.presentation
 
 import arrow.core.Either
 import arrow.core.left

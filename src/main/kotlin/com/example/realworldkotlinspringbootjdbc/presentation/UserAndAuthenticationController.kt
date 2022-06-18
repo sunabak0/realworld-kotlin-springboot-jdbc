@@ -1,10 +1,10 @@
-package com.example.realworldkotlinspringbootjdbc.controller
+package com.example.realworldkotlinspringbootjdbc.presentation
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
-import com.example.realworldkotlinspringbootjdbc.controller.response.CurrentUser
-import com.example.realworldkotlinspringbootjdbc.controller.response.serializeMyErrorListForResponseBody
-import com.example.realworldkotlinspringbootjdbc.controller.response.serializeUnexpectedErrorForResponseBody
+import com.example.realworldkotlinspringbootjdbc.presentation.response.CurrentUser
+import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
+import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.service.UserService
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt

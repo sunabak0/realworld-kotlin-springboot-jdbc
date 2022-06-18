@@ -1,4 +1,4 @@
-package com.example.realworldkotlinspringbootjdbc.controller.response
+package com.example.realworldkotlinspringbootjdbc.presentation.response
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonRootName

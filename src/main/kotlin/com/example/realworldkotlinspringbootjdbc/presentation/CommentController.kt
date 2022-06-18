@@ -1,8 +1,8 @@
-package com.example.realworldkotlinspringbootjdbc.controller
+package com.example.realworldkotlinspringbootjdbc.presentation
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
-import com.example.realworldkotlinspringbootjdbc.controller.response.Comment
+import com.example.realworldkotlinspringbootjdbc.presentation.response.Comment
 import com.example.realworldkotlinspringbootjdbc.service.CommentService
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.tags.Tag

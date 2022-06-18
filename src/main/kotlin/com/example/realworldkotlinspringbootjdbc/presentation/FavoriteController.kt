@@ -1,6 +1,6 @@
-package com.example.realworldkotlinspringbootjdbc.controller
+package com.example.realworldkotlinspringbootjdbc.presentation
 
-import com.example.realworldkotlinspringbootjdbc.controller.response.Article
+import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.swagger.v3.oas.annotations.tags.Tag
