@@ -4,6 +4,9 @@ import arrow.core.Option
 import arrow.core.Validated
 import arrow.core.ValidatedNel
 import arrow.core.invalid
+import arrow.core.invalidNel
+import arrow.core.valid
+import arrow.core.zip
 import arrow.typeclasses.Semigroup
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
