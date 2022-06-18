@@ -26,13 +26,13 @@ interface Password {
         //
         // Validation 無し
         //
-        fun newWithoutValidation(password: String): Password = Password.PasswordWithoutValidation(password)
+        fun newWithoutValidation(password: String): Password = PasswordWithoutValidation(password)
 
         //
         // Validation 有り
         //
-        fun new(password: String?): ValidatedNel<ValidationError, Password> {
-            return when (val result = ValidationError.Required.check(password)) {
+        fun new(password: String?): ValidatedNel<ValidationError, Password> =
+            when (val result = ValidationError.Required.check(password)) {
                 is Validated.Invalid -> result.value.invalidNel()
                 is Validated.Valid -> {
                     val existedPassword = result.value
@@ -42,7 +42,15 @@ interface Password {
                     ) { _, _ -> ValidatedPassword(existedPassword) }
                 }
             }
-        }
+
+        //
+        // Login用 パスワード
+        //
+        fun newForLogin(password: String?): ValidatedNel<ValidationError, Password> =
+            when (val result = ValidationError.Required.check(password)) {
+                is Validated.Invalid -> result.value.invalidNel()
+                is Validated.Valid -> PasswordWithoutValidation(result.value).valid()
+            }
     }
 
     //

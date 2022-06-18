@@ -29,8 +29,8 @@ interface Email {
         //
         // Validation 有り
         //
-        fun new(email: String?): ValidatedNel<ValidationError, Email> {
-            return when (val result = ValidationError.Required.check(email)) {
+        fun new(email: String?): ValidatedNel<ValidationError, Email> =
+            when (val result = ValidationError.Required.check(email)) {
                 is Validated.Invalid -> result.value.invalidNel()
                 is Validated.Valid -> {
                     val existedEmail = result.value
@@ -38,7 +38,6 @@ interface Email {
                         .map { ValidatedEmail(existedEmail) }
                 }
             }
-        }
     }
 
     //

@@ -1,26 +1,33 @@
 package com.example.realworldkotlinspringbootjdbc.repository
 
 import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UnregisteredUser
-import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
-import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
-import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.service.UserService
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Repository
 
 interface UserRepository {
-    fun register(user: UnregisteredUser): Either<UserService.RegisterError, RegisteredUser>
+    //
+    // ユーザー登録
+    //
+    fun register(user: UnregisteredUser): Either<UserService.RegisterError, RegisteredUser> = UserService.RegisterError.NotImplemented.left()
+
+    //
+    // ユーザー検索 by Email with Password
+    //
+    fun findByEmailWithPassword(email: Email): Either<UserService.LoginError, RegisteredUser> = UserService.LoginError.NotImplemented.left()
 
     sealed interface UserRepositoryError : MyError {
         sealed interface TransactionError : UserRepositoryError {
             data class DbError(override val cause: Throwable, val unregisteredUser: UnregisteredUser) : UserRepositoryError, MyError.MyErrorWithThrowable
             data class UnexpectedError(override val cause: Throwable, val unregisteredUser: UnregisteredUser) : UserRepositoryError, MyError.MyErrorWithThrowable
+            data class NotFoundError(val email: Email) : UserRepositoryError, MyError.Basic
         }
-        object NotImplemented : UserRepositoryError
     }
 }
 
@@ -33,16 +40,15 @@ class UserRepositoryImpl : UserRepository {
             val error = UserRepository.UserRepositoryError.TransactionError.DbError(e, user)
             return Either.Left(UserService.RegisterError.FailedRegister(error))
         }
-        val registeredUser = object : RegisteredUser {
-            override val userId: UserId get() = userId
-            override val email: Email get() = user.email
-            override val username: Username get() = user.username
-            override val bio: Bio get() = object : Bio { override val value: String get() = "" }
-            override val image: Image get() = object : Image { override val value: String get() = "" }
-        }
-        return Either.Right(registeredUser)
+        val registeredUser = RegisteredUser.newWithoutValidation(
+            userId.value,
+            user.email.value,
+            user.username.value,
+            "",
+            ""
+        )
+        return registeredUser.right()
     }
-
     //
     // @Transaction
     fun registerTransactionApply(user: UnregisteredUser): UserId {
@@ -50,5 +56,16 @@ class UserRepositoryImpl : UserRepository {
         // val sql1 = "INSERT INTO users(email, username, password, created_at, updated_at) VALUES (:email, :username, :password, :created_at, :updated_at) RETURNING id;"
         // val sql2 = "INSERT INTO profiles(user_id, bio, image, created_at, updated_at) VALUES (:user_id, :bio, :image, :created_at, :updated_at);"
         return UserId(999)
+    }
+
+    override fun findByEmailWithPassword(email: Email): Either<UserService.LoginError, RegisteredUser> {
+        val registeredUser = RegisteredUser.newWithoutValidation(
+            888,
+            email.value,
+            "dummy-username",
+            "",
+            ""
+        )
+        return registeredUser.right()
     }
 }

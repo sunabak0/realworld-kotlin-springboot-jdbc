@@ -56,7 +56,7 @@ class UserAndAuthenticationController(
                     // ユーザーの登録は上手くいったが、JWTのエンコードで失敗
                     //
                     is Either.Left -> ResponseEntity(
-                        serializeUnexpectedErrorForResponseBody("予期せぬエラーが発生しました(cause: ${mySessionJwt::class.simpleName.toString()})"),
+                        serializeUnexpectedErrorForResponseBody("予期せぬエラーが発生しました(cause: ${mySessionJwt::class.simpleName})"),
                         HttpStatus.valueOf(500)
                     )
                 }
@@ -69,9 +69,9 @@ class UserAndAuthenticationController(
                 // 原因: バリデーションエラー
                 //
                 is UserService.RegisterError.ValidationErrors -> ResponseEntity(
-                        serializeMyErrorListForResponseBody(usecaseError.errors),
-                        HttpStatus.valueOf(422)
-                    )
+                    serializeMyErrorListForResponseBody(usecaseError.errors),
+                    HttpStatus.valueOf(422)
+                )
                 //
                 // 原因: DB周りのエラー
                 //
@@ -83,7 +83,7 @@ class UserAndAuthenticationController(
                 // 原因: 予期せぬエラー
                 //
                 else -> ResponseEntity(
-                    "予期せぬエラーが発生しました(cause: ${usecaseError::class.simpleName.toString()})",
+                    "予期せぬエラーが発生しました(cause: ${usecaseError::class.simpleName})",
                     HttpStatus.valueOf(500)
                 )
             }
@@ -92,7 +92,41 @@ class UserAndAuthenticationController(
 
     @PostMapping("/users/login")
     fun login(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
-        val user = User(
+        // val user = ObjectMapper()
+        //    .enable(DeserializationFeature.UNWRAP_ROOT_VALUE)
+        //    .readValue<NullableUser>(rawRequestBody!!)
+        // when (val result = userService.login(user.email, user.password)) {
+        //    //
+        //    // ログインに成功
+        //    //
+        //    is Either.Right -> {
+        //        val registeredUser = result.value
+        //        val session = MySession(registeredUser.userId, registeredUser.email)
+        //        when (val token = mySessionJwt.encode(session)) {
+        //            //
+        //            // 全て成功
+        //            //
+        //            is Either.Right -> ResponseEntity(
+        //                CurrentUser.from(registeredUser, token.value).serializeWithRootName(),
+        //                HttpStatus.valueOf(201)
+        //            )
+        //            //
+        //            // ユーザーの登録は上手くいったが、JWTのエンコードで失敗
+        //            //
+        //            is Either.Left -> ResponseEntity(
+        //                serializeUnexpectedErrorForResponseBody("予期せぬエラーが発生しました(cause: ${mySessionJwt::class.simpleName.toString()})"),
+        //                HttpStatus.valueOf(500)
+        //            )
+        //        }
+        //    }
+        //    //
+        //    // ログインに失敗
+        //    //
+        //    is Either.Left -> {
+        //
+        //    }
+        // }
+        val currentUser = User(
             "hoge@example.com",
             "hoge-username",
             "hoge-bio",
@@ -102,7 +136,7 @@ class UserAndAuthenticationController(
         return ResponseEntity(
             ObjectMapper()
                 .enable(SerializationFeature.WRAP_ROOT_VALUE)
-                .writeValueAsString(user),
+                .writeValueAsString(currentUser),
             HttpStatus.valueOf(200)
         )
     }

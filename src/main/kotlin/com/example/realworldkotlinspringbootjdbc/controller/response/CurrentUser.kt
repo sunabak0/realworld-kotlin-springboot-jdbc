@@ -25,7 +25,7 @@ data class CurrentUser(
             )
     }
 
-    fun serializeWithRootName() : String =
+    fun serializeWithRootName(): String =
         ObjectMapper()
             .enable(SerializationFeature.WRAP_ROOT_VALUE)
             .writeValueAsString(this)

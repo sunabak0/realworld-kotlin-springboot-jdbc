@@ -5,6 +5,7 @@ interface MyError {
         val message: String
         val key: String
     }
+    interface Basic : MyError
     interface MyErrorWithThrowable : MyError { val cause: Throwable }
 
     interface MyErrorWithMyError : MyError { val cause: MyError }

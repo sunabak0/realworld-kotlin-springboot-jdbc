@@ -3,7 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.controller.response
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import com.fasterxml.jackson.databind.ObjectMapper
 
-fun serializeMyErrorListForResponseBody(errors: List<MyError>) : String =
+fun serializeMyErrorListForResponseBody(errors: List<MyError>): String =
     ObjectMapper()
         .writeValueAsString(
             mapOf(
@@ -12,7 +12,7 @@ fun serializeMyErrorListForResponseBody(errors: List<MyError>) : String =
                 )
             )
         )
-fun serializeUnexpectedErrorForResponseBody(errorMessage: String) : String =
+fun serializeUnexpectedErrorForResponseBody(errorMessage: String): String =
     ObjectMapper()
         .writeValueAsString(
             mapOf(

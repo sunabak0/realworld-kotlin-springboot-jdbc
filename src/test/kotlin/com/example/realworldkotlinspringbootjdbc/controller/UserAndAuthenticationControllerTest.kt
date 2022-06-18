@@ -4,11 +4,6 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
-import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
-import com.example.realworldkotlinspringbootjdbc.domain.user.Email
-import com.example.realworldkotlinspringbootjdbc.domain.user.Image
-import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
-import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.service.UserService
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import com.example.realworldkotlinspringbootjdbc.util.MySession
