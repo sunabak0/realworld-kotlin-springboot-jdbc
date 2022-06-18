@@ -1,6 +1,9 @@
 package com.example.realworldkotlinspringbootjdbc.domain.user
 
-import arrow.core.*
+import arrow.core.Option
+import arrow.core.Validated
+import arrow.core.ValidatedNel
+import arrow.core.invalid
 import arrow.typeclasses.Semigroup
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
@@ -63,8 +66,7 @@ interface Password {
             companion object {
                 private const val minimum: Int = 8
                 fun check(password: String): ValidatedNel<ValidationError, Unit> =
-                    if (minimum <= password.length) { Unit.valid() }
-                    else { TooShort(password).invalidNel() }
+                    if (minimum <= password.length) { Unit.valid() } else { TooShort(password).invalidNel() }
             }
             override val message: String get() = "パスワードは${minimum}文字以上にしてください。"
         }
@@ -76,8 +78,7 @@ interface Password {
             companion object {
                 private const val maximum: Int = 32
                 fun check(password: String): ValidatedNel<ValidationError, Unit> =
-                    if (password.length <= maximum) { Unit.valid() }
-                    else { TooLong(password).invalidNel() }
+                    if (password.length <= maximum) { Unit.valid() } else { TooLong(password).invalidNel() }
             }
             override val message: String get() = "パスワードは${maximum}文字以下にしてください。"
         }

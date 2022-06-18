@@ -1,6 +1,11 @@
 package com.example.realworldkotlinspringbootjdbc.domain.user
 
-import arrow.core.*
+import arrow.core.Option
+import arrow.core.Validated
+import arrow.core.ValidatedNel
+import arrow.core.invalidNel
+import arrow.core.validNel
+import arrow.core.zip
 import arrow.typeclasses.Semigroup
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
@@ -27,14 +32,13 @@ interface Username {
         //
         fun new(username: String?): ValidatedNel<ValidationError, Username> {
             return when (val result = ValidationError.Required.check(username)) {
-                is Validated.Invalid -> { return result.value.invalidNel() }
+                is Validated.Invalid -> result.value.invalidNel()
                 is Validated.Valid -> {
                     val existedUsername = result.value
                     ValidationError.TooShort.check(existedUsername).zip(
                         Semigroup.nonEmptyList(),
                         ValidationError.TooLong.check(existedUsername)
                     ) { _, _ -> ValidatedUsername(existedUsername) }
-                        .handleErrorWith { it.invalid() }
                 }
             }
         }
@@ -64,8 +68,7 @@ interface Username {
             companion object {
                 private const val minimum: Int = 4
                 fun check(username: String): ValidatedNel<ValidationError, Unit> =
-                    if (minimum <= username.length) { Unit.validNel() }
-                    else { TooShort(username).invalidNel() }
+                    if (minimum <= username.length) { Unit.validNel() } else { TooShort(username).invalidNel() }
             }
             override val message: String get() = "ユーザー名は${minimum}文字以上にしてください。"
         }
@@ -77,8 +80,7 @@ interface Username {
             companion object {
                 private const val maximum: Int = 32
                 fun check(username: String): ValidatedNel<ValidationError, Unit> =
-                    if (username.length <= maximum) { Unit.validNel() }
-                    else { TooLong(username).invalidNel() }
+                    if (username.length <= maximum) { Unit.validNel() } else { TooLong(username).invalidNel() }
             }
             override val message: String get() = "ユーザー名は${maximum}文字以下にしてください。"
         }

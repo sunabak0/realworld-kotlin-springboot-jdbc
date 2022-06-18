@@ -32,7 +32,7 @@ class ProfileServiceImpl() : ProfileService {
                     override val username: Username
                         get() = it.value
                     override val bio: Bio
-                        get() = object : Bio{override val value: String get() = "hoge-bio"}
+                        get() = object : Bio { override val value: String get() = "hoge-bio" }
                     override val image: String
                         get() = "hoge-image"
                     override val following: Boolean
