@@ -1,72 +1,85 @@
 package com.example.realworldkotlinspringbootjdbc.domain.user
 
-import arrow.core.Option
-import arrow.core.Validated
+import arrow.core.*
+import arrow.typeclasses.Semigroup
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface Password {
     val value: String
-    data class ValidationErrors(override val errors: List<ValidationError>) : MyError.ValidationErrors
+
+    //
+    // 実装
+    //
+    private data class ValidatedPassword(override val value: String) : Password
+    private data class PasswordWithoutValidation(override val value: String) : Password
+
+    //
+    // Factory メソッド
+    //
+    companion object {
+        //
+        // Validation 無し
+        //
+        fun newWithoutValidation(password: String): Password = Password.PasswordWithoutValidation(password)
+
+        //
+        // Validation 有り
+        //
+        fun new(password: String?): ValidatedNel<ValidationError, Password> {
+            return when (val result = ValidationError.Required.check(password)) {
+                is Validated.Invalid -> result.value.invalidNel()
+                is Validated.Valid -> {
+                    val existedPassword = result.value
+                    ValidationError.TooShort.check(existedPassword).zip(
+                        Semigroup.nonEmptyList(),
+                        ValidationError.TooLong.check(existedPassword)
+                    ) { _, _ -> ValidatedPassword(existedPassword) }
+                }
+            }
+        }
+    }
+
+    //
+    // ドメインルール
+    //
     sealed interface ValidationError : MyError.ValidationError {
-        override val key: String get() = "password"
+        override val key: String get() = Password::class.simpleName.toString()
+        //
+        // Nullは駄目
+        //
         object Required : ValidationError {
             override val message: String get() = "パスワードを入力してください。"
             fun check(password: String?): Validated<Required, String> =
                 Option.fromNullable(password).fold(
-                    { Validated.Invalid(Required) },
-                    { Validated.Valid(it) }
+                    { Required.invalid() },
+                    { it.valid() }
                 )
         }
+
+        //
+        // 短すぎては駄目
+        //
         data class TooShort(val password: String) : ValidationError {
             companion object {
                 private const val minimum: Int = 8
-                fun check(password: String): Validated<TooShort, String> =
-                    if (minimum <= password.length) {
-                        Validated.Valid(password)
-                    } else {
-                        Validated.Invalid(TooShort(password))
-                    }
+                fun check(password: String): ValidatedNel<ValidationError, Unit> =
+                    if (minimum <= password.length) { Unit.valid() }
+                    else { TooShort(password).invalidNel() }
             }
             override val message: String get() = "パスワードは${minimum}文字以上にしてください。"
         }
+
+        //
+        // 長すぎては駄目
+        //
         data class TooLong(val password: String) : ValidationError {
             companion object {
                 private const val maximum: Int = 32
-                fun check(password: String): Validated<TooLong, String> =
-                    if (password.length <= maximum) {
-                        Validated.Valid(password)
-                    } else {
-                        Validated.Invalid(TooLong(password))
-                    }
+                fun check(password: String): ValidatedNel<ValidationError, Unit> =
+                    if (password.length <= maximum) { Unit.valid() }
+                    else { TooLong(password).invalidNel() }
             }
             override val message: String get() = "パスワードは${maximum}文字以下にしてください。"
         }
     }
-
-    companion object {
-        fun new(password: String?): Validated<ValidationErrors, Password> {
-            val existedPassword = when (val it = ValidationError.Required.check(password)) {
-                is Validated.Invalid -> { return Validated.Invalid(ValidationErrors(listOf(it.value))) }
-                is Validated.Valid -> it.value
-            }
-            val errors = mutableListOf<ValidationError>()
-            when (val it = ValidationError.TooShort.check(existedPassword)) {
-                is Validated.Invalid -> { errors.add(it.value) }
-                is Validated.Valid -> {}
-            }
-            when (val it = ValidationError.TooLong.check(existedPassword)) {
-                is Validated.Invalid -> { errors.add(it.value) }
-                is Validated.Valid -> {}
-            }
-            return if (errors.size == 0) { Validated.Valid(PasswordImpl(existedPassword)) } else {
-                Validated.Invalid(
-                    ValidationErrors(
-                        errors
-                    )
-                )
-            }
-        }
-    }
-
-    private data class PasswordImpl(override val value: String) : Password
 }

@@ -47,7 +47,7 @@ interface UnregisteredUser {
                 is Validated.Valid -> {}
             }
             when (validatedPassword) {
-                is Validated.Invalid -> { errors.addAll(validatedPassword.value.errors) }
+                is Validated.Invalid -> { errors.addAll(validatedPassword.value) }
                 is Validated.Valid -> {}
             }
             when (validatedUsername) {
