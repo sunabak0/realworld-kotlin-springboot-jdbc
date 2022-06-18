@@ -12,24 +12,21 @@ import org.springframework.stereotype.Service
 import java.text.SimpleDateFormat
 import java.util.Date
 
-interface ArticleService {
-    fun show(slug: String?): Either<ShowError, Article> = ShowError.NotImplemented.left()
-    sealed interface ShowError : MyError {
-        data class ValidationErrors(override val errors: List<MyError.ValidationError>) :
-            ShowError,
-            MyError.ValidationErrors
-
-        data class FailedShow(override val cause: MyError) : ShowError, MyError.MyErrorWithMyError
-        data class NotFound(override val cause: MyError) : ShowError, MyError.MyErrorWithMyError
-        object NotImplemented : ShowError
+interface ShowArticleUseCase {
+    fun execute(slug: String?): Either<Error, Article> = Error.NotImplemented.left()
+    sealed interface Error : MyError {
+        data class ValidationErrors(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
+        data class FailedShow(override val cause: MyError) : Error, MyError.MyErrorWithMyError
+        data class NotFound(override val cause: MyError) : Error, MyError.MyErrorWithMyError
+        object NotImplemented : Error
     }
 }
 
 @Service
-class ArticleServiceImpl() : ArticleService {
-    override fun show(slug: String?): Either<ArticleService.ShowError, Article> {
+class ShowArticleUseCaseImpl() : ShowArticleUseCase {
+    override fun execute(slug: String?): Either<ShowArticleUseCase.Error, Article> {
         return when (val it = Slug.new(slug)) {
-            is Invalid -> ArticleService.ShowError.ValidationErrors(it.value).left()
+            is Invalid -> ShowArticleUseCase.Error.ValidationErrors(it.value).left()
             is Valid -> {
                 val a = object : Article {
                     override val title: String

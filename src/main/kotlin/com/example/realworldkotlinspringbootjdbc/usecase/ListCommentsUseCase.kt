@@ -1,7 +1,6 @@
 package com.example.realworldkotlinspringbootjdbc.usecase
 
 import arrow.core.Either
-import arrow.core.Either.Left
 import arrow.core.Validated.Invalid
 import arrow.core.Validated.Valid
 import arrow.core.left
@@ -13,23 +12,23 @@ import org.springframework.stereotype.Service
 import java.text.SimpleDateFormat
 import java.util.Date
 
-interface CommentService {
-    fun list(slug: String?): Either<ListError, List<Comment>> = Left(ListError.NotImplemented)
-    sealed interface ListError : MyError {
+interface ListCommentsUseCase {
+    fun execute(slug: String?): Either<Error, List<Comment>> = Error.NotImplemented.left()
+    sealed interface Error : MyError {
         data class ValidationErrors(override val errors: List<MyError.ValidationError>) :
-            ListError,
+            Error,
             MyError.ValidationErrors
-        data class FailedShow(override val cause: MyError) : ListError, MyError.MyErrorWithMyError
-        data class NotFound(override val cause: MyError) : ListError, MyError.MyErrorWithMyError
-        object NotImplemented : ListError
+        data class FailedShow(override val cause: MyError) : Error, MyError.MyErrorWithMyError
+        data class NotFound(override val cause: MyError) : Error, MyError.MyErrorWithMyError
+        object NotImplemented : Error
     }
 }
 
 @Service
-class CommentServiceImpl() : CommentService {
-    override fun list(slug: String?): Either<CommentService.ListError, List<Comment>> {
+class ShowCommentsUseCaseImpl() : ListCommentsUseCase {
+    override fun execute(slug: String?): Either<ListCommentsUseCase.Error, List<Comment>> {
         return when (val it = Slug.new(slug)) {
-            is Invalid -> CommentService.ListError.ValidationErrors(it.value).left()
+            is Invalid -> ListCommentsUseCase.Error.ValidationErrors(it.value).left()
             is Valid -> {
                 val a = object : Comment {
                     override val id: Int

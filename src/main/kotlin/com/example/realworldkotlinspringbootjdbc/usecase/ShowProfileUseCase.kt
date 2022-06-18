@@ -12,24 +12,24 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
-interface ProfileService {
-    fun showProfile(username: String?): Either<ShowProfileError, Profile> = Left(ShowProfileError.NotImplemented)
-    sealed interface ShowProfileError : MyError {
+interface ShowProfileUseCase {
+    fun execute(username: String?): Either<Error, Profile> = Left(Error.NotImplemented)
+    sealed interface Error : MyError {
         data class ValidationErrors(override val errors: List<MyError.ValidationError>) :
-            ShowProfileError,
+            Error,
             MyError.ValidationErrors
 
-        data class FailedShow(override val cause: MyError) : ShowProfileError, MyError.MyErrorWithMyError
-        data class NotFound(override val cause: MyError) : ShowProfileError, MyError.MyErrorWithMyError
-        object NotImplemented : ShowProfileError
+        data class FailedShow(override val cause: MyError) : Error, MyError.MyErrorWithMyError
+        data class NotFound(override val cause: MyError) : Error, MyError.MyErrorWithMyError
+        object NotImplemented : Error
     }
 }
 
 @Service
-class ProfileServiceImpl() : ProfileService {
-    override fun showProfile(username: String?): Either<ProfileService.ShowProfileError, Profile> {
+class ShowProfileUseCaseImpl() : ShowProfileUseCase {
+    override fun execute(username: String?): Either<ShowProfileUseCase.Error, Profile> {
         return when (val it = Username.new(username)) {
-            is Invalid -> ProfileService.ShowProfileError.ValidationErrors(it.value).left()
+            is Invalid -> ShowProfileUseCase.Error.ValidationErrors(it.value).left()
             is Valid -> {
                 val a = object : Profile {
                     override val username: Username
