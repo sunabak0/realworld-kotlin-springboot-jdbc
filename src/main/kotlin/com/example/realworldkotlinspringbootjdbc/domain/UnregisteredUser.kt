@@ -43,7 +43,7 @@ interface UnregisteredUser {
             }
             // TODO: Too Bad
             when (validatedEmail) {
-                is Validated.Invalid -> { errors.addAll(validatedEmail.value.errors) }
+                is Validated.Invalid -> { errors.addAll(validatedEmail.value) }
                 is Validated.Valid -> {}
             }
             when (validatedPassword) {

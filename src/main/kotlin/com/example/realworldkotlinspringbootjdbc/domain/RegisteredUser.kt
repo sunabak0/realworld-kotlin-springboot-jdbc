@@ -54,7 +54,7 @@ interface RegisteredUser {
             }
             when (validatedEmail) {
                 is Validated.Invalid -> {
-                    errors.addAll(validatedEmail.value.errors)
+                    errors.addAll(validatedEmail.value)
                 }
                 is Validated.Valid -> {}
             }
