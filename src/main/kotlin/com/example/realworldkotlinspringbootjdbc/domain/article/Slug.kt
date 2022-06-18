@@ -2,15 +2,49 @@ package com.example.realworldkotlinspringbootjdbc.domain.article
 
 import arrow.core.Option
 import arrow.core.Validated
+import arrow.core.ValidatedNel
+import arrow.core.invalidNel
+import arrow.core.valid
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface Slug {
     val value: String
 
-    data class ValidationErrors(override val errors: List<ValidationError>) : MyError.ValidationErrors
-    sealed interface ValidationError : MyError.ValidationError {
-        override val key: String get() = "slug"
+    //
+    // 実装
+    //
+    private data class ValidatedSlug(override val value: String) : Slug
+    private data class SlugWithoutValidation(override val value: String) : Slug
 
+    //
+    // Factory メソッド
+    //
+    companion object {
+        //
+        // Validation 無し
+        //
+        fun newWithoutValidation(slug: String): Slug = Slug.SlugWithoutValidation(slug)
+
+        //
+        // Validation 有り
+        //
+        fun new(slug: String?): ValidatedNel<ValidationError, Slug> {
+            return when (val result = ValidationError.Required.check(slug)) {
+                is Validated.Invalid -> result.value.invalidNel()
+                is Validated.Valid -> ValidationError.TooLong.check(result.value)
+                    .map { ValidatedSlug(result.value) }
+            }
+        }
+    }
+
+    //
+    // ドメインルール
+    //
+    sealed interface ValidationError : MyError.ValidationError {
+        override val key: String get() = Slug::class.simpleName.toString()
+        //
+        // Nullは駄目
+        //
         object Required : ValidationError {
             override val message: String get() = "slugを入力してください。"
             fun check(slug: String?): Validated<Required, String> =
@@ -20,47 +54,16 @@ interface Slug {
                 )
         }
 
+        //
+        // 長すぎては駄目
+        //
         data class TooLong(val slug: String) : ValidationError {
             companion object {
                 private const val maximum: Int = 32
-                fun check(slug: String): Validated<TooLong, String> =
-                    if (slug.length <= maximum) {
-                        Validated.Valid(slug)
-                    } else {
-                        Validated.Invalid(TooLong(slug))
-                    }
+                fun check(slug: String): ValidatedNel<TooLong, Unit> =
+                    if (slug.length <= maximum) { Unit.valid() } else { TooLong(slug).invalidNel() }
             }
-
             override val message: String get() = "slugは${maximum}文字以下にしてください。"
         }
     }
-
-    companion object {
-        fun new(slug: String?): Validated<ValidationErrors, Slug> {
-            val existedSlug = when (val it = ValidationError.Required.check(slug)) {
-                is Validated.Invalid -> {
-                    return Validated.Invalid(ValidationErrors(listOf(it.value)))
-                }
-                is Validated.Valid -> it.value
-            }
-            val errors = mutableListOf<ValidationError>()
-            when (val it = ValidationError.TooLong.check(existedSlug)) {
-                is Validated.Invalid -> {
-                    errors.add(it.value)
-                }
-                is Validated.Valid -> {}
-            }
-            return if (errors.size == 0) {
-                Validated.Valid(SlugImpl(existedSlug))
-            } else {
-                Validated.Invalid(
-                    ValidationErrors(
-                        errors
-                    )
-                )
-            }
-        }
-    }
-
-    private data class SlugImpl(override val value: String) : Slug
 }

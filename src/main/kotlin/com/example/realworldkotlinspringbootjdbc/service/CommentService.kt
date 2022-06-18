@@ -26,7 +26,7 @@ interface CommentService {
 class CommentServiceImpl() : CommentService {
     override fun list(slug: String?): Either<CommentService.ListError, List<Comment>> {
         return when (val it = Slug.new(slug)) {
-            is Invalid -> Either.Left(CommentService.ListError.ValidationErrors(it.value.errors))
+            is Invalid -> Either.Left(CommentService.ListError.ValidationErrors(it.value))
             is Valid -> {
                 val a = object : Comment {
                     override val id: Int

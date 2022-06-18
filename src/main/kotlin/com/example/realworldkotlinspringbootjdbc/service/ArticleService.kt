@@ -27,7 +27,7 @@ interface ArticleService {
 class ArticleServiceImpl() : ArticleService {
     override fun show(slug: String?): Either<ArticleService.ShowError, Article> {
         return when (val it = Slug.new(slug)) {
-            is Invalid -> Either.Left(ArticleService.ShowError.ValidationErrors(it.value.errors))
+            is Invalid -> Either.Left(ArticleService.ShowError.ValidationErrors(it.value))
             is Valid -> {
                 val a = object : Article {
                     override val title: String
