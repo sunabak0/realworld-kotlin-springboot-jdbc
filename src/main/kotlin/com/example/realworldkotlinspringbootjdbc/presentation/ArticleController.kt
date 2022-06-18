@@ -4,7 +4,7 @@ import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Articles
-import com.example.realworldkotlinspringbootjdbc.service.ArticleService
+import com.example.realworldkotlinspringbootjdbc.usecase.ArticleService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.swagger.v3.oas.annotations.tags.Tag

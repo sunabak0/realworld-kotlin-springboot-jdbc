@@ -5,7 +5,7 @@ import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.CurrentUser
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
-import com.example.realworldkotlinspringbootjdbc.service.UserService
+import com.example.realworldkotlinspringbootjdbc.usecase.UserService
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties

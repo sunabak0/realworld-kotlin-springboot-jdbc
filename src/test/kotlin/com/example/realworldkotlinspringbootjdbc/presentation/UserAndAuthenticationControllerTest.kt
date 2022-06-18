@@ -4,7 +4,7 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
-import com.example.realworldkotlinspringbootjdbc.service.UserService
+import com.example.realworldkotlinspringbootjdbc.usecase.UserService
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
