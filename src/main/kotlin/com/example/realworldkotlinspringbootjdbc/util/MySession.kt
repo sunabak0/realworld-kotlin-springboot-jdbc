@@ -1,6 +1,8 @@
 package com.example.realworldkotlinspringbootjdbc.util
 
 import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTCreationException
@@ -20,8 +22,8 @@ interface MySessionJwt {
         const val USER_ID_KEY = "userId"
         const val EMAIL_KEY = "email"
     }
-    fun decode(token: String): Either<DecodeError, MySession> = Either.Left(DecodeError.NotImplemented)
-    fun encode(session: MySession): Either<EncodeError, String> = Either.Left(EncodeError.NotImplemented)
+    fun decode(token: String): Either<DecodeError, MySession> = DecodeError.NotImplemented.left()
+    fun encode(session: MySession): Either<EncodeError, String> = EncodeError.NotImplemented.left()
 
     sealed interface DecodeError : MyError {
         data class FailedDecode(override val cause: JWTDecodeException, val token: String) : DecodeError, MyError.MyErrorWithThrowable
@@ -40,7 +42,7 @@ object MySessionJwtImpl : MySessionJwt {
         val decodedToken = try {
             JWT.decode(token)
         } catch (e: JWTDecodeException) {
-            return Either.Left(MySessionJwt.DecodeError.FailedDecode(cause = e, token))
+            return MySessionJwt.DecodeError.FailedDecode(cause = e, token).left()
         }
         return try {
             val userId = decodedToken.getClaim(MySessionJwt.USER_ID_KEY).asInt()
@@ -49,9 +51,9 @@ object MySessionJwtImpl : MySessionJwt {
                 UserId(userId),
                 object : Email { override val value: String get() = email }
             )
-            Either.Right(session)
+            session.right()
         } catch (e: NullPointerException) {
-            Either.Left(MySessionJwt.DecodeError.NothingRequiredClaim(token))
+            MySessionJwt.DecodeError.NothingRequiredClaim(token).left()
         }
     }
 
@@ -63,9 +65,9 @@ object MySessionJwtImpl : MySessionJwt {
                 .withClaim(MySessionJwt.USER_ID_KEY, session.userId.value)
                 .withClaim(MySessionJwt.EMAIL_KEY, session.email.value)
                 .sign(Algorithm.HMAC256(secret))
-            Either.Right(token)
+            token.right()
         } catch (e: JWTCreationException) {
-            Either.Left(MySessionJwt.EncodeError.FailedEncode(e, session))
+            MySessionJwt.EncodeError.FailedEncode(e, session).left()
         }
     }
 }
