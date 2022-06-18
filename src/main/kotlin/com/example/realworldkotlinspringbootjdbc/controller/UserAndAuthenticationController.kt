@@ -1,6 +1,9 @@
 package com.example.realworldkotlinspringbootjdbc.controller
 
 import arrow.core.Either
+import com.example.realworldkotlinspringbootjdbc.controller.response.CurrentUser
+import com.example.realworldkotlinspringbootjdbc.controller.response.serializeMyErrorListForResponseBody
+import com.example.realworldkotlinspringbootjdbc.controller.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.service.UserService
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
@@ -28,59 +31,61 @@ class UserAndAuthenticationController(
 ) {
     @PostMapping("/users")
     fun register(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
+        //
         // TODO: try/catch
+        //
         val user = ObjectMapper()
             .enable(DeserializationFeature.UNWRAP_ROOT_VALUE)
             .readValue<NullableUser>(rawRequestBody!!)
         return when (val result = userService.register(user.email, user.password, user.username)) {
+            //
+            // ユーザー登録に成功
+            //
             is Either.Right -> {
                 val registeredUser = result.value
                 val session = MySession(registeredUser.userId, registeredUser.email)
                 when (val token = mySessionJwt.encode(session)) {
-                    is Either.Right -> {
-                        val currentUser = User(
-                            registeredUser.email.value,
-                            registeredUser.username.value,
-                            registeredUser.bio.value,
-                            registeredUser.image.value,
-                            token.value,
-                        )
-                        ResponseEntity(
-                            ObjectMapper()
-                                .enable(SerializationFeature.WRAP_ROOT_VALUE)
-                                .writeValueAsString(currentUser),
-                            HttpStatus.valueOf(201)
-                        )
-                    }
-                    is Either.Left -> {
-                        val responseBody = "予期せぬエラーが発生しました(cause: ${mySessionJwt::class.simpleName.toString()})"
-                        ResponseEntity(responseBody, HttpStatus.valueOf(500))
-                    }
+                    //
+                    // 全て成功
+                    //
+                    is Either.Right -> ResponseEntity(
+                        CurrentUser.from(registeredUser, token.value).serializeWithRootName(),
+                        HttpStatus.valueOf(201)
+                    )
+                    //
+                    // ユーザーの登録は上手くいったが、JWTのエンコードで失敗
+                    //
+                    is Either.Left -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("予期せぬエラーが発生しました(cause: ${mySessionJwt::class.simpleName.toString()})"),
+                        HttpStatus.valueOf(500)
+                    )
                 }
             }
+            //
+            // ユーザー登録に失敗
+            //
             is Either.Left -> when (val usecaseError = result.value) {
-                is UserService.RegisterError.ValidationErrors -> {
-                    ResponseEntity(
-                        ObjectMapper()
-                            .writeValueAsString(
-                                mapOf(
-                                    "errors" to mapOf(
-                                        "body" to usecaseError.errors
-                                    )
-                                )
-                            ),
+                //
+                // 原因: バリデーションエラー
+                //
+                is UserService.RegisterError.ValidationErrors -> ResponseEntity(
+                        serializeMyErrorListForResponseBody(usecaseError.errors),
                         HttpStatus.valueOf(422)
                     )
-                }
-                is UserService.RegisterError.FailedRegister -> {
-                    ResponseEntity(
-                        "", HttpStatus.valueOf(500)
-                    )
-                }
-                else -> {
-                    val responseBody = "予期せぬエラーが発生しました(cause: ${usecaseError::class.simpleName.toString()})"
-                    ResponseEntity(responseBody, HttpStatus.valueOf(500))
-                }
+                //
+                // 原因: DB周りのエラー
+                //
+                is UserService.RegisterError.FailedRegister -> ResponseEntity(
+                    "DBエラー",
+                    HttpStatus.valueOf(500)
+                )
+                //
+                // 原因: 予期せぬエラー
+                //
+                else -> ResponseEntity(
+                    "予期せぬエラーが発生しました(cause: ${usecaseError::class.simpleName.toString()})",
+                    HttpStatus.valueOf(500)
+                )
             }
         }
     }
