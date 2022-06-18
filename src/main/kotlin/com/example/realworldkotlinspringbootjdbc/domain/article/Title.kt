@@ -2,8 +2,8 @@ package com.example.realworldkotlinspringbootjdbc.domain.article
 
 import arrow.core.Option
 import arrow.core.Validated
-import arrow.core.Validated.Valid
 import arrow.core.Validated.Invalid
+import arrow.core.Validated.Valid
 import arrow.core.ValidatedNel
 import arrow.core.invalidNel
 import arrow.core.valid

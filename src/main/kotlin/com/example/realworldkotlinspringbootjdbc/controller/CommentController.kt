@@ -1,6 +1,7 @@
 package com.example.realworldkotlinspringbootjdbc.controller
 
-import arrow.core.Either
+import arrow.core.Either.Left
+import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.service.CommentService
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -23,10 +24,10 @@ class CommentController(val commentService: CommentService) {
     fun list(): ResponseEntity<String> {
         val result = commentService.list("hoge-slug")
         when (result) {
-            is Either.Right -> {
+            is Right -> {
                 println(result.value)
             }
-            is Either.Left -> {}
+            is Left -> {}
         }
         val comment1 = Comment(
             1,

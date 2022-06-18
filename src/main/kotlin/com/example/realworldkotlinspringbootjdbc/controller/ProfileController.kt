@@ -1,6 +1,7 @@
 package com.example.realworldkotlinspringbootjdbc.controller
 
-import arrow.core.Either
+import arrow.core.Either.Left
+import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.service.ProfileService
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonRootName
@@ -23,10 +24,10 @@ class ProfileController(
     fun showProfile(): ResponseEntity<String> {
         val result = profileService.showProfile("hoge-username")
         when (result) {
-            is Either.Right -> {
+            is Right -> {
                 println(result.value)
             }
-            is Either.Left -> {}
+            is Left -> {}
         }
         val profile = Profile(
             "hoge-username",
@@ -46,8 +47,7 @@ class ProfileController(
     fun follow(): ResponseEntity<String> {
         val profile = Profile(
             "hoge-username",
-            "hoge-bio",
-            "hoge-image",
+            "hoge-bio", "hoge-image",
             true
         )
         return ResponseEntity(
