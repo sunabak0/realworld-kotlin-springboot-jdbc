@@ -1,6 +1,8 @@
 package com.example.realworldkotlinspringbootjdbc.domain
 
-import arrow.core.Validated
+import arrow.core.ValidatedNel
+import arrow.core.zip
+import arrow.typeclasses.Semigroup
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
@@ -15,76 +17,60 @@ interface RegisteredUser {
     val bio: Bio
     val image: Image
 
-    data class ValidationErrors(override val errors: List<MyError.ValidationError>) : MyError.ValidationErrors
-    companion object {
-        fun new(
-            userId: Int,
-            email: String?,
-            username: String?,
-            bio: String?,
-            image: String?
-        ): Validated<ValidationErrors, RegisteredUser> {
-            // TODO: More smart
-            val errors = mutableListOf<MyError.ValidationError>()
-            val validatedEmail = Email.new(email)
-            val validatedUsername = Username.new(username)
-            val validatedBio = Bio.new(bio)
-            val validatedImage = Image.new(image)
-            when (validatedEmail) {
-                is Validated.Valid -> when (validatedUsername) {
-                    is Validated.Valid -> when (validatedBio) {
-                        is Validated.Valid -> when (validatedImage) {
-                            is Validated.Valid -> {
-                                val user = RegisteredUserImpl(
-                                    UserId(userId),
-                                    validatedEmail.value,
-                                    validatedUsername.value,
-                                    validatedBio.value,
-                                    validatedImage.value,
-                                )
-                                return Validated.Valid(user)
-                            }
-                            is Validated.Invalid -> {}
-                        }
-                        is Validated.Invalid -> {}
-                    }
-                    is Validated.Invalid -> {}
-                }
-                is Validated.Invalid -> {}
-            }
-            when (validatedEmail) {
-                is Validated.Invalid -> {
-                    errors.addAll(validatedEmail.value)
-                }
-                is Validated.Valid -> {}
-            }
-            when (validatedUsername) {
-                is Validated.Invalid -> {
-                    errors.addAll(validatedUsername.value)
-                }
-                is Validated.Valid -> {}
-            }
-            when (validatedBio) {
-                is Validated.Invalid -> {
-                    errors.addAll(validatedBio.value)
-                }
-                is Validated.Valid -> {}
-            }
-            when (validatedImage) {
-                is Validated.Invalid -> {
-                    errors.addAll(validatedImage.value)
-                }
-                is Validated.Valid -> {}
-            }
-            return Validated.Invalid(ValidationErrors(errors))
-        }
-    }
-
-    private data class RegisteredUserImpl(
+    //
+    // 実装
+    //
+    private data class ValidatedRegisteredUser(
         override val userId: UserId,
         override val email: Email,
         override val username: Username,
         override val bio: Bio,
         override val image: Image,
     ) : RegisteredUser
+    private data class WithoutValidationRegisteredUser(
+        override val userId: UserId,
+        override val email: Email,
+        override val username: Username,
+        override val bio: Bio,
+        override val image: Image,
+    ) : RegisteredUser
+
+    //
+    // Factory メソッド
+    //
+    companion object {
+        //
+        // Validation 無し
+        //
+        fun newWithoutValidation(
+            userId: Int,
+            email: String,
+            username: String,
+            bio: String,
+            image: String
+        ): RegisteredUser = WithoutValidationRegisteredUser(
+            UserId(userId),
+            Email.newWithoutValidation(email),
+            Username.newWithoutValidation(username),
+            Bio.newWithoutValidation(bio),
+            Image.newWithoutValidation(image),
+        )
+
+        //
+        // Validation 有り
+        //
+        fun new(
+            userId: Int,
+            email: String?,
+            username: String?,
+            bio: String?,
+            image: String?
+        ): ValidatedNel<MyError.ValidationError, RegisteredUser> =
+            Email.new(email).zip(
+                Semigroup.nonEmptyList(),
+                Username.new(username),
+                Bio.new(bio),
+                Image.new(image)
+            ) { a, b, c, d -> ValidatedRegisteredUser(UserId(userId), a, b, c, d) }
+    }
 }
