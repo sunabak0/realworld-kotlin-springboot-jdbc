@@ -1,3 +1,3 @@
 package com.example.realworldkotlinspringbootjdbc.domain.comment
 
-class CommentId
+data class CommentId(val value: Int)
