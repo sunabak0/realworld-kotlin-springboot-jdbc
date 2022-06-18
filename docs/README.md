@@ -2,9 +2,7 @@
 
 1. インターフェースの返り値を固定した実装を用意してDIする
 2. その時の挙動を確認する
-. 
-## Controller
 
-![](./controller.png)
+## Presentation
 
-![](./controller-detail.png)
+![](./presentation-detail.png)
