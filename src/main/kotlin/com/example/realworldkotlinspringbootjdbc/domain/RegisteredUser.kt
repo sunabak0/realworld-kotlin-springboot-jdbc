@@ -72,7 +72,7 @@ interface RegisteredUser {
             }
             when (validatedImage) {
                 is Validated.Invalid -> {
-                    errors.addAll(validatedImage.value.errors)
+                    errors.addAll(validatedImage.value)
                 }
                 is Validated.Valid -> {}
             }
