@@ -1,6 +1,6 @@
 package com.example.realworldkotlinspringbootjdbc.sandbox.db
 
-import com.example.realworldkotlinspringbootjdbc.repository.DbConnection
+import com.example.realworldkotlinspringbootjdbc.infra.DbConnection
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test

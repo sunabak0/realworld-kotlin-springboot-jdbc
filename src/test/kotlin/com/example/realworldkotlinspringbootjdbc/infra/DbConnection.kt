@@ -1,4 +1,4 @@
-package com.example.realworldkotlinspringbootjdbc.repository
+package com.example.realworldkotlinspringbootjdbc.infra
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource

@@ -13,7 +13,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UnregisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.Password
-import com.example.realworldkotlinspringbootjdbc.repository.UserRepository
+import com.example.realworldkotlinspringbootjdbc.infra.UserRepository
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 

@@ -1,4 +1,4 @@
-package com.example.realworldkotlinspringbootjdbc.repository
+package com.example.realworldkotlinspringbootjdbc.infra
 
 import arrow.core.Either
 import arrow.core.left
