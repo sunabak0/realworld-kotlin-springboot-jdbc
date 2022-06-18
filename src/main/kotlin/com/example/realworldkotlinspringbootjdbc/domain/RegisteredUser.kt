@@ -66,7 +66,7 @@ interface RegisteredUser {
             }
             when (validatedBio) {
                 is Validated.Invalid -> {
-                    errors.addAll(validatedBio.value.errors)
+                    errors.addAll(validatedBio.value)
                 }
                 is Validated.Valid -> {}
             }
