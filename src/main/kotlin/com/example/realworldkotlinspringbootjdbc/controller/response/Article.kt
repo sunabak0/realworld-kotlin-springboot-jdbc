@@ -3,8 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.controller.response
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonRootName
-import java.util.*
-
+import java.util.Date
 
 @JsonRootName(value = "article")
 data class Article(

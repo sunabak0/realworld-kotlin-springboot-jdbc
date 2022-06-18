@@ -72,5 +72,4 @@ class ProfileController(
             HttpStatus.valueOf(200)
         )
     }
-
 }
