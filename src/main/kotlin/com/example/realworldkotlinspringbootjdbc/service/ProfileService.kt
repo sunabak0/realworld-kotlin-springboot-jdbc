@@ -1,8 +1,11 @@
 package com.example.realworldkotlinspringbootjdbc.service
 
 import arrow.core.Either
-import arrow.core.Invalid
-import arrow.core.Valid
+import arrow.core.Either.Left
+import arrow.core.Validated.Invalid
+import arrow.core.Validated.Valid
+import arrow.core.left
+import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.profile.Profile
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
@@ -10,7 +13,7 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface ProfileService {
-    fun showProfile(username: String?): Either<ShowProfileError, Profile> = Either.Left(ShowProfileError.NotImplemented)
+    fun showProfile(username: String?): Either<ShowProfileError, Profile> = Left(ShowProfileError.NotImplemented)
     sealed interface ShowProfileError : MyError {
         data class ValidationErrors(override val errors: List<MyError.ValidationError>) :
             ShowProfileError,
@@ -26,7 +29,7 @@ interface ProfileService {
 class ProfileServiceImpl() : ProfileService {
     override fun showProfile(username: String?): Either<ProfileService.ShowProfileError, Profile> {
         return when (val it = Username.new(username)) {
-            is Invalid -> Either.Left(ProfileService.ShowProfileError.ValidationErrors(it.value))
+            is Invalid -> ProfileService.ShowProfileError.ValidationErrors(it.value).left()
             is Valid -> {
                 val a = object : Profile {
                     override val username: Username
@@ -38,7 +41,7 @@ class ProfileServiceImpl() : ProfileService {
                     override val following: Boolean
                         get() = true
                 }
-                Either.Right(a)
+                a.right()
             }
         }
     }

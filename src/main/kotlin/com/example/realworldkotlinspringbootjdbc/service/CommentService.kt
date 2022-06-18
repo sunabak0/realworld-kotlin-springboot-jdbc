@@ -1,8 +1,11 @@
 package com.example.realworldkotlinspringbootjdbc.service
 
 import arrow.core.Either
-import arrow.core.Invalid
-import arrow.core.Valid
+import arrow.core.Either.Left
+import arrow.core.Validated.Invalid
+import arrow.core.Validated.Valid
+import arrow.core.left
+import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.Comment
 import com.example.realworldkotlinspringbootjdbc.util.MyError
@@ -11,7 +14,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 interface CommentService {
-    fun list(slug: String?): Either<ListError, List<Comment>> = Either.Left(ListError.NotImplemented)
+    fun list(slug: String?): Either<ListError, List<Comment>> = Left(ListError.NotImplemented)
     sealed interface ListError : MyError {
         data class ValidationErrors(override val errors: List<MyError.ValidationError>) :
             ListError,
@@ -26,7 +29,7 @@ interface CommentService {
 class CommentServiceImpl() : CommentService {
     override fun list(slug: String?): Either<CommentService.ListError, List<Comment>> {
         return when (val it = Slug.new(slug)) {
-            is Invalid -> Either.Left(CommentService.ListError.ValidationErrors(it.value))
+            is Invalid -> CommentService.ListError.ValidationErrors(it.value).left()
             is Valid -> {
                 val a = object : Comment {
                     override val id: Int
@@ -52,7 +55,7 @@ class CommentServiceImpl() : CommentService {
                     override val author: String
                         get() = "hoge-author-2"
                 }
-                Either.Right(listOf(a, b))
+                listOf(a, b).right()
             }
         }
     }

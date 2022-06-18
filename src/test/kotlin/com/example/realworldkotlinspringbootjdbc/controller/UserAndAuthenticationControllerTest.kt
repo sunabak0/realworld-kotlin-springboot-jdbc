@@ -65,7 +65,7 @@ class UserAndAuthenticationControllerTest {
                     password: String?,
                     username: String?,
                 ): Either<UserService.RegisterError, RegisteredUser> {
-                    return Either.Left(UserService.RegisterError.ValidationErrors(listOf(dummyValidationError)))
+                    return UserService.RegisterError.ValidationErrors(listOf(dummyValidationError)).left()
                 }
             }
             val actual = UserAndAuthenticationController(registerReturnValidationError, MySessionJwtImpl).register(requestBody)

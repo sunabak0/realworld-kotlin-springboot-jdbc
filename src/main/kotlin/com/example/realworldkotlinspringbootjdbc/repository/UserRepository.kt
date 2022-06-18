@@ -38,7 +38,7 @@ class UserRepositoryImpl : UserRepository {
             registerTransactionApply(user)
         } catch (e: Throwable) {
             val error = UserRepository.UserRepositoryError.TransactionError.DbError(e, user)
-            return Either.Left(UserService.RegisterError.FailedRegister(error))
+            return UserService.RegisterError.FailedRegister(error).left()
         }
         val registeredUser = RegisteredUser.newWithoutValidation(
             userId.value,

@@ -1,8 +1,10 @@
 package com.example.realworldkotlinspringbootjdbc.service
 
 import arrow.core.Either
-import arrow.core.Invalid
-import arrow.core.Valid
+import arrow.core.Validated.Invalid
+import arrow.core.Validated.Valid
+import arrow.core.left
+import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.article.Article
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.util.MyError
@@ -11,7 +13,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 interface ArticleService {
-    fun show(slug: String?): Either<ShowError, Article> = Either.Left(ShowError.NotImplemented)
+    fun show(slug: String?): Either<ShowError, Article> = ShowError.NotImplemented.left()
     sealed interface ShowError : MyError {
         data class ValidationErrors(override val errors: List<MyError.ValidationError>) :
             ShowError,
@@ -27,7 +29,7 @@ interface ArticleService {
 class ArticleServiceImpl() : ArticleService {
     override fun show(slug: String?): Either<ArticleService.ShowError, Article> {
         return when (val it = Slug.new(slug)) {
-            is Invalid -> Either.Left(ArticleService.ShowError.ValidationErrors(it.value))
+            is Invalid -> ArticleService.ShowError.ValidationErrors(it.value).left()
             is Valid -> {
                 val a = object : Article {
                     override val title: String
@@ -51,7 +53,7 @@ class ArticleServiceImpl() : ArticleService {
                     override val favoritesCount: Int
                         get() = 1
                 }
-                Either.Right(a)
+                a.right()
             }
         }
     }

@@ -6,7 +6,9 @@ import arrow.core.ValidatedNel
 import arrow.core.handleErrorWith
 import arrow.core.invalid
 import arrow.core.invalidNel
+import arrow.core.left
 import arrow.core.nonEmptyListOf
+import arrow.core.right
 import arrow.core.validNel
 import arrow.core.zip
 import arrow.typeclasses.Semigroup
@@ -57,24 +59,24 @@ class PracticeZipMethod {
     // fun <A, B, C> Either<A, B>.zip(fb: Either<A, C>): Either<A, Pair<B, C»
     @Test
     fun _2つのRightに対してzipすると1つのPathになってRightが返る() {
-        fun a(): Either<String, Boolean> = Either.Right(true)
-        fun b(): Either<String, Long> = Either.Right(1L)
+        fun a(): Either<String, Boolean> = true.right()
+        fun b(): Either<String, Long> = 1L.right()
         // zipの結果 => Either<String, Pair<Boolean, Long>>
 
         val actual = a().zip(b())
-        val expected = Either.Right(Pair(true, 1L))
+        val expected = Pair(true, 1L).right()
         assertThat(actual).isEqualTo(expected)
     }
 
     @Test
     fun _3つのRightに対してzipするとBlockありきで別の型に変換できる() {
         data class Dummy(val x: Boolean, val y: Long, val z: String)
-        fun a(): Either<String, Boolean> = Either.Right(true)
-        fun b(): Either<String, Long> = Either.Right(1L)
-        fun c(): Either<String, String> = Either.Right("C-Right")
+        fun a(): Either<String, Boolean> = true.right()
+        fun b(): Either<String, Long> = 1L.right()
+        fun c(): Either<String, String> = "C-Right".right()
 
         val actual = a().zip(b(), c()) { av, bv, cv -> Dummy(av, bv, cv) }
-        val expected = Either.Right(Dummy(true, 1L, "C-Right"))
+        val expected = Dummy(true, 1L, "C-Right").right()
         assertThat(actual).isEqualTo(expected)
     }
 
@@ -82,13 +84,13 @@ class PracticeZipMethod {
     fun _3つのEitherに対して2つのLeftが混ざっていると1つ目だけがhandleWithに行く() {
         val list = mutableListOf<String>()
         data class Dummy(val x: Boolean, val y: Long, val z: String)
-        fun a(): Either<String, Boolean> = Either.Right(true)
-        fun b(): Either<String, Long> { list.add("B"); return Either.Left("B-Left") }
-        fun c(): Either<String, String> { list.add("C"); return Either.Left("C-Left") }
+        fun a(): Either<String, Boolean> = true.right()
+        fun b(): Either<String, Long> { list.add("B"); return "B-Left".left() }
+        fun c(): Either<String, String> { list.add("C"); return "C-Left".left() }
 
         val actual = a().zip(b(), c()) { av, bv, cv -> Dummy(av, bv, cv) }
-            .handleErrorWith { Either.Left(it) }
-        val expected = Either.Left("B-Left") // C-Leftがない
+            .handleErrorWith { it.left() }
+        val expected = "B-Left".left() // C-Leftがない
         assertThat(actual).isEqualTo(expected)
         assertThat(list).isEqualTo(listOf("B", "C")) // c()は実行されている
     }
