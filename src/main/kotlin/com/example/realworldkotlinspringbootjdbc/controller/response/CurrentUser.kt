@@ -14,7 +14,13 @@ data class CurrentUser(
     @JsonProperty("image") val image: String,
     @JsonProperty("token") val token: String,
 ) {
+    //
+    // Factory
+    //
     companion object {
+        //
+        // 現在のユーザー
+        //
         fun from(user: RegisteredUser, token: String): CurrentUser =
             CurrentUser(
                 user.email.value,
@@ -25,6 +31,9 @@ data class CurrentUser(
             )
     }
 
+    //
+    // シリアライズ
+    //
     fun serializeWithRootName(): String =
         ObjectMapper()
             .enable(SerializationFeature.WRAP_ROOT_VALUE)
