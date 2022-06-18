@@ -26,7 +26,7 @@ interface ProfileService {
 class ProfileServiceImpl() : ProfileService {
     override fun showProfile(username: String?): Either<ProfileService.ShowProfileError, Profile> {
         return when (val it = Username.new(username)) {
-            is Invalid -> Either.Left(ProfileService.ShowProfileError.ValidationErrors(it.value.errors))
+            is Invalid -> Either.Left(ProfileService.ShowProfileError.ValidationErrors(it.value))
             is Valid -> {
                 val a = object : Profile {
                     override val username: Username

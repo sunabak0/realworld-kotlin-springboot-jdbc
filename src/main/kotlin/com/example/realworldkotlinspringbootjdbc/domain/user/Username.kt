@@ -1,14 +1,53 @@
 package com.example.realworldkotlinspringbootjdbc.domain.user
 
-import arrow.core.Option
-import arrow.core.Validated
+import arrow.core.*
+import arrow.typeclasses.Semigroup
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface Username {
     val value: String
-    data class ValidationErrors(override val errors: List<ValidationError>) : MyError.ValidationErrors
+
+    //
+    // 実装
+    //
+    private data class ValidatedUsername(override val value: String) : Username
+    private data class UsernameWithoutValidation(override val value: String) : Username
+
+    //
+    // Factory メソッド
+    //
+    companion object {
+        //
+        // Validation無し
+        //
+        fun newWithoutValidation(username: String): Username = UsernameWithoutValidation(username)
+
+        //
+        // Validation有り
+        //
+        fun new(username: String?): ValidatedNel<ValidationError, Username> {
+            return when (val result = ValidationError.Required.check(username)) {
+                is Validated.Invalid -> { return result.value.invalidNel() }
+                is Validated.Valid -> {
+                    val existedUsername = result.value
+                    ValidationError.TooShort.check(existedUsername).zip(
+                        Semigroup.nonEmptyList(),
+                        ValidationError.TooLong.check(existedUsername)
+                    ) { _, _ -> ValidatedUsername(existedUsername) }
+                        .handleErrorWith { it.invalid() }
+                }
+            }
+        }
+    }
+
+    //
+    // ドメインルール
+    //
     sealed interface ValidationError : MyError.ValidationError {
-        override val key: String get() = "username"
+        override val key: String get() = Username::class.simpleName.toString()
+        //
+        // Nullは駄目
+        //
         object Required : ValidationError {
             override val message: String get() = "ユーザ名を入力してください。"
             fun check(username: String?): Validated<Required, String> =
@@ -18,59 +57,30 @@ interface Username {
                 )
         }
 
+        //
+        // 短すぎては駄目
+        //
         data class TooShort(val username: String) : ValidationError {
             companion object {
                 private const val minimum: Int = 4
-                fun check(username: String): Validated<TooShort, String> =
-                    if (minimum <= username.length) {
-                        Validated.Valid(username)
-                    } else {
-                        Validated.Invalid(TooShort(username))
-                    }
+                fun check(username: String): ValidatedNel<ValidationError, Unit> =
+                    if (minimum <= username.length) { Unit.validNel() }
+                    else { TooShort(username).invalidNel() }
             }
-
             override val message: String get() = "ユーザー名は${minimum}文字以上にしてください。"
         }
 
+        //
+        // 長すぎては駄目
+        //
         data class TooLong(val username: String) : ValidationError {
             companion object {
                 private const val maximum: Int = 32
-                fun check(username: String): Validated<TooLong, String> =
-                    if (username.length <= maximum) {
-                        Validated.Valid(username)
-                    } else {
-                        Validated.Invalid(TooLong(username))
-                    }
+                fun check(username: String): ValidatedNel<ValidationError, Unit> =
+                    if (username.length <= maximum) { Unit.validNel() }
+                    else { TooLong(username).invalidNel() }
             }
-
             override val message: String get() = "ユーザー名は${maximum}文字以下にしてください。"
         }
     }
-
-    companion object {
-        fun new(username: String?): Validated<ValidationErrors, Username> {
-            val existedUsername = when (val it = ValidationError.Required.check(username)) {
-                is Validated.Invalid -> { return Validated.Invalid(ValidationErrors(listOf(it.value))) }
-                is Validated.Valid -> it.value
-            }
-            val errors = mutableListOf<ValidationError>()
-            when (val it = ValidationError.TooShort.check(existedUsername)) {
-                is Validated.Invalid -> { errors.add(it.value) }
-                is Validated.Valid -> {}
-            }
-            when (val it = ValidationError.TooLong.check(existedUsername)) {
-                is Validated.Invalid -> { errors.add(it.value) }
-                is Validated.Valid -> {}
-            }
-            return if (errors.size == 0) { Validated.Valid(UsernameImpl(existedUsername)) } else {
-                Validated.Invalid(
-                    ValidationErrors(
-                        errors
-                    )
-                )
-            }
-        }
-    }
-
-    private data class UsernameImpl(override val value: String) : Username
 }

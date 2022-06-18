@@ -51,7 +51,7 @@ interface UnregisteredUser {
                 is Validated.Valid -> {}
             }
             when (validatedUsername) {
-                is Validated.Invalid -> { errors.addAll(validatedUsername.value.errors) }
+                is Validated.Invalid -> { errors.addAll(validatedUsername.value) }
                 is Validated.Valid -> {}
             }
             return Validated.Invalid(ValidationErrors(errors))

@@ -60,7 +60,7 @@ interface RegisteredUser {
             }
             when (validatedUsername) {
                 is Validated.Invalid -> {
-                    errors.addAll(validatedUsername.value.errors)
+                    errors.addAll(validatedUsername.value)
                 }
                 is Validated.Valid -> {}
             }
