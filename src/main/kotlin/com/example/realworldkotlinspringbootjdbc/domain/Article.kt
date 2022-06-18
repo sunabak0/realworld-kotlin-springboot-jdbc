@@ -1,5 +1,6 @@
-package com.example.realworldkotlinspringbootjdbc.domain.article
+package com.example.realworldkotlinspringbootjdbc.domain
 
+import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import java.util.Date
 
 interface Article {

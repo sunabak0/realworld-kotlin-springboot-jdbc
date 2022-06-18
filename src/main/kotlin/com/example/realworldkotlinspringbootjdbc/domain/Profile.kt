@@ -1,4 +1,4 @@
-package com.example.realworldkotlinspringbootjdbc.domain.profile
+package com.example.realworldkotlinspringbootjdbc.domain
 
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username

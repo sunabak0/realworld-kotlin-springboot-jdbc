@@ -1,4 +1,4 @@
-package com.example.realworldkotlinspringbootjdbc.domain.comment
+package com.example.realworldkotlinspringbootjdbc.domain
 
 import java.util.Date
 
