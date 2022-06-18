@@ -3,7 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Profile
-import com.example.realworldkotlinspringbootjdbc.usecase.ProfileService
+import com.example.realworldkotlinspringbootjdbc.usecase.ShowProfileUseCase
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -17,11 +17,11 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @Tag(name = "Profile")
 class ProfileController(
-    val profileService: ProfileService
+    val showProfile: ShowProfileUseCase
 ) {
     @GetMapping("/profiles/{username}")
     fun showProfile(): ResponseEntity<String> {
-        val result = profileService.showProfile("hoge-username")
+        val result = showProfile.execute("hoge-username")
         when (result) {
             is Right -> {
                 println(result.value)

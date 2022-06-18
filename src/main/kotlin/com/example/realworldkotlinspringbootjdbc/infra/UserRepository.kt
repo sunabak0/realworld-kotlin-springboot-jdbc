@@ -7,7 +7,8 @@ import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UnregisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
-import com.example.realworldkotlinspringbootjdbc.usecase.UserService
+import com.example.realworldkotlinspringbootjdbc.usecase.LoginUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.RegisterUserUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Repository
 
@@ -15,12 +16,12 @@ interface UserRepository {
     //
     // ユーザー登録
     //
-    fun register(user: UnregisteredUser): Either<UserService.RegisterError, RegisteredUser> = UserService.RegisterError.NotImplemented.left()
+    fun register(user: UnregisteredUser): Either<RegisterUserUseCase.Error, RegisteredUser> = RegisterUserUseCase.Error.NotImplemented.left()
 
     //
     // ユーザー検索 by Email with Password
     //
-    fun findByEmailWithPassword(email: Email): Either<UserService.LoginError, RegisteredUser> = UserService.LoginError.NotImplemented.left()
+    fun findByEmailWithPassword(email: Email): Either<LoginUseCase.Error, RegisteredUser> = LoginUseCase.Error.NotImplemented.left()
 
     sealed interface UserRepositoryError : MyError {
         sealed interface TransactionError : UserRepositoryError {
@@ -33,12 +34,12 @@ interface UserRepository {
 
 @Repository
 class UserRepositoryImpl : UserRepository {
-    override fun register(user: UnregisteredUser): Either<UserService.RegisterError, RegisteredUser> {
+    override fun register(user: UnregisteredUser): Either<RegisterUserUseCase.Error, RegisteredUser> {
         val userId = try {
             registerTransactionApply(user)
         } catch (e: Throwable) {
             val error = UserRepository.UserRepositoryError.TransactionError.DbError(e, user)
-            return UserService.RegisterError.FailedRegister(error).left()
+            return RegisterUserUseCase.Error.FailedRegister(error).left()
         }
         val registeredUser = RegisteredUser.newWithoutValidation(
             userId.value,
@@ -58,7 +59,7 @@ class UserRepositoryImpl : UserRepository {
         return UserId(999)
     }
 
-    override fun findByEmailWithPassword(email: Email): Either<UserService.LoginError, RegisteredUser> {
+    override fun findByEmailWithPassword(email: Email): Either<LoginUseCase.Error, RegisteredUser> {
         val registeredUser = RegisteredUser.newWithoutValidation(
             888,
             email.value,

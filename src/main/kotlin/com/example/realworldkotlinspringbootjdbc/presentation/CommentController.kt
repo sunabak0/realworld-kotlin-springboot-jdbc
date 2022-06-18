@@ -3,7 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Comment
-import com.example.realworldkotlinspringbootjdbc.usecase.CommentService
+import com.example.realworldkotlinspringbootjdbc.usecase.ListCommentsUseCase
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
@@ -17,10 +17,10 @@ import java.text.SimpleDateFormat
 
 @RestController
 @Tag(name = "Comments")
-class CommentController(val commentService: CommentService) {
+class CommentController(val listComments: ListCommentsUseCase) {
     @GetMapping("/articles/{slug}/comments")
     fun list(): ResponseEntity<String> {
-        val result = commentService.list("hoge-slug")
+        val result = listComments.execute("hoge-slug")
         when (result) {
             is Right -> {
                 println(result.value)

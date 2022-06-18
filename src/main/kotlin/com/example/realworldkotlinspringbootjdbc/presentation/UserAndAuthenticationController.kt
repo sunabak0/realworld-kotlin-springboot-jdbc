@@ -5,7 +5,7 @@ import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.CurrentUser
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
-import com.example.realworldkotlinspringbootjdbc.usecase.UserService
+import com.example.realworldkotlinspringbootjdbc.usecase.RegisterUserUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @Tag(name = "User and Authentication")
 class UserAndAuthenticationController(
-    val userService: UserService,
+    val registerUser: RegisterUserUseCase,
     val mySessionJwt: MySessionJwt,
 ) {
     @PostMapping("/users")
@@ -38,7 +38,7 @@ class UserAndAuthenticationController(
         val user = ObjectMapper()
             .enable(DeserializationFeature.UNWRAP_ROOT_VALUE)
             .readValue<NullableUser>(rawRequestBody!!)
-        return when (val result = userService.register(user.email, user.password, user.username)) {
+        return when (val result = registerUser.execute(user.email, user.password, user.username)) {
             //
             // ユーザー登録に成功
             //
@@ -69,14 +69,14 @@ class UserAndAuthenticationController(
                 //
                 // 原因: バリデーションエラー
                 //
-                is UserService.RegisterError.ValidationErrors -> ResponseEntity(
+                is RegisterUserUseCase.Error.ValidationErrors -> ResponseEntity(
                     serializeMyErrorListForResponseBody(usecaseError.errors),
                     HttpStatus.valueOf(422)
                 )
                 //
                 // 原因: DB周りのエラー
                 //
-                is UserService.RegisterError.FailedRegister -> ResponseEntity(
+                is RegisterUserUseCase.Error.FailedRegister -> ResponseEntity(
                     "DBエラー",
                     HttpStatus.valueOf(500)
                 )

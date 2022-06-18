@@ -4,7 +4,7 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
-import com.example.realworldkotlinspringbootjdbc.usecase.UserService
+import com.example.realworldkotlinspringbootjdbc.usecase.RegisterUserUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
@@ -36,12 +36,12 @@ class UserAndAuthenticationControllerTest {
                 "dummy-bio",
                 "dummy-image",
             )
-            val registerReturnRegisteredUser = object : UserService {
-                override fun register(
+            val registerReturnRegisteredUser = object : RegisterUserUseCase {
+                override fun execute(
                     email: String?,
                     password: String?,
                     username: String?,
-                ): Either<UserService.RegisterError, RegisteredUser> = dummyRegisteredUser.right()
+                ): Either<RegisterUserUseCase.Error, RegisteredUser> = dummyRegisteredUser.right()
             }
             val actual = UserAndAuthenticationController(
                 registerReturnRegisteredUser,
@@ -59,13 +59,13 @@ class UserAndAuthenticationControllerTest {
                 override val message: String get() = "DummyValidationError"
                 override val key: String get() = "DummyKey"
             }
-            val registerReturnValidationError = object : UserService {
-                override fun register(
+            val registerReturnValidationError = object : RegisterUserUseCase {
+                override fun execute(
                     email: String?,
                     password: String?,
                     username: String?,
-                ): Either<UserService.RegisterError, RegisteredUser> {
-                    return UserService.RegisterError.ValidationErrors(listOf(dummyValidationError)).left()
+                ): Either<RegisterUserUseCase.Error, RegisteredUser> {
+                    return RegisterUserUseCase.Error.ValidationErrors(listOf(dummyValidationError)).left()
                 }
             }
             val actual = UserAndAuthenticationController(registerReturnValidationError, MySessionJwtImpl).register(requestBody)
@@ -75,15 +75,15 @@ class UserAndAuthenticationControllerTest {
         @Test
         fun `ユーザー登録時、Serivceが「登録失敗」を返す場合、500エラーレスポンスを返す`() {
             val dummyError = object : MyError {}
-            val registerReturnFailedRegisterError = object : UserService {
-                override fun register(
+            val registerReturnFailedError = object : RegisterUserUseCase {
+                override fun execute(
                     email: String?,
                     password: String?,
                     username: String?,
-                ): Either<UserService.RegisterError, RegisteredUser> =
-                    UserService.RegisterError.FailedRegister(dummyError).left()
+                ): Either<RegisterUserUseCase.Error, RegisteredUser> =
+                    RegisterUserUseCase.Error.FailedRegister(dummyError).left()
             }
-            val actual = UserAndAuthenticationController(registerReturnFailedRegisterError, MySessionJwtImpl).register(requestBody)
+            val actual = UserAndAuthenticationController(registerReturnFailedError, MySessionJwtImpl).register(requestBody)
             val expected = ResponseEntity("DBエラー", HttpStatus.valueOf(500))
             assertThat(actual).isEqualTo(expected)
         }

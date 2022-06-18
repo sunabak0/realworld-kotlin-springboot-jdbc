@@ -4,7 +4,7 @@ import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Articles
-import com.example.realworldkotlinspringbootjdbc.usecase.ArticleService
+import com.example.realworldkotlinspringbootjdbc.usecase.ShowArticleUseCase
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -21,7 +21,7 @@ import java.text.SimpleDateFormat
 @RestController
 @Tag(name = "Articles")
 class ArticleController(
-    val articleService: ArticleService,
+    val showArticle: ShowArticleUseCase,
 ) {
     @GetMapping("/articles")
     fun filter(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
@@ -95,7 +95,7 @@ class ArticleController(
 
     @GetMapping("/articles/{slug}")
     fun show(): ResponseEntity<String> {
-        val result = articleService.show("hoge-slug")
+        val result = showArticle.execute("hoge-slug")
         when (result) {
             is Right -> {
                 println(result.value)
