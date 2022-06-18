@@ -3,6 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.service
 import arrow.core.Either
 import arrow.core.Invalid
 import arrow.core.Valid
+import arrow.core.left
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UnregisteredUser
 import com.example.realworldkotlinspringbootjdbc.repository.UserRepository
@@ -24,7 +25,7 @@ class UserServiceImpl(
 ) : UserService {
     override fun register(email: String?, password: String?, username: String?): Either<UserService.RegisterError, RegisteredUser> {
         return when (val it = UnregisteredUser.new(email, password, username)) {
-            is Invalid -> Either.Left(UserService.RegisterError.ValidationErrors(it.value))
+            is Invalid -> UserService.RegisterError.ValidationErrors(it.value).left()
             is Valid -> userRepository.register(it.value)
         }
     }
