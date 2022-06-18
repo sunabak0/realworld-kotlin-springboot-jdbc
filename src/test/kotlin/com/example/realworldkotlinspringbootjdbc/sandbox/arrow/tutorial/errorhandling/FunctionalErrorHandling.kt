@@ -1,15 +1,21 @@
 package com.example.realworldkotlinspringbootjdbc.sandbox.arrow.tutorial.errorhandling
 
-import arrow.core.*
-import arrow.core.Either.Right
+import arrow.core.Either
 import arrow.core.Either.Left
+import arrow.core.Either.Right
+import arrow.core.Nel
+import arrow.core.ValidatedNel
 import arrow.core.continuations.either
 import arrow.core.continuations.nullable
-
+import arrow.core.handleErrorWith
+import arrow.core.invalidNel
+import arrow.core.nonEmptyListOf
+import arrow.core.traverse
+import arrow.core.validNel
+import arrow.core.zip
 import arrow.typeclasses.Semigroup
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-
 
 class FunctionalErrorHandling {
     object Lettuce
@@ -140,7 +146,6 @@ typealias NastyLettuce = FunctionalErrorHandling.Case03.CookingException.NastyLe
 typealias KnifeIsDull = FunctionalErrorHandling.Case03.CookingException.KnifeIsDull
 typealias InsufficientAmountOfLettuce = FunctionalErrorHandling.Case03.CookingException.InsufficientAmountOfLettuce
 
-
 //
 // https://arrow-kt.io/docs/patterns/error_handling/#alternative-validation-strategies--failing-fast-vs-accumulating-errors
 // バリデーション戦略
@@ -173,10 +178,10 @@ class AlternativeValidationStrategy {
         // エラーの累積
         //
         private fun FormField.validateErrorAccumulate(): ValidatedNel<ValidationError, Email> =
-        contains("@").zip(
-            Semigroup.nonEmptyList(), // accumulates errors in a non empty list, can be omited for NonEmptyList
-            maxLength(250)
-        ) { _, _ -> Email(value) }.handleErrorWith { ValidationError.NotAnEmail(it).invalidNel() }
+            contains("@").zip(
+                Semigroup.nonEmptyList(), // accumulates errors in a non empty list, can be omited for NonEmptyList
+                maxLength(250)
+            ) { _, _ -> Email(value) }.handleErrorWith { ValidationError.NotAnEmail(it).invalidNel() }
         //
         // エラーの早期リターン
         //
@@ -190,10 +195,10 @@ class AlternativeValidationStrategy {
         operator fun invoke(strategy: Strategy, fields: List<FormField>): Either<Nel<ValidationError>, List<Email>> =
             when (strategy) {
                 Strategy.FailFast ->
-                    //fields.traverseEither { it.validateFailFast() } // 非推奨っぽかった
+                    // fields.traverseEither { it.validateFailFast() } // 非推奨っぽかった
                     fields.traverse { it.validateFailFast() }
                 Strategy.ErrorAccumulation ->
-                    //fields.traverseValidated(Semigroup.nonEmptyList()) { // 非推奨っぽかった
+                    // fields.traverseValidated(Semigroup.nonEmptyList()) { // 非推奨っぽかった
                     fields.traverse(Semigroup.nonEmptyList()) {
                         it.validateErrorAccumulate()
                     }.toEither()
@@ -204,7 +209,7 @@ class AlternativeValidationStrategy {
     fun `エラーの累積`() {
         val fields = listOf(
             FormField("Invalid Email Domain Label", "nowhere.com"),
-            FormField("Too Long Email Label", "nowheretoolong${(0..251).map { "g" }}"), //this fails
+            FormField("Too Long Email Label", "nowheretoolong${(0..251).map { "g" }}"), // this fails
             FormField("Valid Email Label", "getlost@nowhere.com")
         )
         val actual = Rules(Strategy.ErrorAccumulation, fields)
@@ -224,12 +229,11 @@ class AlternativeValidationStrategy {
         assertThat(actual).isEqualTo(expected)
     }
 
-
     @Test
     fun `エラーの早期リターン`() {
         val fields = listOf(
             FormField("Invalid Email Domain Label", "nowhere.com"),
-            FormField("Too Long Email Label", "nowheretoolong${(0..251).map { "g" }}"), //this fails
+            FormField("Too Long Email Label", "nowheretoolong${(0..251).map { "g" }}"), // this fails
             FormField("Valid Email Label", "getlost@nowhere.com")
         )
         val actual = Rules(Strategy.FailFast, fields)

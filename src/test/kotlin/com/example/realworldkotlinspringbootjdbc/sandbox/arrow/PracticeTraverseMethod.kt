@@ -6,11 +6,11 @@ import arrow.core.traverse
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class traverse素振り {
+class PracticeTraverseMethod {
     object DummyError
     @Test
     fun 全てRightだった時まとめてEither1つにできる() {
-        fun double(v : Int): Either<DummyError, Int> = Either.Right(v * 2)
+        fun double(v: Int): Either<DummyError, Int> = Either.Right(v * 2)
         val actual = nonEmptyListOf(1, 2, 3).traverse { double(it) }
         val expected = Either.Right(nonEmptyListOf(2, 4, 6))
         assertThat(actual).isEqualTo(expected)
@@ -19,7 +19,7 @@ class traverse素振り {
     @Test
     fun LeftとRightが混じった時は早期リターンっぽい() {
         val list = mutableListOf<Int>()
-        fun hello(v : Int): Either<String, Boolean> {
+        fun hello(v: Int): Either<String, Boolean> {
             list.add(v)
             return when (v % 3) {
                 0 -> { Either.Right(true) }

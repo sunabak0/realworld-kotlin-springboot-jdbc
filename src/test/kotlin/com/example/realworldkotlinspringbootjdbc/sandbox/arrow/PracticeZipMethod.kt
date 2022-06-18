@@ -1,6 +1,14 @@
 package com.example.realworldkotlinspringbootjdbc.sandbox.arrow
 
-import arrow.core.*
+import arrow.core.Either
+import arrow.core.Validated
+import arrow.core.ValidatedNel
+import arrow.core.handleErrorWith
+import arrow.core.invalid
+import arrow.core.invalidNel
+import arrow.core.nonEmptyListOf
+import arrow.core.validNel
+import arrow.core.zip
 import arrow.typeclasses.Semigroup
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -46,7 +54,6 @@ class PracticeZipMethod {
         assertThat(actual).isEqualTo(expected)
     }
 
-
     // fun <A, B, C> Either<A, B>.zip(fb: Either<A, C>): Either<A, Pair<B, C»
     @Test
     fun _2つのRightに対してzipすると1つのPathになってRightが返る() {
@@ -66,7 +73,7 @@ class PracticeZipMethod {
         fun b(): Either<String, Long> = Either.Right(1L)
         fun c(): Either<String, String> = Either.Right("C-Right")
 
-        val actual = a().zip(b(),c()) { av, bv, cv -> Dummy(av, bv, cv) }
+        val actual = a().zip(b(), c()) { av, bv, cv -> Dummy(av, bv, cv) }
         val expected = Either.Right(Dummy(true, 1L, "C-Right"))
         assertThat(actual).isEqualTo(expected)
     }
@@ -79,7 +86,7 @@ class PracticeZipMethod {
         fun b(): Either<String, Long> { list.add("B"); return Either.Left("B-Left") }
         fun c(): Either<String, String> { list.add("C"); return Either.Left("C-Left") }
 
-        val actual = a().zip(b(),c()) { av, bv, cv -> Dummy(av, bv, cv) }
+        val actual = a().zip(b(), c()) { av, bv, cv -> Dummy(av, bv, cv) }
             .handleErrorWith { Either.Left(it) }
         val expected = Either.Left("B-Left") // C-Leftがない
         assertThat(actual).isEqualTo(expected)

@@ -3,7 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.sandbox.arrow
 import arrow.core.nonEmptyListOf
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.UUID
 
 //
 // NonEmptyList
@@ -15,7 +15,7 @@ class OfficialNonEmptyListSample {
     @Test
     fun NonEmptyListの要素数が1以上である() {
         // val value = nonEmptyListOf() // コンパイルが通らない
-        val value = nonEmptyListOf(1,2,3,4,5)
+        val value = nonEmptyListOf(1, 2, 3, 4, 5)
         assertThat(value).isNotEmpty
     }
 
@@ -47,7 +47,6 @@ class OfficialNonEmptyListSample {
         }
         assertThat(actual).isEqualTo(nonEmptyListOf(5, 6, 6, 7, 7, 8))
     }
-
 
     @Test
     fun zipは複数のNonEmptyListを並列にまとめ直す() {
