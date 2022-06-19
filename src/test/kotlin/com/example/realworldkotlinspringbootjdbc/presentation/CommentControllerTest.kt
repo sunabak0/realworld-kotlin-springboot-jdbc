@@ -22,20 +22,20 @@ class CommentControllerTest {
 
         @Test
         fun `コメント取得時、UseCase が「Comment」の配列を返す場合、200レスポンスを返す`() {
-            val dummyComments = listOf<Comment>(
+            val dummyComments = listOf(
                 Comment.newWithoutValidation(
-                    id = 1,
-                    body = "hoge-body-1",
-                    createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                    updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                    author = "hoge-author-1"
+                    1,
+                    "hoge-body-1",
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                    "hoge-author-1"
                 ),
                 Comment.newWithoutValidation(
-                    id = 2,
-                    body = "hoge-body-2",
-                    createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
-                    updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
-                    author = "hoge-author-2"
+                    2,
+                    "hoge-body-2",
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
+                    "hoge-author-2"
                 ),
             )
             val returnedComments = object : ListCommentsUseCase {
