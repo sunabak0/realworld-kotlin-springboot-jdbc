@@ -1,10 +1,13 @@
 package com.example.realworldkotlinspringbootjdbc.usecase
 
-import arrow.core.*
-import arrow.core.Either.Left
-import arrow.core.Either.Right
+import arrow.core.Either
+import arrow.core.Option
 import arrow.core.Validated.Invalid
 import arrow.core.Validated.Valid
+import arrow.core.flatMap
+import arrow.core.left
+import arrow.core.right
+import arrow.core.zip
 import arrow.typeclasses.Semigroup
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
@@ -38,9 +41,8 @@ class LoginUseCaseImpl(
             // Email, Password両方ともバリデーションはOK -> User 検索 -> Password 比較
             //
             is Valid -> userRepository.findByEmailWithPassword(validatedInput.value.first).flatMap {
-                    if (validatedInput.value.second == it.second) { it.first.right() }
-                    else { LoginUseCase.Error.Unauthorized(validatedInput.value.first).left() }
-                }
+                if (validatedInput.value.second == it.second) { it.first.right() } else { LoginUseCase.Error.Unauthorized(validatedInput.value.first).left() }
+            }
         }
     }
 }
