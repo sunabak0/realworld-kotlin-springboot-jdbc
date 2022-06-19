@@ -69,6 +69,7 @@ class CommentController(val listComments: ListCommentsUseCase) {
                 )
                 ListCommentsUseCase.Error.NotImplemented -> TODO()
                 is ListCommentsUseCase.Error.ValidationErrors -> TODO()
+                is ListCommentsUseCase.Error.Unexpected -> TODO()
             }
         }
     }
