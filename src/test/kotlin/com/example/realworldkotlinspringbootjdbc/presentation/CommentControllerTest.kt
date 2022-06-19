@@ -1,9 +1,11 @@
 package com.example.realworldkotlinspringbootjdbc.presentation
 
 import arrow.core.Either
+import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
 import com.example.realworldkotlinspringbootjdbc.usecase.ListCommentsUseCase
+import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -45,6 +47,18 @@ class CommentControllerTest {
                 """{"comments":[{"id":1,"body":"hoge-body-1","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-author-1"},{"id":2,"body":"hoge-body-2","createdAt":"2022-02-01T15:00:00.000Z","updatedAt":"2022-02-01T15:00:00.000Z","author":"hoge-author-2"}]}""",
                 HttpStatus.valueOf(200)
             )
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        fun `コメント取得時、UseCase が「NotFound」を返す場合、404エラーレスポンスを返す`() {
+            val dummyError = object : MyError {}
+            val returnedNotFoundError = object : ListCommentsUseCase {
+                override fun execute(slug: String?): Either<ListCommentsUseCase.Error, kotlin.collections.List<Comment>> =
+                    ListCommentsUseCase.Error.NotFound(dummyError).left()
+            }
+            val actual = commentController(returnedNotFoundError).list(pathParam)
+            val expected = ResponseEntity("""{"errors":{"body":["コメントが見つかりませんでした"]}}""", HttpStatus.valueOf(404))
             assertThat(actual).isEqualTo(expected)
         }
     }

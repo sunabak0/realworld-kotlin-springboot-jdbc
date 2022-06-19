@@ -3,6 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Comment
+import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.usecase.ListCommentsUseCase
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -22,37 +23,55 @@ class CommentController(val listComments: ListCommentsUseCase) {
     @GetMapping("/articles/{slug}/comments")
     fun list(@PathVariable("slug") slug: String): ResponseEntity<String> {
         val result = listComments.execute("hoge-slug")
-        when (result) {
+        return when (result) {
+            /**
+             * コメント取得に成功
+             */
             is Right -> {
-                println(result.value)
-            }
-            is Left -> {}
-        }
-        val comment1 = Comment(
-            1,
-            "hoge-body-1",
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-            "hoge-author-1"
-        )
-        val comment2 = Comment(
-            2,
-            "hoge-body-2",
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
-            "hoge-author-2"
-        )
-        return ResponseEntity(
-            ObjectMapper().writeValueAsString(
-                mapOf(
-                    "comments" to listOf(
-                        comment1,
-                        comment2,
-                    ),
+                val comments = result.value
+                println(comments)
+                val comment1 = Comment(
+                    1,
+                    "hoge-body-1",
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                    "hoge-author-1"
                 )
-            ),
-            HttpStatus.valueOf(200)
-        )
+                val comment2 = Comment(
+                    2,
+                    "hoge-body-2",
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
+                    "hoge-author-2"
+                )
+                return ResponseEntity(
+                    ObjectMapper().writeValueAsString(
+                        mapOf(
+                            "comments" to listOf(
+                                comment1,
+                                comment2,
+                            ),
+                        )
+                    ),
+                    HttpStatus.valueOf(200)
+                )
+            }
+            /**
+             * コメント取得に失敗
+             */
+            is Left -> when (val useCaseError = result.value) {
+                /**
+                 * 原因
+                 */
+                is ListCommentsUseCase.Error.FailedShow -> TODO()
+                is ListCommentsUseCase.Error.NotFound -> ResponseEntity(
+                    serializeUnexpectedErrorForResponseBody("コメントが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                    HttpStatus.valueOf(404)
+                )
+                ListCommentsUseCase.Error.NotImplemented -> TODO()
+                is ListCommentsUseCase.Error.ValidationErrors -> TODO()
+            }
+        }
     }
 
     @PostMapping("/articles/{slug}/comments")
