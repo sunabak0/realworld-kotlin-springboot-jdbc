@@ -5,16 +5,12 @@ import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.CurrentUser
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
+import com.example.realworldkotlinspringbootjdbc.request.NullableUser
 import com.example.realworldkotlinspringbootjdbc.usecase.RegisterUserUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.annotation.JsonRootName
-import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -32,12 +28,7 @@ class UserAndAuthenticationController(
 ) {
     @PostMapping("/users")
     fun register(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
-        //
-        // TODO: try/catch
-        //
-        val user = ObjectMapper()
-            .enable(DeserializationFeature.UNWRAP_ROOT_VALUE)
-            .readValue<NullableUser>(rawRequestBody!!)
+        val user = NullableUser.from(rawRequestBody)
         return when (val result = registerUser.execute(user.email, user.password, user.username)) {
             //
             // ユーザー登録に成功
@@ -175,14 +166,4 @@ class UserAndAuthenticationController(
             HttpStatus.valueOf(200)
         )
     }
-
-    @JsonIgnoreProperties(ignoreUnknown = true) // デシリアライズ時、利用していないkeyがあった時、それを無視する
-    @JsonRootName(value = "user")
-    data class NullableUser(
-        @JsonProperty("email") val email: String?,
-        @JsonProperty("password") val password: String?,
-        @JsonProperty("username") val username: String?,
-        @JsonProperty("bio") val bio: String?,
-        @JsonProperty("image") val image: String?,
-    )
 }
