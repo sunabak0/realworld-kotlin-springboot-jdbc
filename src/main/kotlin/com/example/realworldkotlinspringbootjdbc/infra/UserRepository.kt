@@ -6,11 +6,13 @@ import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UnregisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
+import com.example.realworldkotlinspringbootjdbc.domain.user.Password
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.usecase.LoginUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.RegisterUserUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Repository
+typealias RegisteredWithPassword = Pair<RegisteredUser, Password>
 
 interface UserRepository {
     //
@@ -21,13 +23,13 @@ interface UserRepository {
     //
     // ユーザー検索 by Email with Password
     //
-    fun findByEmailWithPassword(email: Email): Either<LoginUseCase.Error, RegisteredUser> = LoginUseCase.Error.NotImplemented.left()
+    fun findByEmailWithPassword(email: Email): Either<LoginUseCase.Error, RegisteredWithPassword> = LoginUseCase.Error.NotImplemented.left()
 
     sealed interface UserRepositoryError : MyError {
         sealed interface TransactionError : UserRepositoryError {
             data class DbError(override val cause: Throwable, val unregisteredUser: UnregisteredUser) : UserRepositoryError, MyError.MyErrorWithThrowable
-            data class UnexpectedError(override val cause: Throwable, val unregisteredUser: UnregisteredUser) : UserRepositoryError, MyError.MyErrorWithThrowable
             data class NotFoundError(val email: Email) : UserRepositoryError, MyError.Basic
+            data class UnexpectedError(override val cause: Throwable, val unregisteredUser: UnregisteredUser) : UserRepositoryError, MyError.MyErrorWithThrowable
         }
     }
 }
@@ -59,7 +61,7 @@ class UserRepositoryImpl : UserRepository {
         return UserId(999)
     }
 
-    override fun findByEmailWithPassword(email: Email): Either<LoginUseCase.Error, RegisteredUser> {
+    override fun findByEmailWithPassword(email: Email): Either<LoginUseCase.Error, RegisteredWithPassword> {
         val registeredUser = RegisteredUser.newWithoutValidation(
             888,
             email.value,
@@ -67,6 +69,7 @@ class UserRepositoryImpl : UserRepository {
             "",
             ""
         )
-        return registeredUser.right()
+        val password = Password.newWithoutValidation("dummy-password")
+        return Pair(registeredUser, password).right()
     }
 }
