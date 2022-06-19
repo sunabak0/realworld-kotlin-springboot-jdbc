@@ -71,22 +71,22 @@ class UserAndAuthenticationController(
                 //
                 // 原因: バリデーションエラー
                 //
-                is RegisterUserUseCase.Error.ValidationErrors -> ResponseEntity(
+                is RegisterUserUseCase.Error.InvalidUser -> ResponseEntity(
                     serializeMyErrorListForResponseBody(usecaseError.errors),
+                    HttpStatus.valueOf(422)
+                )
+                //
+                // 原因: 使おうとしたEmailが既に登録されている
+                //
+                is RegisterUserUseCase.Error.AlreadyRegisteredEmail -> ResponseEntity(
+                    serializeUnexpectedErrorForResponseBody("メールアドレスは既に登録されています"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                     HttpStatus.valueOf(422)
                 )
                 //
                 // 原因: DB周りのエラー
                 //
-                is RegisterUserUseCase.Error.FailedRegister -> ResponseEntity(
+                is RegisterUserUseCase.Error.Unexpected -> ResponseEntity(
                     "DBエラー",
-                    HttpStatus.valueOf(500)
-                )
-                //
-                // 原因: 予期せぬエラー
-                //
-                else -> ResponseEntity(
-                    "予期せぬエラーが発生しました(cause: ${usecaseError::class.simpleName})",
                     HttpStatus.valueOf(500)
                 )
             }
@@ -136,7 +136,7 @@ class UserAndAuthenticationController(
             // 何かしらに失敗
             //
             is Left -> when (val useCaseError = useCaseResult.value) {
-                is LoginUseCase.Error.ValidationErrors -> ResponseEntity(
+                is LoginUseCase.Error.InvalidEmailOrPassword -> ResponseEntity(
                     serializeMyErrorListForResponseBody(useCaseError.errors),
                     HttpStatus.valueOf(401)
                 )
@@ -144,11 +144,10 @@ class UserAndAuthenticationController(
                     serializeUnexpectedErrorForResponseBody("認証に失敗しました"),
                     HttpStatus.valueOf(401)
                 )
-                is LoginUseCase.Error.UnexpectedError -> ResponseEntity(
+                is LoginUseCase.Error.Unexpected -> ResponseEntity(
                     serializeUnexpectedErrorForResponseBody("予期せぬエラーが発生しました(cause: ${useCaseError::class.simpleName})"),
                     HttpStatus.valueOf(422)
                 )
-                is LoginUseCase.Error.NotImplemented -> TODO()
             }
         }
     }

@@ -4,11 +4,15 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
+import com.example.realworldkotlinspringbootjdbc.domain.UnregisteredUser
+import com.example.realworldkotlinspringbootjdbc.domain.user.Email
+import com.example.realworldkotlinspringbootjdbc.domain.user.Password
+import com.example.realworldkotlinspringbootjdbc.domain.user.Username
+import com.example.realworldkotlinspringbootjdbc.usecase.LoginUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.RegisterUserUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
-import com.example.realworldkotlinspringbootjdbc.util.MySessionJwtImpl
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -24,9 +28,12 @@ class UserAndAuthenticationControllerTest {
                 }
         """.trimIndent()
 
+        private val notImplementedLoginUseCase = object : LoginUseCase {}
         private val mySessionJwtEncodeReturnString = object : MySessionJwt {
             override fun encode(session: MySession) = "dummy-jwt-token".right()
         }
+        private inline fun userAndAuthenticationController(registerUserUseCase: RegisterUserUseCase): UserAndAuthenticationController =
+            UserAndAuthenticationController(registerUserUseCase, notImplementedLoginUseCase, mySessionJwtEncodeReturnString)
         @Test
         fun `ユーザー登録時、UseCase が「RegisteredUser」を返し、JWTエンコードが成功する場合、201レスポンスを返す`() {
             val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
@@ -43,10 +50,7 @@ class UserAndAuthenticationControllerTest {
                     username: String?,
                 ): Either<RegisterUserUseCase.Error, RegisteredUser> = dummyRegisteredUser.right()
             }
-            val actual = UserAndAuthenticationController(
-                registerReturnRegisteredUser,
-                mySessionJwtEncodeReturnString,
-            ).register(requestBody)
+            val actual = userAndAuthenticationController(registerReturnRegisteredUser).register(requestBody)
             val expected = ResponseEntity(
                 """{"user":{"email":"dummy@example.com","username":"dummy-name","bio":"dummy-bio","image":"dummy-image","token":"dummy-jwt-token"}}""",
                 HttpStatus.valueOf(201)
@@ -65,26 +69,31 @@ class UserAndAuthenticationControllerTest {
                     password: String?,
                     username: String?,
                 ): Either<RegisterUserUseCase.Error, RegisteredUser> {
-                    return RegisterUserUseCase.Error.ValidationErrors(listOf(dummyValidationError)).left()
+                    return RegisterUserUseCase.Error.InvalidUser(listOf(dummyValidationError)).left()
                 }
             }
-            val actual = UserAndAuthenticationController(registerReturnValidationError, MySessionJwtImpl).register(requestBody)
+            val actual = userAndAuthenticationController(registerReturnValidationError).register(requestBody)
             val expected = ResponseEntity("""{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError"}]}}""", HttpStatus.valueOf(422))
             assertThat(actual).isEqualTo(expected)
         }
         @Test
         fun `ユーザー登録時、UseCase が「登録失敗」を返す場合、500エラーレスポンスを返す`() {
             val dummyError = object : MyError {}
+            val dummyRegisteredUser = object : UnregisteredUser {
+                override val email: Email get() = object : Email { override val value: String get() = "dummy@example.com" }
+                override val password: Password get() = object : Password { override val value: String get() = "dummy-password" }
+                override val username: Username get() = object : Username { override val value: String get() = "dummy-username" }
+            }
             val registerReturnFailedError = object : RegisterUserUseCase {
                 override fun execute(
                     email: String?,
                     password: String?,
                     username: String?,
                 ): Either<RegisterUserUseCase.Error, RegisteredUser> =
-                    RegisterUserUseCase.Error.FailedRegister(dummyError).left()
+                    RegisterUserUseCase.Error.AlreadyRegisteredEmail(dummyError, dummyRegisteredUser).left()
             }
-            val actual = UserAndAuthenticationController(registerReturnFailedError, MySessionJwtImpl).register(requestBody)
-            val expected = ResponseEntity("DBエラー", HttpStatus.valueOf(500))
+            val actual = userAndAuthenticationController(registerReturnFailedError).register(requestBody)
+            val expected = ResponseEntity("""{"errors":{"body":["メールアドレスは既に登録されています"]}}""", HttpStatus.valueOf(422))
             assertThat(actual).isEqualTo(expected)
         }
     }
