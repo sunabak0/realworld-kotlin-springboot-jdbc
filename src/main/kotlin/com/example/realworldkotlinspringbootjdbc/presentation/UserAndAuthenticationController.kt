@@ -5,7 +5,7 @@ import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.CurrentUser
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
-import com.example.realworldkotlinspringbootjdbc.request.NullableUser
+import com.example.realworldkotlinspringbootjdbc.presentation.request.NullableUser
 import com.example.realworldkotlinspringbootjdbc.usecase.LoginUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.RegisterUserUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MySession
