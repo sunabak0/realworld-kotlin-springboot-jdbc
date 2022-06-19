@@ -28,7 +28,7 @@ class UserAndAuthenticationControllerTest {
             override fun encode(session: MySession) = "dummy-jwt-token".right()
         }
         @Test
-        fun `ユーザー登録時、Serivceが「RegisteredUser」を返し、JWTエンコードが成功する場合、201レスポンスを返す`() {
+        fun `ユーザー登録時、UseCase が「RegisteredUser」を返し、JWTエンコードが成功する場合、201レスポンスを返す`() {
             val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
                 1,
                 "dummy@example.com",
@@ -54,7 +54,7 @@ class UserAndAuthenticationControllerTest {
             assertThat(actual).isEqualTo(expected)
         }
         @Test
-        fun `ユーザー登録時、Serivceが「バリデーションエラー」を返す場合、422エラーレスポンスを返す`() {
+        fun `ユーザー登録時、UseCase が「バリデーションエラー」を返す場合、422エラーレスポンスを返す`() {
             val dummyValidationError = object : MyError.ValidationError {
                 override val message: String get() = "DummyValidationError"
                 override val key: String get() = "DummyKey"
@@ -73,7 +73,7 @@ class UserAndAuthenticationControllerTest {
             assertThat(actual).isEqualTo(expected)
         }
         @Test
-        fun `ユーザー登録時、Serivceが「登録失敗」を返す場合、500エラーレスポンスを返す`() {
+        fun `ユーザー登録時、UseCase が「登録失敗」を返す場合、500エラーレスポンスを返す`() {
             val dummyError = object : MyError {}
             val registerReturnFailedError = object : RegisterUserUseCase {
                 override fun execute(
