@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -93,18 +94,19 @@ class UserAndAuthenticationController(
         }
     }
 
-    //
-    // ログイン
-    //
-    // 例(成功/失敗)
-    // $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"1234@example.com", "password":"dummy-password"}}' 'http://localhost:8080/api/users/login' | jq '.'
-    //
-    // 失敗例
-    // $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"1234@example.com","password":""}}' 'http://localhost:8080/api/users/login' | jq '.'
-    // $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"1234@example.com"}}' 'http://localhost:8080/api/users/login' | jq '.'
-    // $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"password":"dummy-password"}}' 'http://localhost:8080/api/users/login' | jq '.'
-    // $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{},,,,,}' 'http://localhost:8080/api/users/login' | jq '.'
-    //
+    /**
+     *
+     * ログイン
+     *
+     * 例(成功/失敗)
+     * $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"1234@example.com", "password":"dummy-password"}}' 'http://localhost:8080/api/users/login' | jq '.'
+     *
+     * 失敗例
+     * $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"1234@example.com","password":""}}' 'http://localhost:8080/api/users/login' | jq '.'
+     * $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"1234@example.com"}}' 'http://localhost:8080/api/users/login' | jq '.'
+     * $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"password":"dummy-password"}}' 'http://localhost:8080/api/users/login' | jq '.'
+     * $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{},,,,,}' 'http://localhost:8080/api/users/login' | jq '.'
+     */
     @PostMapping("/users/login")
     fun login(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
         val user = NullableUser.from(rawRequestBody)
@@ -156,12 +158,17 @@ class UserAndAuthenticationController(
     // (ログイン済みである)現在のユーザー情報を取得
     //
     // 例(成功/失敗)
-    // $ curl -X GET --header 'Content-Type: application/json' 'http://localhost:8080/api/user' | jq '.'
+    // $ curl -X GET --header 'Content-Type: application/json' -H 'Authorization: Bearer ***' 'http://localhost:8080/api/user' | jq '.'
     //
     // 失敗例
+    // $ curl -X GET --header 'Content-Type: application/json' -H 'Authorization: Bearer ***' 'http://localhost:8080/api/user' | jq '.'
     //
     @GetMapping("/user")
-    fun showCurrentUser(): ResponseEntity<String> {
+    fun showCurrentUser(@RequestHeader("Authorization") rawAuthorizationHeader: String?): ResponseEntity<String> {
+        println("-----")
+        println(rawAuthorizationHeader)
+        println("-----")
+        // TODO Auth
         val user = CurrentUser(
             "hoge@example.com",
             "hoge-username",

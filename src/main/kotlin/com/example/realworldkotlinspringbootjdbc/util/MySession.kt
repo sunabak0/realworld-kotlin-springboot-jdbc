@@ -22,17 +22,16 @@ interface MySessionJwt {
         const val USER_ID_KEY = "userId"
         const val EMAIL_KEY = "email"
     }
-    fun decode(token: String): Either<DecodeError, MySession> = DecodeError.NotImplemented.left()
-    fun encode(session: MySession): Either<EncodeError, String> = EncodeError.NotImplemented.left()
+    fun decode(token: String): Either<DecodeError, MySession> = TODO()
+    fun encode(session: MySession): Either<EncodeError, String> = TODO()
 
     sealed interface DecodeError : MyError {
         data class FailedDecode(override val cause: JWTDecodeException, val token: String) : DecodeError, MyError.MyErrorWithThrowable
+        data class NotMatchIssuer(val token: String, val actual: String, val expected: String) : DecodeError, MyError.Basic
         data class NothingRequiredClaim(val token: String) : DecodeError, MyError
-        object NotImplemented : DecodeError
     }
     sealed interface EncodeError : MyError {
         data class FailedEncode(override val cause: JWTCreationException, val session: MySession) : EncodeError, MyError.MyErrorWithThrowable
-        object NotImplemented : EncodeError
     }
 }
 
@@ -47,11 +46,17 @@ object MySessionJwtImpl : MySessionJwt {
         return try {
             val userId = decodedToken.getClaim(MySessionJwt.USER_ID_KEY).asInt()
             val email = decodedToken.getClaim(MySessionJwt.EMAIL_KEY).asString()
-            val session = MySession(
-                UserId(userId),
-                object : Email { override val value: String get() = email }
-            )
-            session.right()
+            if (decodedToken.issuer == MySessionJwt.ISSUER) {
+                val session = MySession(
+                    UserId(userId),
+                    object : Email {
+                        override val value: String get() = email
+                    }
+                )
+                session.right()
+            } else {
+                MySessionJwt.DecodeError.NotMatchIssuer(token, decodedToken.issuer, MySessionJwt.ISSUER).left()
+            }
         } catch (e: NullPointerException) {
             MySessionJwt.DecodeError.NothingRequiredClaim(token).left()
         }
