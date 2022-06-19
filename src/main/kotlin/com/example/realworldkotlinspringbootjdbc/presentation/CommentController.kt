@@ -21,9 +21,8 @@ import java.text.SimpleDateFormat
 @Tag(name = "Comments")
 class CommentController(val listComments: ListCommentsUseCase) {
     @GetMapping("/articles/{slug}/comments")
-    fun list(@PathVariable("slug") slug: String): ResponseEntity<String> {
-        val result = listComments.execute("hoge-slug")
-        return when (result) {
+    fun list(@PathVariable("slug") slug: String?): ResponseEntity<String> {
+        return when (val result = listComments.execute(slug)) {
             /**
              * コメント取得に成功
              */
