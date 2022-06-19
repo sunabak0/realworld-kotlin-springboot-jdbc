@@ -6,6 +6,7 @@ import com.example.realworldkotlinspringbootjdbc.presentation.response.CurrentUs
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.request.NullableUser
+import com.example.realworldkotlinspringbootjdbc.usecase.LoginUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.RegisterUserUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
@@ -23,13 +24,23 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @Tag(name = "User and Authentication")
 class UserAndAuthenticationController(
-    val registerUser: RegisterUserUseCase,
+    val registerUserUseCase: RegisterUserUseCase,
+    val loginUseCase: LoginUseCase,
     val mySessionJwt: MySessionJwt,
 ) {
+    //
+    // ユーザー登録
+    //
+    // 成功例
+    // $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"1234@example.com", "password":"Passw0rd", "username":"taro"}}' 'http://localhost:8080/api/users' | jq '.'
+    //
+    // 失敗例
+    // $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"1234@example.com"}}' 'http://localhost:8080/api/users' | jq '.'
+    //
     @PostMapping("/users")
     fun register(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
         val user = NullableUser.from(rawRequestBody)
-        return when (val result = registerUser.execute(user.email, user.password, user.username)) {
+        return when (val result = registerUserUseCase.execute(user.email, user.password, user.username)) {
             //
             // ユーザー登録に成功
             //
@@ -82,57 +93,74 @@ class UserAndAuthenticationController(
         }
     }
 
+    //
+    // ログイン
+    //
+    // 例(成功/失敗)
+    // $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"1234@example.com", "password":"dummy-password"}}' 'http://localhost:8080/api/users/login' | jq '.'
+    //
+    // 失敗例
+    // $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"1234@example.com","password":""}}' 'http://localhost:8080/api/users/login' | jq '.'
+    // $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"1234@example.com"}}' 'http://localhost:8080/api/users/login' | jq '.'
+    // $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"password":"dummy-password"}}' 'http://localhost:8080/api/users/login' | jq '.'
+    // $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{},,,,,}' 'http://localhost:8080/api/users/login' | jq '.'
+    //
     @PostMapping("/users/login")
     fun login(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
-        // val user = ObjectMapper()
-        //    .enable(DeserializationFeature.UNWRAP_ROOT_VALUE)
-        //    .readValue<NullableUser>(rawRequestBody!!)
-        // when (val result = userService.login(user.email, user.password)) {
-        //    //
-        //    // ログインに成功
-        //    //
-        //    is Right -> {
-        //        val registeredUser = result.value
-        //        val session = MySession(registeredUser.userId, registeredUser.email)
-        //        when (val token = mySessionJwt.encode(session)) {
-        //            //
-        //            // 全て成功
-        //            //
-        //            is Right -> ResponseEntity(
-        //                CurrentUser.from(registeredUser, token.value).serializeWithRootName(),
-        //                HttpStatus.valueOf(201)
-        //            )
-        //            //
-        //            // ユーザーの登録は上手くいったが、JWTのエンコードで失敗
-        //            //
-        //            is Left -> ResponseEntity(
-        //                serializeUnexpectedErrorForResponseBody("予期せぬエラーが発生しました(cause: ${mySessionJwt::class.simpleName.toString()})"),
-        //                HttpStatus.valueOf(500)
-        //            )
-        //        }
-        //    }
-        //    //
-        //    // ログインに失敗
-        //    //
-        //    is Left -> {
-        //
-        //    }
-        // }
-        val currentUser = CurrentUser(
-            "hoge@example.com",
-            "hoge-username",
-            "hoge-bio",
-            "hoge-image",
-            "hoge-token",
-        )
-        return ResponseEntity(
-            ObjectMapper()
-                .enable(SerializationFeature.WRAP_ROOT_VALUE)
-                .writeValueAsString(currentUser),
-            HttpStatus.valueOf(200)
-        )
+        val user = NullableUser.from(rawRequestBody)
+        return when (val useCaseResult = loginUseCase.execute(user.email, user.password)) {
+            //
+            // 認証 成功
+            //
+            is Right -> {
+                val registeredUser = useCaseResult.value
+                val session = MySession(registeredUser.userId, registeredUser.email)
+                when (val token = mySessionJwt.encode(session)) {
+                    //
+                    // 全て成功
+                    //
+                    is Right -> ResponseEntity(
+                        CurrentUser.from(registeredUser, token.value).serializeWithRootName(),
+                        HttpStatus.valueOf(201)
+                    )
+                    //
+                    // 認証 は成功したが、JWTのエンコードで失敗
+                    //
+                    is Left -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("予期せぬエラーが発生しました(cause: ${mySessionJwt::class.simpleName})"),
+                        HttpStatus.valueOf(500)
+                    )
+                }
+            }
+            //
+            // 何かしらに失敗
+            //
+            is Left -> when (val useCaseError = useCaseResult.value) {
+                is LoginUseCase.Error.ValidationErrors -> ResponseEntity(
+                    serializeMyErrorListForResponseBody(useCaseError.errors),
+                    HttpStatus.valueOf(401)
+                )
+                is LoginUseCase.Error.Unauthorized -> ResponseEntity(
+                    serializeUnexpectedErrorForResponseBody("認証に失敗しました"),
+                    HttpStatus.valueOf(401)
+                )
+                is LoginUseCase.Error.UnexpectedError -> ResponseEntity(
+                    serializeUnexpectedErrorForResponseBody("予期せぬエラーが発生しました(cause: ${useCaseError::class.simpleName})"),
+                    HttpStatus.valueOf(422)
+                )
+                is LoginUseCase.Error.NotImplemented -> TODO()
+            }
+        }
     }
 
+    //
+    // (ログイン済みである)現在のユーザー情報を取得
+    //
+    // 例(成功/失敗)
+    // $ curl -X GET --header 'Content-Type: application/json' 'http://localhost:8080/api/user' | jq '.'
+    //
+    // 失敗例
+    //
     @GetMapping("/user")
     fun showCurrentUser(): ResponseEntity<String> {
         val user = CurrentUser(
