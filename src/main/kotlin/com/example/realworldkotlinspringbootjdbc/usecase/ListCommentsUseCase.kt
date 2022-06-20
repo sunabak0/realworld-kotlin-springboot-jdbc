@@ -14,16 +14,12 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface ListCommentsUseCase {
-    fun execute(slug: String?): Either<Error, List<Comment>> = Error.NotImplemented.left()
+    fun execute(slug: String?): Either<Error, List<Comment>> = TODO()
     sealed interface Error : MyError {
-        data class ValidationErrors(override val errors: List<MyError.ValidationError>) :
-            Error,
-            MyError.ValidationErrors
-
+        data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
         data class FailedShow(override val cause: MyError) : Error, MyError.MyErrorWithMyError
         data class NotFound(override val cause: MyError) : Error, MyError.MyErrorWithMyError
         data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
-        object NotImplemented : Error
     }
 }
 
@@ -33,7 +29,7 @@ class ShowCommentsUseCaseImpl(
 ) : ListCommentsUseCase {
     override fun execute(slug: String?): Either<ListCommentsUseCase.Error, List<Comment>> {
         return when (val it = Slug.new(slug)) {
-            is Invalid -> ListCommentsUseCase.Error.ValidationErrors(it.value).left()
+            is Invalid -> ListCommentsUseCase.Error.InvalidSlug(it.value).left()
             is Valid -> when (val listResult = commentRepository.list(it.value)) {
                 /**
                  * コメントの取得 成功

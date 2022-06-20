@@ -3,6 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Comment
+import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.usecase.ListCommentsUseCase
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -60,15 +61,20 @@ class CommentController(val listComments: ListCommentsUseCase) {
              */
             is Left -> when (val useCaseError = result.value) {
                 /**
-                 * 原因
+                 * 原因: バリデーションエラー
                  */
-                is ListCommentsUseCase.Error.FailedShow -> TODO()
+                is ListCommentsUseCase.Error.InvalidSlug -> ResponseEntity(
+                    serializeMyErrorListForResponseBody(useCaseError.errors),
+                    HttpStatus.valueOf(422)
+                )
+                /**
+                 * 原因: Slug に該当する記事が見つからなかった
+                 */
                 is ListCommentsUseCase.Error.NotFound -> ResponseEntity(
                     serializeUnexpectedErrorForResponseBody("コメントが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                     HttpStatus.valueOf(404)
                 )
-                ListCommentsUseCase.Error.NotImplemented -> TODO()
-                is ListCommentsUseCase.Error.ValidationErrors -> TODO()
+                is ListCommentsUseCase.Error.FailedShow -> TODO()
                 is ListCommentsUseCase.Error.Unexpected -> TODO()
             }
         }

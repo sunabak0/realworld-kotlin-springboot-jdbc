@@ -61,5 +61,24 @@ class CommentControllerTest {
             val expected = ResponseEntity("""{"errors":{"body":["コメントが見つかりませんでした"]}}""", HttpStatus.valueOf(404))
             assertThat(actual).isEqualTo(expected)
         }
+
+        @Test
+        fun `コメント取得時、UseCase が「バリデーションエラー」を返す場合、422エラーレスポンスを返す`() {
+            val dummyValidationError = object : MyError.ValidationError {
+                override val message: String get() = "DummyValidationError"
+                override val key: String get() = "DummyKey"
+            }
+            val returnedListValidationError = object : ListCommentsUseCase {
+                override fun execute(slug: String?): Either<ListCommentsUseCase.Error, kotlin.collections.List<Comment>> {
+                    return ListCommentsUseCase.Error.InvalidSlug(listOf(dummyValidationError)).left()
+                }
+            }
+            val actual = commentController(returnedListValidationError).list(pathParam)
+            val expected = ResponseEntity(
+                """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError"}]}}""",
+                HttpStatus.valueOf(422)
+            )
+            assertThat(actual).isEqualTo(expected)
+        }
     }
 }
