@@ -31,7 +31,7 @@ interface UserRepository {
     fun findByUserId(id: UserId): Either<FindByUserIdError, RegisteredUser> = TODO()
     sealed interface FindByUserIdError : MyError {
         data class NotFound(val id: UserId) : FindByUserIdError, MyError.Basic
-        data class Unexpected(override val cause: Throwable, val user: UnregisteredUser) : FindByUserIdError, MyError.MyErrorWithThrowable
+        data class Unexpected(override val cause: Throwable, val userId: UserId) : FindByUserIdError, MyError.MyErrorWithThrowable
     }
 }
 
