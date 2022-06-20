@@ -41,7 +41,7 @@ interface MyAuth {
         //
         // 謎エラー
         //
-        data class Unexpected(override val cause: MyError, val session: MySession) : Unauthorized, MyError.MyErrorWithMyError
+        data class Unexpected(override val cause: MyError, val bearerToken: Option<String>) : Unauthorized, MyError.MyErrorWithMyError
     }
 }
 
@@ -72,7 +72,7 @@ class MyAuthImpl(
                     {
                         when (it) {
                             is UserRepository.FindByUserIdError.NotFound -> MyAuth.Unauthorized.NotFound(it, session.userId).left()
-                            is UserRepository.FindByUserIdError.Unexpected -> MyAuth.Unauthorized.Unexpected(it, session).left()
+                            is UserRepository.FindByUserIdError.Unexpected -> MyAuth.Unauthorized.Unexpected(it, Option.fromNullable(authorizationHeader)).left()
                         }
                     },
                     { Pair(session.email, it).right() }
