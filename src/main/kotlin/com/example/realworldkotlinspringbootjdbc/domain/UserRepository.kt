@@ -3,6 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.domain
 import arrow.core.Either
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.Password
+import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface UserRepository {
@@ -18,10 +19,19 @@ interface UserRepository {
     //
     // ユーザー検索 by Email with Password
     //
-    fun findByEmailWithPassword(email: Email): Either<FindByEmailWithPasswordError, RegisteredWithPassword>
+    fun findByEmailWithPassword(email: Email): Either<FindByEmailWithPasswordError, RegisteredWithPassword> = TODO()
     sealed interface FindByEmailWithPasswordError : MyError {
         data class NotFound(val email: Email) : FindByEmailWithPasswordError, MyError.Basic
         data class Unexpected(override val cause: Throwable, val user: UnregisteredUser) : FindByEmailWithPasswordError, MyError.MyErrorWithThrowable
+    }
+
+    //
+    // ユーザー検索 by UserId
+    //
+    fun findByUserId(id: UserId): Either<FindByUserIdError, RegisteredUser> = TODO()
+    sealed interface FindByUserIdError : MyError {
+        data class NotFound(val id: UserId) : FindByUserIdError, MyError.Basic
+        data class Unexpected(override val cause: Throwable, val user: UnregisteredUser) : FindByUserIdError, MyError.MyErrorWithThrowable
     }
 }
 

@@ -1,4 +1,4 @@
-package com.example.realworldkotlinspringbootjdbc.request
+package com.example.realworldkotlinspringbootjdbc.presentation.request
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty

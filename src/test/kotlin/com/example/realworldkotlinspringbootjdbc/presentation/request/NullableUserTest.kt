@@ -1,6 +1,5 @@
 package com.example.realworldkotlinspringbootjdbc.presentation.request
 
-import com.example.realworldkotlinspringbootjdbc.request.NullableUser
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
