@@ -17,7 +17,6 @@ interface ListCommentsUseCase {
     fun execute(slug: String?): Either<Error, List<Comment>> = TODO()
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
-        data class FailedShow(override val cause: MyError) : Error, MyError.MyErrorWithMyError
         data class NotFound(override val cause: MyError) : Error, MyError.MyErrorWithMyError
         data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
