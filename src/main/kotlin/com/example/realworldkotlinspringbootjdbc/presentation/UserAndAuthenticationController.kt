@@ -29,63 +29,63 @@ class UserAndAuthenticationController(
     val loginUseCase: LoginUseCase,
     val mySessionJwt: MySessionJwt,
 ) {
-    //
-    // ユーザー登録
-    //
-    // 成功例
-    // $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"1234@example.com", "password":"Passw0rd", "username":"taro"}}' 'http://localhost:8080/api/users' | jq '.'
-    //
-    // 失敗例
-    // $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"1234@example.com"}}' 'http://localhost:8080/api/users' | jq '.'
-    //
+    /**
+     * ユーザー登録
+     *
+     * 成功例
+     * $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"1234@example.com", "password":"Passw0rd", "username":"taro"}}' 'http://localhost:8080/api/users' | jq '.'
+     *
+     * 失敗例
+     * $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"1234@example.com"}}' 'http://localhost:8080/api/users' | jq '.'
+     */
     @PostMapping("/users")
     fun register(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
         val user = NullableUser.from(rawRequestBody)
         return when (val result = registerUserUseCase.execute(user.email, user.password, user.username)) {
-            //
-            // ユーザー登録に成功
-            //
+            /**
+             * ユーザー登録に成功
+             */
             is Right -> {
                 val registeredUser = result.value
                 val session = MySession(registeredUser.userId, registeredUser.email)
                 when (val token = mySessionJwt.encode(session)) {
-                    //
-                    // 全て成功
-                    //
+                    /**
+                     * 全て成功
+                     */
                     is Right -> ResponseEntity(
                         CurrentUser.from(registeredUser, token.value).serializeWithRootName(),
                         HttpStatus.valueOf(201)
                     )
-                    //
-                    // ユーザーの登録は上手くいったが、JWTのエンコードで失敗
-                    //
+                    /**
+                     * ユーザーの登録は上手くいったが、JWTのエンコードで失敗
+                     */
                     is Left -> ResponseEntity(
                         serializeUnexpectedErrorForResponseBody("予期せぬエラーが発生しました(cause: ${mySessionJwt::class.simpleName})"),
                         HttpStatus.valueOf(500)
                     )
                 }
             }
-            //
-            // ユーザー登録に失敗
-            //
+            /**
+             * ユーザー登録に失敗
+             */
             is Left -> when (val usecaseError = result.value) {
-                //
-                // 原因: バリデーションエラー
-                //
+                /**
+                 * 原因: バリデーションエラー
+                 */
                 is RegisterUserUseCase.Error.InvalidUser -> ResponseEntity(
                     serializeMyErrorListForResponseBody(usecaseError.errors),
                     HttpStatus.valueOf(422)
                 )
-                //
-                // 原因: 使おうとしたEmailが既に登録されている
-                //
+                /**
+                 * 原因: 使おうとしたEmailが既に登録されている
+                 */
                 is RegisterUserUseCase.Error.AlreadyRegisteredEmail -> ResponseEntity(
                     serializeUnexpectedErrorForResponseBody("メールアドレスは既に登録されています"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                     HttpStatus.valueOf(422)
                 )
-                //
-                // 原因: DB周りのエラー
-                //
+                /**
+                 * 原因: DB周りのエラー
+                 */
                 is RegisterUserUseCase.Error.Unexpected -> ResponseEntity(
                     "DBエラー",
                     HttpStatus.valueOf(500)
@@ -111,32 +111,32 @@ class UserAndAuthenticationController(
     fun login(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
         val user = NullableUser.from(rawRequestBody)
         return when (val useCaseResult = loginUseCase.execute(user.email, user.password)) {
-            //
-            // 認証 成功
-            //
+            /**
+             * 認証 成功
+             */
             is Right -> {
                 val registeredUser = useCaseResult.value
                 val session = MySession(registeredUser.userId, registeredUser.email)
                 when (val token = mySessionJwt.encode(session)) {
-                    //
-                    // 全て成功
-                    //
+                    /**
+                     * 全て成功
+                     */
                     is Right -> ResponseEntity(
                         CurrentUser.from(registeredUser, token.value).serializeWithRootName(),
                         HttpStatus.valueOf(201)
                     )
-                    //
-                    // 認証 は成功したが、JWTのエンコードで失敗
-                    //
+                    /**
+                     * 認証 は成功したが、JWTのエンコードで失敗
+                     */
                     is Left -> ResponseEntity(
                         serializeUnexpectedErrorForResponseBody("予期せぬエラーが発生しました(cause: ${mySessionJwt::class.simpleName})"),
                         HttpStatus.valueOf(500)
                     )
                 }
             }
-            //
-            // 何かしらに失敗
-            //
+            /**
+             * 何かしらに失敗
+             */
             is Left -> when (val useCaseError = useCaseResult.value) {
                 is LoginUseCase.Error.InvalidEmailOrPassword -> ResponseEntity(
                     serializeMyErrorListForResponseBody(useCaseError.errors),
@@ -154,15 +154,15 @@ class UserAndAuthenticationController(
         }
     }
 
-    //
-    // (ログイン済みである)現在のユーザー情報を取得
-    //
-    // 例(成功/失敗)
-    // $ curl -X GET --header 'Content-Type: application/json' -H 'Authorization: Bearer ***' 'http://localhost:8080/api/user' | jq '.'
-    //
-    // 失敗例
-    // $ curl -X GET --header 'Content-Type: application/json' -H 'Authorization: Bearer ***' 'http://localhost:8080/api/user' | jq '.'
-    //
+    /**
+     * (ログイン済みである)現在のユーザー情報を取得
+     *
+     * 例(成功/失敗)
+     * $ curl -X GET --header 'Content-Type: application/json' -H 'Authorization: Bearer ***' 'http://localhost:8080/api/user' | jq '.'
+     *
+     * 失敗例
+     * $ curl -X GET --header 'Content-Type: application/json' -H 'Authorization: Bearer ***' 'http://localhost:8080/api/user' | jq '.'
+     */
     @GetMapping("/user")
     fun showCurrentUser(@RequestHeader("Authorization") rawAuthorizationHeader: String?): ResponseEntity<String> {
         println("-----")
