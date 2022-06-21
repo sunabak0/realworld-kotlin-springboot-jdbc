@@ -8,6 +8,7 @@ import com.example.realworldkotlinspringbootjdbc.presentation.response.serialize
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.usecase.LoginUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.RegisterUserUseCase
+import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -25,9 +26,10 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @Tag(name = "User and Authentication")
 class UserAndAuthenticationController(
+    val mySessionJwt: MySessionJwt,
+    val myAuth: MyAuth,
     val registerUserUseCase: RegisterUserUseCase,
     val loginUseCase: LoginUseCase,
-    val mySessionJwt: MySessionJwt,
 ) {
     /**
      * ユーザー登録

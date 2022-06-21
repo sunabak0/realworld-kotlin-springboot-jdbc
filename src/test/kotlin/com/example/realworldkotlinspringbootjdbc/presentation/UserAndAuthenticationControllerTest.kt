@@ -10,6 +10,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Password
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.usecase.LoginUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.RegisterUserUseCase
+import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
@@ -21,7 +22,7 @@ import org.springframework.http.ResponseEntity
 
 class UserAndAuthenticationControllerTest {
     @Nested
-    class Register {
+    class `ユーザー登録(RegisterUserUseCase)` {
         private val requestBody = """
                 {
                     "user": {}
@@ -29,13 +30,14 @@ class UserAndAuthenticationControllerTest {
         """.trimIndent()
 
         private val notImplementedLoginUseCase = object : LoginUseCase {}
+        private val notImplementedMyAuth = object : MyAuth {}
         private val mySessionJwtEncodeReturnString = object : MySessionJwt {
             override fun encode(session: MySession) = "dummy-jwt-token".right()
         }
-        private inline fun userAndAuthenticationController(registerUserUseCase: RegisterUserUseCase): UserAndAuthenticationController =
-            UserAndAuthenticationController(registerUserUseCase, notImplementedLoginUseCase, mySessionJwtEncodeReturnString)
+        private fun userAndAuthenticationController(registerUserUseCase: RegisterUserUseCase): UserAndAuthenticationController =
+            UserAndAuthenticationController(mySessionJwtEncodeReturnString, notImplementedMyAuth, registerUserUseCase, notImplementedLoginUseCase, )
         @Test
-        fun `ユーザー登録時、UseCase が「RegisteredUser」を返し、JWTエンコードが成功する場合、201レスポンスを返す`() {
+        fun `UseCase が「RegisteredUser」を返し、JWTエンコードが成功する場合、201レスポンスを返す`() {
             val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
                 1,
                 "dummy@example.com",
@@ -58,7 +60,7 @@ class UserAndAuthenticationControllerTest {
             assertThat(actual).isEqualTo(expected)
         }
         @Test
-        fun `ユーザー登録時、UseCase が「バリデーションエラー」を返す場合、422エラーレスポンスを返す`() {
+        fun `UseCase が「バリデーションエラー」を返す場合、422エラーレスポンスを返す`() {
             val dummyValidationError = object : MyError.ValidationError {
                 override val message: String get() = "DummyValidationError"
                 override val key: String get() = "DummyKey"
@@ -77,7 +79,7 @@ class UserAndAuthenticationControllerTest {
             assertThat(actual).isEqualTo(expected)
         }
         @Test
-        fun `ユーザー登録時、UseCase が「登録失敗」を返す場合、500エラーレスポンスを返す`() {
+        fun `UseCase が「登録失敗」を返す場合、500エラーレスポンスを返す`() {
             val dummyError = object : MyError {}
             val dummyRegisteredUser = object : UnregisteredUser {
                 override val email: Email get() = object : Email { override val value: String get() = "dummy@example.com" }

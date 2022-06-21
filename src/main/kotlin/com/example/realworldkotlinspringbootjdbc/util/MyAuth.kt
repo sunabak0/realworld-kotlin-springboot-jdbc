@@ -12,7 +12,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import org.springframework.stereotype.Component
 
 interface MyAuth {
-    fun authorize(bearerToken: String?): Either<Unauthorized, RegisteredUser>
+    fun authorize(bearerToken: String?): Either<Unauthorized, RegisteredUser> = TODO()
 
     //
     // エラーの種類(基本的に全て認証失敗)
