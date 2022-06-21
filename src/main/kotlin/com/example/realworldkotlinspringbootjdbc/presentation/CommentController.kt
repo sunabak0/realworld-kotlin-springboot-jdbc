@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
-import java.text.SimpleDateFormat
 
 @RestController
 @Tag(name = "Comments")
@@ -28,29 +27,21 @@ class CommentController(val listComments: ListCommentsUseCase) {
              * コメント取得に成功
              */
             is Right -> {
-                val comments = result.value
-                println(comments)
-                val comment1 = Comment(
-                    1,
-                    "hoge-body-1",
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                    "hoge-author-1"
-                )
-                val comment2 = Comment(
-                    2,
-                    "hoge-body-2",
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
-                    "hoge-author-2"
-                )
+                val comments =
+                    result.value.map {
+                        Comment(
+                            it.id,
+                            it.body,
+                            it.createdAt,
+                            it.updatedAt,
+                            it.author,
+                        )
+                    }
+
                 return ResponseEntity(
                     ObjectMapper().writeValueAsString(
                         mapOf(
-                            "comments" to listOf(
-                                comment1,
-                                comment2,
-                            ),
+                            "comments" to comments,
                         )
                     ),
                     HttpStatus.valueOf(200)
