@@ -13,41 +13,38 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 interface Body {
     val value: String
 
-    //
-    // 実装
-    //
+    /**
+     * 実装
+     */
     private data class ValidatedBody(override val value: String) : Body
     private data class BodyWithoutValidation(override val value: String) : Body
 
-    //
-    // Factory メソッド
-    //
+    /**
+     * Factory メソッド
+     */
     companion object {
-        //
-        // Validation 無し
-        //
+        /**
+         * Validation 無し
+         */
         fun newWithoutValidation(body: String): Body = BodyWithoutValidation(body)
 
-        //
-        // Validation 有り
-        //
+        /**
+         * Validation 有り
+         */
         fun new(body: String?): ValidatedNel<ValidationError, Body> {
             return when (val result = ValidationError.Required.check(body)) {
                 is Invalid -> result.value.invalidNel()
-                is Valid -> ValidationError.TooLong.check(result.value)
-                    .map { ValidatedBody(result.value) }
+                is Valid -> ValidationError.TooLong.check(result.value).map { ValidatedBody(result.value) }
             }
         }
     }
 
-    //
-    // ドメインルール
-    //
     sealed interface ValidationError : MyError.ValidationError {
         override val key: String get() = Body::class.simpleName.toString()
-        //
-        // Nullは駄目
-        //
+
+        /**
+         * 必須
+         */
         object Required : ValidationError {
             override val message: String get() = "bodyを入力してください。"
             fun check(body: String?): Validated<Required, String> =
@@ -57,16 +54,21 @@ interface Body {
                 )
         }
 
-        //
-        // 長すぎては駄目
-        //
+        /**
+         * 長すぎては駄目
+         */
         data class TooLong(val body: String) : ValidationError {
             companion object {
                 private const val maximum: Int = 1024
                 fun check(body: String): ValidatedNel<ValidationError, Unit> =
-                    if (body.length <= maximum) { Unit.valid() } else { TooLong(body).invalidNel() }
+                    if (body.length <= maximum) {
+                        Unit.valid()
+                    } else {
+                        TooLong(body).invalidNel()
+                    }
             }
-            override val message: String get() = "bodyは${maximum}文字以下にしてください。"
+            override val message: String
+                get() = "bodyは${maximum}文字以下にしてください。"
         }
     }
 }

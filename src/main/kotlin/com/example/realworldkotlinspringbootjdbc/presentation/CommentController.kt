@@ -65,7 +65,13 @@ class CommentController(val listComments: ListCommentsUseCase) {
                     serializeUnexpectedErrorForResponseBody("コメントが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                     HttpStatus.valueOf(404)
                 )
-                is ListCommentsUseCase.Error.Unexpected -> TODO()
+                /**
+                 * 原因: 不明
+                 */
+                is ListCommentsUseCase.Error.Unexpected -> ResponseEntity(
+                    serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                    HttpStatus.valueOf(500)
+                )
             }
         }
     }

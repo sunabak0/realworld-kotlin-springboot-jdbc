@@ -80,5 +80,17 @@ class CommentControllerTest {
             )
             assertThat(actual).isEqualTo(expected)
         }
+        @Test
+        fun `コメント取得時、UseCase が原因不明のエラーを返す場合、500 エラーレスポンスを返す`() {
+            val dummyUnexpectedError = object : MyError {}
+            val listReturnUnexpectedError = object : ListCommentsUseCase {
+                override fun execute(slug: String?): Either<ListCommentsUseCase.Error, kotlin.collections.List<Comment>> {
+                    return ListCommentsUseCase.Error.Unexpected(dummyUnexpectedError).left()
+                }
+            }
+            val actual = commentController(listReturnUnexpectedError).list(pathParam)
+            val expected = ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500))
+            assertThat(actual).isEqualTo(expected)
+        }
     }
 }
