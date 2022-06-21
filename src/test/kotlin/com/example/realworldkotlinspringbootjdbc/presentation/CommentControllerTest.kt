@@ -22,7 +22,7 @@ class CommentControllerTest {
 
         @Test
         fun `コメント取得時、UseCase が「Comment」の配列を返す場合、200レスポンスを返す`() {
-            val dummyComments = listOf(
+            val mockComments = listOf(
                 Comment.newWithoutValidation(
                     1,
                     "hoge-body-1",
@@ -40,7 +40,7 @@ class CommentControllerTest {
             )
             val listReturnComment = object : ListCommentsUseCase {
                 override fun execute(slug: String?): Either<ListCommentsUseCase.Error, kotlin.collections.List<Comment>> =
-                    dummyComments.right()
+                    mockComments.right()
             }
             val actual = commentController(listReturnComment).list(pathParam)
             val expected = ResponseEntity(
@@ -52,10 +52,10 @@ class CommentControllerTest {
 
         @Test
         fun `コメント取得時、UseCase が「NotFound」を返す場合、404 エラーレスポンスを返す`() {
-            val dummyError = object : MyError {}
+            val notImplementedError = object : MyError {}
             val listReturnNotFoundError = object : ListCommentsUseCase {
                 override fun execute(slug: String?): Either<ListCommentsUseCase.Error, kotlin.collections.List<Comment>> =
-                    ListCommentsUseCase.Error.NotFound(dummyError).left()
+                    ListCommentsUseCase.Error.NotFound(notImplementedError).left()
             }
             val actual = commentController(listReturnNotFoundError).list(pathParam)
             val expected = ResponseEntity("""{"errors":{"body":["コメントが見つかりませんでした"]}}""", HttpStatus.valueOf(404))
@@ -64,13 +64,13 @@ class CommentControllerTest {
 
         @Test
         fun `コメント取得時、UseCase が「バリデーションエラー」を返す場合、422 エラーレスポンスを返す`() {
-            val dummyValidationError = object : MyError.ValidationError {
+            val notImplementedValidationError = object : MyError.ValidationError {
                 override val message: String get() = "DummyValidationError"
                 override val key: String get() = "DummyKey"
             }
             val listReturnValidationError = object : ListCommentsUseCase {
                 override fun execute(slug: String?): Either<ListCommentsUseCase.Error, kotlin.collections.List<Comment>> {
-                    return ListCommentsUseCase.Error.InvalidSlug(listOf(dummyValidationError)).left()
+                    return ListCommentsUseCase.Error.InvalidSlug(listOf(notImplementedValidationError)).left()
                 }
             }
             val actual = commentController(listReturnValidationError).list(pathParam)
@@ -82,10 +82,10 @@ class CommentControllerTest {
         }
         @Test
         fun `コメント取得時、UseCase が原因不明のエラーを返す場合、500 エラーレスポンスを返す`() {
-            val dummyUnexpectedError = object : MyError {}
+            val notImplementedError = object : MyError {}
             val listReturnUnexpectedError = object : ListCommentsUseCase {
                 override fun execute(slug: String?): Either<ListCommentsUseCase.Error, kotlin.collections.List<Comment>> {
-                    return ListCommentsUseCase.Error.Unexpected(dummyUnexpectedError).left()
+                    return ListCommentsUseCase.Error.Unexpected(notImplementedError).left()
                 }
             }
             val actual = commentController(listReturnUnexpectedError).list(pathParam)
