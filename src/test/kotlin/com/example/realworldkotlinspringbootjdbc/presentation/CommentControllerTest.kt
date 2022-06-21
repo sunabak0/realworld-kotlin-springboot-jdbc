@@ -38,11 +38,11 @@ class CommentControllerTest {
                     "hoge-author-2"
                 ),
             )
-            val returnedComments = object : ListCommentsUseCase {
+            val listReturnComment = object : ListCommentsUseCase {
                 override fun execute(slug: String?): Either<ListCommentsUseCase.Error, kotlin.collections.List<Comment>> =
                     dummyComments.right()
             }
-            val actual = commentController(returnedComments).list(pathParam)
+            val actual = commentController(listReturnComment).list(pathParam)
             val expected = ResponseEntity(
                 """{"comments":[{"id":1,"body":"hoge-body-1","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-author-1"},{"id":2,"body":"hoge-body-2","createdAt":"2022-02-01T15:00:00.000Z","updatedAt":"2022-02-01T15:00:00.000Z","author":"hoge-author-2"}]}""",
                 HttpStatus.valueOf(200)
@@ -51,29 +51,29 @@ class CommentControllerTest {
         }
 
         @Test
-        fun `コメント取得時、UseCase が「NotFound」を返す場合、404エラーレスポンスを返す`() {
+        fun `コメント取得時、UseCase が「NotFound」を返す場合、404 エラーレスポンスを返す`() {
             val dummyError = object : MyError {}
-            val returnedNotFoundError = object : ListCommentsUseCase {
+            val listReturnNotFoundError = object : ListCommentsUseCase {
                 override fun execute(slug: String?): Either<ListCommentsUseCase.Error, kotlin.collections.List<Comment>> =
                     ListCommentsUseCase.Error.NotFound(dummyError).left()
             }
-            val actual = commentController(returnedNotFoundError).list(pathParam)
+            val actual = commentController(listReturnNotFoundError).list(pathParam)
             val expected = ResponseEntity("""{"errors":{"body":["コメントが見つかりませんでした"]}}""", HttpStatus.valueOf(404))
             assertThat(actual).isEqualTo(expected)
         }
 
         @Test
-        fun `コメント取得時、UseCase が「バリデーションエラー」を返す場合、422エラーレスポンスを返す`() {
+        fun `コメント取得時、UseCase が「バリデーションエラー」を返す場合、422 エラーレスポンスを返す`() {
             val dummyValidationError = object : MyError.ValidationError {
                 override val message: String get() = "DummyValidationError"
                 override val key: String get() = "DummyKey"
             }
-            val returnedListValidationError = object : ListCommentsUseCase {
+            val listReturnValidationError = object : ListCommentsUseCase {
                 override fun execute(slug: String?): Either<ListCommentsUseCase.Error, kotlin.collections.List<Comment>> {
                     return ListCommentsUseCase.Error.InvalidSlug(listOf(dummyValidationError)).left()
                 }
             }
-            val actual = commentController(returnedListValidationError).list(pathParam)
+            val actual = commentController(listReturnValidationError).list(pathParam)
             val expected = ResponseEntity(
                 """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError"}]}}""",
                 HttpStatus.valueOf(422)
