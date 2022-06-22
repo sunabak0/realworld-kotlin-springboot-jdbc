@@ -6,6 +6,7 @@ import com.example.realworldkotlinspringbootjdbc.presentation.request.NullableUs
 import com.example.realworldkotlinspringbootjdbc.presentation.response.CurrentUser
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
+import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
 import com.example.realworldkotlinspringbootjdbc.usecase.LoginUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.RegisterUserUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
@@ -114,7 +115,7 @@ class UserAndAuthenticationController(
         val user = NullableUser.from(rawRequestBody)
         return when (val useCaseResult = loginUseCase.execute(user.email, user.password)) {
             /**
-             * 認証 成功
+             * パスワード認証 成功
              */
             is Right -> {
                 val registeredUser = useCaseResult.value
@@ -172,19 +173,7 @@ class UserAndAuthenticationController(
             /**
              * JWT認証 失敗
              */
-            is Left -> when (val error = authorizeResult.value) {
-                /**
-                 * 原因: 謎
-                 */
-                is MyAuth.Unauthorized.Unexpected -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody("予期せぬエラーが発生しました(cause: $error)"),
-                    HttpStatus.valueOf(500)
-                )
-                /**
-                 * 原因: 謎以外全て
-                 */
-                else -> ResponseEntity("", HttpStatus.valueOf(401))
-            }
+            is Left -> AuthorizationError.handle(authorizeResult.value)
             /**
              * JWT認証 成功
              */
