@@ -4,6 +4,12 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
+import com.example.realworldkotlinspringbootjdbc.domain.Profile
+import com.example.realworldkotlinspringbootjdbc.domain.comment.Body as CommentBody
+import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
+import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
+import com.example.realworldkotlinspringbootjdbc.domain.user.Image
+import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.usecase.ListCommentsUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.assertj.core.api.Assertions.assertThat
@@ -24,18 +30,28 @@ class CommentControllerTest {
         fun `コメント取得時、UseCase が「Comment」のリストを返す場合、200レスポンスを返す`() {
             val mockComments = listOf(
                 Comment.newWithoutValidation(
-                    1,
-                    "hoge-body-1",
+                    CommentId(1),
+                    CommentBody.newWithoutValidation("hoge-body-1"),
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                    "hoge-author-1"
+                    Profile.newWithoutValidation(
+                        Username.newWithoutValidation("hoge-author-1"),
+                        Bio.newWithoutValidation("hoge-bio-1"),
+                        Image.newWithoutValidation("hoge-image-1"),
+                        false
+                    )
                 ),
                 Comment.newWithoutValidation(
-                    2,
-                    "hoge-body-2",
+                    CommentId(2),
+                    CommentBody.newWithoutValidation("hoge-body-2"),
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
-                    "hoge-author-2"
+                    Profile.newWithoutValidation(
+                        Username.newWithoutValidation("hoge-author-2"),
+                        Bio.newWithoutValidation("hoge-bio-2"),
+                        Image.newWithoutValidation("hoge-image-2"),
+                        false
+                    )
                 ),
             )
             val listReturnComment = object : ListCommentsUseCase {

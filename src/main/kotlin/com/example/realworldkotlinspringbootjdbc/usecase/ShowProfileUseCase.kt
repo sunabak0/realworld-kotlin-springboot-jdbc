@@ -8,6 +8,7 @@ import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Profile
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
+import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
@@ -35,9 +36,13 @@ class ShowProfileUseCaseImpl() : ShowProfileUseCase {
                     override val username: Username
                         get() = it.value
                     override val bio: Bio
-                        get() = object : Bio { override val value: String get() = "hoge-bio" }
-                    override val image: String
-                        get() = "hoge-image"
+                        get() = object : Bio {
+                            override val value: String get() = "hoge-bio"
+                        }
+                    override val image: Image
+                        get() = object : Image {
+                            override val value: String get() = "hoge-image"
+                        }
                     override val following: Boolean
                         get() = true
                 }
