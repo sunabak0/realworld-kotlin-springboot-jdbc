@@ -39,6 +39,9 @@ interface Body {
         }
     }
 
+    /**
+     * ドメインルール
+     */
     sealed interface ValidationError : MyError.ValidationError {
         override val key: String get() = Body::class.simpleName.toString()
 
