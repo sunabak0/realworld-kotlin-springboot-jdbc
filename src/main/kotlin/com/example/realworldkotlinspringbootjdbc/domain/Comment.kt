@@ -28,6 +28,6 @@ interface Comment {
          * Validation 無し
          */
         fun newWithoutValidation(id: Int, body: String, createdAt: Date, updatedAt: Date, author: String): Comment =
-            Comment.CommentWithoutValidation(id, body, createdAt, updatedAt, author)
+            CommentWithoutValidation(id, body, createdAt, updatedAt, author)
     }
 }
