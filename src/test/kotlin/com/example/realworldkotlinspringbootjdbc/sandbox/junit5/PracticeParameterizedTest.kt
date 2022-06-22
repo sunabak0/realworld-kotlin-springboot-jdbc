@@ -1,7 +1,6 @@
 package com.example.realworldkotlinspringbootjdbc.sandbox.junit5
 
 import org.assertj.core.api.Assertions.assertThat
-import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
