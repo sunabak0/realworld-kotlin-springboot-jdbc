@@ -1,60 +1,53 @@
 package com.example.realworldkotlinspringbootjdbc.usecase
 
 import arrow.core.Either
+import arrow.core.Either.Left
+import arrow.core.Either.Right
 import arrow.core.Validated.Invalid
 import arrow.core.Validated.Valid
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
+import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
-import java.text.SimpleDateFormat
-import java.util.Date
 
 interface ListCommentsUseCase {
-    fun execute(slug: String?): Either<Error, List<Comment>> = Error.NotImplemented.left()
+    fun execute(slug: String?): Either<Error, List<Comment>> = TODO()
     sealed interface Error : MyError {
-        data class ValidationErrors(override val errors: List<MyError.ValidationError>) :
-            Error,
-            MyError.ValidationErrors
-        data class FailedShow(override val cause: MyError) : Error, MyError.MyErrorWithMyError
+        data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
         data class NotFound(override val cause: MyError) : Error, MyError.MyErrorWithMyError
-        object NotImplemented : Error
+        data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
 }
 
 @Service
-class ShowCommentsUseCaseImpl() : ListCommentsUseCase {
+class ShowCommentsUseCaseImpl(
+    val commentRepository: CommentRepository
+) : ListCommentsUseCase {
     override fun execute(slug: String?): Either<ListCommentsUseCase.Error, List<Comment>> {
         return when (val it = Slug.new(slug)) {
-            is Invalid -> ListCommentsUseCase.Error.ValidationErrors(it.value).left()
-            is Valid -> {
-                val a = object : Comment {
-                    override val id: Int
-                        get() = 1
-                    override val body: String
-                        get() = "hoge-body-1"
-                    override val createdAt: Date
-                        get() = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-                    override val updatedAt: Date
-                        get() = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-                    override val author: String
-                        get() = "hoge-author-1"
+            is Invalid -> ListCommentsUseCase.Error.InvalidSlug(it.value).left()
+            is Valid -> when (val listResult = commentRepository.list(it.value)) {
+                /**
+                 * コメントの取得 成功
+                 */
+                is Right -> listResult.value.right()
+                /**
+                 * コメントの取得失敗
+                 */
+                is Left -> when (val listError = listResult.value) {
+                    /**
+                     * 原因: Slug に該当する記事が見つからなかった
+                     */
+                    is CommentRepository.ListError.NotFoundArticleBySlug -> ListCommentsUseCase.Error.NotFound(listError)
+                        .left()
+                    /**
+                     * 原因: 不明
+                     */
+                    is CommentRepository.ListError.Unexpected -> ListCommentsUseCase.Error.Unexpected(listError).left()
                 }
-                val b = object : Comment {
-                    override val id: Int
-                        get() = 2
-                    override val body: String
-                        get() = "hoge-body-2"
-                    override val createdAt: Date
-                        get() = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00")
-                    override val updatedAt: Date
-                        get() = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00")
-                    override val author: String
-                        get() = "hoge-author-2"
-                }
-                listOf(a, b).right()
             }
         }
     }

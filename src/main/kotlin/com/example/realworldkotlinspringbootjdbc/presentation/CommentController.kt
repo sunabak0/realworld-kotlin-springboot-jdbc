@@ -3,6 +3,8 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Comment
+import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
+import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.usecase.ListCommentsUseCase
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -10,48 +12,68 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
-import java.text.SimpleDateFormat
 
 @RestController
 @Tag(name = "Comments")
 class CommentController(val listComments: ListCommentsUseCase) {
     @GetMapping("/articles/{slug}/comments")
-    fun list(): ResponseEntity<String> {
-        val result = listComments.execute("hoge-slug")
-        when (result) {
+    fun list(@PathVariable("slug") slug: String?): ResponseEntity<String> {
+        return when (val result = listComments.execute(slug)) {
+            /**
+             * コメント取得に成功
+             */
             is Right -> {
-                println(result.value)
-            }
-            is Left -> {}
-        }
-        val comment1 = Comment(
-            1,
-            "hoge-body-1",
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-            "hoge-author-1"
-        )
-        val comment2 = Comment(
-            2,
-            "hoge-body-2",
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
-            "hoge-author-2"
-        )
-        return ResponseEntity(
-            ObjectMapper().writeValueAsString(
-                mapOf(
-                    "comments" to listOf(
-                        comment1,
-                        comment2,
+                val comments =
+                    result.value.map {
+                        Comment(
+                            it.id,
+                            it.body,
+                            it.createdAt,
+                            it.updatedAt,
+                            it.author,
+                        )
+                    }
+
+                return ResponseEntity(
+                    ObjectMapper().writeValueAsString(
+                        mapOf(
+                            "comments" to comments,
+                        )
                     ),
+                    HttpStatus.valueOf(200)
                 )
-            ),
-            HttpStatus.valueOf(200)
-        )
+            }
+            /**
+             * コメント取得に失敗
+             */
+            is Left -> when (val useCaseError = result.value) {
+                /**
+                 * 原因: バリデーションエラー
+                 */
+                is ListCommentsUseCase.Error.InvalidSlug -> ResponseEntity(
+                    serializeMyErrorListForResponseBody(useCaseError.errors),
+                    HttpStatus.valueOf(422)
+                )
+                /**
+                 * 原因: 記事が見つかりませんでした
+                 */
+                is ListCommentsUseCase.Error.NotFound -> ResponseEntity(
+                    serializeUnexpectedErrorForResponseBody("コメントが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                    HttpStatus.valueOf(404)
+                )
+                /**
+                 * 原因: 不明
+                 */
+                is ListCommentsUseCase.Error.Unexpected -> ResponseEntity(
+                    serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                    HttpStatus.valueOf(500)
+                )
+            }
+        }
     }
 
     @PostMapping("/articles/{slug}/comments")
