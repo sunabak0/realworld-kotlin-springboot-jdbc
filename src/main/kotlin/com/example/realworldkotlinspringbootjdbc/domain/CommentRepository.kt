@@ -7,7 +7,7 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 interface CommentRepository {
     fun list(slug: Slug): Either<ListError, List<Comment>> = TODO()
     sealed interface ListError : MyError {
-        data class NotFound(val slug: Slug) : ListError, MyError.Basic
+        data class NotFoundArticleBySlug(val slug: Slug) : ListError, MyError.Basic
         data class Unexpected(override val cause: Throwable, val slug: Slug) : ListError, MyError.MyErrorWithThrowable
     }
 }

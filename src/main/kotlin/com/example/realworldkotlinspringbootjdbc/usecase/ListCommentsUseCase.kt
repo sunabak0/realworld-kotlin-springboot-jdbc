@@ -41,7 +41,7 @@ class ShowCommentsUseCaseImpl(
                     /**
                      * 原因: コメントが見つからなかった
                      */
-                    is CommentRepository.ListError.NotFound -> ListCommentsUseCase.Error.NotFound(listError)
+                    is CommentRepository.ListError.NotFoundArticleBySlug -> ListCommentsUseCase.Error.NotFound(listError)
                         .left()
                     /**
                      * 原因: 不明
