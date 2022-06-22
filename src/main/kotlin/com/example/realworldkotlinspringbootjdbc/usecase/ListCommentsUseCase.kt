@@ -39,7 +39,7 @@ class ShowCommentsUseCaseImpl(
                  */
                 is Left -> when (val listError = listResult.value) {
                     /**
-                     * 原因: コメントが見つからなかった
+                     * 原因: Slug に該当する記事が見つからなかった
                      */
                     is CommentRepository.ListError.NotFoundArticleBySlug -> ListCommentsUseCase.Error.NotFound(listError)
                         .left()

@@ -21,7 +21,7 @@ class CommentControllerTest {
             CommentController(commentsUseCase)
 
         @Test
-        fun `コメント取得時、UseCase が「Comment」の配列を返す場合、200レスポンスを返す`() {
+        fun `コメント取得時、UseCase が「Comment」のリストを返す場合、200レスポンスを返す`() {
             val mockComments = listOf(
                 Comment.newWithoutValidation(
                     1,
@@ -80,6 +80,7 @@ class CommentControllerTest {
             )
             assertThat(actual).isEqualTo(expected)
         }
+
         @Test
         fun `コメント取得時、UseCase が原因不明のエラーを返す場合、500 エラーレスポンスを返す`() {
             val notImplementedError = object : MyError {}

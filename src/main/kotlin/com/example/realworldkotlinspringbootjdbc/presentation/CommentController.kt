@@ -59,7 +59,7 @@ class CommentController(val listComments: ListCommentsUseCase) {
                     HttpStatus.valueOf(422)
                 )
                 /**
-                 * 原因: Slug に該当する記事が見つからなかった
+                 * 原因: 記事が見つかりませんでした
                  */
                 is ListCommentsUseCase.Error.NotFound -> ResponseEntity(
                     serializeUnexpectedErrorForResponseBody("コメントが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
