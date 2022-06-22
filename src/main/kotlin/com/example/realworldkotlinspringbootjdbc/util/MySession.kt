@@ -49,9 +49,7 @@ object MySessionJwtImpl : MySessionJwt {
             if (decodedToken.issuer == MySessionJwt.ISSUER) {
                 val session = MySession(
                     UserId(userId),
-                    object : Email {
-                        override val value: String get() = email
-                    }
+                    Email.newWithoutValidation(email)
                 )
                 session.right()
             } else {

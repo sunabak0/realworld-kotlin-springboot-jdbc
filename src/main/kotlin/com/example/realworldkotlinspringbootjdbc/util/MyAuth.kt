@@ -79,7 +79,7 @@ class MyAuthImpl(
                 )
             }.flatMap { // Compare MySession.Email and RegisteredUser.Email
                 val (sessionEmail, registeredUser) = it
-                if (sessionEmail == registeredUser.email) { registeredUser.right() } else { MyAuth.Unauthorized.NotMatchEmail(sessionEmail, registeredUser.email).left() }
+                if (sessionEmail.value == registeredUser.email.value) { registeredUser.right() } else { println(sessionEmail.value); MyAuth.Unauthorized.NotMatchEmail(sessionEmail, registeredUser.email).left() }
             }
     }
 }

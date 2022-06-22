@@ -54,4 +54,15 @@ class UserRepositoryImpl : UserRepository {
         val password = Password.newWithoutValidation("dummy-password")
         return Pair(registeredUser, password).right()
     }
+
+    override fun findByUserId(id: UserId): Either<UserRepository.FindByUserIdError, RegisteredUser> {
+        val registeredUser = RegisteredUser.newWithoutValidation(
+            id.value,
+            "dummy@example.com",
+            "dummy-username",
+            "",
+            ""
+        )
+        return registeredUser.right()
+    }
 }

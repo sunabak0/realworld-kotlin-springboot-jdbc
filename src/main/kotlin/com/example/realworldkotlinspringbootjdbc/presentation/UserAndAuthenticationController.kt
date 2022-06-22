@@ -35,10 +35,10 @@ class UserAndAuthenticationController(
      * ユーザー登録
      *
      * 成功例
-     * $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"1234@example.com", "password":"Passw0rd", "username":"taro"}}' 'http://localhost:8080/api/users' | jq '.'
+     * $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"dummy@example.com", "password":"Passw0rd", "username":"taro"}}' 'http://localhost:8080/api/users' | jq '.'
      *
      * 失敗例
-     * $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"1234@example.com"}}' 'http://localhost:8080/api/users' | jq '.'
+     * $ curl -X POST --header 'Content-Type: application/json' -d '{"user":{"email":"dummy@example.com"}}' 'http://localhost:8080/api/users' | jq '.'
      */
     @PostMapping("/users")
     fun register(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
@@ -157,34 +157,58 @@ class UserAndAuthenticationController(
     }
 
     /**
+     *
      * (ログイン済みである)現在のユーザー情報を取得
      *
      * 例(成功/失敗)
-     * $ curl -X GET --header 'Content-Type: application/json' -H 'Authorization: Bearer ***' 'http://localhost:8080/api/user' | jq '.'
+     * $ curl -X GET --header 'Content-Type: application/json' -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJSZWFsV29ybGQiLCJ1c2VySWQiOjk5OSwiZW1haWwiOiJkdW1teUBleGFtcGxlLmNvbSJ9.zOw8VGLbw5vEFzWt__rbEW2mXg5InFyDYZ4bwuSZTtw' 'http://localhost:8080/api/user' | jq '.'
      *
      * 失敗例
      * $ curl -X GET --header 'Content-Type: application/json' -H 'Authorization: Bearer ***' 'http://localhost:8080/api/user' | jq '.'
      */
     @GetMapping("/user")
-    fun showCurrentUser(@RequestHeader("Authorization") rawAuthorizationHeader: String?): ResponseEntity<String> {
-        println("-----")
-        println(rawAuthorizationHeader)
-        println("-----")
-        // TODO Auth
-        val user = CurrentUser(
-            "hoge@example.com",
-            "hoge-username",
-            "hoge-bio",
-            "hoge-image",
-            "hoge-token",
-        )
-        return ResponseEntity(
-            ObjectMapper()
-                .enable(SerializationFeature.WRAP_ROOT_VALUE)
-                .writeValueAsString(user),
-            HttpStatus.valueOf(200)
-        )
-    }
+    fun showCurrentUser(@RequestHeader("Authorization") rawAuthorizationHeader: String?): ResponseEntity<String> =
+        when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
+            /**
+             * JWT認証 失敗
+             */
+            is Left -> when (val error = authorizeResult.value) {
+                /**
+                 * 原因: 謎
+                 */
+                is MyAuth.Unauthorized.Unexpected -> ResponseEntity(
+                    serializeUnexpectedErrorForResponseBody("予期せぬエラーが発生しました(cause: $error)"),
+                    HttpStatus.valueOf(500)
+                )
+                /**
+                 * 原因: 謎以外全て
+                 */
+                else -> ResponseEntity("", HttpStatus.valueOf(401))
+            }
+            /**
+             * JWT認証 成功
+             */
+            is Right -> {
+                val registeredUser = authorizeResult.value
+                val session = MySession(registeredUser.userId, registeredUser.email)
+                when (val token = mySessionJwt.encode(session)) {
+                    /**
+                     * 全て成功
+                     */
+                    is Right -> ResponseEntity(
+                        CurrentUser.from(registeredUser, token.value).serializeWithRootName(),
+                        HttpStatus.valueOf(201)
+                    )
+                    /**
+                     * 原因: セッションのJWTエンコードで失敗
+                     */
+                    is Left -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("予期せぬエラーが発生しました(cause: ${mySessionJwt::class.simpleName})"),
+                        HttpStatus.valueOf(500)
+                    )
+                }
+            }
+        }
 
     @PutMapping("/user")
     fun update(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
