@@ -2,7 +2,7 @@
 
 ## アーキテクチャ
 
-![](./docs/architecture.png)
+![](./docs/architecture-basic.drawio.png)
 
 ## UseCase
 
