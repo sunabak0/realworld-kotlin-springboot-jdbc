@@ -30,11 +30,11 @@ class CommentController(val listComments: ListCommentsUseCase) {
                 val comments =
                     result.value.map {
                         Comment(
-                            it.id,
-                            it.body,
+                            it.id.value,
+                            it.body.value,
                             it.createdAt,
                             it.updatedAt,
-                            it.author,
+                            it.author.username.value,
                         )
                     }
 
