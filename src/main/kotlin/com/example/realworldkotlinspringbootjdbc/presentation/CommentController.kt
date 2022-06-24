@@ -6,6 +6,7 @@ import com.example.realworldkotlinspringbootjdbc.presentation.response.Comment
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.usecase.ListCommentsUseCase
+import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @Tag(name = "Comments")
-class CommentController(val listComments: ListCommentsUseCase) {
+class CommentController(val listComments: ListCommentsUseCase, val myAuth: MyAuth) {
     @GetMapping("/articles/{slug}/comments")
     fun list(@PathVariable("slug") slug: String?): ResponseEntity<String> {
         return when (val result = listComments.execute(slug)) {
