@@ -5,4 +5,4 @@
 
 ## Presentation
 
-![](./presentation-detail.png)
+![](./presentation.drawio.png)
