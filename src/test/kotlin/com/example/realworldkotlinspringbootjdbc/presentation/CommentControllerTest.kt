@@ -10,6 +10,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
+import com.example.realworldkotlinspringbootjdbc.usecase.CreateCommentsUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.ListCommentsUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.example.realworldkotlinspringbootjdbc.util.MyError
@@ -24,9 +25,16 @@ class CommentControllerTest {
     @Nested
     class List {
         private val pathParam = "hoge-slug"
-        private inline fun commentController(commentsUseCase: ListCommentsUseCase, myAuth: MyAuth): CommentController =
-            CommentController(commentsUseCase, myAuth)
+        private inline fun commentController(
+            commentsUseCase: ListCommentsUseCase,
+            createCommentsUseCase: CreateCommentsUseCase,
+            myAuth: MyAuth
+        ): CommentController =
+            CommentController(commentsUseCase, createCommentsUseCase, myAuth)
+
         private val notImplementedMyAuth = object : MyAuth {}
+
+        private val notImplementedCreateCommentsUseCase = object : CreateCommentsUseCase {}
 
         @Test
         fun `コメント取得時、UseCase が「Comment」のリストを返す場合、200レスポンスを返す`() {
@@ -60,7 +68,10 @@ class CommentControllerTest {
                 override fun execute(slug: String?): Either<ListCommentsUseCase.Error, kotlin.collections.List<Comment>> =
                     mockComments.right()
             }
-            val actual = commentController(listReturnComment, notImplementedMyAuth).list(pathParam)
+            val actual =
+                commentController(listReturnComment, notImplementedCreateCommentsUseCase, notImplementedMyAuth).list(
+                    pathParam
+                )
             val expected = ResponseEntity(
                 """{"comments":[{"id":1,"body":"hoge-body-1","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-author-1"},{"id":2,"body":"hoge-body-2","createdAt":"2022-02-01T15:00:00.000Z","updatedAt":"2022-02-01T15:00:00.000Z","author":"hoge-author-2"}]}""",
                 HttpStatus.valueOf(200)
@@ -75,7 +86,11 @@ class CommentControllerTest {
                 override fun execute(slug: String?): Either<ListCommentsUseCase.Error, kotlin.collections.List<Comment>> =
                     ListCommentsUseCase.Error.NotFound(notImplementedError).left()
             }
-            val actual = commentController(listReturnNotFoundError, notImplementedMyAuth).list(pathParam)
+            val actual = commentController(
+                listReturnNotFoundError,
+                notImplementedCreateCommentsUseCase,
+                notImplementedMyAuth
+            ).list(pathParam)
             val expected = ResponseEntity("""{"errors":{"body":["コメントが見つかりませんでした"]}}""", HttpStatus.valueOf(404))
             assertThat(actual).isEqualTo(expected)
         }
@@ -91,7 +106,11 @@ class CommentControllerTest {
                     return ListCommentsUseCase.Error.InvalidSlug(listOf(notImplementedValidationError)).left()
                 }
             }
-            val actual = commentController(listReturnValidationError, notImplementedMyAuth).list(pathParam)
+            val actual = commentController(
+                listReturnValidationError,
+                notImplementedCreateCommentsUseCase,
+                notImplementedMyAuth
+            ).list(pathParam)
             val expected = ResponseEntity(
                 """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError"}]}}""",
                 HttpStatus.valueOf(422)
@@ -107,7 +126,11 @@ class CommentControllerTest {
                     return ListCommentsUseCase.Error.Unexpected(notImplementedError).left()
                 }
             }
-            val actual = commentController(listReturnUnexpectedError, notImplementedMyAuth).list(pathParam)
+            val actual = commentController(
+                listReturnUnexpectedError,
+                notImplementedCreateCommentsUseCase,
+                notImplementedMyAuth
+            ).list(pathParam)
             val expected = ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500))
             assertThat(actual).isEqualTo(expected)
         }

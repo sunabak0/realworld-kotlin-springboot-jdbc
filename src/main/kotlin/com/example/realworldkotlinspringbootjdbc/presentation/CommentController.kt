@@ -5,6 +5,8 @@ import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Comment
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
+import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
+import com.example.realworldkotlinspringbootjdbc.usecase.CreateCommentsUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.ListCommentsUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -20,7 +22,11 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @Tag(name = "Comments")
-class CommentController(val listComments: ListCommentsUseCase, val myAuth: MyAuth) {
+class CommentController(
+    val listComments: ListCommentsUseCase,
+    val createCommentsUseCase: CreateCommentsUseCase,
+    val myAuth: MyAuth
+) {
     @GetMapping("/articles/{slug}/comments")
     fun list(@PathVariable("slug") slug: String?): ResponseEntity<String> {
         return when (val result = listComments.execute(slug)) {
