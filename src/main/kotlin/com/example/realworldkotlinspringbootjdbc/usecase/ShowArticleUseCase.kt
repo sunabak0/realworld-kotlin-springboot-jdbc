@@ -21,7 +21,8 @@ import java.util.Date
 interface ShowArticleUseCase {
     fun execute(slug: String?): Either<Error, Article> = Error.NotImplemented.left()
     sealed interface Error : MyError {
-        data class ValidationErrors(override val errors: List<MyError.ValidationError>) : Error,
+        data class ValidationErrors(override val errors: List<MyError.ValidationError>) :
+            Error,
             MyError.ValidationErrors
 
         data class FailedShow(override val cause: MyError) : Error, MyError.MyErrorWithMyError

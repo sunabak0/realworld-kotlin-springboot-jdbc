@@ -7,7 +7,9 @@ import arrow.core.right
 import com.auth0.jwt.exceptions.JWTCreationException
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UnregisteredUser
+import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
+import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.Password
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
@@ -61,11 +63,11 @@ class UserAndAuthenticationControllerTest {
                 )
             }
             val successByUseCase = RegisteredUser.newWithoutValidation(
-                1,
-                "dummy@example.com",
-                "dummy-name",
-                "dummy-bio",
-                "dummy-image",
+                UserId(1),
+                Email.newWithoutValidation("dummy@example.com"),
+                Username.newWithoutValidation("dummy-name"),
+                Bio.newWithoutValidation("dummy-bio"),
+                Image.newWithoutValidation("dummy-image"),
             )
             val successByMySessionEncode = "success.encoded.token"
         }
@@ -73,11 +75,11 @@ class UserAndAuthenticationControllerTest {
 
     class `ユーザー登録` {
         val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
-            1,
-            "dummy@example.com",
-            "dummy-name",
-            "dummy-bio",
-            "dummy-image",
+            UserId(1),
+            Email.newWithoutValidation("dummy@example.com"),
+            Username.newWithoutValidation("dummy-name"),
+            Bio.newWithoutValidation("dummy-bio"),
+            Image.newWithoutValidation("dummy-image"),
         )
         val dummyMySession = MySession(
             UserId(1),
@@ -141,11 +143,11 @@ class UserAndAuthenticationControllerTest {
         @Test
         fun `UseCase が「RegisteredUser」を返し、JWTエンコードが成功する場合、201レスポンスを返す`() {
             val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
-                1,
-                "dummy@example.com",
-                "dummy-name",
-                "dummy-bio",
-                "dummy-image",
+                UserId(1),
+                Email.newWithoutValidation("dummy@example.com"),
+                Username.newWithoutValidation("dummy-name"),
+                Bio.newWithoutValidation("dummy-bio"),
+                Image.newWithoutValidation("dummy-image"),
             )
             val registerReturnRegisteredUser = object : RegisterUserUseCase {
                 override fun execute(
