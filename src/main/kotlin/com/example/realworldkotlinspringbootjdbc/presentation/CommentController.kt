@@ -179,7 +179,10 @@ class CommentController(
                         /***
                          * 原因: CommentId がバリデーションエラー
                          */
-                        is DeleteCommentsUseCase.Error.InvalidCommentId -> TODO()
+                        is DeleteCommentsUseCase.Error.InvalidCommentId -> ResponseEntity(
+                            serializeMyErrorListForResponseBody(useCaseError.errors),
+                            HttpStatus.valueOf(422)
+                        )
                         /**
                          * 原因: 記事が見つからなかった
                          */
