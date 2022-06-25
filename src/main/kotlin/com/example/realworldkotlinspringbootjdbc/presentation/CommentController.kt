@@ -91,7 +91,7 @@ class CommentController(
         @PathVariable("slug") slug: String?,
         @RequestBody rawRequestBody: String?
     ): ResponseEntity<String> {
-        when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
+        return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
             /**
              * JWT 認証 失敗
              */
@@ -101,23 +101,28 @@ class CommentController(
              */
             is Right -> {
                 val comment = NullableComment.from(rawRequestBody)
-                println(comment)
+                when (val registeredComment = createCommentsUseCase.execute(slug, comment.body)) {
+                    is Left -> TODO()
+                    /**
+                     * コメントの登録に成功
+                     */
+                    is Right -> ResponseEntity(
+                        ObjectMapper().writeValueAsString(
+                            mapOf(
+                                "comment" to mapOf(
+                                    "id" to 1,
+                                    "body" to "hoge-body",
+                                    "createdAt" to "2022-01-01T00:00:00.0+09:00",
+                                    "updatedAt" to "2022-01-01T00:00:00.0+09:00",
+                                    "author" to "hoge-author",
+                                ),
+                            )
+                        ),
+                        HttpStatus.valueOf(201)
+                    )
+                }
             }
         }
-        return ResponseEntity(
-            ObjectMapper().writeValueAsString(
-                mapOf(
-                    "comment" to mapOf(
-                        "id" to 1,
-                        "body" to "hoge-body",
-                        "createdAt" to "2022-01-01T00:00:00.0+09:00",
-                        "updatedAt" to "2022-01-01T00:00:00.0+09:00",
-                        "author" to "hoge-author",
-                    ),
-                )
-            ),
-            HttpStatus.valueOf(201)
-        )
     }
 
     @DeleteMapping("/articles/{slug}/comments/{id}")
