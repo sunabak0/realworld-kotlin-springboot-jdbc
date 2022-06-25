@@ -102,7 +102,15 @@ class CommentController(
             is Right -> {
                 val comment = NullableComment.from(rawRequestBody)
                 when (val createdComment = createCommentsUseCase.execute(slug, comment.body)) {
-                    is Left -> TODO()
+                    is Left -> when (val useCaseError = createdComment.value) {
+                        is CreateCommentsUseCase.Error.InvalidSlug -> ResponseEntity(
+                            serializeMyErrorListForResponseBody(useCaseError.errors),
+                            HttpStatus.valueOf(422)
+                        )
+                        is CreateCommentsUseCase.Error.InvalidCommentBody -> TODO()
+                        is CreateCommentsUseCase.Error.NotFound -> TODO()
+                        is CreateCommentsUseCase.Error.Unexpected -> TODO()
+                    }
                     /**
                      * コメントの登録に成功
                      */

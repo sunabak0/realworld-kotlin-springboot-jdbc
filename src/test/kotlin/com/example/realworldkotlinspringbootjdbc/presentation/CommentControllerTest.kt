@@ -139,6 +139,7 @@ class CommentControllerTest {
 
     @Nested
     class Create {
+        private val requestHeader = "hoge-authorize"
         private val pathParam = "hoge-slug"
         private val requestBody = """
                 {
@@ -162,6 +163,12 @@ class CommentControllerTest {
         ): CommentController =
             CommentController(listCommentsUseCase, createCommentsUseCase, myAuth)
 
+        private val authorizedMyAuth = object : MyAuth {
+            override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
+                return dummyRegisteredUser.right()
+            }
+        }
+
         @Test
         fun `コメント作成時、UseCase がコメント作成したコメントを返す場合、201 レスポンスを返す`() {
             val returnComment = Comment.newWithoutValidation(
@@ -176,11 +183,6 @@ class CommentControllerTest {
                     true
                 )
             )
-            val notImplementedMyAuth = object : MyAuth {
-                override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
-                    return dummyRegisteredUser.right()
-                }
-            }
             val createCommentsUseCase = object : CreateCommentsUseCase {
                 override fun execute(slug: String?, body: String?): Either<CreateCommentsUseCase.Error, Comment> {
                     return returnComment.right()
@@ -190,11 +192,34 @@ class CommentControllerTest {
                 commentController(
                     notImplementedListCommentsUseCase,
                     createCommentsUseCase,
-                    notImplementedMyAuth
+                    authorizedMyAuth
                 ).create(pathParam, pathParam, requestBody)
             val expected = ResponseEntity(
                 """{"Comment":{"id":1,"body":"hoge-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-username"}}""",
                 HttpStatus.valueOf(201)
+            )
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        fun `コメント作成時、Slug が不正であることに起因する「バリデーションエラー」のとき、422 エラーレスポンスを返す`() {
+            val notImplementedValidationError = object : MyError.ValidationError {
+                override val message: String get() = "DummyValidationError"
+                override val key: String get() = "DummyKey"
+            }
+            val createReturnValidationError = object : CreateCommentsUseCase {
+                override fun execute(slug: String?, body: String?): Either<CreateCommentsUseCase.Error, Comment> {
+                    return CreateCommentsUseCase.Error.InvalidSlug(listOf(notImplementedValidationError)).left()
+                }
+            }
+            val actual = commentController(
+                notImplementedListCommentsUseCase,
+                createReturnValidationError,
+                authorizedMyAuth
+            ).create(requestHeader, pathParam, requestBody)
+            val expected = ResponseEntity(
+                """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError"}]}}""",
+                HttpStatus.valueOf(422)
             )
             assertThat(actual).isEqualTo(expected)
         }
