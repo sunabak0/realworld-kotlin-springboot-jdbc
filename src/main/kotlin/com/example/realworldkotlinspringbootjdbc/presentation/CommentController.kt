@@ -168,7 +168,31 @@ class CommentController(
                     /**
                      * コメントの削除に失敗
                      */
-                    is Left -> TODO()
+                    is Left -> when (val useCaseError = result.value) {
+                        /***
+                         * 原因: Slug がバリデーションエラー
+                         */
+                        is DeleteCommentsUseCase.Error.InvalidSlug -> ResponseEntity(
+                            serializeMyErrorListForResponseBody(useCaseError.errors),
+                            HttpStatus.valueOf(422)
+                        )
+                        /***
+                         * 原因: CommentId がバリデーションエラー
+                         */
+                        is DeleteCommentsUseCase.Error.InvalidCommentId -> TODO()
+                        /**
+                         * 原因: 記事が見つからなかった
+                         */
+                        is DeleteCommentsUseCase.Error.ArticleNotFoundBySlug -> TODO()
+                        /**
+                         * 原因: コメントが見つからなかった
+                         */
+                        is DeleteCommentsUseCase.Error.CommentsNotFoundByCommentId -> TODO()
+                        /**
+                         * 原因: 未知のエラー
+                         */
+                        is DeleteCommentsUseCase.Error.Unexpected -> TODO()
+                    }
                     /**
                      * コメントの削除に成功
                      */

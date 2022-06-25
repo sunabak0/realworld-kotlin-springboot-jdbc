@@ -345,5 +345,29 @@ class CommentControllerTest {
             val expected = ResponseEntity("", HttpStatus.valueOf(200))
             assertThat(actual).isEqualTo(expected)
         }
+
+        @Test
+        fun `コメント削除時、Slug が不正であることに起因する「バリデーションエラー」のとき、422 エラーレスポンスを返す`() {
+            val notImplementedValidationError = object : MyError.ValidationError {
+                override val message: String get() = "DummyValidationError because Invalid Slug"
+                override val key: String get() = "DummyKey"
+            }
+            val deleteRetrunValidationError = object : DeleteCommentsUseCase {
+                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentsUseCase.Error, Unit> {
+                    return DeleteCommentsUseCase.Error.InvalidSlug(listOf(notImplementedValidationError)).left()
+                }
+            }
+            val actual = commentController(
+                notImplementedListCommentsUseCase,
+                notImplementedCreateCommentsUseCase,
+                deleteRetrunValidationError,
+                authorizedMyAuth
+            ).delete(requestHeader, pathParamSlug, pathParamCommentId)
+            val expected = ResponseEntity(
+                """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid Slug"}]}}""",
+                HttpStatus.valueOf(422)
+            )
+            assertThat(actual).isEqualTo(expected)
+        }
     }
 }
