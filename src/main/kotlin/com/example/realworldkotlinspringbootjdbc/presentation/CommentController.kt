@@ -193,7 +193,10 @@ class CommentController(
                         /**
                          * 原因: コメントが見つからなかった
                          */
-                        is DeleteCommentsUseCase.Error.CommentsNotFoundByCommentId -> TODO()
+                        is DeleteCommentsUseCase.Error.CommentsNotFoundByCommentId -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("コメントが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                            HttpStatus.valueOf(404)
+                        )
                         /**
                          * 原因: 未知のエラー
                          */

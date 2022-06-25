@@ -415,5 +415,26 @@ class CommentControllerTest {
             val expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404))
             assertThat(actual).isEqualTo(expected)
         }
+
+        @Test
+        fun `コメント削除時、UseCase が CommentId に該当するコメントが見つからなかったことに起因する「NotFound」エラーのとき、404 エラーレスポンスを返す`() {
+            val notImplementedError = object : MyError {}
+            val deleteReturnCommentNotFoundError = object : DeleteCommentsUseCase {
+                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentsUseCase.Error, Unit> {
+                    return DeleteCommentsUseCase.Error.CommentsNotFoundByCommentId(
+                        notImplementedError,
+                        CommentId(pathParamCommentId)
+                    ).left()
+                }
+            }
+            val actual = commentController(
+                notImplementedListCommentsUseCase,
+                notImplementedCreateCommentsUseCase,
+                deleteReturnCommentNotFoundError,
+                authorizedMyAuth
+            ).delete(requestHeader, pathParamSlug, pathParamCommentId)
+            val expected = ResponseEntity("""{"errors":{"body":["コメントが見つかりませんでした"]}}""", HttpStatus.valueOf(404))
+            assertThat(actual).isEqualTo(expected)
+        }
     }
 }
