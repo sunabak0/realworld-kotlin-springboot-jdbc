@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service
 
 interface CreateCommentsUseCase {
     fun execute(slug: String?, body: String?): Either<Error, Comment> = TODO()
-    interface Error : MyError {
+    sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
         data class InvalidCommentBody(override val errors: List<MyError.ValidationError>) : Error,
             MyError.ValidationErrors
