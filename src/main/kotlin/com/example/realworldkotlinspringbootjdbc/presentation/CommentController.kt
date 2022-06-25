@@ -186,7 +186,10 @@ class CommentController(
                         /**
                          * 原因: 記事が見つからなかった
                          */
-                        is DeleteCommentsUseCase.Error.ArticleNotFoundBySlug -> TODO()
+                        is DeleteCommentsUseCase.Error.ArticleNotFoundBySlug -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                            HttpStatus.valueOf(404)
+                        )
                         /**
                          * 原因: コメントが見つからなかった
                          */

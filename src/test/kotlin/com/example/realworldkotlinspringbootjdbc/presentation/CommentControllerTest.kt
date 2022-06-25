@@ -6,6 +6,7 @@ import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
 import com.example.realworldkotlinspringbootjdbc.domain.Profile
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
+import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
@@ -391,6 +392,27 @@ class CommentControllerTest {
                 """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid CommentId"}]}}""",
                 HttpStatus.valueOf(422)
             )
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        fun `コメント削除時、UseCase がSlug に該当する記事が見つからなかったことに起因する「NotFound」エラーのとき、404 エラーレスポンスを返す`() {
+            val notImplementedError = object : MyError {}
+            val deleteReturnArticleNotFoundError = object : DeleteCommentsUseCase {
+                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentsUseCase.Error, Unit> {
+                    return DeleteCommentsUseCase.Error.ArticleNotFoundBySlug(
+                        notImplementedError,
+                        Slug.newWithoutValidation(pathParamSlug)
+                    ).left()
+                }
+            }
+            val actual = commentController(
+                notImplementedListCommentsUseCase,
+                notImplementedCreateCommentsUseCase,
+                deleteReturnArticleNotFoundError,
+                authorizedMyAuth
+            ).delete(requestHeader, pathParamSlug, pathParamCommentId)
+            val expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404))
             assertThat(actual).isEqualTo(expected)
         }
     }

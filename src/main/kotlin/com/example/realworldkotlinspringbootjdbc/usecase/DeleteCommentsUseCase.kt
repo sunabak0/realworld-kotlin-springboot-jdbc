@@ -10,7 +10,8 @@ interface DeleteCommentsUseCase {
 
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
-        data class InvalidCommentId(override val errors: List<MyError.ValidationError>) : Error,
+        data class InvalidCommentId(override val errors: List<MyError.ValidationError>) :
+            Error,
             MyError.ValidationErrors
 
         data class ArticleNotFoundBySlug(override val cause: MyError, val slug: Slug) :
