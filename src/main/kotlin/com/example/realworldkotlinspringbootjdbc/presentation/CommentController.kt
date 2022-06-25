@@ -2,6 +2,7 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import com.example.realworldkotlinspringbootjdbc.presentation.request.NullableComment
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Comment
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -84,7 +86,23 @@ class CommentController(
     }
 
     @PostMapping("/articles/{slug}/comments")
-    fun create(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
+    fun create(
+        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
+        @RequestBody rawRequestBody: String?
+    ): ResponseEntity<String> {
+        when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
+            /**
+             * JWT 認証 失敗
+             */
+            is Left -> AuthorizationError.handle(authorizeResult.value)
+            /**
+             * JWT 認証 成功
+             */
+            is Right -> {
+                val comment = NullableComment.from(rawRequestBody)
+                println(comment)
+            }
+        }
         return ResponseEntity(
             ObjectMapper().writeValueAsString(
                 mapOf(
@@ -97,7 +115,7 @@ class CommentController(
                     ),
                 )
             ),
-            HttpStatus.valueOf(200)
+            HttpStatus.valueOf(201)
         )
     }
 
