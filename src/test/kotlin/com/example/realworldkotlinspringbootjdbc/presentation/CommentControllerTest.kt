@@ -204,7 +204,7 @@ class CommentControllerTest {
         @Test
         fun `コメント作成時、Slug が不正であることに起因する「バリデーションエラー」のとき、422 エラーレスポンスを返す`() {
             val notImplementedValidationError = object : MyError.ValidationError {
-                override val message: String get() = "DummyValidationError"
+                override val message: String get() = "DummyValidationError because Invalid Slug"
                 override val key: String get() = "DummyKey"
             }
             val createReturnValidationError = object : CreateCommentsUseCase {
@@ -218,7 +218,30 @@ class CommentControllerTest {
                 authorizedMyAuth
             ).create(requestHeader, pathParam, requestBody)
             val expected = ResponseEntity(
-                """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError"}]}}""",
+                """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid Slug"}]}}""",
+                HttpStatus.valueOf(422)
+            )
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        fun `コメント作成時、CommentBody が不正であることに起因する「バリデーションエラー」のとき、422 エラーレスポンスを返す`() {
+            val notImplementedValidationError = object : MyError.ValidationError {
+                override val message: String get() = "DummyValidationError because invalid CommentBody"
+                override val key: String get() = "DummyKey"
+            }
+            val createReturnValidationError = object : CreateCommentsUseCase {
+                override fun execute(slug: String?, body: String?): Either<CreateCommentsUseCase.Error, Comment> {
+                    return CreateCommentsUseCase.Error.InvalidCommentBody(listOf(notImplementedValidationError)).left()
+                }
+            }
+            val actual = commentController(
+                notImplementedListCommentsUseCase,
+                createReturnValidationError,
+                authorizedMyAuth
+            ).create(requestHeader, pathParam, requestBody)
+            val expected = ResponseEntity(
+                """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because invalid CommentBody"}]}}""",
                 HttpStatus.valueOf(422)
             )
             assertThat(actual).isEqualTo(expected)

@@ -107,7 +107,10 @@ class CommentController(
                             serializeMyErrorListForResponseBody(useCaseError.errors),
                             HttpStatus.valueOf(422)
                         )
-                        is CreateCommentsUseCase.Error.InvalidCommentBody -> TODO()
+                        is CreateCommentsUseCase.Error.InvalidCommentBody -> ResponseEntity(
+                            serializeMyErrorListForResponseBody(useCaseError.errors),
+                            HttpStatus.valueOf(422)
+                        )
                         is CreateCommentsUseCase.Error.NotFound -> TODO()
                         is CreateCommentsUseCase.Error.Unexpected -> TODO()
                     }
