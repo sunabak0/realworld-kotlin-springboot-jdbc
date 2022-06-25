@@ -107,17 +107,7 @@ class CommentController(
                      * コメントの登録に成功
                      */
                     is Right -> ResponseEntity(
-                        ObjectMapper().writeValueAsString(
-                            mapOf(
-                                "comment" to mapOf(
-                                    "id" to 1,
-                                    "body" to "hoge-body",
-                                    "createdAt" to "2022-01-01T00:00:00.0+09:00",
-                                    "updatedAt" to "2022-01-01T00:00:00.0+09:00",
-                                    "author" to "hoge-author",
-                                ),
-                            )
-                        ),
+                        Comment.from(registeredComment.value).serializeWithRootName(),
                         HttpStatus.valueOf(201)
                     )
                 }

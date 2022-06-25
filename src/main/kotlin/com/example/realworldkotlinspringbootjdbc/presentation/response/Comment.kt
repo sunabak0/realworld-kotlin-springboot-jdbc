@@ -2,6 +2,8 @@ package com.example.realworldkotlinspringbootjdbc.presentation.response
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import java.util.Date
 
 data class Comment(
@@ -14,4 +16,26 @@ data class Comment(
     @JsonProperty("updatedAt")
     val updatedAt: Date,
     @JsonProperty("author") val author: String,
-)
+) {
+    /**
+     * Factory メソッド
+     */
+    companion object {
+        fun from(comment: com.example.realworldkotlinspringbootjdbc.domain.Comment): Comment =
+            Comment(
+                comment.id.value,
+                comment.body.value,
+                comment.createdAt,
+                comment.updatedAt,
+                comment.author.username.value,
+            )
+    }
+
+    /**
+     * JSON へシリアライズ
+     */
+    fun serializeWithRootName(): String =
+        ObjectMapper()
+            .enable(SerializationFeature.WRAP_ROOT_VALUE)
+            .writeValueAsString(this)
+}

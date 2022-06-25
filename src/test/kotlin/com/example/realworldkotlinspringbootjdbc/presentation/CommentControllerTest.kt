@@ -193,7 +193,7 @@ class CommentControllerTest {
                     notImplementedMyAuth
                 ).create(pathParam, pathParam, requestBody)
             val expected = ResponseEntity(
-                """{"comment":{"id":1,"body":"hoge-body","createdAt":"2022-01-01T00:00:00.0+09:00","updatedAt":"2022-01-01T00:00:00.0+09:00","author":"hoge-author"}}""",
+                """{"Comment":{"id":1,"body":"hoge-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-username"}}""",
                 HttpStatus.valueOf(201)
             )
             assertThat(actual).isEqualTo(expected)
