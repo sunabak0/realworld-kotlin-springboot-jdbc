@@ -25,13 +25,13 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @Tag(name = "Comments")
 class CommentController(
-    val listComments: ListCommentsUseCase,
+    val listCommentsUseCase: ListCommentsUseCase,
     val createCommentsUseCase: CreateCommentsUseCase,
     val myAuth: MyAuth
 ) {
     @GetMapping("/articles/{slug}/comments")
     fun list(@PathVariable("slug") slug: String?): ResponseEntity<String> {
-        return when (val result = listComments.execute(slug)) {
+        return when (val result = listCommentsUseCase.execute(slug)) {
             /**
              * コメント取得に成功
              */
