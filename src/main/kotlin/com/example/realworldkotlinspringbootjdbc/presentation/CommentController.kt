@@ -8,6 +8,7 @@ import com.example.realworldkotlinspringbootjdbc.presentation.response.serialize
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
 import com.example.realworldkotlinspringbootjdbc.usecase.CreateCommentsUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.DeleteCommentsUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.ListCommentsUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController
 class CommentController(
     val listCommentsUseCase: ListCommentsUseCase,
     val createCommentsUseCase: CreateCommentsUseCase,
+    val deleteCommentsUseCase: DeleteCommentsUseCase,
     val myAuth: MyAuth
 ) {
     @GetMapping("/articles/{slug}/comments")
@@ -148,7 +150,34 @@ class CommentController(
     }
 
     @DeleteMapping("/articles/{slug}/comments/{id}")
-    fun delete(): ResponseEntity<String> {
-        return ResponseEntity("", HttpStatus.valueOf(200))
+    fun delete(
+        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
+        @PathVariable("slug") slug: String?,
+        @PathVariable("id") commentId: Int?
+    ): ResponseEntity<String> {
+        return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
+            /**
+             * JWT 認証 失敗
+             */
+            is Left -> AuthorizationError.handle(authorizeResult.value)
+            /**
+             * JWT 認証 成功
+             */
+            is Right -> {
+                when (val result = deleteCommentsUseCase.execute(slug, commentId)) {
+                    /**
+                     * コメントの削除に失敗
+                     */
+                    is Left -> TODO()
+                    /**
+                     * コメントの削除に成功
+                     */
+                    is Right -> ResponseEntity(
+                        "",
+                        HttpStatus.valueOf(200)
+                    )
+                }
+            }
+        }
     }
 }
