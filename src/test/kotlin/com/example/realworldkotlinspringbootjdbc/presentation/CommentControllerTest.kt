@@ -170,7 +170,7 @@ class CommentControllerTest {
         }
 
         @Test
-        fun `コメント作成時、UseCase がコメント作成したコメントを返す場合、201 レスポンスを返す`() {
+        fun `コメント作成時、UseCase がコメント作成したコメントを返す場合、200 レスポンスを返す`() {
             val returnComment = Comment.newWithoutValidation(
                 CommentId(1),
                 CommentBody.newWithoutValidation("hoge-body"),
@@ -196,7 +196,7 @@ class CommentControllerTest {
                 ).create(pathParam, pathParam, requestBody)
             val expected = ResponseEntity(
                 """{"Comment":{"id":1,"body":"hoge-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-username"}}""",
-                HttpStatus.valueOf(201)
+                HttpStatus.valueOf(200)
             )
             assertThat(actual).isEqualTo(expected)
         }

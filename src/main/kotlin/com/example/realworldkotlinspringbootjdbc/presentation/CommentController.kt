@@ -140,7 +140,7 @@ class CommentController(
                      */
                     is Right -> ResponseEntity(
                         Comment.from(createdComment.value).serializeWithRootName(),
-                        HttpStatus.valueOf(201)
+                        HttpStatus.valueOf(200)
                     )
                 }
             }
