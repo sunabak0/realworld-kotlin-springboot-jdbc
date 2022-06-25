@@ -200,7 +200,10 @@ class CommentController(
                         /**
                          * 原因: 未知のエラー
                          */
-                        is DeleteCommentsUseCase.Error.Unexpected -> TODO()
+                        is DeleteCommentsUseCase.Error.Unexpected -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                            HttpStatus.valueOf(500)
+                        )
                     }
                     /**
                      * コメントの削除に成功

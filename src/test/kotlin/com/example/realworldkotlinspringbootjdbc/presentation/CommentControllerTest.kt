@@ -436,5 +436,23 @@ class CommentControllerTest {
             val expected = ResponseEntity("""{"errors":{"body":["コメントが見つかりませんでした"]}}""", HttpStatus.valueOf(404))
             assertThat(actual).isEqualTo(expected)
         }
+
+        @Test
+        fun `コメント削除時、UseCase が原因不明のエラーを返す場合、500 エラーレスポンスを返す`() {
+            val notImplementedError = object : MyError {}
+            val deleteReturnUnexpectedError = object : DeleteCommentsUseCase {
+                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentsUseCase.Error, Unit> {
+                    return DeleteCommentsUseCase.Error.Unexpected(notImplementedError).left()
+                }
+            }
+            val actual = commentController(
+                notImplementedListCommentsUseCase,
+                notImplementedCreateCommentsUseCase,
+                deleteReturnUnexpectedError,
+                authorizedMyAuth,
+            ).delete(requestHeader, pathParamSlug, pathParamCommentId)
+            val expected = ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500))
+            assertThat(actual).isEqualTo(expected)
+        }
     }
 }
