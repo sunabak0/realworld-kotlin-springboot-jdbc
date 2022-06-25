@@ -102,6 +102,9 @@ class CommentController(
             is Right -> {
                 val comment = NullableComment.from(rawRequestBody)
                 when (val createdComment = createCommentsUseCase.execute(slug, comment.body)) {
+                    /**
+                     * コメントの登録に失敗
+                     */
                     is Left -> when (val useCaseError = createdComment.value) {
                         /***
                          * 原因: Slug がバリデーションエラー
