@@ -101,13 +101,13 @@ class CommentController(
              */
             is Right -> {
                 val comment = NullableComment.from(rawRequestBody)
-                when (val registeredComment = createCommentsUseCase.execute(slug, comment.body)) {
+                when (val createdComment = createCommentsUseCase.execute(slug, comment.body)) {
                     is Left -> TODO()
                     /**
                      * コメントの登録に成功
                      */
                     is Right -> ResponseEntity(
-                        Comment.from(registeredComment.value).serializeWithRootName(),
+                        Comment.from(createdComment.value).serializeWithRootName(),
                         HttpStatus.valueOf(201)
                     )
                 }
