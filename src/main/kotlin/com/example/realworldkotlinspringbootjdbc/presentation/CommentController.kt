@@ -88,6 +88,7 @@ class CommentController(
     @PostMapping("/articles/{slug}/comments")
     fun create(
         @RequestHeader("Authorization") rawAuthorizationHeader: String?,
+        @PathVariable("slug") slug: String?,
         @RequestBody rawRequestBody: String?
     ): ResponseEntity<String> {
         when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {

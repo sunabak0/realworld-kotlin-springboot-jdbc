@@ -191,7 +191,7 @@ class CommentControllerTest {
                     notImplementedListCommentsUseCase,
                     createCommentsUseCase,
                     notImplementedMyAuth
-                ).create(pathParam, requestBody)
+                ).create(pathParam, pathParam, requestBody)
             val expected = ResponseEntity(
                 """{"comment":{"id":1,"body":"hoge-body","createdAt":"2022-01-01T00:00:00.0+09:00","updatedAt":"2022-01-01T00:00:00.0+09:00","author":"hoge-author"}}""",
                 HttpStatus.valueOf(201)
