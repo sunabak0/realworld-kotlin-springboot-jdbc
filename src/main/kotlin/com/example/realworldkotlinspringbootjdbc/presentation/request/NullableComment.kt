@@ -27,7 +27,7 @@ data class NullableComment(
     @JsonProperty("body") val body: String?
 ) {
     companion object {
-        fun from(rawRequestBody: String?) : NullableComment =
+        fun from(rawRequestBody: String?): NullableComment =
             try {
                 ObjectMapper()
                     .enable(DeserializationFeature.UNWRAP_ROOT_VALUE)

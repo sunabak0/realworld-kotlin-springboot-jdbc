@@ -1,8 +1,8 @@
 package com.example.realworldkotlinspringbootjdbc.domain
 
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
-import com.example.realworldkotlinspringbootjdbc.domain.comment.Body as CommentBody
 import java.util.Date
+import com.example.realworldkotlinspringbootjdbc.domain.comment.Body as CommentBody
 
 interface Comment {
     val id: CommentId

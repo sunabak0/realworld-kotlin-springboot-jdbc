@@ -17,7 +17,8 @@ interface CreateCommentsUseCase {
     fun execute(slug: String?, body: String?): Either<Error, Comment> = TODO()
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
-        data class InvalidCommentBody(override val errors: List<MyError.ValidationError>) : Error,
+        data class InvalidCommentBody(override val errors: List<MyError.ValidationError>) :
+            Error,
             MyError.ValidationErrors
 
         data class NotFound(override val cause: MyError) : Error, MyError.MyErrorWithMyError
