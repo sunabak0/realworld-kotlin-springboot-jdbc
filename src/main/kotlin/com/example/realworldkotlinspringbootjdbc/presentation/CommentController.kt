@@ -127,7 +127,10 @@ class CommentController(
                         /**
                          * 原因: 不明
                          */
-                        is CreateCommentsUseCase.Error.Unexpected -> TODO()
+                        is CreateCommentsUseCase.Error.Unexpected -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                            HttpStatus.valueOf(500)
+                        )
                     }
                     /**
                      * コメントの登録に成功
