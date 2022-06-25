@@ -23,7 +23,7 @@ data class Comment(
     companion object {
         fun from(comment: com.example.realworldkotlinspringbootjdbc.domain.Comment): Comment =
             Comment(
-                comment.id.value,
+                comment.id.value.toInt(),
                 comment.body.value,
                 comment.createdAt,
                 comment.updatedAt,

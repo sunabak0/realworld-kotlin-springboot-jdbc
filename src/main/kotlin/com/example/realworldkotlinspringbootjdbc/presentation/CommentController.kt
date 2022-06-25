@@ -41,7 +41,7 @@ class CommentController(
                 val comments =
                     result.value.map {
                         Comment(
-                            it.id.value,
+                            it.id.value.toInt(),
                             it.body.value,
                             it.createdAt,
                             it.updatedAt,
@@ -153,7 +153,7 @@ class CommentController(
     fun delete(
         @RequestHeader("Authorization") rawAuthorizationHeader: String?,
         @PathVariable("slug") slug: String?,
-        @PathVariable("id") commentId: Int?
+        @PathVariable("id") commentId: String?
     ): ResponseEntity<String> {
         return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
             /**

@@ -6,7 +6,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface DeleteCommentsUseCase {
-    fun execute(slug: String?, commentId: Int?): Either<Error, Unit> = TODO()
+    fun execute(slug: String?, commentId: String?): Either<Error, Unit> = TODO()
 
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
