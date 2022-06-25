@@ -71,7 +71,7 @@ class CommentController(
                  * 原因: 記事が見つかりませんでした
                  */
                 is ListCommentsUseCase.Error.NotFound -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody("コメントが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                    serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                     HttpStatus.valueOf(404)
                 )
                 /**
@@ -103,15 +103,30 @@ class CommentController(
                 val comment = NullableComment.from(rawRequestBody)
                 when (val createdComment = createCommentsUseCase.execute(slug, comment.body)) {
                     is Left -> when (val useCaseError = createdComment.value) {
+                        /***
+                         * 原因: Slug がバリデーションエラー
+                         */
                         is CreateCommentsUseCase.Error.InvalidSlug -> ResponseEntity(
                             serializeMyErrorListForResponseBody(useCaseError.errors),
                             HttpStatus.valueOf(422)
                         )
+                        /***
+                         * 原因: CommentBody がバリデーションエラー
+                         */
                         is CreateCommentsUseCase.Error.InvalidCommentBody -> ResponseEntity(
                             serializeMyErrorListForResponseBody(useCaseError.errors),
                             HttpStatus.valueOf(422)
                         )
-                        is CreateCommentsUseCase.Error.NotFound -> TODO()
+                        /**
+                         * 原因: 記事が見つかりませんでした
+                         */
+                        is CreateCommentsUseCase.Error.NotFound -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                            HttpStatus.valueOf(404)
+                        )
+                        /**
+                         * 原因: 不明
+                         */
                         is CreateCommentsUseCase.Error.Unexpected -> TODO()
                     }
                     /**

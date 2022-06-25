@@ -92,7 +92,7 @@ class CommentControllerTest {
                 notImplementedCreateCommentsUseCase,
                 notImplementedMyAuth
             ).list(pathParam)
-            val expected = ResponseEntity("""{"errors":{"body":["コメントが見つかりませんでした"]}}""", HttpStatus.valueOf(404))
+            val expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404))
             assertThat(actual).isEqualTo(expected)
         }
 
@@ -244,6 +244,23 @@ class CommentControllerTest {
                 """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because invalid CommentBody"}]}}""",
                 HttpStatus.valueOf(422)
             )
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        fun `コメント作成時、Slug に該当する Article が見つからなかったことに起因する「Not Found」エラーのとき、404 エラーレスポンスを返す`() {
+            val notImplementedError = object : MyError {}
+            val createReturnNotFoundError = object : CreateCommentsUseCase {
+                override fun execute(slug: String?, body: String?): Either<CreateCommentsUseCase.Error, Comment> {
+                    return CreateCommentsUseCase.Error.NotFound(notImplementedError).left()
+                }
+            }
+            val actual = commentController(
+                notImplementedListCommentsUseCase,
+                createReturnNotFoundError,
+                authorizedMyAuth
+            ).create(requestHeader, pathParam, requestBody)
+            val expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404))
             assertThat(actual).isEqualTo(expected)
         }
     }
