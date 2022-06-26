@@ -4,5 +4,4 @@ import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-class CommentRepositoryImpl: CommentRepository {
-}
+class CommentRepositoryImpl : CommentRepository
