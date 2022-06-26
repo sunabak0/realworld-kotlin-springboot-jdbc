@@ -10,7 +10,7 @@ import com.example.realworldkotlinspringbootjdbc.presentation.response.serialize
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
 import com.example.realworldkotlinspringbootjdbc.usecase.CreateCommentUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.DeleteCommentUseCase
-import com.example.realworldkotlinspringbootjdbc.usecase.ListCommentsUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.ListCommentUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -27,14 +27,14 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @Tag(name = "Comments")
 class CommentController(
-    val listCommentsUseCase: ListCommentsUseCase,
+    val listCommentUseCase: ListCommentUseCase,
     val createCommentUseCase: CreateCommentUseCase,
     val deleteCommentUseCase: DeleteCommentUseCase,
     val myAuth: MyAuth
 ) {
     @GetMapping("/articles/{slug}/comments")
     fun list(@PathVariable("slug") slug: String?): ResponseEntity<String> {
-        return when (val result = listCommentsUseCase.execute(slug)) {
+        return when (val result = listCommentUseCase.execute(slug)) {
             /**
              * コメント取得に成功
              */
@@ -66,21 +66,21 @@ class CommentController(
                 /**
                  * 原因: バリデーションエラー
                  */
-                is ListCommentsUseCase.Error.InvalidSlug -> ResponseEntity(
+                is ListCommentUseCase.Error.InvalidSlug -> ResponseEntity(
                     serializeMyErrorListForResponseBody(useCaseError.errors),
                     HttpStatus.valueOf(422)
                 )
                 /**
                  * 原因: 記事が見つかりませんでした
                  */
-                is ListCommentsUseCase.Error.NotFound -> ResponseEntity(
+                is ListCommentUseCase.Error.NotFound -> ResponseEntity(
                     serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                     HttpStatus.valueOf(404)
                 )
                 /**
                  * 原因: 不明
                  */
-                is ListCommentsUseCase.Error.Unexpected -> ResponseEntity(
+                is ListCommentUseCase.Error.Unexpected -> ResponseEntity(
                     serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                     HttpStatus.valueOf(500)
                 )
