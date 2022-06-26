@@ -9,7 +9,7 @@ import com.example.realworldkotlinspringbootjdbc.presentation.response.serialize
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
 import com.example.realworldkotlinspringbootjdbc.usecase.CreateCommentUseCase
-import com.example.realworldkotlinspringbootjdbc.usecase.DeleteCommentsUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.DeleteCommentUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.ListCommentsUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController
 class CommentController(
     val listCommentsUseCase: ListCommentsUseCase,
     val createCommentUseCase: CreateCommentUseCase,
-    val deleteCommentsUseCase: DeleteCommentsUseCase,
+    val deleteCommentUseCase: DeleteCommentUseCase,
     val myAuth: MyAuth
 ) {
     @GetMapping("/articles/{slug}/comments")
@@ -165,7 +165,7 @@ class CommentController(
              * JWT 認証 成功
              */
             is Right -> {
-                when (val result = deleteCommentsUseCase.execute(slug, NullableCommentId.from(commentId))) {
+                when (val result = deleteCommentUseCase.execute(slug, NullableCommentId.from(commentId))) {
                     /**
                      * コメントの削除に失敗
                      */
@@ -173,35 +173,35 @@ class CommentController(
                         /**
                          * 原因: Slug がバリデーションエラー
                          */
-                        is DeleteCommentsUseCase.Error.InvalidSlug -> ResponseEntity(
+                        is DeleteCommentUseCase.Error.InvalidSlug -> ResponseEntity(
                             serializeMyErrorListForResponseBody(useCaseError.errors),
                             HttpStatus.valueOf(422)
                         )
                         /**
                          * 原因: CommentId がバリデーションエラー
                          */
-                        is DeleteCommentsUseCase.Error.InvalidCommentId -> ResponseEntity(
+                        is DeleteCommentUseCase.Error.InvalidCommentId -> ResponseEntity(
                             serializeMyErrorListForResponseBody(useCaseError.errors),
                             HttpStatus.valueOf(422)
                         )
                         /**
                          * 原因: 記事が見つからなかった
                          */
-                        is DeleteCommentsUseCase.Error.ArticleNotFoundBySlug -> ResponseEntity(
+                        is DeleteCommentUseCase.Error.ArticleNotFoundBySlug -> ResponseEntity(
                             serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(404)
                         )
                         /**
                          * 原因: コメントが見つからなかった
                          */
-                        is DeleteCommentsUseCase.Error.CommentsNotFoundByCommentId -> ResponseEntity(
+                        is DeleteCommentUseCase.Error.CommentsNotFoundByCommentId -> ResponseEntity(
                             serializeUnexpectedErrorForResponseBody("コメントが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(404)
                         )
                         /**
                          * 原因: 未知のエラー
                          */
-                        is DeleteCommentsUseCase.Error.Unexpected -> ResponseEntity(
+                        is DeleteCommentUseCase.Error.Unexpected -> ResponseEntity(
                             serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(500)
                         )

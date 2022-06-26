@@ -6,7 +6,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
-interface DeleteCommentsUseCase {
+interface DeleteCommentUseCase {
     fun execute(slug: String?, commentId: Int?): Either<Error, Unit> = TODO()
 
     sealed interface Error : MyError {
@@ -28,4 +28,4 @@ interface DeleteCommentsUseCase {
 }
 
 @Service
-class DeleteCommentsUseCaseImpl : DeleteCommentsUseCase
+class DeleteCommentUseCaseImpl : DeleteCommentUseCase
