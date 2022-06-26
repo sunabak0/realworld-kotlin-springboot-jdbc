@@ -43,17 +43,17 @@ interface RegisteredUser {
         // Validation 無し
         //
         fun newWithoutValidation(
-            userId: Int,
-            email: String,
-            username: String,
-            bio: String,
-            image: String
+            userId: UserId,
+            email: Email,
+            username: Username,
+            bio: Bio,
+            image: Image
         ): RegisteredUser = WithoutValidationRegisteredUser(
-            UserId(userId),
-            Email.newWithoutValidation(email),
-            Username.newWithoutValidation(username),
-            Bio.newWithoutValidation(bio),
-            Image.newWithoutValidation(image),
+            userId,
+            email,
+            username,
+            bio,
+            image,
         )
 
         //

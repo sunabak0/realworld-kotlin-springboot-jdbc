@@ -7,9 +7,12 @@ import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UnregisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UserRepository
 import com.example.realworldkotlinspringbootjdbc.domain.UserRepository.FindByEmailWithPasswordError
+import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
+import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.Password
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
+import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import org.springframework.stereotype.Repository
 typealias RegisteredWithPassword = Pair<RegisteredUser, Password>
 
@@ -23,11 +26,11 @@ class UserRepositoryImpl : UserRepository {
             return UserRepository.RegisterError.Unexpected(e, user).left()
         }
         val registeredUser = RegisteredUser.newWithoutValidation(
-            userId.value,
-            user.email.value,
-            user.username.value,
-            "",
-            ""
+            userId,
+            user.email,
+            user.username,
+            Bio.newWithoutValidation(""),
+            Image.newWithoutValidation("")
         )
         return registeredUser.right()
     }
@@ -45,11 +48,11 @@ class UserRepositoryImpl : UserRepository {
         // val sql1 = "SELECT * FROM users WHERE users.email = :email;"
         // val sql2 = "INSERT INTO profiles(user_id, bio, image, created_at, updated_at) VALUES (:user_id, :bio, :image, :created_at, :updated_at);"
         val registeredUser = RegisteredUser.newWithoutValidation(
-            888,
-            email.value,
-            "dummy-username",
-            "",
-            ""
+            UserId(888),
+            email,
+            Username.newWithoutValidation("dummy-username"),
+            Bio.newWithoutValidation(""),
+            Image.newWithoutValidation("")
         )
         val password = Password.newWithoutValidation("dummy-password")
         return Pair(registeredUser, password).right()
@@ -57,11 +60,11 @@ class UserRepositoryImpl : UserRepository {
 
     override fun findByUserId(id: UserId): Either<UserRepository.FindByUserIdError, RegisteredUser> {
         val registeredUser = RegisteredUser.newWithoutValidation(
-            id.value,
-            "dummy@example.com",
-            "dummy-username",
-            "",
-            ""
+            id,
+            Email.newWithoutValidation("dummy@example.com"),
+            Username.newWithoutValidation("dummy-username"),
+            Bio.newWithoutValidation(""),
+            Image.newWithoutValidation("")
         )
         return registeredUser.right()
     }
