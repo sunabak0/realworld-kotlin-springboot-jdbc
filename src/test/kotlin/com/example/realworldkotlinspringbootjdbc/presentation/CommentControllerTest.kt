@@ -5,9 +5,13 @@ import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
 import com.example.realworldkotlinspringbootjdbc.domain.Profile
+import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
+import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
+import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
+import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.usecase.CreateCommentsUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.DeleteCommentsUseCase
@@ -160,11 +164,11 @@ class CommentControllerTest {
                 }
         """.trimIndent()
         val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
-            1,
-            "dummy@example.com",
-            "dummy-name",
-            "dummy-bio",
-            "dummy-image",
+            UserId(1),
+            Email.newWithoutValidation("dummy@example.com"),
+            Username.newWithoutValidation("dummy-name"),
+            Bio.newWithoutValidation("dummy-bio"),
+            Image.newWithoutValidation("dummy-image"),
         )
         private val notImplementedListCommentsUseCase = object : ListCommentsUseCase {}
         private val notImplementedDeleteCommentsUseCase = object : DeleteCommentsUseCase {}
@@ -306,11 +310,11 @@ class CommentControllerTest {
         private val pathParamSlug = "hoge-slug"
         private val pathParamCommentId = 1
         private val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
-            1,
-            "dummy@example.com",
-            "dummy-name",
-            "dummy-bio",
-            "dummy-image",
+            UserId(1),
+            Email.newWithoutValidation("dummy@example.com"),
+            Username.newWithoutValidation("dummy-name"),
+            Bio.newWithoutValidation("dummy-bio"),
+            Image.newWithoutValidation("dummy-image"),
         )
         private val notImplementedListCommentsUseCase = object : ListCommentsUseCase {}
         private val notImplementedCreateCommentsUseCase = object : CreateCommentsUseCase {}
