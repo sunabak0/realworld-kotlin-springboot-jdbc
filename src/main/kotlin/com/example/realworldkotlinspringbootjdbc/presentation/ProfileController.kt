@@ -4,6 +4,7 @@ import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Profile
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
+import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.usecase.ShowProfileUseCase
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -55,7 +56,10 @@ class ProfileController(
                 /**
                  * 原因: プロフィールが見つからなかった
                  */
-                is ShowProfileUseCase.Error.NotFound -> TODO()
+                is ShowProfileUseCase.Error.NotFound -> ResponseEntity(
+                    serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                    HttpStatus.valueOf(404)
+                )
                 /**
                  * 原因: 不明
                  */

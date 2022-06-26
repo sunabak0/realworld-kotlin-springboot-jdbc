@@ -60,5 +60,20 @@ class ProfileControllerTest {
             )
             assertThat(actual).isEqualTo(expected)
         }
+
+        @Test
+        fun `プロフィール取得時、UseCase がNotFoundを返す場合、404レスポンスを返す`() {
+            val notImplementedError = object : MyError {}
+            val showProfileReturnNotFoundError = object : ShowProfileUseCase {
+                override fun execute(username: String?): Either<ShowProfileUseCase.Error, Profile> =
+                    ShowProfileUseCase.Error.NotFound(notImplementedError).left()
+            }
+            val actual = profileController(showProfileReturnNotFoundError).showProfile(pathParam)
+            val expected = ResponseEntity(
+                """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
+                HttpStatus.valueOf(404)
+            )
+            assertThat(actual).isEqualTo(expected)
+        }
     }
 }
