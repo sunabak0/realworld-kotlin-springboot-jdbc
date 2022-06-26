@@ -13,7 +13,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
-interface ListCommentsUseCase {
+interface ListCommentUseCase {
     fun execute(slug: String?): Either<Error, List<Comment>> = TODO()
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
@@ -23,12 +23,12 @@ interface ListCommentsUseCase {
 }
 
 @Service
-class ShowCommentsUseCaseImpl(
+class ShowCommentUseCaseImpl(
     val commentRepository: CommentRepository
-) : ListCommentsUseCase {
-    override fun execute(slug: String?): Either<ListCommentsUseCase.Error, List<Comment>> {
+) : ListCommentUseCase {
+    override fun execute(slug: String?): Either<ListCommentUseCase.Error, List<Comment>> {
         return when (val it = Slug.new(slug)) {
-            is Invalid -> ListCommentsUseCase.Error.InvalidSlug(it.value).left()
+            is Invalid -> ListCommentUseCase.Error.InvalidSlug(it.value).left()
             is Valid -> when (val listResult = commentRepository.list(it.value)) {
                 /**
                  * コメントの取得 成功
@@ -41,12 +41,12 @@ class ShowCommentsUseCaseImpl(
                     /**
                      * 原因: Slug に該当する記事が見つからなかった
                      */
-                    is CommentRepository.ListError.NotFoundArticleBySlug -> ListCommentsUseCase.Error.NotFound(listError)
+                    is CommentRepository.ListError.NotFoundArticleBySlug -> ListCommentUseCase.Error.NotFound(listError)
                         .left()
                     /**
                      * 原因: 不明
                      */
-                    is CommentRepository.ListError.Unexpected -> ListCommentsUseCase.Error.Unexpected(listError).left()
+                    is CommentRepository.ListError.Unexpected -> ListCommentUseCase.Error.Unexpected(listError).left()
                 }
             }
         }
