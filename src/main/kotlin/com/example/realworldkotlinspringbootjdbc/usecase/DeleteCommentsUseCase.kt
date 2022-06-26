@@ -28,6 +28,4 @@ interface DeleteCommentsUseCase {
 }
 
 @Service
-class DeleteCommentsUseCaseImpl : DeleteCommentsUseCase {
-
-}
+class DeleteCommentsUseCaseImpl : DeleteCommentsUseCase

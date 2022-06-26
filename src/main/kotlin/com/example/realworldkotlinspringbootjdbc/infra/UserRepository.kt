@@ -34,6 +34,7 @@ class UserRepositoryImpl : UserRepository {
         )
         return registeredUser.right()
     }
+
     // @Transaction
     private fun registerTransactionApply(user: UnregisteredUser): UserId {
         // val sql0 = "SELECT count(email) FROM users WHERE users.email = ?"
