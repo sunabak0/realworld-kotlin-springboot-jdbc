@@ -19,11 +19,11 @@ import javax.websocket.server.PathParam
 @RestController
 @Tag(name = "Profile")
 class ProfileController(
-    val showProfile: ShowProfileUseCase
+    val showProfileUseCase: ShowProfileUseCase
 ) {
     @GetMapping("/profiles/{username}")
     fun showProfile(@PathParam("username") username: String?): ResponseEntity<String> {
-        return when (val result = showProfile.execute(username)) {
+        return when (val result = showProfileUseCase.execute(username)) {
             /**
              * プロフィール取得に成功
              */
