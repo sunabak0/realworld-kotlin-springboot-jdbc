@@ -10,24 +10,24 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 interface Slug {
     val value: String
 
-    //
-    // 実装
-    //
+    /**
+     * 実装
+     */
     private data class ValidatedSlug(override val value: String) : Slug
     private data class SlugWithoutValidation(override val value: String) : Slug
 
-    //
-    // Factory メソッド
-    //
+    /**
+     * Factory メソッド
+     */
     companion object {
-        //
-        // Validation 無し
-        //
+        /**
+         * Validation 無し
+         */
         fun newWithoutValidation(slug: String): Slug = Slug.SlugWithoutValidation(slug)
 
-        //
-        // Validation 有り
-        //
+        /**
+         * Validation 有り
+         */
         fun new(slug: String?): ValidatedNel<ValidationError, Slug> {
             return when (val result = ValidationError.Required.check(slug)) {
                 is Validated.Invalid -> result.value.invalidNel()
@@ -37,14 +37,14 @@ interface Slug {
         }
     }
 
-    //
-    // ドメインルール
-    //
+    /**
+     * ドメインルール
+     */
     sealed interface ValidationError : MyError.ValidationError {
         override val key: String get() = Slug::class.simpleName.toString()
-        //
-        // Nullは駄目
-        //
+        /**
+         * Nullは駄目
+         */
         object Required : ValidationError {
             override val message: String get() = "slugを入力してください。"
             fun check(slug: String?): Validated<Required, String> =
@@ -54,9 +54,9 @@ interface Slug {
                 )
         }
 
-        //
-        // 長すぎては駄目
-        //
+        /**
+         * 長すぎては駄目
+         */
         data class TooLong(val slug: String) : ValidationError {
             companion object {
                 private const val maximum: Int = 32

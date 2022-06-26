@@ -56,9 +56,9 @@ interface RegisteredUser {
             image,
         )
 
-        //
-        // Validation 有り
-        //
+        /**
+         * Validation 有り
+         */
         fun new(
             userId: Int,
             email: String?,

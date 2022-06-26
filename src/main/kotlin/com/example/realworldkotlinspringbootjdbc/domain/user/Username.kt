@@ -12,24 +12,24 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 interface Username {
     val value: String
 
-    //
-    // 実装
-    //
+    /**
+     * 実装
+     */
     private data class ValidatedUsername(override val value: String) : Username
     private data class UsernameWithoutValidation(override val value: String) : Username
 
-    //
-    // Factory メソッド
-    //
+    /**
+     * Factory メソッド
+     */
     companion object {
-        //
-        // Validation無し
-        //
+        /**
+         * Validation無し
+         */
         fun newWithoutValidation(username: String): Username = UsernameWithoutValidation(username)
 
-        //
-        // Validation有り
-        //
+        /**
+         * Validation有り
+         */
         fun new(username: String?): ValidatedNel<ValidationError, Username> {
             return when (val result = ValidationError.Required.check(username)) {
                 is Validated.Invalid -> result.value.invalidNel()
@@ -44,14 +44,14 @@ interface Username {
         }
     }
 
-    //
-    // ドメインルール
-    //
+    /**
+     * ドメインルール
+     */
     sealed interface ValidationError : MyError.ValidationError {
         override val key: String get() = Username::class.simpleName.toString()
-        //
-        // Nullは駄目
-        //
+        /**
+         * Nullは駄目
+         */
         object Required : ValidationError {
             override val message: String get() = "ユーザ名を入力してください。"
             fun check(username: String?): Validated<Required, String> =
@@ -61,9 +61,9 @@ interface Username {
                 )
         }
 
-        //
-        // 短すぎては駄目
-        //
+        /**
+         * 短すぎては駄目
+         */
         data class TooShort(val username: String) : ValidationError {
             companion object {
                 private const val minimum: Int = 4
@@ -73,9 +73,9 @@ interface Username {
             override val message: String get() = "ユーザー名は${minimum}文字以上にしてください。"
         }
 
-        //
-        // 長すぎては駄目
-        //
+        /**
+         * 長すぎては駄目
+         */
         data class TooLong(val username: String) : ValidationError {
             companion object {
                 private const val maximum: Int = 32

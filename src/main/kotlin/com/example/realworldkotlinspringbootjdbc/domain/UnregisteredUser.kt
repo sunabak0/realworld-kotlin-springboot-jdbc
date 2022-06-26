@@ -13,22 +13,22 @@ interface UnregisteredUser {
     val password: Password
     val username: Username
 
-    //
-    // 実装
-    //
+    /**
+     * 実装
+     */
     private data class ValidatedUnregisteredUser(
         override val email: Email,
         override val password: Password,
         override val username: Username,
     ) : UnregisteredUser
 
-    //
-    // Factory メソッド
-    //
+    /**
+     * Factory メソッド
+     */
     companion object {
-        //
-        // Validation 有り
-        //
+        /**
+         * Validation 有り
+         */
         fun new(
             email: String?,
             password: String?,

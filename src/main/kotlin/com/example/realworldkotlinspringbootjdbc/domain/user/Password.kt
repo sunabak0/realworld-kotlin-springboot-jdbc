@@ -13,24 +13,24 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 interface Password {
     val value: String
 
-    //
-    // 実装
-    //
+    /**
+     * 実装
+     */
     private data class ValidatedPassword(override val value: String) : Password
     private data class PasswordWithoutValidation(override val value: String) : Password
 
-    //
-    // Factory メソッド
-    //
+    /**
+     * Factory メソッド
+     */
     companion object {
-        //
-        // Validation 無し
-        //
+        /**
+         * Validation 無し
+         */
         fun newWithoutValidation(password: String): Password = PasswordWithoutValidation(password)
 
-        //
-        // Validation 有り
-        //
+        /**
+         * Validation 有り
+         */
         fun new(password: String?): ValidatedNel<ValidationError, Password> =
             when (val result = ValidationError.Required.check(password)) {
                 is Validated.Invalid -> result.value.invalidNel()
@@ -43,9 +43,9 @@ interface Password {
                 }
             }
 
-        //
-        // Login用 パスワード
-        //
+        /**
+         * Login用 パスワード
+         */
         fun newForLogin(password: String?): ValidatedNel<ValidationError, Password> =
             when (val result = ValidationError.Required.check(password)) {
                 is Validated.Invalid -> result.value.invalidNel()
@@ -53,14 +53,14 @@ interface Password {
             }
     }
 
-    //
-    // ドメインルール
-    //
+    /**
+     * ドメインルール
+     */
     sealed interface ValidationError : MyError.ValidationError {
         override val key: String get() = Password::class.simpleName.toString()
-        //
-        // Nullは駄目
-        //
+        /**
+         * Nullは駄目
+         */
         object Required : ValidationError {
             override val message: String get() = "パスワードを入力してください。"
             fun check(password: String?): Validated<Required, String> =
@@ -70,9 +70,9 @@ interface Password {
                 )
         }
 
-        //
-        // 短すぎては駄目
-        //
+        /**
+         * 短すぎては駄目
+         */
         data class TooShort(val password: String) : ValidationError {
             companion object {
                 private const val minimum: Int = 8
@@ -82,9 +82,9 @@ interface Password {
             override val message: String get() = "パスワードは${minimum}文字以上にしてください。"
         }
 
-        //
-        // 長すぎては駄目
-        //
+        /**
+         * 長すぎては駄目
+         */
         data class TooLong(val password: String) : ValidationError {
             companion object {
                 private const val maximum: Int = 32
