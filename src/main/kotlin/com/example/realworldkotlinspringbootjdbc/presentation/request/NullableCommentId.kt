@@ -7,7 +7,7 @@ package com.example.realworldkotlinspringbootjdbc.presentation.request
  * - コメント削除
  *
  * 概要
- * - パスパラメータから一時的に String 型で受け取った CommentId を otIntOrNull 変換する
+ * - パスパラメータから一時的に String 型で受け取った CommentId を toIntOrNull 変換する
  *
  * 利用例
  * ```
