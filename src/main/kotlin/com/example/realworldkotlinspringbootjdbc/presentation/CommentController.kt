@@ -8,7 +8,7 @@ import com.example.realworldkotlinspringbootjdbc.presentation.response.Comment
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
-import com.example.realworldkotlinspringbootjdbc.usecase.CreateCommentsUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.CreateCommentUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.DeleteCommentsUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.ListCommentsUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(name = "Comments")
 class CommentController(
     val listCommentsUseCase: ListCommentsUseCase,
-    val createCommentsUseCase: CreateCommentsUseCase,
+    val createCommentUseCase: CreateCommentUseCase,
     val deleteCommentsUseCase: DeleteCommentsUseCase,
     val myAuth: MyAuth
 ) {
@@ -104,7 +104,7 @@ class CommentController(
              */
             is Right -> {
                 val comment = NullableComment.from(rawRequestBody)
-                when (val createdComment = createCommentsUseCase.execute(slug, comment.body)) {
+                when (val createdComment = createCommentUseCase.execute(slug, comment.body)) {
                     /**
                      * コメントの登録に失敗
                      */
@@ -112,28 +112,28 @@ class CommentController(
                         /***
                          * 原因: Slug がバリデーションエラー
                          */
-                        is CreateCommentsUseCase.Error.InvalidSlug -> ResponseEntity(
+                        is CreateCommentUseCase.Error.InvalidSlug -> ResponseEntity(
                             serializeMyErrorListForResponseBody(useCaseError.errors),
                             HttpStatus.valueOf(422)
                         )
                         /***
                          * 原因: CommentBody がバリデーションエラー
                          */
-                        is CreateCommentsUseCase.Error.InvalidCommentBody -> ResponseEntity(
+                        is CreateCommentUseCase.Error.InvalidCommentBody -> ResponseEntity(
                             serializeMyErrorListForResponseBody(useCaseError.errors),
                             HttpStatus.valueOf(422)
                         )
                         /**
                          * 原因: 記事が見つかりませんでした
                          */
-                        is CreateCommentsUseCase.Error.NotFound -> ResponseEntity(
+                        is CreateCommentUseCase.Error.NotFound -> ResponseEntity(
                             serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(404)
                         )
                         /**
                          * 原因: 不明
                          */
-                        is CreateCommentsUseCase.Error.Unexpected -> ResponseEntity(
+                        is CreateCommentUseCase.Error.Unexpected -> ResponseEntity(
                             serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(500)
                         )

@@ -13,7 +13,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
-import com.example.realworldkotlinspringbootjdbc.usecase.CreateCommentsUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.CreateCommentUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.DeleteCommentsUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.ListCommentsUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
@@ -32,15 +32,15 @@ class CommentControllerTest {
         private val pathParam = "hoge-slug"
         private inline fun commentController(
             commentsUseCase: ListCommentsUseCase,
-            createCommentsUseCase: CreateCommentsUseCase,
+            createCommentUseCase: CreateCommentUseCase,
             deleteCommentsUseCase: DeleteCommentsUseCase,
             myAuth: MyAuth
         ): CommentController =
-            CommentController(commentsUseCase, createCommentsUseCase, deleteCommentsUseCase, myAuth)
+            CommentController(commentsUseCase, createCommentUseCase, deleteCommentsUseCase, myAuth)
 
         private val notImplementedMyAuth = object : MyAuth {}
 
-        private val notImplementedCreateCommentsUseCase = object : CreateCommentsUseCase {}
+        private val notImplementedCreateCommentUseCase = object : CreateCommentUseCase {}
 
         private val notImplementedDeleteCommentsUseCase = object : DeleteCommentsUseCase {}
 
@@ -79,7 +79,7 @@ class CommentControllerTest {
             val actual =
                 commentController(
                     listReturnComment,
-                    notImplementedCreateCommentsUseCase,
+                    notImplementedCreateCommentUseCase,
                     notImplementedDeleteCommentsUseCase,
                     notImplementedMyAuth
                 ).list(
@@ -101,7 +101,7 @@ class CommentControllerTest {
             }
             val actual = commentController(
                 listReturnNotFoundError,
-                notImplementedCreateCommentsUseCase,
+                notImplementedCreateCommentUseCase,
                 notImplementedDeleteCommentsUseCase,
                 notImplementedMyAuth
             ).list(pathParam)
@@ -122,7 +122,7 @@ class CommentControllerTest {
             }
             val actual = commentController(
                 listReturnValidationError,
-                notImplementedCreateCommentsUseCase,
+                notImplementedCreateCommentUseCase,
                 notImplementedDeleteCommentsUseCase,
                 notImplementedMyAuth
             ).list(pathParam)
@@ -143,7 +143,7 @@ class CommentControllerTest {
             }
             val actual = commentController(
                 listReturnUnexpectedError,
-                notImplementedCreateCommentsUseCase,
+                notImplementedCreateCommentUseCase,
                 notImplementedDeleteCommentsUseCase,
                 notImplementedMyAuth
             ).list(pathParam)
@@ -174,11 +174,11 @@ class CommentControllerTest {
         private val notImplementedDeleteCommentsUseCase = object : DeleteCommentsUseCase {}
         private inline fun commentController(
             listCommentsUseCase: ListCommentsUseCase,
-            createCommentsUseCase: CreateCommentsUseCase,
+            createCommentUseCase: CreateCommentUseCase,
             deleteCommentsUseCase: DeleteCommentsUseCase,
             myAuth: MyAuth
         ): CommentController =
-            CommentController(listCommentsUseCase, createCommentsUseCase, deleteCommentsUseCase, myAuth)
+            CommentController(listCommentsUseCase, createCommentUseCase, deleteCommentsUseCase, myAuth)
 
         private val authorizedMyAuth = object : MyAuth {
             override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
@@ -200,15 +200,15 @@ class CommentControllerTest {
                     true
                 )
             )
-            val createCommentsUseCase = object : CreateCommentsUseCase {
-                override fun execute(slug: String?, body: String?): Either<CreateCommentsUseCase.Error, Comment> {
+            val createCommentUseCase = object : CreateCommentUseCase {
+                override fun execute(slug: String?, body: String?): Either<CreateCommentUseCase.Error, Comment> {
                     return returnComment.right()
                 }
             }
             val actual =
                 commentController(
                     notImplementedListCommentsUseCase,
-                    createCommentsUseCase,
+                    createCommentUseCase,
                     notImplementedDeleteCommentsUseCase,
                     authorizedMyAuth
                 ).create(pathParam, pathParam, requestBody)
@@ -225,9 +225,9 @@ class CommentControllerTest {
                 override val message: String get() = "DummyValidationError because Invalid Slug"
                 override val key: String get() = "DummyKey"
             }
-            val createReturnValidationError = object : CreateCommentsUseCase {
-                override fun execute(slug: String?, body: String?): Either<CreateCommentsUseCase.Error, Comment> {
-                    return CreateCommentsUseCase.Error.InvalidSlug(listOf(notImplementedValidationError)).left()
+            val createReturnValidationError = object : CreateCommentUseCase {
+                override fun execute(slug: String?, body: String?): Either<CreateCommentUseCase.Error, Comment> {
+                    return CreateCommentUseCase.Error.InvalidSlug(listOf(notImplementedValidationError)).left()
                 }
             }
             val actual = commentController(
@@ -249,9 +249,9 @@ class CommentControllerTest {
                 override val message: String get() = "DummyValidationError because invalid CommentBody"
                 override val key: String get() = "DummyKey"
             }
-            val createReturnValidationError = object : CreateCommentsUseCase {
-                override fun execute(slug: String?, body: String?): Either<CreateCommentsUseCase.Error, Comment> {
-                    return CreateCommentsUseCase.Error.InvalidCommentBody(listOf(notImplementedValidationError)).left()
+            val createReturnValidationError = object : CreateCommentUseCase {
+                override fun execute(slug: String?, body: String?): Either<CreateCommentUseCase.Error, Comment> {
+                    return CreateCommentUseCase.Error.InvalidCommentBody(listOf(notImplementedValidationError)).left()
                 }
             }
             val actual = commentController(
@@ -270,9 +270,9 @@ class CommentControllerTest {
         @Test
         fun `コメント作成時、Slug に該当する Article が見つからなかったことに起因する「Not Found」エラーのとき、404 エラーレスポンスを返す`() {
             val notImplementedError = object : MyError {}
-            val createReturnNotFoundError = object : CreateCommentsUseCase {
-                override fun execute(slug: String?, body: String?): Either<CreateCommentsUseCase.Error, Comment> {
-                    return CreateCommentsUseCase.Error.NotFound(notImplementedError).left()
+            val createReturnNotFoundError = object : CreateCommentUseCase {
+                override fun execute(slug: String?, body: String?): Either<CreateCommentUseCase.Error, Comment> {
+                    return CreateCommentUseCase.Error.NotFound(notImplementedError).left()
                 }
             }
             val actual = commentController(
@@ -288,9 +288,9 @@ class CommentControllerTest {
         @Test
         fun `コメント作成時、UseCase が原因不明のエラーを返す場合、500 エラーレスポンスを返す`() {
             val notImplementedError = object : MyError {}
-            val createReturnUnexpectedError = object : CreateCommentsUseCase {
-                override fun execute(slug: String?, body: String?): Either<CreateCommentsUseCase.Error, Comment> {
-                    return CreateCommentsUseCase.Error.Unexpected(notImplementedError).left()
+            val createReturnUnexpectedError = object : CreateCommentUseCase {
+                override fun execute(slug: String?, body: String?): Either<CreateCommentUseCase.Error, Comment> {
+                    return CreateCommentUseCase.Error.Unexpected(notImplementedError).left()
                 }
             }
             val actual = commentController(
@@ -317,14 +317,14 @@ class CommentControllerTest {
             Image.newWithoutValidation("dummy-image"),
         )
         private val notImplementedListCommentsUseCase = object : ListCommentsUseCase {}
-        private val notImplementedCreateCommentsUseCase = object : CreateCommentsUseCase {}
+        private val notImplementedCreateCommentUseCase = object : CreateCommentUseCase {}
         private inline fun commentController(
             listCommentsUseCase: ListCommentsUseCase,
-            createCommentsUseCase: CreateCommentsUseCase,
+            createCommentUseCase: CreateCommentUseCase,
             deleteCommentsUseCase: DeleteCommentsUseCase,
             myAuth: MyAuth
         ): CommentController =
-            CommentController(listCommentsUseCase, createCommentsUseCase, deleteCommentsUseCase, myAuth)
+            CommentController(listCommentsUseCase, createCommentUseCase, deleteCommentsUseCase, myAuth)
 
         private val authorizedMyAuth = object : MyAuth {
             override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
@@ -341,7 +341,7 @@ class CommentControllerTest {
             }
             val actual = commentController(
                 notImplementedListCommentsUseCase,
-                notImplementedCreateCommentsUseCase,
+                notImplementedCreateCommentUseCase,
                 deleteCommentsUseCase,
                 authorizedMyAuth
             ).delete(requestHeader, pathParamSlug, pathParamCommentId)
@@ -362,7 +362,7 @@ class CommentControllerTest {
             }
             val actual = commentController(
                 notImplementedListCommentsUseCase,
-                notImplementedCreateCommentsUseCase,
+                notImplementedCreateCommentUseCase,
                 deleteReturnValidationError,
                 authorizedMyAuth
             ).delete(requestHeader, pathParamSlug, pathParamCommentId)
@@ -386,7 +386,7 @@ class CommentControllerTest {
             }
             val actual = commentController(
                 notImplementedListCommentsUseCase,
-                notImplementedCreateCommentsUseCase,
+                notImplementedCreateCommentUseCase,
                 deleteReturnValidationError,
                 authorizedMyAuth
             ).delete(requestHeader, pathParamSlug, pathParamCommentId)
@@ -410,7 +410,7 @@ class CommentControllerTest {
             }
             val actual = commentController(
                 notImplementedListCommentsUseCase,
-                notImplementedCreateCommentsUseCase,
+                notImplementedCreateCommentUseCase,
                 deleteReturnArticleNotFoundError,
                 authorizedMyAuth
             ).delete(requestHeader, pathParamSlug, pathParamCommentId)
@@ -431,7 +431,7 @@ class CommentControllerTest {
             }
             val actual = commentController(
                 notImplementedListCommentsUseCase,
-                notImplementedCreateCommentsUseCase,
+                notImplementedCreateCommentUseCase,
                 deleteReturnCommentNotFoundError,
                 authorizedMyAuth
             ).delete(requestHeader, pathParamSlug, pathParamCommentId)
@@ -449,7 +449,7 @@ class CommentControllerTest {
             }
             val actual = commentController(
                 notImplementedListCommentsUseCase,
-                notImplementedCreateCommentsUseCase,
+                notImplementedCreateCommentUseCase,
                 deleteReturnUnexpectedError,
                 authorizedMyAuth,
             ).delete(requestHeader, pathParamSlug, pathParamCommentId)

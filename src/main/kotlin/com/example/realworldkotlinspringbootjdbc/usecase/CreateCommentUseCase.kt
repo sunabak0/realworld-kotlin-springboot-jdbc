@@ -13,7 +13,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.comment.Body
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
-interface CreateCommentsUseCase {
+interface CreateCommentUseCase {
     fun execute(slug: String?, body: String?): Either<Error, Comment> = TODO()
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
@@ -27,15 +27,15 @@ interface CreateCommentsUseCase {
 }
 
 @Service
-class CreateCommentsUseCaseImpl(
+class CreateCommentUseCaseImpl(
     val commentRepository: CommentRepository
-) : CreateCommentsUseCase {
-    override fun execute(slug: String?, body: String?): Either<CreateCommentsUseCase.Error, Comment> {
+) : CreateCommentUseCase {
+    override fun execute(slug: String?, body: String?): Either<CreateCommentUseCase.Error, Comment> {
         return when (val it = Slug.new(slug)) {
             /**
              * Slug が不正
              */
-            is Invalid -> CreateCommentsUseCase.Error.InvalidSlug(it.value).left()
+            is Invalid -> CreateCommentUseCase.Error.InvalidSlug(it.value).left()
             /**
              * Slug が適切
              */
@@ -43,7 +43,7 @@ class CreateCommentsUseCaseImpl(
                 /**
                  * CommentBody が不正
                  */
-                is Invalid -> CreateCommentsUseCase.Error.InvalidCommentBody(commentBody.value).left()
+                is Invalid -> CreateCommentUseCase.Error.InvalidCommentBody(commentBody.value).left()
                 /**
                  * CommentBody が適切
                  */
