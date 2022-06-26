@@ -1,12 +1,14 @@
 package com.example.realworldkotlinspringbootjdbc.presentation
 
 import arrow.core.Either
+import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Profile
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.usecase.ShowProfileUseCase
+import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -34,7 +36,28 @@ class ProfileControllerTest {
                     mockProfile.right()
             }
             val actual = profileController(showProfileReturnProfile).showProfile(pathParam)
-            val expected = ResponseEntity("""{"profile":{"username":"hoge-username","bio":"hoge-bio","image":"hoge-image","following":true}}""", HttpStatus.valueOf(200))
+            val expected = ResponseEntity(
+                """{"profile":{"username":"hoge-username","bio":"hoge-bio","image":"hoge-image","following":true}}""",
+                HttpStatus.valueOf(200)
+            )
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        fun `プロフィール取得時、UseCase がバリデーションエラーを返す場合、404レスポンスを返す`() {
+            val notImplementedValidationError = object : MyError.ValidationError {
+                override val message: String get() = "DummyValidationError InvalidUserName"
+                override val key: String get() = "DummyKey"
+            }
+            val showProfileReturnNotFoundError = object : ShowProfileUseCase {
+                override fun execute(username: String?): Either<ShowProfileUseCase.Error, Profile> =
+                    ShowProfileUseCase.Error.InvalidUserName(listOf(notImplementedValidationError)).left()
+            }
+            val actual = profileController(showProfileReturnNotFoundError).showProfile(pathParam)
+            val expected = ResponseEntity(
+                """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError InvalidUserName"}]}}""",
+                HttpStatus.valueOf(404)
+            )
             assertThat(actual).isEqualTo(expected)
         }
     }

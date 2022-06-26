@@ -3,6 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Profile
+import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.usecase.ShowProfileUseCase
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -27,7 +28,6 @@ class ProfileController(
              * プロフィール取得に成功
              */
             is Right -> {
-                println(result.value)
                 val profile = Profile(
                     result.value.username.value,
                     result.value.bio.value,
@@ -41,9 +41,24 @@ class ProfileController(
                     HttpStatus.valueOf(200)
                 )
             }
+            /**
+             * プロフィール取得に失敗
+             */
             is Left -> when (val useCaseError = result.value) {
+                /**
+                 * 原因: バリデーションエラー
+                 */
+                is ShowProfileUseCase.Error.InvalidUserName -> ResponseEntity(
+                    serializeMyErrorListForResponseBody(useCaseError.errors),
+                    HttpStatus.valueOf(404)
+                )
+                /**
+                 * 原因: プロフィールが見つからなかった
+                 */
                 is ShowProfileUseCase.Error.NotFound -> TODO()
-                is ShowProfileUseCase.Error.ValidationErrors -> TODO()
+                /**
+                 * 原因: 不明
+                 */
                 is ShowProfileUseCase.Error.Unexpected -> TODO()
             }
         }
