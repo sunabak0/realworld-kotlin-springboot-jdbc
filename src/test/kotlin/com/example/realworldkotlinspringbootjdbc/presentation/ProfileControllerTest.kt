@@ -49,11 +49,11 @@ class ProfileControllerTest {
                 override val message: String get() = "DummyValidationError InvalidUserName"
                 override val key: String get() = "DummyKey"
             }
-            val showProfileReturnNotFoundError = object : ShowProfileUseCase {
+            val showProfileReturnInvalidUserNameError = object : ShowProfileUseCase {
                 override fun execute(username: String?): Either<ShowProfileUseCase.Error, Profile> =
                     ShowProfileUseCase.Error.InvalidUserName(listOf(notImplementedValidationError)).left()
             }
-            val actual = profileController(showProfileReturnNotFoundError).showProfile(pathParam)
+            val actual = profileController(showProfileReturnInvalidUserNameError).showProfile(pathParam)
             val expected = ResponseEntity(
                 """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError InvalidUserName"}]}}""",
                 HttpStatus.valueOf(404)
