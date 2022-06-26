@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Test
 
 class NullableCommentIdTest {
     @Nested
-    class `引数の種類よって null かどうか` {
+    class `引数の種類よって戻り値の型を確認する` {
         @Test
-        fun `正の整数（0 以外）の場合`() {
+        fun `正の整数（0 以外）の場合、戻り値は整数`() {
             val pathParam = "1"
             val actual = NullableCommentId.from(pathParam)
             val expected = 1
@@ -16,7 +16,7 @@ class NullableCommentIdTest {
         }
 
         @Test
-        fun `0の場合`() {
+        fun `0の場合、戻り値は整数`() {
             val pathParam = "0"
             val actual = NullableCommentId.from(pathParam)
             val expected = 0
@@ -24,7 +24,7 @@ class NullableCommentIdTest {
         }
 
         @Test
-        fun `負の整数の場合`() {
+        fun `負の整数の場合、戻り値は null`() {
             val pathParam = "-1"
             val actual = NullableCommentId.from(pathParam)
             val expected = -1
@@ -32,7 +32,7 @@ class NullableCommentIdTest {
         }
 
         @Test
-        fun `小数点つきの正の数（0 以外）の場合`() {
+        fun `小数点つきの正の数（0 以外）の場合、戻り値は null`() {
             val pathParam = "1.0"
             val actual = NullableCommentId.from(pathParam)
             val expected = null
@@ -40,7 +40,7 @@ class NullableCommentIdTest {
         }
 
         @Test
-        fun `小数点つきの0の場合`() {
+        fun `小数点つきの0の場合、戻り値は null`() {
             val pathParam = "0.0"
             val actual = NullableCommentId.from(pathParam)
             val expected = null
@@ -48,7 +48,7 @@ class NullableCommentIdTest {
         }
 
         @Test
-        fun `小数点つきの負の整数の場合`() {
+        fun `小数点つきの負の整数の場合、戻り値は null`() {
             val pathParam = "-1.0"
             val actual = NullableCommentId.from(pathParam)
             val expected = null
@@ -56,7 +56,7 @@ class NullableCommentIdTest {
         }
 
         @Test
-        fun `文字列の場合`() {
+        fun `文字列の場合、戻り値は null`() {
             val pathParam = "hoge"
             val actual = NullableCommentId.from(pathParam)
             val expected = null
@@ -64,7 +64,7 @@ class NullableCommentIdTest {
         }
 
         @Test
-        fun `null の場合`() {
+        fun `null の場合、戻り値は null`() {
             val pathParam = null
             val actual = NullableCommentId.from(pathParam)
             val expected = null
