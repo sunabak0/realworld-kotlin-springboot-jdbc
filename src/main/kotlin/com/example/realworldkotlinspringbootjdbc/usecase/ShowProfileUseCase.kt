@@ -1,7 +1,6 @@
 package com.example.realworldkotlinspringbootjdbc.usecase
 
 import arrow.core.Either
-import arrow.core.Either.Left
 import arrow.core.Validated.Invalid
 import arrow.core.Validated.Valid
 import arrow.core.left
@@ -14,15 +13,14 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface ShowProfileUseCase {
-    fun execute(username: String?): Either<Error, Profile> = Left(Error.NotImplemented)
+    fun execute(username: String?): Either<Error, Profile> = TODO()
     sealed interface Error : MyError {
         data class ValidationErrors(override val errors: List<MyError.ValidationError>) :
             Error,
             MyError.ValidationErrors
 
-        data class FailedShow(override val cause: MyError) : Error, MyError.MyErrorWithMyError
         data class NotFound(override val cause: MyError) : Error, MyError.MyErrorWithMyError
-        object NotImplemented : Error
+        data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
 }
 
