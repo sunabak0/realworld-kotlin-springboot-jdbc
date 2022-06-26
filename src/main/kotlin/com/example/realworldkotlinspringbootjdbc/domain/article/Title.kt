@@ -12,24 +12,24 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 interface Title {
     val value: String
 
-    //
-    // 実装
-    //
+    /**
+     * 実装
+     */
     private data class ValidatedTitle(override val value: String) : Title
     private data class TitleWithoutValidation(override val value: String) : Title
 
-    //
-    // Factory メソッド
-    //
+    /**
+     * Factory メソッド
+     */
     companion object {
-        //
-        // Validation 無し
-        //
+        /**
+         * Validation 無し
+         */
         fun newWithoutValidation(title: String): Title = TitleWithoutValidation(title)
 
-        //
-        // Validation 有り
-        //
+        /**
+         * Validation 有り
+         */
         fun new(title: String?): ValidatedNel<ValidationError, Title> {
             return when (val result = ValidationError.Required.check(title)) {
                 is Invalid -> result.value.invalidNel()
@@ -39,14 +39,14 @@ interface Title {
         }
     }
 
-    //
-    // ドメインルール
-    //
+    /**
+     * ドメインルール
+     */
     sealed interface ValidationError : MyError.ValidationError {
         override val key: String get() = Title::class.simpleName.toString()
-        //
-        // Nullは駄目
-        //
+        /**
+         * Nullは駄目
+         */
         object Required : ValidationError {
             override val message: String get() = "titleを入力してください。"
             fun check(title: String?): Validated<Required, String> =
@@ -56,9 +56,9 @@ interface Title {
                 )
         }
 
-        //
-        // 長すぎては駄目
-        //
+        /**
+         * 長すぎては駄目
+         */
         data class TooLong(val title: String) : ValidationError {
             companion object {
                 private const val maximum: Int = 32

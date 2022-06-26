@@ -11,24 +11,24 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 interface Bio {
     val value: String
 
-    //
-    // 実装
-    //
+    /**
+     * 実装
+     */
     private data class ValidatedBio(override val value: String) : Bio
     private data class BioWithoutValidation(override val value: String) : Bio
 
-    //
-    // Factory メソッド
-    //
+    /**
+     * Factory メソッド
+     */
     companion object {
-        //
-        // Validation 無し
-        //
+        /**
+         * Validation 無し
+         */
         fun newWithoutValidation(bio: String): Bio = BioWithoutValidation(bio)
 
-        //
-        // Validation 有り
-        //
+        /**
+         * Validation 有り
+         */
         fun new(bio: String?): ValidatedNel<ValidationError, Bio> {
             return when (val result = ValidationError.Required.check(bio)) {
                 is Validated.Invalid -> result.value.invalidNel()
@@ -38,14 +38,14 @@ interface Bio {
         }
     }
 
-    //
-    // ドメインルール
-    //
+    /**
+     * ドメインルール
+     */
     sealed interface ValidationError : MyError.ValidationError {
         override val key: String get() = Bio::class.simpleName.toString()
-        //
-        // Nullは駄目
-        //
+        /**
+         * Nullは駄目
+         */
         object Required : ValidationError {
             override val message: String get() = "bioを入力してください。"
             fun check(bio: String?): Validated<Required, String> =
@@ -55,9 +55,9 @@ interface Bio {
                 )
         }
 
-        //
-        // 長すぎては駄目
-        //
+        /**
+         * 長すぎては駄目
+         */
         data class TooLong(val bio: String) : ValidationError {
             companion object {
                 private const val maximum: Int = 512

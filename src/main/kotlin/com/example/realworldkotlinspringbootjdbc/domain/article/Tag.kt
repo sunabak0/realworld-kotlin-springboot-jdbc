@@ -12,24 +12,24 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 interface Tag {
     val value: String
 
-    //
-    // 実装
-    //
+    /**
+     * 実装
+     */
     private data class ValidatedTag(override val value: String) : Tag
     private data class TagWithoutValidation(override val value: String) : Tag
 
-    //
-    // Factory メソッド
-    //
+    /**
+     * Factory メソッド
+     */
     companion object {
-        //
-        // Validation 無し
-        //
+        /**
+         * Validation 無し
+         */
         fun newWithoutValidation(tag: String): Tag = TagWithoutValidation(tag)
 
-        //
-        // Validation 有り
-        //
+        /**
+         * Validation 有り
+         */
         fun new(tag: String?): ValidatedNel<ValidationError, Tag> {
             return when (val result = ValidationError.Required.check(tag)) {
                 is Invalid -> result.value.invalidNel()
@@ -39,15 +39,15 @@ interface Tag {
         }
     }
 
-    //
-    // ドメインルール
-    //
+    /**
+     * ドメインルール
+     */
     sealed interface ValidationError : MyError.ValidationError {
         override val key: String get() = Tag::class.simpleName.toString()
 
-        //
-        // Nullは駄目
-        //
+        /**
+         * Nullは駄目
+         */
         object Required : ValidationError {
             override val message: String get() = "tagを入力してください。"
             fun check(tag: String?): Validated<Required, String> =
@@ -57,9 +57,9 @@ interface Tag {
                 )
         }
 
-        //
-        // 長すぎては駄目
-        //
+        /**
+         * 長すぎては駄目
+         */
         data class TooLong(val tag: String) : ValidationError {
             companion object {
                 private const val maximum: Int = 16

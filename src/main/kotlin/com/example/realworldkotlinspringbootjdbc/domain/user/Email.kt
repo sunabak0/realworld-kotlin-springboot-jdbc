@@ -11,24 +11,24 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 interface Email {
     val value: String
 
-    //
-    // 実装
-    //
+    /**
+     * 実装
+     */
     private data class ValidatedEmail(override val value: String) : Email
     private data class EmailWithoutValidation(override val value: String) : Email
 
-    //
-    // Factory メソッド
-    //
+    /**
+     * Factory メソッド
+     */
     companion object {
-        //
-        // Validation 無し
-        //
+        /**
+         * Validation 無し
+         */
         fun newWithoutValidation(email: String): Email = EmailWithoutValidation(email)
 
-        //
-        // Validation 有り
-        //
+        /**
+         * Validation 有り
+         */
         fun new(email: String?): ValidatedNel<ValidationError, Email> =
             when (val result = ValidationError.Required.check(email)) {
                 is Validated.Invalid -> result.value.invalidNel()
@@ -40,14 +40,15 @@ interface Email {
             }
     }
 
-    //
-    // ドメインルール
-    //
+    /**
+     * ドメインルール
+     */
     sealed interface ValidationError : MyError.ValidationError {
         override val key: String get() = Email::class.simpleName.toString()
-        //
-        // Nullは駄目
-        //
+
+        /**
+         * Nullは駄目
+         */
         object Required : ValidationError {
             override val message: String get() = "メールアドレスを入力してください。"
             fun check(password: String?): Validated<Required, String> =
@@ -57,12 +58,12 @@ interface Email {
                 )
         }
 
-        //
-        // メールアドレスの形式であること
-        //
-        // 参考
-        // https://android.googlesource.com/platform/frameworks/base/+/81aa097/core/java/android/util/Patterns.java#146
-        //
+        /**
+         * メールアドレスの形式であること
+         *
+         * 参考
+         * https://android.googlesource.com/platform/frameworks/base/+/81aa097/core/java/android/util/Patterns.java#146
+         */
         data class InvalidFormat(val email: String) : ValidationError {
             override val message: String get() = "メールアドレスが不正な形式です。(正しい形式例：john@example.com)"
             companion object {
@@ -76,13 +77,6 @@ interface Email {
                 fun check(email: String): ValidatedNel<ValidationError, Unit> =
                     if (email.matches(emailPattern.toRegex())) { Unit.valid() } else { InvalidFormat(email).invalidNel() }
             }
-        }
-
-        //
-        // 既に登録済みでないメールアドレスであること
-        //
-        data class AlreadyUsedError(val email: String) : ValidationError {
-            override val message: String get() = "登録済みのメールアドレスです。他のメールアドレスを利用してください。"
         }
     }
 }

@@ -7,27 +7,27 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface UserRepository {
-    //
-    // ユーザー登録
-    //
+    /**
+     * ユーザー登録
+     */
     fun register(user: UnregisteredUser): Either<RegisterError, RegisteredUser> = TODO()
     sealed interface RegisterError : MyError {
         data class AlreadyRegisteredEmail(val email: Email) : RegisterError, MyError.Basic
         data class Unexpected(override val cause: Throwable, val user: UnregisteredUser) : RegisterError, MyError.MyErrorWithThrowable
     }
 
-    //
-    // ユーザー検索 by Email with Password
-    //
+    /**
+     * ユーザー検索 by Email with Password
+     */
     fun findByEmailWithPassword(email: Email): Either<FindByEmailWithPasswordError, RegisteredWithPassword> = TODO()
     sealed interface FindByEmailWithPasswordError : MyError {
         data class NotFound(val email: Email) : FindByEmailWithPasswordError, MyError.Basic
         data class Unexpected(override val cause: Throwable, val user: UnregisteredUser) : FindByEmailWithPasswordError, MyError.MyErrorWithThrowable
     }
 
-    //
-    // ユーザー検索 by UserId
-    //
+    /**
+     * ユーザー検索 by UserId
+     */
     fun findByUserId(id: UserId): Either<FindByUserIdError, RegisteredUser> = TODO()
     sealed interface FindByUserIdError : MyError {
         data class NotFound(val id: UserId) : FindByUserIdError, MyError.Basic

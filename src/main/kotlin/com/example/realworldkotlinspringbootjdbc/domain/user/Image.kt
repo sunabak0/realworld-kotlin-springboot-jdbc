@@ -11,24 +11,24 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 interface Image {
     val value: String
 
-    //
-    // 実装
-    //
+    /**
+     * 実装
+     */
     private data class ValidatedImage(override val value: String) : Image
     private data class ImageWithoutValidation(override val value: String) : Image
 
-    //
-    // Factory メソッド
-    //
+    /**
+     * Factory メソッド
+     */
     companion object {
-        //
-        // Validation 無し
-        //
+        /**
+         * Validation 無し
+         */
         fun newWithoutValidation(image: String): Image = ImageWithoutValidation(image)
 
-        //
-        // Validation 有り
-        //
+        /**
+         * Validation 有り
+         */
         fun new(image: String?): ValidatedNel<ValidationError, Image> {
             return when (val result = ValidationError.Required.check(image)) {
                 is Validated.Invalid -> result.value.invalidNel()
@@ -38,14 +38,14 @@ interface Image {
         }
     }
 
-    //
-    // ドメインルール
-    //
+    /**
+     * ドメインルール
+     */
     sealed interface ValidationError : MyError.ValidationError {
         override val key: String get() = Image::class.simpleName.toString()
-        //
-        // Nullは駄目
-        //
+        /**
+         * Nullは駄目
+         */
         object Required : ValidationError {
             override val message: String get() = "imageを入力してください。"
             fun check(image: String?): Validated<Required, String> =
@@ -55,9 +55,9 @@ interface Image {
                 )
         }
 
-        //
-        // 長すぎては駄目
-        //
+        /**
+         * 長すぎては駄目
+         */
         data class TooLong(val image: String) : ValidationError {
             companion object {
                 private const val maximum: Int = 512
