@@ -13,9 +13,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
  * 用途
  * - コメント登録
  *
- * 概要
- * - nullを許容して、利用しない key も許容することえいろいろな箇所で使い回す
- *
  * 利用例
  * ```
  * val comment = NullableComment.from("""{"comment":{"body":"dummy-body"}}""")
