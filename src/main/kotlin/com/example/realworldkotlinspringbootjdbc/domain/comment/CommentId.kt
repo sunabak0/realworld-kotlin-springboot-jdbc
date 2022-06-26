@@ -9,21 +9,21 @@ import arrow.core.valid
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface CommentId {
-    val value: String
+    val value: Int
 
     /**
      * 実装
      */
-    private data class ValidatedCommentId(override val value: String) : CommentId
-    private data class CommentIdWithoutValidation(override val value: String) : CommentId
+    private data class ValidatedCommentId(override val value: Int) : CommentId
+    private data class CommentIdWithoutValidation(override val value: Int) : CommentId
 
     /**
      * Factory メソッド
      */
     companion object {
-        fun newWithoutValidation(id: String): CommentId = CommentIdWithoutValidation(id)
+        fun newWithoutValidation(id: Int): CommentId = CommentIdWithoutValidation(id)
 
-        fun new(id: String?): ValidatedNel<ValidationError, CommentId> {
+        fun new(id: Int?): ValidatedNel<ValidationError, CommentId> {
             return when (val result = ValidationError.Required.check(id)) {
                 is Validated.Invalid -> result.value.invalidNel()
                 is Validated.Valid -> ValidationError.MustBeNaturalNumber.check(result.value)
@@ -45,7 +45,7 @@ interface CommentId {
             override val message: String
                 get() = "id を入力してください"
 
-            fun check(id: String?): Validated<Required, String> =
+            fun check(id: Int?): Validated<Required, Int> =
                 Option.fromNullable(id).fold(
                     { Required.invalid() },
                     { it.valid() }
@@ -55,16 +55,13 @@ interface CommentId {
         /**
          * 自然数（0より大きい整数）
          */
-        data class MustBeNaturalNumber(val id: String) : ValidationError {
+        data class MustBeNaturalNumber(val id: Int) : ValidationError {
             companion object {
-                fun check(id: String): ValidatedNel<ValidationError, String> =
-                    when (val result = id.toUIntOrNull()) {
-                        is UInt -> if (result > 0.toUInt()) {
-                            result.toString().valid()
-                        } else {
-                            MustBeNaturalNumber(id).invalidNel()
-                        }
-                        else -> MustBeNaturalNumber(id).invalidNel()
+                fun check(id: Int): ValidatedNel<ValidationError, Int> =
+                    if (id > 0) {
+                        id.valid()
+                    } else {
+                        MustBeNaturalNumber(id).invalidNel()
                     }
             }
 

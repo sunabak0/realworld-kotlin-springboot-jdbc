@@ -44,7 +44,7 @@ class CommentControllerTest {
         fun `コメント取得時、UseCase が「Comment」のリストを返す場合、200レスポンスを返す`() {
             val mockComments = listOf(
                 Comment.newWithoutValidation(
-                    CommentId.newWithoutValidation("1"),
+                    CommentId.newWithoutValidation(1),
                     CommentBody.newWithoutValidation("hoge-body-1"),
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
@@ -56,7 +56,7 @@ class CommentControllerTest {
                     )
                 ),
                 Comment.newWithoutValidation(
-                    CommentId.newWithoutValidation("2"),
+                    CommentId.newWithoutValidation(2),
                     CommentBody.newWithoutValidation("hoge-body-2"),
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
@@ -185,7 +185,7 @@ class CommentControllerTest {
         @Test
         fun `コメント作成時、UseCase がコメント作成したコメントを返す場合、200 レスポンスを返す`() {
             val returnComment = Comment.newWithoutValidation(
-                CommentId.newWithoutValidation("1"),
+                CommentId.newWithoutValidation(1),
                 CommentBody.newWithoutValidation("hoge-body"),
                 SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
                 SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
@@ -304,7 +304,7 @@ class CommentControllerTest {
     class Delete {
         private val requestHeader = "hoge-authorize"
         private val pathParamSlug = "hoge-slug"
-        private val pathParamCommentId = "1"
+        private val pathParamCommentId = 1
         private val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
             1,
             "dummy@example.com",
@@ -331,7 +331,7 @@ class CommentControllerTest {
         @Test
         fun `コメント削除時、UseCase が Unit を返す場合、200 レスポンスを返す`() {
             val deleteCommentsUseCase = object : DeleteCommentsUseCase {
-                override fun execute(slug: String?, commentId: String?): Either<DeleteCommentsUseCase.Error, Unit> {
+                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentsUseCase.Error, Unit> {
                     return Unit.right()
                 }
             }
@@ -352,7 +352,7 @@ class CommentControllerTest {
                 override val key: String get() = "DummyKey"
             }
             val deleteReturnValidationError = object : DeleteCommentsUseCase {
-                override fun execute(slug: String?, commentId: String?): Either<DeleteCommentsUseCase.Error, Unit> {
+                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentsUseCase.Error, Unit> {
                     return DeleteCommentsUseCase.Error.InvalidSlug(listOf(notImplementedValidationError)).left()
                 }
             }
@@ -376,7 +376,7 @@ class CommentControllerTest {
                 override val key: String get() = "DummyKey"
             }
             val deleteReturnValidationError = object : DeleteCommentsUseCase {
-                override fun execute(slug: String?, commentId: String?): Either<DeleteCommentsUseCase.Error, Unit> {
+                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentsUseCase.Error, Unit> {
                     return DeleteCommentsUseCase.Error.InvalidCommentId(listOf(notImplementedValidationError)).left()
                 }
             }
@@ -397,7 +397,7 @@ class CommentControllerTest {
         fun `コメント削除時、UseCase がSlug に該当する記事が見つからなかったことに起因する「NotFound」エラーのとき、404 エラーレスポンスを返す`() {
             val notImplementedError = object : MyError {}
             val deleteReturnArticleNotFoundError = object : DeleteCommentsUseCase {
-                override fun execute(slug: String?, commentId: String?): Either<DeleteCommentsUseCase.Error, Unit> {
+                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentsUseCase.Error, Unit> {
                     return DeleteCommentsUseCase.Error.ArticleNotFoundBySlug(
                         notImplementedError,
                         Slug.newWithoutValidation(pathParamSlug)
@@ -418,7 +418,7 @@ class CommentControllerTest {
         fun `コメント削除時、UseCase が CommentId に該当するコメントが見つからなかったことに起因する「NotFound」エラーのとき、404 エラーレスポンスを返す`() {
             val notImplementedError = object : MyError {}
             val deleteReturnCommentNotFoundError = object : DeleteCommentsUseCase {
-                override fun execute(slug: String?, commentId: String?): Either<DeleteCommentsUseCase.Error, Unit> {
+                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentsUseCase.Error, Unit> {
                     return DeleteCommentsUseCase.Error.CommentsNotFoundByCommentId(
                         notImplementedError,
                         CommentId.newWithoutValidation(pathParamCommentId)
@@ -439,7 +439,7 @@ class CommentControllerTest {
         fun `コメント削除時、UseCase が原因不明のエラーを返す場合、500 エラーレスポンスを返す`() {
             val notImplementedError = object : MyError {}
             val deleteReturnUnexpectedError = object : DeleteCommentsUseCase {
-                override fun execute(slug: String?, commentId: String?): Either<DeleteCommentsUseCase.Error, Unit> {
+                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentsUseCase.Error, Unit> {
                     return DeleteCommentsUseCase.Error.Unexpected(notImplementedError).left()
                 }
             }

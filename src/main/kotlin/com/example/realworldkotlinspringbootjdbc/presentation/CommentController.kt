@@ -153,7 +153,7 @@ class CommentController(
     fun delete(
         @RequestHeader("Authorization") rawAuthorizationHeader: String?,
         @PathVariable("slug") slug: String?,
-        @PathVariable("id") commentId: String?
+        @PathVariable("id") commentId: Int?
     ): ResponseEntity<String> {
         return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
             /**
@@ -169,14 +169,14 @@ class CommentController(
                      * コメントの削除に失敗
                      */
                     is Left -> when (val useCaseError = result.value) {
-                        /***
+                        /**
                          * 原因: Slug がバリデーションエラー
                          */
                         is DeleteCommentsUseCase.Error.InvalidSlug -> ResponseEntity(
                             serializeMyErrorListForResponseBody(useCaseError.errors),
                             HttpStatus.valueOf(422)
                         )
-                        /***
+                        /**
                          * 原因: CommentId がバリデーションエラー
                          */
                         is DeleteCommentsUseCase.Error.InvalidCommentId -> ResponseEntity(

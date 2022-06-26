@@ -4,9 +4,10 @@ import arrow.core.Either
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
 import com.example.realworldkotlinspringbootjdbc.util.MyError
+import org.springframework.stereotype.Service
 
 interface DeleteCommentsUseCase {
-    fun execute(slug: String?, commentId: String?): Either<Error, Unit> = TODO()
+    fun execute(slug: String?, commentId: Int?): Either<Error, Unit> = TODO()
 
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
@@ -24,4 +25,9 @@ interface DeleteCommentsUseCase {
 
         data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
+}
+
+@Service
+class DeleteCommentsUseCaseImpl : DeleteCommentsUseCase {
+
 }
