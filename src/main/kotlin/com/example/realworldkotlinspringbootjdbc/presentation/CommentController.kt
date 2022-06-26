@@ -3,6 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.request.NullableComment
+import com.example.realworldkotlinspringbootjdbc.presentation.request.NullableCommentId
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Comment
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
@@ -41,7 +42,7 @@ class CommentController(
                 val comments =
                     result.value.map {
                         Comment(
-                            it.id.value.toInt(),
+                            it.id.value,
                             it.body.value,
                             it.createdAt,
                             it.updatedAt,
@@ -153,7 +154,7 @@ class CommentController(
     fun delete(
         @RequestHeader("Authorization") rawAuthorizationHeader: String?,
         @PathVariable("slug") slug: String?,
-        @PathVariable("id") commentId: Int?
+        @PathVariable("id") commentId: String?
     ): ResponseEntity<String> {
         return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
             /**
@@ -164,7 +165,7 @@ class CommentController(
              * JWT 認証 成功
              */
             is Right -> {
-                when (val result = deleteCommentsUseCase.execute(slug, commentId)) {
+                when (val result = deleteCommentsUseCase.execute(slug, NullableCommentId.from(commentId))) {
                     /**
                      * コメントの削除に失敗
                      */

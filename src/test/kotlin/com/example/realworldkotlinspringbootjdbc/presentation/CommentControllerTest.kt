@@ -308,7 +308,7 @@ class CommentControllerTest {
     class Delete {
         private val requestHeader = "hoge-authorize"
         private val pathParamSlug = "hoge-slug"
-        private val pathParamCommentId = 1
+        private val pathParamCommentId = "1"
         private val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
             UserId(1),
             Email.newWithoutValidation("dummy@example.com"),
@@ -425,7 +425,7 @@ class CommentControllerTest {
                 override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentsUseCase.Error, Unit> {
                     return DeleteCommentsUseCase.Error.CommentsNotFoundByCommentId(
                         notImplementedError,
-                        CommentId.newWithoutValidation(pathParamCommentId)
+                        CommentId.newWithoutValidation(pathParamCommentId.toInt())
                     ).left()
                 }
             }
