@@ -50,7 +50,7 @@ class ProfileController(
                  * 原因: バリデーションエラー
                  */
                 is ShowProfileUseCase.Error.InvalidUserName -> ResponseEntity(
-                    serializeMyErrorListForResponseBody(useCaseError.errors),
+                    serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                     HttpStatus.valueOf(404)
                 )
                 /**

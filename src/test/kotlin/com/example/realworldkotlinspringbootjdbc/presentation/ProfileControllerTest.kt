@@ -55,7 +55,7 @@ class ProfileControllerTest {
             }
             val actual = profileController(showProfileReturnInvalidUserNameError).showProfile(pathParam)
             val expected = ResponseEntity(
-                """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError InvalidUserName"}]}}""",
+                """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
                 HttpStatus.valueOf(404)
             )
             assertThat(actual).isEqualTo(expected)
