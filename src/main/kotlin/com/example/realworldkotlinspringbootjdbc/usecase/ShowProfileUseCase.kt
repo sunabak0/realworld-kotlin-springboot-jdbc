@@ -39,11 +39,11 @@ class ShowProfileUseCaseImpl(
              */
             is Valid -> when (val showProfileResult = profileRepository.show(it.value)) {
                 /**
-                 * プロフィール取得成功
+                 * プロフィール取得失敗
                  */
                 is Left -> TODO()
                 /**
-                 * プロフィール取得失敗
+                 * プロフィール取得成功
                  */
                 is Right -> TODO()
             }
