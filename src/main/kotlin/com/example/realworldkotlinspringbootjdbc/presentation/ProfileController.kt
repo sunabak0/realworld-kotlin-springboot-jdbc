@@ -164,7 +164,10 @@ class ProfileController(
                     /**
                      * 原因: 不明
                      */
-                    is UnfollowProfileUseCase.Error.Unexpected -> TODO()
+                    is UnfollowProfileUseCase.Error.Unexpected -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(500)
+                    )
                 }
                 /**
                  * プロフィールのアンフォローに成功
