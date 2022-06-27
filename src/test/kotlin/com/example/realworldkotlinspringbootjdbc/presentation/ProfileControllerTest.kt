@@ -214,5 +214,24 @@ class ProfileControllerTest {
             )
             assertThat(actual).isEqualTo(expected)
         }
+
+        @Test
+        fun `プロフォールをフォロー時、UseCase が原因不明のエラーを返す場合、500 レスポンスを返す`() {
+            val notImplementedError = object : MyError {}
+            val followProfileUnexpectedError = object : FollowProfileUseCase {
+                override fun execute(username: String?): Either<FollowProfileUseCase.Error, Profile> =
+                    FollowProfileUseCase.Error.Unexpected(notImplementedError).left()
+            }
+            val actual = profileController(
+                notImplementedShowProfileUseCase,
+                followProfileUnexpectedError,
+                authorizedMyAuth
+            ).follow(requestHeader, pathParam)
+            val expected = ResponseEntity(
+                """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
+                HttpStatus.valueOf(500)
+            )
+            assertThat(actual).isEqualTo(expected)
+        }
     }
 }

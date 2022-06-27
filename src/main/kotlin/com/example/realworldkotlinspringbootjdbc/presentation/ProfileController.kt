@@ -111,7 +111,10 @@ class ProfileController(
                     /**
                      * 原因: 不明
                      */
-                    is FollowProfileUseCase.Error.Unexpected -> TODO()
+                    is FollowProfileUseCase.Error.Unexpected -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(500)
+                    )
                 }
                 /**
                  * プロフィールのフォローに成功
