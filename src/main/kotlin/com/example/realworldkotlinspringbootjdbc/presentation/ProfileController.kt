@@ -146,7 +146,23 @@ class ProfileController(
                 /**
                  * プロフィールのアンフォローに失敗
                  */
-                is Left -> TODO()
+                is Left -> when (unfollowedProfile.value) {
+                    /**
+                     * 原因: UserName が不正
+                     */
+                    is UnfollowProfileUseCase.Error.InvalidUserName -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: Profile が見つからなかった
+                     */
+                    is UnfollowProfileUseCase.Error.NotFound -> TODO()
+                    /**
+                     * 原因: 不明
+                     */
+                    is UnfollowProfileUseCase.Error.Unexpected -> TODO()
+                }
                 /**
                  * プロフィールのアンフォローに成功
                  */
