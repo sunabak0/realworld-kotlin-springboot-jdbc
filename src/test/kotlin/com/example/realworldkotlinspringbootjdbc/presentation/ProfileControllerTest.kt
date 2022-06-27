@@ -333,5 +333,25 @@ class ProfileControllerTest {
             )
             assertThat(actual).isEqualTo(expected)
         }
+
+        @Test
+        fun `プロフォールをフォロー時、UseCase がNotFoundを返す場合、404レスポンスを返す`() {
+            val notImplementedError = object : MyError {}
+            val unfollowProfileReturnNotFoundError = object : UnfollowProfileUseCase {
+                override fun execute(username: String?): Either<UnfollowProfileUseCase.Error, Profile> =
+                    UnfollowProfileUseCase.Error.NotFound(notImplementedError).left()
+            }
+            val actual = profileController(
+                notImplementedShowProfileUseCase,
+                notImplementedFollowProfileUseCase,
+                unfollowProfileReturnNotFoundError,
+                authorizedMyAuth
+            ).unfollow(requestHeader, pathParam)
+            val expected = ResponseEntity(
+                """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
+                HttpStatus.valueOf(404)
+            )
+            assertThat(actual).isEqualTo(expected)
+        }
     }
 }

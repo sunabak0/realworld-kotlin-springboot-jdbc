@@ -157,7 +157,10 @@ class ProfileController(
                     /**
                      * 原因: Profile が見つからなかった
                      */
-                    is UnfollowProfileUseCase.Error.NotFound -> TODO()
+                    is UnfollowProfileUseCase.Error.NotFound -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
                     /**
                      * 原因: 不明
                      */
