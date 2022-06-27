@@ -29,7 +29,7 @@ class DbConnectionTest {
         val sqlParams = MapSqlParameterSource()
             .addValue("email", "nothing@example.com")
         val actual = namedParameterJdbcTemplate.queryForMap(sql, sqlParams)
-        val expected = mapOf("count" to 0)
+        val expected = mapOf("count" to 0L)
         assertThat(actual).isEqualTo(expected)
     }
 }
