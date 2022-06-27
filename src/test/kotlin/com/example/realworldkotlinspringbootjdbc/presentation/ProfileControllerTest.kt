@@ -172,5 +172,28 @@ class ProfileControllerTest {
             )
             assertThat(actual).isEqualTo(expected)
         }
+
+        @Test
+        fun `フォロー時、UseCase がバリデーションエラーを返す場合、404 を返す`() {
+            val notImplementedValidationError = object : MyError.ValidationError {
+                override val message: String get() = "DummyValidationError InvalidUserName"
+                override val key: String get() = "DummyKey"
+            }
+            val followProfileReturnInvalidUserNameError = object : FollowProfileUseCase {
+                override fun execute(username: String?): Either<FollowProfileUseCase.Error, Profile> =
+                    FollowProfileUseCase.Error.InvalidUserName(listOf(notImplementedValidationError)).left()
+            }
+            val actual =
+                profileController(
+                    notImplementedShowProfileUseCase,
+                    followProfileReturnInvalidUserNameError,
+                    authorizedMyAuth
+                ).follow(requestHeader, pathParam)
+            val expected = ResponseEntity(
+                """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
+                HttpStatus.valueOf(404)
+            )
+            assertThat(actual).isEqualTo(expected)
+        }
     }
 }

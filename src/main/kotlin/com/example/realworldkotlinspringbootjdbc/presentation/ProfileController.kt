@@ -93,7 +93,23 @@ class ProfileController(
                 /**
                  * プロフィールのフォローに失敗
                  */
-                is Left -> TODO()
+                is Left -> when (val useCaseError = followedProfile.value) {
+                    /**
+                     * 原因: UserName が不正
+                     */
+                    is FollowProfileUseCase.Error.InvalidUserName -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: Profile が見つからなかった
+                     */
+                    is FollowProfileUseCase.Error.NotFound -> TODO()
+                    /**
+                     * 原因: 不明
+                     */
+                    is FollowProfileUseCase.Error.Unexpected -> TODO()
+                }
                 /**
                  * プロフィールのフォローに成功
                  */
