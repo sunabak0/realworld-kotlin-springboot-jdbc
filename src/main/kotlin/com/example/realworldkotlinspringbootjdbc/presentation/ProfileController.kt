@@ -130,18 +130,31 @@ class ProfileController(
     }
 
     @DeleteMapping("/profiles/{username}/follow")
-    fun unfollow(): ResponseEntity<String> {
-        val profile = Profile(
-            "hoge-username",
-            "hoge-bio",
-            "hoge-image",
-            false
-        )
-        return ResponseEntity(
-            ObjectMapper()
-                .enable(SerializationFeature.WRAP_ROOT_VALUE)
-                .writeValueAsString(profile),
-            HttpStatus.valueOf(200)
-        )
+    fun unfollow(
+        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
+        @PathParam("username") username: String?
+    ): ResponseEntity<String> {
+        return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
+            /**
+             * JWT 認証 失敗
+             */
+            is Left -> AuthorizationError.handle(authorizeResult.value)
+            /**
+             * JWT 認証 成功
+             */
+            is Right -> when (val unfollowedProfile = unfollowProfileUseCase.execute(username)) {
+                /**
+                 * プロフィールのアンフォローに失敗
+                 */
+                is Left -> TODO()
+                /**
+                 * プロフィールのアンフォローに成功
+                 */
+                is Right -> ResponseEntity(
+                    Profile.from(unfollowedProfile.value).serializeWithRootName(),
+                    HttpStatus.valueOf(200)
+                )
+            }
+        }
     }
 }
