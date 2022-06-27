@@ -84,23 +84,23 @@ CREATE UNIQUE INDEX index_users_on_email ON public.users USING btree (email);
 CREATE UNIQUE INDEX index_users_on_username ON public.users USING btree (username);
 
 -- Relation
-ALTER TABLE ONLY public.favorites
-    ADD CONSTRAINT fk_00f2e522fe FOREIGN KEY (article_id) REFERENCES public.articles(id);
-ALTER TABLE ONLY public.followings
-    ADD CONSTRAINT fk_1668ccdb36 FOREIGN KEY (follower_id) REFERENCES public.users(id);
-ALTER TABLE ONLY public.article_comments
-    ADD CONSTRAINT fk_33ea79615a FOREIGN KEY (author_id) REFERENCES public.users(id);
-ALTER TABLE ONLY public.followings
-    ADD CONSTRAINT fk_5371baeb2d FOREIGN KEY (following_id) REFERENCES public.users(id);
-ALTER TABLE ONLY public.article_tags
-    ADD CONSTRAINT fk_646e8d3122 FOREIGN KEY (article_id) REFERENCES public.articles(id);
-ALTER TABLE ONLY public.article_comments
-    ADD CONSTRAINT fk_67982717fa FOREIGN KEY (article_id) REFERENCES public.users(id);
-ALTER TABLE ONLY public.article_tags
-    ADD CONSTRAINT fk_b651172c61 FOREIGN KEY (tag_id) REFERENCES public.tags(id);
-ALTER TABLE ONLY public.favorites
-    ADD CONSTRAINT fk_d15744e438 FOREIGN KEY (user_id) REFERENCES public.users(id);
-ALTER TABLE ONLY public.profiles
-    ADD CONSTRAINT fk_e424190865 FOREIGN KEY (user_id) REFERENCES public.users(id);
-ALTER TABLE ONLY public.articles
-    ADD CONSTRAINT fk_e74ce85cbc FOREIGN KEY (author_id) REFERENCES public.users(id);
+--ALTER TABLE ONLY public.favorites
+--    ADD CONSTRAINT fk_00f2e522fe FOREIGN KEY (article_id) REFERENCES public.articles(id);
+--ALTER TABLE ONLY public.followings
+--    ADD CONSTRAINT fk_1668ccdb36 FOREIGN KEY (follower_id) REFERENCES public.users(id);
+--ALTER TABLE ONLY public.article_comments
+--    ADD CONSTRAINT fk_33ea79615a FOREIGN KEY (author_id) REFERENCES public.users(id);
+--ALTER TABLE ONLY public.followings
+--    ADD CONSTRAINT fk_5371baeb2d FOREIGN KEY (following_id) REFERENCES public.users(id);
+--ALTER TABLE ONLY public.article_tags
+--    ADD CONSTRAINT fk_646e8d3122 FOREIGN KEY (article_id) REFERENCES public.articles(id);
+--ALTER TABLE ONLY public.article_comments
+--    ADD CONSTRAINT fk_67982717fa FOREIGN KEY (article_id) REFERENCES public.users(id);
+--ALTER TABLE ONLY public.article_tags
+--    ADD CONSTRAINT fk_b651172c61 FOREIGN KEY (tag_id) REFERENCES public.tags(id);
+--ALTER TABLE ONLY public.favorites
+--    ADD CONSTRAINT fk_d15744e438 FOREIGN KEY (user_id) REFERENCES public.users(id);
+--ALTER TABLE ONLY public.profiles
+--    ADD CONSTRAINT fk_e424190865 FOREIGN KEY (user_id) REFERENCES public.users(id);
+--ALTER TABLE ONLY public.articles
+--    ADD CONSTRAINT fk_e74ce85cbc FOREIGN KEY (author_id) REFERENCES public.users(id);

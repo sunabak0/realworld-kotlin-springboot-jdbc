@@ -14,8 +14,8 @@ down.db: ## dbを落とす
 test: ## テスト実行
 	./gradlew test
 
-.PHONY: test.withLocalDb
-test.withLocalDb: ## テスト(with local db)実行
+.PHONY: test.with-local-db
+test.with-local-db: ## テスト(with local db)実行
 	./gradlew test withLocalDb
 
 .PHONY: test.e2e
