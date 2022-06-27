@@ -149,7 +149,7 @@ class ProfileControllerTest {
         }
 
         @Test
-        fun `フォロー時、UseCaseが「Profile」を返す場合、200 レスポンスを返す`() {
+        fun `プロフォールをフォロー時、UseCaseが「Profile」を返す場合、200 レスポンスを返す`() {
             val returnProfile = Profile.newWithoutValidation(
                 Username.newWithoutValidation("hoge-username"),
                 Bio.newWithoutValidation("hoge-bio"),
@@ -174,7 +174,7 @@ class ProfileControllerTest {
         }
 
         @Test
-        fun `フォロー時、UseCase がバリデーションエラーを返す場合、404 を返す`() {
+        fun `プロフォールをフォロー時、UseCase がバリデーションエラーを返す場合、404 を返す`() {
             val notImplementedValidationError = object : MyError.ValidationError {
                 override val message: String get() = "DummyValidationError InvalidUserName"
                 override val key: String get() = "DummyKey"
@@ -189,6 +189,25 @@ class ProfileControllerTest {
                     followProfileReturnInvalidUserNameError,
                     authorizedMyAuth
                 ).follow(requestHeader, pathParam)
+            val expected = ResponseEntity(
+                """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
+                HttpStatus.valueOf(404)
+            )
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        fun `プロフォールをフォロー時、UseCase がNotFoundを返す場合、404レスポンスを返す`() {
+            val notImplementedError = object : MyError {}
+            val followProfileReturnNotFoundError = object : FollowProfileUseCase {
+                override fun execute(username: String?): Either<FollowProfileUseCase.Error, Profile> =
+                    FollowProfileUseCase.Error.NotFound(notImplementedError).left()
+            }
+            val actual = profileController(
+                notImplementedShowProfileUseCase,
+                followProfileReturnNotFoundError,
+                authorizedMyAuth
+            ).follow(requestHeader, pathParam)
             val expected = ResponseEntity(
                 """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
                 HttpStatus.valueOf(404)
