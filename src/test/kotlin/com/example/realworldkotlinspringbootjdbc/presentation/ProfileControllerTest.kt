@@ -12,6 +12,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.usecase.FollowProfileUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.ShowProfileUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.UnfollowProfileUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
@@ -26,14 +27,16 @@ class ProfileControllerTest {
         private val pathParam = "hoge-username"
 
         private val notImplementedFollowProfileUseCase = object : FollowProfileUseCase {}
+        private val notImplementedUnfollowProfileUseCase = object : UnfollowProfileUseCase {}
         private val notImplementedMyAuth = object : MyAuth {}
 
         private inline fun profileController(
             showProfileUseCase: ShowProfileUseCase,
             followProfileUseCase: FollowProfileUseCase,
+            unfollowProfileUseCase: UnfollowProfileUseCase,
             myAuth: MyAuth
         ): ProfileController =
-            ProfileController(showProfileUseCase, followProfileUseCase, myAuth)
+            ProfileController(showProfileUseCase, followProfileUseCase, unfollowProfileUseCase, myAuth)
 
         @Test
         fun `プロフィール取得時、UseCase が「Profile」を返す場合、200レスポンスを返す`() {
@@ -50,6 +53,7 @@ class ProfileControllerTest {
             val actual = profileController(
                 showProfileReturnProfile,
                 notImplementedFollowProfileUseCase,
+                notImplementedUnfollowProfileUseCase,
                 notImplementedMyAuth
             ).showProfile(pathParam)
             val expected = ResponseEntity(
@@ -73,6 +77,7 @@ class ProfileControllerTest {
                 profileController(
                     showProfileReturnInvalidUserNameError,
                     notImplementedFollowProfileUseCase,
+                    notImplementedUnfollowProfileUseCase,
                     notImplementedMyAuth
                 ).showProfile(pathParam)
             val expected = ResponseEntity(
@@ -92,6 +97,7 @@ class ProfileControllerTest {
             val actual = profileController(
                 showProfileReturnNotFoundError,
                 notImplementedFollowProfileUseCase,
+                notImplementedUnfollowProfileUseCase,
                 notImplementedMyAuth
             ).showProfile(pathParam)
             val expected = ResponseEntity(
@@ -112,6 +118,7 @@ class ProfileControllerTest {
                 profileController(
                     showProfileReturnUnexpectedError,
                     notImplementedFollowProfileUseCase,
+                    notImplementedUnfollowProfileUseCase,
                     notImplementedMyAuth
                 ).showProfile(pathParam)
             val expected = ResponseEntity(
@@ -134,13 +141,15 @@ class ProfileControllerTest {
             Image.newWithoutValidation("dummy-image"),
         )
         private val notImplementedShowProfileUseCase = object : ShowProfileUseCase {}
+        private val notImplementedUnfollowProfileUseCase = object : UnfollowProfileUseCase {}
 
         private inline fun profileController(
             showProfileUseCase: ShowProfileUseCase,
             followProfileUseCase: FollowProfileUseCase,
+            unfollowProfileUseCase: UnfollowProfileUseCase,
             myAuth: MyAuth
         ): ProfileController =
-            ProfileController(showProfileUseCase, followProfileUseCase, myAuth)
+            ProfileController(showProfileUseCase, followProfileUseCase, unfollowProfileUseCase, myAuth)
 
         private val authorizedMyAuth = object : MyAuth {
             override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
@@ -162,7 +171,12 @@ class ProfileControllerTest {
                 }
             }
             val actual =
-                profileController(notImplementedShowProfileUseCase, followProfileUseCase, authorizedMyAuth).follow(
+                profileController(
+                    notImplementedShowProfileUseCase,
+                    followProfileUseCase,
+                    notImplementedUnfollowProfileUseCase,
+                    authorizedMyAuth
+                ).follow(
                     requestHeader,
                     pathParam
                 )
@@ -187,6 +201,7 @@ class ProfileControllerTest {
                 profileController(
                     notImplementedShowProfileUseCase,
                     followProfileReturnInvalidUserNameError,
+                    notImplementedUnfollowProfileUseCase,
                     authorizedMyAuth
                 ).follow(requestHeader, pathParam)
             val expected = ResponseEntity(
@@ -206,6 +221,7 @@ class ProfileControllerTest {
             val actual = profileController(
                 notImplementedShowProfileUseCase,
                 followProfileReturnNotFoundError,
+                notImplementedUnfollowProfileUseCase,
                 authorizedMyAuth
             ).follow(requestHeader, pathParam)
             val expected = ResponseEntity(
@@ -225,6 +241,7 @@ class ProfileControllerTest {
             val actual = profileController(
                 notImplementedShowProfileUseCase,
                 followProfileUnexpectedError,
+                notImplementedUnfollowProfileUseCase,
                 authorizedMyAuth
             ).follow(requestHeader, pathParam)
             val expected = ResponseEntity(

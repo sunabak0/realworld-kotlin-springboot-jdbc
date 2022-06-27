@@ -7,6 +7,7 @@ import com.example.realworldkotlinspringbootjdbc.presentation.response.serialize
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
 import com.example.realworldkotlinspringbootjdbc.usecase.FollowProfileUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.ShowProfileUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.UnfollowProfileUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -25,6 +26,7 @@ import javax.websocket.server.PathParam
 class ProfileController(
     val showProfileUseCase: ShowProfileUseCase,
     val followProfileUseCase: FollowProfileUseCase,
+    val unfollowProfileUseCase: UnfollowProfileUseCase,
     val myAuth: MyAuth
 ) {
     @GetMapping("/profiles/{username}")
