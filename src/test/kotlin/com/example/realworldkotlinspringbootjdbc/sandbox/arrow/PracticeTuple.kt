@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test
 class PracticeTuple {
     @Test
     fun `TupleXは属性がそれぞれ等価であれば、等価である`() {
-        val a = Tuple4(1,2,3,4)
-        val b = Tuple4(1,2,3,4)
+        val a = Tuple4(1, 2, 3, 4)
+        val b = Tuple4(1, 2, 3, 4)
         assertThat(a).isEqualTo(b)
     }
 }
