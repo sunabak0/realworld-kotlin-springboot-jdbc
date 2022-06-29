@@ -80,7 +80,8 @@ class ProfileRepositoryImplTest {
     fun `ProfileRepository show() で 0 件だったときの異常系`() {
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
 
-        val expect = ProfileRepository.ShowError.NotFoundProfileByUsername(Username.newWithoutValidation("dummy-username"))
+        val expect =
+            ProfileRepository.ShowError.NotFoundProfileByUsername(Username.newWithoutValidation("dummy-username"))
         when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"))) {
             is Left -> assertThat(actual.value).isEqualTo(expect)
             is Right -> assert(false)

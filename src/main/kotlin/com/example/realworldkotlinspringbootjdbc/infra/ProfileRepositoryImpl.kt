@@ -34,12 +34,14 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         return try {
             val profileFromDb = namedParameterJdbcTemplate.queryForList(sql, sqlParams)
             if (profileFromDb.isNotEmpty()) {
-                Profile.newWithoutValidation(
-                    Username.newWithoutValidation(profileFromDb[0]["username"].toString()),
-                    Bio.newWithoutValidation(profileFromDb[0]["bio"].toString()),
-                    Image.newWithoutValidation(profileFromDb[0]["image"].toString()),
-                    false
-                ).right()
+                profileFromDb.map {
+                    Profile.newWithoutValidation(
+                        Username.newWithoutValidation(it["username"].toString()),
+                        Bio.newWithoutValidation(it["bio"].toString()),
+                        Image.newWithoutValidation(it["image"].toString()),
+                        false
+                    )
+                }[0].right()
             } else {
                 ProfileRepository.ShowError.NotFoundProfileByUsername(username).left()
             }
