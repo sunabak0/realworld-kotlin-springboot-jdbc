@@ -15,8 +15,7 @@ interface Username {
     /**
      * 実装
      */
-    private data class ValidatedUsername(override val value: String) : Username
-    private data class UsernameWithoutValidation(override val value: String) : Username
+    private data class UsernameImpl(override val value: String) : Username
 
     /**
      * Factory メソッド
@@ -25,7 +24,7 @@ interface Username {
         /**
          * Validation無し
          */
-        fun newWithoutValidation(username: String): Username = UsernameWithoutValidation(username)
+        fun newWithoutValidation(username: String): Username = UsernameImpl(username)
 
         /**
          * Validation有り
@@ -38,7 +37,7 @@ interface Username {
                     ValidationError.TooShort.check(existedUsername).zip(
                         Semigroup.nonEmptyList(),
                         ValidationError.TooLong.check(existedUsername)
-                    ) { _, _ -> ValidatedUsername(existedUsername) }
+                    ) { _, _ -> UsernameImpl(existedUsername) }
                 }
             }
         }

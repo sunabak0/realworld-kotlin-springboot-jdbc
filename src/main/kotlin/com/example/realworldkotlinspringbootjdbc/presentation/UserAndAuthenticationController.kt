@@ -9,11 +9,10 @@ import com.example.realworldkotlinspringbootjdbc.presentation.response.serialize
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
 import com.example.realworldkotlinspringbootjdbc.usecase.LoginUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.RegisterUserUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.UpdateUserUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -31,6 +30,7 @@ class UserAndAuthenticationController(
     val myAuth: MyAuth,
     val registerUserUseCase: RegisterUserUseCase,
     val loginUseCase: LoginUseCase,
+    val updateUserUseCase: UpdateUserUseCase,
 ) {
     /**
      * ユーザー登録
@@ -199,20 +199,70 @@ class UserAndAuthenticationController(
             }
         }
 
+    /**
+     *
+     * (ログイン済みである)現在のユーザー情報を更新する
+     *
+     * TODO: RealWorldの仕様にあるように見えないけど、Passwordを必須にした方が良さそう
+     *
+     * 成功例
+     * $ TODO
+     *
+     * 失敗例
+     * $ TODO
+     */
     @PutMapping("/user")
-    fun update(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
-        val user = CurrentUser(
-            "hoge@example.com",
-            "hoge-username",
-            "hoge-bio",
-            "hoge-image",
-            "hoge-token",
-        )
-        return ResponseEntity(
-            ObjectMapper()
-                .enable(SerializationFeature.WRAP_ROOT_VALUE)
-                .writeValueAsString(user),
-            HttpStatus.valueOf(200)
-        )
+    fun update(
+        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
+        @RequestBody rawRequestBody: String?,
+    ): ResponseEntity<String> {
+        val nullableUser = NullableUser.from(rawRequestBody)
+        return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
+            /**
+             * JWT認証 失敗
+             */
+            is Left -> AuthorizationError.handle(authorizeResult.value)
+            /**
+             * JWT認証 成功
+             */
+            is Right -> {
+                val currentUser = authorizeResult.value
+                val useCaseResult = updateUserUseCase.execute(
+                    currentUser,
+                    nullableUser.email,
+                    nullableUser.username,
+                    nullableUser.bio,
+                    nullableUser.image,
+                )
+                when (useCaseResult) {
+                    /**
+                     * User情報更新 失敗
+                     */
+                    is Left -> { TODO() }
+                    /**
+                     * User情報更新 成功
+                     */
+                    is Right -> {
+                        val session = MySession(currentUser.userId, currentUser.email)
+                        when (val token = mySessionJwt.encode(session)) {
+                            /**
+                             * セッションのエンコード 成功
+                             */
+                            is Right -> ResponseEntity(
+                                CurrentUser.from(useCaseResult.value, token.value).serializeWithRootName(),
+                                HttpStatus.valueOf(201)
+                            )
+                            /**
+                             * 原因: セッションのJWTエンコードで失敗
+                             */
+                            is Left -> ResponseEntity(
+                                serializeUnexpectedErrorForResponseBody("予期せぬエラーが発生しました(cause: ${mySessionJwt::class.simpleName})"),
+                                HttpStatus.valueOf(500)
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
