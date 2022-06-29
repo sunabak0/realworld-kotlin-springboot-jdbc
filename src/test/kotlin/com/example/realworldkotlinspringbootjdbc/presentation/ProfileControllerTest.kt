@@ -28,7 +28,7 @@ class ProfileControllerTest {
         private val notImplementedFollowProfileUseCase = object : FollowProfileUseCase {}
         private val notImplementedMyAuth = object : MyAuth {}
 
-        private inline fun profileController(
+        private fun profileController(
             showProfileUseCase: ShowProfileUseCase,
             followProfileUseCase: FollowProfileUseCase,
             myAuth: MyAuth
@@ -135,7 +135,7 @@ class ProfileControllerTest {
         )
         private val notImplementedShowProfileUseCase = object : ShowProfileUseCase {}
 
-        private inline fun profileController(
+        private fun profileController(
             showProfileUseCase: ShowProfileUseCase,
             followProfileUseCase: FollowProfileUseCase,
             myAuth: MyAuth

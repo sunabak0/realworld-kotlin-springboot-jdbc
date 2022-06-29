@@ -30,7 +30,7 @@ class CommentControllerTest {
     @Nested
     class List {
         private val pathParam = "hoge-slug"
-        private inline fun commentController(
+        private fun commentController(
             commentsUseCase: ListCommentUseCase,
             createCommentUseCase: CreateCommentUseCase,
             deleteCommentUseCase: DeleteCommentUseCase,
@@ -172,7 +172,7 @@ class CommentControllerTest {
         )
         private val notImplementedListCommentUseCase = object : ListCommentUseCase {}
         private val notImplementedDeleteCommentUseCase = object : DeleteCommentUseCase {}
-        private inline fun commentController(
+        private fun commentController(
             listCommentUseCase: ListCommentUseCase,
             createCommentUseCase: CreateCommentUseCase,
             deleteCommentUseCase: DeleteCommentUseCase,
@@ -318,7 +318,7 @@ class CommentControllerTest {
         )
         private val notImplementedListCommentUseCase = object : ListCommentUseCase {}
         private val notImplementedCreateCommentUseCase = object : CreateCommentUseCase {}
-        private inline fun commentController(
+        private fun commentController(
             listCommentUseCase: ListCommentUseCase,
             createCommentUseCase: CreateCommentUseCase,
             deleteCommentUseCase: DeleteCommentUseCase,
