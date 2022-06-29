@@ -1,7 +1,10 @@
 package com.example.realworldkotlinspringbootjdbc.usecase
 
 import arrow.core.Either
-import arrow.core.Validated
+import arrow.core.Either.Left
+import arrow.core.Either.Right
+import arrow.core.Validated.Invalid
+import arrow.core.Validated.Valid
 import arrow.core.left
 import com.example.realworldkotlinspringbootjdbc.domain.Profile
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
@@ -28,19 +31,19 @@ class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) : Follo
             /**
              * Username が不正
              */
-            is Validated.Invalid -> FollowProfileUseCase.Error.InvalidUserName(it.value).left()
+            is Invalid -> FollowProfileUseCase.Error.InvalidUserName(it.value).left()
             /**
              * Username が適切
              */
-            is Validated.Valid -> when (val followProfileResult = profileRepository.follow(it.value)) {
+            is Valid -> when (val followProfileResult = profileRepository.follow(it.value)) {
                 /**
                  * プロフィールフォロー失敗
                  */
-                is Either.Left -> TODO()
+                is Left -> TODO()
                 /**
                  * プロフィールフォロー成功
                  */
-                is Either.Right -> TODO()
+                is Right -> TODO()
             }
         }
     }
