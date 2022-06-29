@@ -12,7 +12,7 @@ import java.util.Date
 class DataClassEquals {
     @Nested
     class SimpleDataClass {
-        data class Person (
+        data class Person(
             val name: String,
             val age: Int,
             val birthday: Date,
