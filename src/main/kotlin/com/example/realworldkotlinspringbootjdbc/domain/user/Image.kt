@@ -14,8 +14,7 @@ interface Image {
     /**
      * 実装
      */
-    private data class ValidatedImage(override val value: String) : Image
-    private data class ImageWithoutValidation(override val value: String) : Image
+    private data class ImageImpl(override val value: String) : Image
 
     /**
      * Factory メソッド
@@ -24,7 +23,7 @@ interface Image {
         /**
          * Validation 無し
          */
-        fun newWithoutValidation(image: String): Image = ImageWithoutValidation(image)
+        fun newWithoutValidation(image: String): Image = ImageImpl(image)
 
         /**
          * Validation 有り
@@ -33,7 +32,7 @@ interface Image {
             return when (val result = ValidationError.Required.check(image)) {
                 is Validated.Invalid -> result.value.invalidNel()
                 is Validated.Valid -> ValidationError.TooLong.check(result.value)
-                    .map { ValidatedImage(result.value) }
+                    .map { ImageImpl(result.value) }
             }
         }
     }
