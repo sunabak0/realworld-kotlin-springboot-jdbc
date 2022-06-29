@@ -154,7 +154,7 @@ class ProfileControllerTest {
                 Username.newWithoutValidation("hoge-username"),
                 Bio.newWithoutValidation("hoge-bio"),
                 Image.newWithoutValidation("hoge-image"),
-                true
+                following = true
             )
             val followProfileUseCase = object : FollowProfileUseCase {
                 override fun execute(username: String?): Either<FollowProfileUseCase.Error, Profile> {
