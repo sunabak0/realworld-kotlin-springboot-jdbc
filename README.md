@@ -1,5 +1,31 @@
 # RealWorld
 
+[![Maintainability](https://api.codeclimate.com/v1/badges/de2d7acc6b617132951a/maintainability)](https://codeclimate.com/github/sunakan/realworld-kotlin-springboot-jdbc/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/de2d7acc6b617132951a/test_coverage)](https://codeclimate.com/github/sunakan/realworld-kotlin-springboot-jdbc/test_coverage)
+
+## 開発
+
+```
+make
+```
+
+```
+######################################################################
+# Makeタスク一覧
+# $ make XXX
+# or
+# $ make XXX --dry-run
+######################################################################
+up                   サーバー起動
+up.db                db起動
+down.db              dbを落とす
+test                 テスト実行
+test.with-local-db   テスト(with local db)実行
+test.e2e             e2eテスト実行
+fmt                  format and lint
+help                 Make タスク一覧
+```
+
 ## アーキテクチャ
 
 ![](./docs/architecture-basic.drawio.png)
@@ -17,7 +43,7 @@
 - Infra層は必ずEither<DomainError, DomainObject>を返す
 - Infra層はDobmainObjectのバリデーション無しでインスタンス化可能である
 
-## Either<E, T>とValidated<E, T>
+## Either<E, T>とValidatedNel<E, T>
 
 |型   |説明                                |
 |:---:|:----------------------------------|
