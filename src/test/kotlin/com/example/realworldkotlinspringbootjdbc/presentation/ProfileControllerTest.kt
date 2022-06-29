@@ -29,11 +29,11 @@ class ProfileControllerTest {
         private val notImplementedMyAuth = object : MyAuth {}
 
         private fun profileController(
+            myAuth: MyAuth,
             showProfileUseCase: ShowProfileUseCase,
-            followProfileUseCase: FollowProfileUseCase,
-            myAuth: MyAuth
+            followProfileUseCase: FollowProfileUseCase
         ): ProfileController =
-            ProfileController(showProfileUseCase, followProfileUseCase, myAuth)
+            ProfileController(myAuth, showProfileUseCase, followProfileUseCase)
 
         @Test
         fun `プロフィール取得時、UseCase が「Profile」を返す場合、200レスポンスを返す`() {
@@ -48,9 +48,9 @@ class ProfileControllerTest {
                     mockProfile.right()
             }
             val actual = profileController(
+                notImplementedMyAuth,
                 showProfileReturnProfile,
-                notImplementedFollowProfileUseCase,
-                notImplementedMyAuth
+                notImplementedFollowProfileUseCase
             ).showProfile(pathParam)
             val expected = ResponseEntity(
                 """{"profile":{"username":"hoge-username","bio":"hoge-bio","image":"hoge-image","following":true}}""",
@@ -71,9 +71,9 @@ class ProfileControllerTest {
             }
             val actual =
                 profileController(
+                    notImplementedMyAuth,
                     showProfileReturnInvalidUserNameError,
                     notImplementedFollowProfileUseCase,
-                    notImplementedMyAuth
                 ).showProfile(pathParam)
             val expected = ResponseEntity(
                 """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
@@ -90,9 +90,9 @@ class ProfileControllerTest {
                     ShowProfileUseCase.Error.NotFound(notImplementedError).left()
             }
             val actual = profileController(
+                notImplementedMyAuth,
                 showProfileReturnNotFoundError,
                 notImplementedFollowProfileUseCase,
-                notImplementedMyAuth
             ).showProfile(pathParam)
             val expected = ResponseEntity(
                 """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
@@ -110,9 +110,9 @@ class ProfileControllerTest {
             }
             val actual =
                 profileController(
+                    notImplementedMyAuth,
                     showProfileReturnUnexpectedError,
                     notImplementedFollowProfileUseCase,
-                    notImplementedMyAuth
                 ).showProfile(pathParam)
             val expected = ResponseEntity(
                 """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
@@ -136,11 +136,11 @@ class ProfileControllerTest {
         private val notImplementedShowProfileUseCase = object : ShowProfileUseCase {}
 
         private fun profileController(
+            myAuth: MyAuth,
             showProfileUseCase: ShowProfileUseCase,
             followProfileUseCase: FollowProfileUseCase,
-            myAuth: MyAuth
         ): ProfileController =
-            ProfileController(showProfileUseCase, followProfileUseCase, myAuth)
+            ProfileController(myAuth, showProfileUseCase, followProfileUseCase)
 
         private val authorizedMyAuth = object : MyAuth {
             override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
@@ -162,7 +162,7 @@ class ProfileControllerTest {
                 }
             }
             val actual =
-                profileController(notImplementedShowProfileUseCase, followProfileUseCase, authorizedMyAuth).follow(
+                profileController(authorizedMyAuth, notImplementedShowProfileUseCase, followProfileUseCase).follow(
                     requestHeader,
                     pathParam
                 )
@@ -185,9 +185,9 @@ class ProfileControllerTest {
             }
             val actual =
                 profileController(
+                    authorizedMyAuth,
                     notImplementedShowProfileUseCase,
                     followProfileReturnInvalidUserNameError,
-                    authorizedMyAuth
                 ).follow(requestHeader, pathParam)
             val expected = ResponseEntity(
                 """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
@@ -204,9 +204,9 @@ class ProfileControllerTest {
                     FollowProfileUseCase.Error.NotFound(notImplementedError).left()
             }
             val actual = profileController(
+                authorizedMyAuth,
                 notImplementedShowProfileUseCase,
                 followProfileReturnNotFoundError,
-                authorizedMyAuth
             ).follow(requestHeader, pathParam)
             val expected = ResponseEntity(
                 """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
@@ -223,9 +223,9 @@ class ProfileControllerTest {
                     FollowProfileUseCase.Error.Unexpected(notImplementedError).left()
             }
             val actual = profileController(
+                authorizedMyAuth,
                 notImplementedShowProfileUseCase,
                 followProfileUnexpectedError,
-                authorizedMyAuth
             ).follow(requestHeader, pathParam)
             val expected = ResponseEntity(
                 """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",

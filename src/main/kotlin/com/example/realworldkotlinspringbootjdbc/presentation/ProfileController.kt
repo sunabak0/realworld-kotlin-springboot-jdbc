@@ -23,9 +23,9 @@ import javax.websocket.server.PathParam
 @RestController
 @Tag(name = "Profile")
 class ProfileController(
+    val myAuth: MyAuth,
     val showProfileUseCase: ShowProfileUseCase,
-    val followProfileUseCase: FollowProfileUseCase,
-    val myAuth: MyAuth
+    val followProfileUseCase: FollowProfileUseCase
 ) {
     @GetMapping("/profiles/{username}")
     fun showProfile(@PathParam("username") username: String?): ResponseEntity<String> {
