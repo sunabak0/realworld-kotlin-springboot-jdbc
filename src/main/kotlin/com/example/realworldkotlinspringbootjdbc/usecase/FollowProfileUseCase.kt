@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service
 interface FollowProfileUseCase {
     fun execute(username: String?): Either<Error, Profile> = TODO()
     sealed interface Error : MyError {
-        data class InvalidUserName(override val errors: List<MyError.ValidationError>) :
+        data class InvalidUsername(override val errors: List<MyError.ValidationError>) :
             Error,
             MyError.ValidationErrors
 
@@ -31,7 +31,7 @@ class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) : Follo
             /**
              * Username が不正
              */
-            is Invalid -> FollowProfileUseCase.Error.InvalidUserName(it.value).left()
+            is Invalid -> FollowProfileUseCase.Error.InvalidUsername(it.value).left()
             /**
              * Username が適切
              */

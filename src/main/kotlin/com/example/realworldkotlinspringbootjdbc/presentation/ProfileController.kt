@@ -54,7 +54,7 @@ class ProfileController(
                 /**
                  * 原因: バリデーションエラー
                  */
-                is ShowProfileUseCase.Error.InvalidUserName -> ResponseEntity(
+                is ShowProfileUseCase.Error.InvalidUsername -> ResponseEntity(
                     serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                     HttpStatus.valueOf(404)
                 )
@@ -95,9 +95,9 @@ class ProfileController(
                  */
                 is Left -> when (val useCaseError = followedProfile.value) {
                     /**
-                     * 原因: UserName が不正
+                     * 原因: Username が不正
                      */
-                    is FollowProfileUseCase.Error.InvalidUserName -> ResponseEntity(
+                    is FollowProfileUseCase.Error.InvalidUsername -> ResponseEntity(
                         serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                         HttpStatus.valueOf(404)
                     )
