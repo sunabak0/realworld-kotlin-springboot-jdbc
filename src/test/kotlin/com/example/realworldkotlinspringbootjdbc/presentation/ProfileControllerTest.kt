@@ -36,7 +36,7 @@ class ProfileControllerTest {
             ProfileController(myAuth, showProfileUseCase, followProfileUseCase)
 
         @Test
-        fun `プロフィール取得時、UseCase が「Profile」を返す場合、200レスポンスを返す`() {
+        fun `プロフィール取得時、 UseCase が「 Profile 」を返す場合、 200 レスポンスを返す`() {
             val mockProfile = Profile.newWithoutValidation(
                 Username.newWithoutValidation("hoge-username"),
                 Bio.newWithoutValidation("hoge-bio"),
@@ -60,7 +60,7 @@ class ProfileControllerTest {
         }
 
         @Test
-        fun `プロフィール取得時、UseCase がバリデーションエラーを返す場合、404レスポンスを返す`() {
+        fun `プロフィール取得時、UseCase がバリデーションエラーを返す場合、 404 レスポンスを返す`() {
             val notImplementedValidationError = object : MyError.ValidationError {
                 override val message: String get() = "DummyValidationError InvalidUserName"
                 override val key: String get() = "DummyKey"
@@ -83,7 +83,7 @@ class ProfileControllerTest {
         }
 
         @Test
-        fun `プロフィール取得時、UseCase がNotFoundを返す場合、404レスポンスを返す`() {
+        fun `プロフィール取得時、 UseCase が NotFound を返す場合、 404 レスポンスを返す`() {
             val notImplementedError = object : MyError {}
             val showProfileReturnNotFoundError = object : ShowProfileUseCase {
                 override fun execute(username: String?): Either<ShowProfileUseCase.Error, Profile> =
@@ -102,7 +102,7 @@ class ProfileControllerTest {
         }
 
         @Test
-        fun `プロフィール取得時、UseCase が原因不明のエラーを返す場合、500 レスポンスを返す`() {
+        fun `プロフィール取得時、 UseCase が原因不明のエラーを返す場合、500 レスポンスを返す`() {
             val notImplementedError = object : MyError {}
             val showProfileReturnUnexpectedError = object : ShowProfileUseCase {
                 override fun execute(username: String?): Either<ShowProfileUseCase.Error, Profile> =
@@ -149,7 +149,7 @@ class ProfileControllerTest {
         }
 
         @Test
-        fun `プロフィールをフォロー時、UseCaseが「Profile」を返す場合、200 レスポンスを返す`() {
+        fun `プロフィールをフォロー時、 UseCase が「 Profile 」を返す場合、200 レスポンスを返す`() {
             val returnProfile = Profile.newWithoutValidation(
                 Username.newWithoutValidation("hoge-username"),
                 Bio.newWithoutValidation("hoge-bio"),
@@ -174,7 +174,7 @@ class ProfileControllerTest {
         }
 
         @Test
-        fun `プロフィールをフォロー時、UseCase がバリデーションエラーを返す場合、404 を返す`() {
+        fun `プロフィールをフォロー時、 UseCase がバリデーションエラーを返す場合、 404 を返す`() {
             val notImplementedValidationError = object : MyError.ValidationError {
                 override val message: String get() = "DummyValidationError InvalidUserName"
                 override val key: String get() = "DummyKey"
@@ -197,7 +197,7 @@ class ProfileControllerTest {
         }
 
         @Test
-        fun `プロフィールをフォロー時、UseCase がNotFoundを返す場合、404レスポンスを返す`() {
+        fun `プロフィールをフォロー時、 UseCase が NotFound を返す場合、404 レスポンスを返す`() {
             val notImplementedError = object : MyError {}
             val followProfileReturnNotFoundError = object : FollowProfileUseCase {
                 override fun execute(username: String?): Either<FollowProfileUseCase.Error, Profile> =
@@ -216,7 +216,7 @@ class ProfileControllerTest {
         }
 
         @Test
-        fun `プロフィールをフォロー時、UseCase が原因不明のエラーを返す場合、500 レスポンスを返す`() {
+        fun `プロフィールをフォロー時、 UseCase が原因不明のエラーを返す場合、500 レスポンスを返す`() {
             val notImplementedError = object : MyError {}
             val followProfileUnexpectedError = object : FollowProfileUseCase {
                 override fun execute(username: String?): Either<FollowProfileUseCase.Error, Profile> =
