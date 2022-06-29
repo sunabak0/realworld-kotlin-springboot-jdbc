@@ -1,6 +1,15 @@
 package com.example.realworldkotlinspringbootjdbc.domain
 
-import arrow.core.*
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Tuple4
+import arrow.core.Validated
+import arrow.core.ValidatedNel
+import arrow.core.invalid
+import arrow.core.invalidNel
+import arrow.core.valid
+import arrow.core.validNel
+import arrow.core.zip
 import arrow.typeclasses.Semigroup
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
@@ -11,20 +20,20 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface UpdatableRegisteredUser {
     val userId: UserId
-    val email: Option<Email>
-    val username: Option<Username>
-    val bio: Option<Bio>
-    val image: Option<Image>
+    val email: Email
+    val username: Username
+    val bio: Bio
+    val image: Image
 
     /**
      * 実装
      */
     private data class ValidatedUpdatableRegisteredUser(
         override val userId: UserId,
-        override val email: Option<Email>,
-        override val username: Option<Username>,
-        override val bio: Option<Bio>,
-        override val image: Option<Image>,
+        override val email: Email,
+        override val username: Username,
+        override val bio: Bio,
+        override val image: Image,
     ) : UpdatableRegisteredUser
 
     /**
@@ -35,61 +44,56 @@ interface UpdatableRegisteredUser {
          * Validation 有り
          */
         fun new(
-            userId: UserId,
+            currentUser: RegisteredUser,
             email: String?,
             username: String?,
             bio: String?,
             image: String?,
         ): ValidatedNel<MyError.ValidationError, UpdatableRegisteredUser> {
             // TODO: Genericsを使ってリファクタできそう(<T>を利用して処理の共通化できそう)
-            // Email(null許容)
-            val newEmailAllowedNull: () -> ValidatedNel<Email.ValidationError, Option<Email>> = { ->
+            // Email
+            val newEmailAllowedNull: () -> ValidatedNel<Email.ValidationError, Email> = { ->
                 Option.fromNullable(email).fold(
-                    { None.validNel() },
-                    { Email.new(it).map { validated -> Some(validated) } }
+                    { currentUser.email.validNel() }, // nullの場合は、currentUserの属性をそのまま利用する
+                    { Email.new(it) }
                 )
             }
-            // Username(null許容)
-            val newUsernameAllowedNull: () -> ValidatedNel<Username.ValidationError, Option<Username>> = { ->
+            // Username
+            val newUsernameAllowedNull: () -> ValidatedNel<Username.ValidationError, Username> = { ->
                 Option.fromNullable(username).fold(
-                    { None.validNel() },
-                    { Username.new(it).map { validated -> Some(validated) } }
+                    { currentUser.username.validNel() }, // nullの場合は、currentUserの属性をそのまま利用する
+                    { Username.new(it) }
                 )
             }
-            // Bio(null許容)
-            val newBioAllowedNull: () -> ValidatedNel<Bio.ValidationError, Option<Bio>> = { ->
+            // Bio
+            val newBioAllowedNull: () -> ValidatedNel<Bio.ValidationError, Bio> = { ->
                 Option.fromNullable(bio).fold(
-                    { None.validNel() },
-                    { Bio.new(it).map { validated -> Some(validated) } }
+                    { currentUser.bio.validNel() }, // nullの場合は、currentUserの属性をそのまま利用する
+                    { Bio.new(it) }
                 )
             }
-            // Image(null許容)
-            val newImageAllowedNull: () -> ValidatedNel<Image.ValidationError, Option<Image>> = { ->
+            // Image
+            val newImageAllowedNull: () -> ValidatedNel<Image.ValidationError, Image> = { ->
                 Option.fromNullable(image).fold(
-                    { None.validNel() },
-                    { Image.new(it).map { validated -> Some(validated) } }
+                    { currentUser.image.validNel() }, // nullの場合は、currentUserの属性をそのまま利用する
+                    { Image.new(it) }
                 )
             }
 
-            /**
-             * プロパティは1つ1つのnullは許容している(=正常扱い)
-             * しかし、全てnullの場合のみ: 異常とする
-             *
-             * Null以外のバリデーションエラーが1つでもある場合: OUT
-             */
             return newEmailAllowedNull().zip(
                 Semigroup.nonEmptyList(),
                 newUsernameAllowedNull(),
                 newBioAllowedNull(),
                 newImageAllowedNull()
             ) { a, b, c, d -> Tuple4(a, b, c, d) }.fold(
-                { it.invalid() }, // 1つでもバリデーションエラーがある場合: OUT
+                { it.invalid() }, // 1つでもバリデーションエラーがある場合: Invalid
                 {
-                    val (a, b, c, d) = it
-                    ValidationError.AtLeastOneAttributeIsRequired.check(a, b, c, d).fold(
-                        { validationError -> validationError.invalidNel() },
-                        { ValidatedUpdatableRegisteredUser(userId, a, b, c, d).validNel() }
-                    )
+                    if (it == Tuple4(currentUser.email, currentUser.username, currentUser.bio, currentUser.image)) {
+                        ValidationError.NothingAttributeToUpdatable.invalidNel() // 新旧が同じ場合: Invalid
+                    } else {
+                        val (a, b, c, d) = it
+                        ValidatedUpdatableRegisteredUser(currentUser.userId, a, b, c, d).validNel()
+                    }
                 }
             )
         }
@@ -100,14 +104,14 @@ interface UpdatableRegisteredUser {
      */
     sealed interface ValidationError : MyError.ValidationError {
         /**
-         * 全て Noneは駄目
+         * 変更が1つもないのは駄目
          */
-        object AtLeastOneAttributeIsRequired : ValidationError {
+        object NothingAttributeToUpdatable : ValidationError {
             override val key: String get() = UpdatableRegisteredUser::class.simpleName.toString()
-            override val message: String get() = "更新するプロパティを1つ以上指定してください"
-            fun check(a: Option<Email>, b: Option<Username>, c: Option<Bio>, d: Option<Image>): Validated<AtLeastOneAttributeIsRequired, Unit> =
+            override val message: String get() = "更新するプロパティが有りません"
+            fun check(a: Option<Email>, b: Option<Username>, c: Option<Bio>, d: Option<Image>): Validated<NothingAttributeToUpdatable, Unit> =
                 when (Tuple4(a, b, c, d)) {
-                    Tuple4(None, None, None, None) -> { AtLeastOneAttributeIsRequired.invalid() }
+                    Tuple4(None, None, None, None) -> { NothingAttributeToUpdatable.invalid() }
                     else -> { Unit.valid() }
                 }
         }
