@@ -16,8 +16,7 @@ interface Password {
     /**
      * 実装
      */
-    private data class ValidatedPassword(override val value: String) : Password
-    private data class PasswordWithoutValidation(override val value: String) : Password
+    private data class PasswordImpl(override val value: String) : Password
 
     /**
      * Factory メソッド
@@ -26,7 +25,7 @@ interface Password {
         /**
          * Validation 無し
          */
-        fun newWithoutValidation(password: String): Password = PasswordWithoutValidation(password)
+        fun newWithoutValidation(password: String): Password = PasswordImpl(password)
 
         /**
          * Validation 有り
@@ -39,7 +38,7 @@ interface Password {
                     ValidationError.TooShort.check(existedPassword).zip(
                         Semigroup.nonEmptyList(),
                         ValidationError.TooLong.check(existedPassword)
-                    ) { _, _ -> ValidatedPassword(existedPassword) }
+                    ) { _, _ -> PasswordImpl(existedPassword) }
                 }
             }
 
@@ -49,7 +48,7 @@ interface Password {
         fun newForLogin(password: String?): ValidatedNel<ValidationError, Password> =
             when (val result = ValidationError.Required.check(password)) {
                 is Validated.Invalid -> result.value.invalidNel()
-                is Validated.Valid -> PasswordWithoutValidation(result.value).valid()
+                is Validated.Valid -> PasswordImpl(result.value).valid()
             }
     }
 

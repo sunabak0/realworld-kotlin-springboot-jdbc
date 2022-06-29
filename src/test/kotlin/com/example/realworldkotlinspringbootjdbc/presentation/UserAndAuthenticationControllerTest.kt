@@ -15,6 +15,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.usecase.LoginUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.RegisterUserUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.UpdateUserUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import com.example.realworldkotlinspringbootjdbc.util.MySession
@@ -52,6 +53,7 @@ class UserAndAuthenticationControllerTest {
                 object : MyAuth {}, // 関係ない
                 object : RegisterUserUseCase { override fun execute(email: String?, password: String?, username: String?): Either<RegisterUserUseCase.Error, RegisteredUser> = useCaseResult },
                 object : LoginUseCase {}, // 関係ない
+                object : UpdateUserUseCase {}, // 関係ない
             ).register("""{"user": {}}""")
 
             assertThat(actual).isEqualTo(expected)
@@ -119,6 +121,7 @@ class UserAndAuthenticationControllerTest {
                         object : MyAuth {}, // 関係ない
                         object : RegisterUserUseCase { override fun execute(email: String?, password: String?, username: String?): Either<RegisterUserUseCase.Error, RegisteredUser> = testCase.useCaseExecuteResult },
                         object : LoginUseCase {}, // 関係ない
+                        object : UpdateUserUseCase {}, // 関係ない
                     ).register("""{"user": {}}""")
 
                     assertThat(actual).isEqualTo(testCase.expected)
@@ -139,7 +142,13 @@ class UserAndAuthenticationControllerTest {
             override fun encode(session: MySession) = "dummy-jwt-token".right()
         }
         private fun userAndAuthenticationController(registerUserUseCase: RegisterUserUseCase): UserAndAuthenticationController =
-            UserAndAuthenticationController(mySessionJwtEncodeReturnString, notImplementedMyAuth, registerUserUseCase, notImplementedLoginUseCase,)
+            UserAndAuthenticationController(
+                mySessionJwtEncodeReturnString,
+                notImplementedMyAuth,
+                registerUserUseCase,
+                notImplementedLoginUseCase,
+                object : UpdateUserUseCase {}, // 関係ない
+            )
         @Test
         fun `UseCase が「RegisteredUser」を返し、JWTエンコードが成功する場合、201レスポンスを返す`() {
             val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
