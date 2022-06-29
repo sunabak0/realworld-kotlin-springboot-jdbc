@@ -8,7 +8,7 @@ interface ProfileRepository {
     fun show(username: Username): Either<ShowError, OtherUser> = TODO()
     sealed interface ShowError : MyError {
         data class NotFoundProfileByUsername(val username: Username) : ShowError, MyError.Basic
-        data class Unexpected(override val cause: Throwable) : ShowError, MyError.MyErrorWithThrowable
+        data class Unexpected(override val cause: Throwable, val username: Username) : ShowError, MyError.MyErrorWithThrowable
     }
 
     fun follow(username: Username): Either<FollowError, OtherUser> = TODO()
