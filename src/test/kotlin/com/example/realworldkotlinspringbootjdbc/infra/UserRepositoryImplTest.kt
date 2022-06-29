@@ -1,9 +1,5 @@
 package com.example.realworldkotlinspringbootjdbc.infra
 
-import arrow.core.Either.Left
-import arrow.core.Either.Right
-import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
@@ -55,10 +51,11 @@ class UserRepositoryImplTest {
         }
         localPrepare()
 
-        val userRepository = UserRepositoryImpl()
-        when (val actual = userRepository.findByUserId(UserId(1))) {
-            is Left -> assert(false)
-            is Right -> assertThat(actual.value.userId).isEqualTo(UserId(1))
-        }
+        TODO()
+        // val userRepository = UserRepositoryImpl()
+        // when (val actual = userRepository.findByUserId(UserId(1))) {
+        //    is Left -> assert(false)
+        //    is Right -> assertThat(actual.value.userId).isEqualTo(UserId(1))
+        // }
     }
 }
