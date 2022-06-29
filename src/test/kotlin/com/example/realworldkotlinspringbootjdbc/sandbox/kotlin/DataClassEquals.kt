@@ -79,7 +79,7 @@ class DataClassEquals {
         @Test
         fun `識別子が異なる場合、他が一致していても不等価である`() {
             val a = Student(StudentNumber(1), "田中太郎", "野球部")
-            val b = Student(StudentNumber(2), "田中太郎", "野球部部")
+            val b = Student(StudentNumber(2), "田中太郎", "野球部")
             assertThat(a == b).isFalse
         }
     }
