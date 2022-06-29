@@ -14,8 +14,7 @@ interface Email {
     /**
      * 実装
      */
-    private data class ValidatedEmail(override val value: String) : Email
-    private data class EmailWithoutValidation(override val value: String) : Email
+    private data class EmailImpl(override val value: String) : Email
 
     /**
      * Factory メソッド
@@ -24,7 +23,7 @@ interface Email {
         /**
          * Validation 無し
          */
-        fun newWithoutValidation(email: String): Email = EmailWithoutValidation(email)
+        fun newWithoutValidation(email: String): Email = EmailImpl(email)
 
         /**
          * Validation 有り
@@ -35,7 +34,7 @@ interface Email {
                 is Validated.Valid -> {
                     val existedEmail = result.value
                     ValidationError.InvalidFormat.check(existedEmail)
-                        .map { ValidatedEmail(existedEmail) }
+                        .map { EmailImpl(existedEmail) }
                 }
             }
     }
