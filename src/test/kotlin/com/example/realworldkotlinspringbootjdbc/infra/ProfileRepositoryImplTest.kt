@@ -3,6 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.infra
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.domain.Profile
+import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
@@ -72,6 +73,17 @@ class ProfileRepositoryImplTest {
         when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"))) {
             is Left -> assert(false)
             is Right -> assertThat(actual.value).isEqualTo(expect)
+        }
+    }
+
+    @Test
+    fun `ProfileRepository show() で 0 件だったときの異常系`() {
+        val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+
+        val expect = ProfileRepository.ShowError.NotFoundProfileByUsername(Username.newWithoutValidation("dummy-username"))
+        when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"))) {
+            is Left -> assertThat(actual.value).isEqualTo(expect)
+            is Right -> assert(false)
         }
     }
 }
