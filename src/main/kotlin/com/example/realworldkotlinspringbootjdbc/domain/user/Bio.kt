@@ -14,8 +14,7 @@ interface Bio {
     /**
      * 実装
      */
-    private data class ValidatedBio(override val value: String) : Bio
-    private data class BioWithoutValidation(override val value: String) : Bio
+    private data class BioImpl(override val value: String) : Bio
 
     /**
      * Factory メソッド
@@ -24,7 +23,7 @@ interface Bio {
         /**
          * Validation 無し
          */
-        fun newWithoutValidation(bio: String): Bio = BioWithoutValidation(bio)
+        fun newWithoutValidation(bio: String): Bio = BioImpl(bio)
 
         /**
          * Validation 有り
@@ -33,7 +32,7 @@ interface Bio {
             return when (val result = ValidationError.Required.check(bio)) {
                 is Validated.Invalid -> result.value.invalidNel()
                 is Validated.Valid -> ValidationError.TooLong.check(result.value)
-                    .map { ValidatedBio(result.value) }
+                    .map { BioImpl(result.value) }
             }
         }
     }
