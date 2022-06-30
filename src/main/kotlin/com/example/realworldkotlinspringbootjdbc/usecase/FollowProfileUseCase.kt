@@ -12,7 +12,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
-interface ShowProfileUseCase {
+interface FollowProfileUseCase {
     fun execute(username: String?): Either<Error, Profile> = TODO()
     sealed interface Error : MyError {
         data class InvalidUsername(override val errors: List<MyError.ValidationError>) :
@@ -25,25 +25,23 @@ interface ShowProfileUseCase {
 }
 
 @Service
-class ShowProfileUseCaseImpl(
-    val profileRepository: ProfileRepository
-) : ShowProfileUseCase {
-    override fun execute(username: String?): Either<ShowProfileUseCase.Error, Profile> {
+class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) : FollowProfileUseCase {
+    override fun execute(username: String?): Either<FollowProfileUseCase.Error, Profile> {
         return when (val it = Username.new(username)) {
             /**
              * Username が不正
              */
-            is Invalid -> ShowProfileUseCase.Error.InvalidUsername(it.value).left()
+            is Invalid -> FollowProfileUseCase.Error.InvalidUsername(it.value).left()
             /**
              * Username が適切
              */
-            is Valid -> when (val showProfileResult = profileRepository.show(it.value)) {
+            is Valid -> when (val followProfileResult = profileRepository.follow(it.value)) {
                 /**
-                 * プロフィール取得失敗
+                 * プロフィールフォロー失敗
                  */
                 is Left -> TODO()
                 /**
-                 * プロフィール取得成功
+                 * プロフィールフォロー成功
                  */
                 is Right -> TODO()
             }

@@ -4,7 +4,10 @@ import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Profile
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
+import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
+import com.example.realworldkotlinspringbootjdbc.usecase.FollowProfileUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.ShowProfileUseCase
+import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -13,13 +16,16 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
 import javax.websocket.server.PathParam
 
 @RestController
 @Tag(name = "Profile")
 class ProfileController(
-    val showProfileUseCase: ShowProfileUseCase
+    val myAuth: MyAuth,
+    val showProfileUseCase: ShowProfileUseCase,
+    val followProfileUseCase: FollowProfileUseCase
 ) {
     @GetMapping("/profiles/{username}")
     fun showProfile(@PathParam("username") username: String?): ResponseEntity<String> {
@@ -48,7 +54,7 @@ class ProfileController(
                 /**
                  * 原因: バリデーションエラー
                  */
-                is ShowProfileUseCase.Error.InvalidUserName -> ResponseEntity(
+                is ShowProfileUseCase.Error.InvalidUsername -> ResponseEntity(
                     serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                     HttpStatus.valueOf(404)
                 )
@@ -71,18 +77,54 @@ class ProfileController(
     }
 
     @PostMapping("/profiles/{username}/follow")
-    fun follow(): ResponseEntity<String> {
-        val profile = Profile(
-            "hoge-username",
-            "hoge-bio", "hoge-image",
-            true
-        )
-        return ResponseEntity(
-            ObjectMapper()
-                .enable(SerializationFeature.WRAP_ROOT_VALUE)
-                .writeValueAsString(profile),
-            HttpStatus.valueOf(200)
-        )
+    fun follow(
+        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
+        @PathParam("username") username: String?
+    ): ResponseEntity<String> {
+        return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
+            /**
+             * JWT 認証 失敗
+             */
+            is Left -> AuthorizationError.handle(authorizeResult.value)
+            /**
+             * JWT 認証 成功
+             */
+            is Right -> when (val followedProfile = followProfileUseCase.execute(username)) {
+                /**
+                 * プロフィールのフォローに失敗
+                 */
+                is Left -> when (val useCaseError = followedProfile.value) {
+                    /**
+                     * 原因: Username が不正
+                     */
+                    is FollowProfileUseCase.Error.InvalidUsername -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: Profile が見つからなかった
+                     */
+                    is FollowProfileUseCase.Error.NotFound -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: 不明
+                     */
+                    is FollowProfileUseCase.Error.Unexpected -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(500)
+                    )
+                }
+                /**
+                 * プロフィールのフォローに成功
+                 */
+                is Right -> ResponseEntity(
+                    Profile.from(followedProfile.value).serializeWithRootName(),
+                    HttpStatus.valueOf(200)
+                )
+            }
+        }
     }
 
     @DeleteMapping("/profiles/{username}/follow")
