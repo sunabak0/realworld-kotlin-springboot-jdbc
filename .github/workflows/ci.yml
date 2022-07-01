@@ -38,7 +38,5 @@ jobs:
       - name: make fmt
         run: make fmt
 
-      - name: make test
-        run: |
-          chmod +x ./gradlew
-          make test
+      - name: gradlew test
+        run: ./gradlew test
