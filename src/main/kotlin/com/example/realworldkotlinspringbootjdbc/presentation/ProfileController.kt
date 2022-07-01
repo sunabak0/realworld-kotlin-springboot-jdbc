@@ -7,6 +7,7 @@ import com.example.realworldkotlinspringbootjdbc.presentation.response.serialize
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
 import com.example.realworldkotlinspringbootjdbc.usecase.FollowProfileUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.ShowProfileUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.UnfollowProfileUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -25,7 +26,8 @@ import javax.websocket.server.PathParam
 class ProfileController(
     val myAuth: MyAuth,
     val showProfileUseCase: ShowProfileUseCase,
-    val followProfileUseCase: FollowProfileUseCase
+    val followProfileUseCase: FollowProfileUseCase,
+    val unfollowProfileUseCase: UnfollowProfileUseCase,
 ) {
     @GetMapping("/profiles/{username}")
     fun showProfile(@PathParam("username") username: String?): ResponseEntity<String> {
@@ -128,18 +130,53 @@ class ProfileController(
     }
 
     @DeleteMapping("/profiles/{username}/follow")
-    fun unfollow(): ResponseEntity<String> {
-        val profile = Profile(
-            "hoge-username",
-            "hoge-bio",
-            "hoge-image",
-            false
-        )
-        return ResponseEntity(
-            ObjectMapper()
-                .enable(SerializationFeature.WRAP_ROOT_VALUE)
-                .writeValueAsString(profile),
-            HttpStatus.valueOf(200)
-        )
+    fun unfollow(
+        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
+        @PathParam("username") username: String?
+    ): ResponseEntity<String> {
+        return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
+            /**
+             * JWT 認証 失敗
+             */
+            is Left -> AuthorizationError.handle(authorizeResult.value)
+            /**
+             * JWT 認証 成功
+             */
+            is Right -> when (val unfollowedProfile = unfollowProfileUseCase.execute(username)) {
+                /**
+                 * プロフィールのアンフォローに失敗
+                 */
+                is Left -> when (unfollowedProfile.value) {
+                    /**
+                     * 原因: Username が不正
+                     */
+                    is UnfollowProfileUseCase.Error.InvalidUsername -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: Profile が見つからなかった
+                     */
+                    is UnfollowProfileUseCase.Error.NotFound -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: 不明
+                     */
+                    is UnfollowProfileUseCase.Error.Unexpected -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(500)
+                    )
+                }
+                /**
+                 * プロフィールのアンフォローに成功
+                 */
+                is Right -> ResponseEntity(
+                    Profile.from(unfollowedProfile.value).serializeWithRootName(),
+                    HttpStatus.valueOf(200)
+                )
+            }
+        }
     }
 }
