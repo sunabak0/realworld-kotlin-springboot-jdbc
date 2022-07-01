@@ -39,4 +39,4 @@ jobs:
         run: make fmt
 
       - name: gradlew test
-        run: ./gradlew test
+        run: ./gradlew test || ls -al ./build/classes/kotlin/test/com/example/realworldkotlinspringbootjdbc/presentation/
