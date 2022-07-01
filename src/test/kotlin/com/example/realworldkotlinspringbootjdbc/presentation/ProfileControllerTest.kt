@@ -281,7 +281,7 @@ class ProfileControllerTest {
         }
 
         @Test
-        fun `プロフィールをアンフォロー時、UseCaeが「Profile」を返す場合、200レスポンスを返す`() {
+        fun `プロフィールをアンフォロー時、UseCae が「 Profile 」を返す場合、200レスポンスを返す`() {
             val returnProfile = Profile.newWithoutValidation(
                 Username.newWithoutValidation("hoge-username"),
                 Bio.newWithoutValidation("hoge-bio"),
@@ -335,7 +335,7 @@ class ProfileControllerTest {
         }
 
         @Test
-        fun `プロフォールをアンフォロー時、UseCase がNotFoundを返す場合、404レスポンスを返す`() {
+        fun `プロフォールをアンフォロー時、UseCase が NotFound を返す場合、404 レスポンスを返す`() {
             val notImplementedError = object : MyError {}
             val unfollowProfileReturnNotFoundError = object : UnfollowProfileUseCase {
                 override fun execute(username: String?): Either<UnfollowProfileUseCase.Error, Profile> =
