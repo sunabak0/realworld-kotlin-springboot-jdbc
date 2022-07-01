@@ -311,7 +311,7 @@ class ProfileControllerTest {
         }
 
         @Test
-        fun `プロフォールをアンフォロー時、UseCase がバリデーションエラーを返す場合、404 を返す`() {
+        fun `プロフィールをアンフォロー時、UseCase がバリデーションエラーを返す場合、404 を返す`() {
             val notImplementedValidationError = object : MyError.ValidationError {
                 override val message: String get() = "DummyValidationError InvalidUsername"
                 override val key: String get() = "DummyKey"
@@ -335,7 +335,7 @@ class ProfileControllerTest {
         }
 
         @Test
-        fun `プロフォールをアンフォロー時、UseCase が NotFound を返す場合、404 レスポンスを返す`() {
+        fun `プロフィールをアンフォロー時、UseCase が NotFound を返す場合、404 レスポンスを返す`() {
             val notImplementedError = object : MyError {}
             val unfollowProfileReturnNotFoundError = object : UnfollowProfileUseCase {
                 override fun execute(username: String?): Either<UnfollowProfileUseCase.Error, Profile> =
@@ -355,7 +355,7 @@ class ProfileControllerTest {
         }
 
         @Test
-        fun `プロフォールをアンフォロー時、UseCase が原因不明のエラーを返す場合、500 レスポンスを返す`() {
+        fun `プロフィールをアンフォロー時、UseCase が原因不明のエラーを返す場合、500 レスポンスを返す`() {
             val notImplementedError = object : MyError {}
             val unfollowProfileUnexpectedError = object : UnfollowProfileUseCase {
                 override fun execute(username: String?): Either<UnfollowProfileUseCase.Error, Profile> =
