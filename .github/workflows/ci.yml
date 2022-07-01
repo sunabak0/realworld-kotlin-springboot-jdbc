@@ -1,0 +1,42 @@
+name: My CI
+
+on:
+  workflow_dispatch:
+
+#
+# actions/checkout
+#
+# URL
+#   - https://github.com/actions/checkout
+# 概要
+#   - GITHUB_WORKSPACE配下のリポジトリをチェックアウト
+
+#
+# actions/setup-java
+#
+# URL
+#   - https://github.com/actions/setup-java
+# 概要
+#   - JDK環境をセットアップ
+
+
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v3
+
+      - name: Javaの環境をセットアップ
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: make fmt
+        run: make fmt
+
+      - name: make test
+        run: make test
