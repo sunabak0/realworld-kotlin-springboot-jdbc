@@ -40,3 +40,6 @@ jobs:
 
       - name: gradlew test
         run: ./gradlew test || ls -al ./build/classes/kotlin/test/com/example/realworldkotlinspringbootjdbc/presentation/
+
+      - name: whoami
+        run: echo '----' && whoami
