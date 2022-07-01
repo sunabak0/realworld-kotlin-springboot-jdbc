@@ -28,7 +28,6 @@ class ProfileController(
     val showProfileUseCase: ShowProfileUseCase,
     val followProfileUseCase: FollowProfileUseCase,
     val unfollowProfileUseCase: UnfollowProfileUseCase,
-    val myAuth: MyAuth
 ) {
     @GetMapping("/profiles/{username}")
     fun showProfile(@PathParam("username") username: String?): ResponseEntity<String> {
