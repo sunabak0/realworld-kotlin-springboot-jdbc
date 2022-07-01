@@ -313,18 +313,18 @@ class ProfileControllerTest {
         @Test
         fun `プロフォールをアンフォロー時、UseCase がバリデーションエラーを返す場合、404 を返す`() {
             val notImplementedValidationError = object : MyError.ValidationError {
-                override val message: String get() = "DummyValidationError InvalidUserName"
+                override val message: String get() = "DummyValidationError InvalidUsername"
                 override val key: String get() = "DummyKey"
             }
-            val unfollowProfileReturnInvalidUserNameError = object : UnfollowProfileUseCase {
+            val unfollowProfileReturnInvalidUsernameError = object : UnfollowProfileUseCase {
                 override fun execute(username: String?): Either<UnfollowProfileUseCase.Error, Profile> =
-                    UnfollowProfileUseCase.Error.InvalidUserName(listOf(notImplementedValidationError)).left()
+                    UnfollowProfileUseCase.Error.InvalidUsername(listOf(notImplementedValidationError)).left()
             }
             val actual =
                 profileController(
                     notImplementedShowProfileUseCase,
                     notImplementedFollowProfileUseCase,
-                    unfollowProfileReturnInvalidUserNameError,
+                    unfollowProfileReturnInvalidUsernameError,
                     authorizedMyAuth
                 ).unfollow(requestHeader, pathParam)
             val expected = ResponseEntity(

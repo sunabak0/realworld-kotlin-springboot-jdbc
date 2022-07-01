@@ -148,9 +148,9 @@ class ProfileController(
                  */
                 is Left -> when (unfollowedProfile.value) {
                     /**
-                     * 原因: UserName が不正
+                     * 原因: Username が不正
                      */
-                    is UnfollowProfileUseCase.Error.InvalidUserName -> ResponseEntity(
+                    is UnfollowProfileUseCase.Error.InvalidUsername -> ResponseEntity(
                         serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                         HttpStatus.valueOf(404)
                     )

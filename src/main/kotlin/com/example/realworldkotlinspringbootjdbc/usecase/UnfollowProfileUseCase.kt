@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service
 interface UnfollowProfileUseCase {
     fun execute(username: String?): Either<Error, Profile> = TODO()
     sealed interface Error : MyError {
-        data class InvalidUserName(override val errors: List<MyError.ValidationError>) :
+        data class InvalidUsername(override val errors: List<MyError.ValidationError>) :
             Error,
             MyError.ValidationErrors
 
@@ -32,7 +32,7 @@ class UnfollowProfileUseCaseImpl(
             /**
              * Username が不正
              */
-            is Validated.Invalid -> UnfollowProfileUseCase.Error.InvalidUserName(it.value).left()
+            is Validated.Invalid -> UnfollowProfileUseCase.Error.InvalidUsername(it.value).left()
             /**
              * Username が適切
              */
