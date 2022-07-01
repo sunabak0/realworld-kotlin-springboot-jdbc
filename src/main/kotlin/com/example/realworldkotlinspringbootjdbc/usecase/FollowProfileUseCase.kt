@@ -8,12 +8,13 @@ import arrow.core.Validated.Valid
 import arrow.core.left
 import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
+import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface FollowProfileUseCase {
-    fun execute(username: String?): Either<Error, OtherUser> = TODO()
+    fun execute(username: String?, currentUserId: UserId): Either<Error, Profile> = TODO()
     sealed interface Error : MyError {
         data class InvalidUsername(override val errors: List<MyError.ValidationError>) :
             Error,
@@ -26,7 +27,7 @@ interface FollowProfileUseCase {
 
 @Service
 class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) : FollowProfileUseCase {
-    override fun execute(username: String?): Either<FollowProfileUseCase.Error, OtherUser> {
+    override fun execute(username: String?, currentUserId: UserId): Either<FollowProfileUseCase.Error, Profile> {
         return when (val it = Username.new(username)) {
             /**
              * Username が不正
@@ -35,7 +36,7 @@ class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) : Follo
             /**
              * Username が適切
              */
-            is Valid -> when (val followProfileResult = profileRepository.follow(it.value)) {
+            is Validated.Valid -> when (val followProfileResult = profileRepository.follow(it.value, currentUserId)) {
                 /**
                  * プロフィールフォロー失敗
                  */

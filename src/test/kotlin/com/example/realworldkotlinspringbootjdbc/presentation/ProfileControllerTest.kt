@@ -167,9 +167,9 @@ class ProfileControllerTest {
                 Image.newWithoutValidation("hoge-image"),
                 following = true,
             )
-            val followOtherUserUseCase = object : FollowProfileUseCase {
-                override fun execute(username: String?): Either<FollowProfileUseCase.Error, OtherUser> {
-                    return returnOtherUser.right()
+            val followProfileUseCase = object : FollowProfileUseCase {
+                override fun execute(username: String?, currentUserId: UserId): Either<FollowProfileUseCase.Error, Profile> {
+                    return returnProfile.right()
                 }
             }
             val actual =
@@ -195,9 +195,9 @@ class ProfileControllerTest {
                 override val message: String get() = "DummyValidationError InvalidUsername"
                 override val key: String get() = "DummyKey"
             }
-            val followOtherUserReturnInvalidUsernameError = object : FollowProfileUseCase {
-                override fun execute(username: String?): Either<FollowProfileUseCase.Error, OtherUser> =
-                    FollowProfileUseCase.Error.InvalidUsername(listOf(notImplementedValidationError)).left()
+            val followProfileReturnInvalidUserNameError = object : FollowProfileUseCase {
+                override fun execute(username: String?, currentUserId: UserId): Either<FollowProfileUseCase.Error, Profile> =
+                    FollowProfileUseCase.Error.InvalidUserName(listOf(notImplementedValidationError)).left()
             }
             val actual =
                 profileController(
@@ -216,8 +216,8 @@ class ProfileControllerTest {
         @Test
         fun `プロフィールをフォロー時、 UseCase が NotFound を返す場合、404 レスポンスを返す`() {
             val notImplementedError = object : MyError {}
-            val followOtherUserReturnNotFoundError = object : FollowProfileUseCase {
-                override fun execute(username: String?): Either<FollowProfileUseCase.Error, OtherUser> =
+            val followProfileReturnNotFoundError = object : FollowProfileUseCase {
+                override fun execute(username: String?, currentUserId: UserId): Either<FollowProfileUseCase.Error, Profile> =
                     FollowProfileUseCase.Error.NotFound(notImplementedError).left()
             }
             val actual = profileController(
@@ -236,8 +236,8 @@ class ProfileControllerTest {
         @Test
         fun `プロフィールをフォロー時、 UseCase が原因不明のエラーを返す場合、500 レスポンスを返す`() {
             val notImplementedError = object : MyError {}
-            val followOtherUserUnexpectedError = object : FollowProfileUseCase {
-                override fun execute(username: String?): Either<FollowProfileUseCase.Error, OtherUser> =
+            val followProfileUnexpectedError = object : FollowProfileUseCase {
+                override fun execute(username: String?, currentUserId: UserId): Either<FollowProfileUseCase.Error, Profile> =
                     FollowProfileUseCase.Error.Unexpected(notImplementedError).left()
             }
             val actual = profileController(

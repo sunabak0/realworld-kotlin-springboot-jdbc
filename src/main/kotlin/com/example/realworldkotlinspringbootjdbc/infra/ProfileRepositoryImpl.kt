@@ -7,6 +7,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.Profile
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
+import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -48,5 +49,41 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         } catch (e: Throwable) {
             ProfileRepository.ShowError.Unexpected(e, username).left()
         }
+    }
+
+    override fun follow(username: Username, currentUserId: UserId): Either<ProfileRepository.FollowError, Profile> {
+        val sql = """
+            INSERT INTO followings
+                (
+                    following_id
+                    , follower_id 
+                    , created_at
+                )
+            SELECT
+                users.id
+                , :current_user_id
+                , CURRENT_DATE
+            WHERE
+                NOT EXISTS (
+                    SELECT
+                        follower_id
+                    FROM
+                        followings
+                    JOIN
+                        users
+                    ON
+                        followings.follower_id = users.user_id
+                    WHERE
+                        users.username = :username
+                        AND following.following_id = users.id
+                        AND following.follower_id = :current_user_id
+                )
+            ;
+        """.trimIndent()
+        val sqlParams =
+            MapSqlParameterSource()
+                .addValue("following_id", username.value)
+                .addValue("current_user_id", currentUserId.value)
+        return super.follow(username, currentUserId)
     }
 }

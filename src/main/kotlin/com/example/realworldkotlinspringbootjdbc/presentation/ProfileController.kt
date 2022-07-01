@@ -91,7 +91,10 @@ class ProfileController(
             /**
              * JWT 認証 成功
              */
-            is Right -> when (val followedProfile = followProfileUseCase.execute(username)) {
+            is Right -> when (
+                val followedProfile =
+                    followProfileUseCase.execute(username, authorizeResult.value.userId)
+            ) {
                 /**
                  * プロフィールのフォローに失敗
                  */
