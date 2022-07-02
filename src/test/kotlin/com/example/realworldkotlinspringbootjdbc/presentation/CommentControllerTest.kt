@@ -421,7 +421,15 @@ class CommentControllerTest {
         @Test
         fun `コメント削除時、UseCase が CommentId に該当するコメントが見つからなかったことに起因する「NotFound」エラーのとき、404 エラーレスポンスを返す`() {
             val notImplementedError = object : MyError {}
-            val deleteReturnCommentNotFoundError = object : DeleteCommentUseCase {
+            /**
+             * FIXME
+             *   - DeleteCommentUseCaseの実装をもっと良い名前にする
+             *   問題
+             *   - GitHub Actionsで〇〇ReturnCommentNotFoundErrorという変数(object)を用意しようとすると、Permission deniedで落ちる
+             *   問題に対して行った対応
+             *   - 変数名を変える
+             */
+            val notFoundError = object : DeleteCommentUseCase {
                 override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentUseCase.Error, Unit> {
                     return DeleteCommentUseCase.Error.CommentsNotFoundByCommentId(
                         notImplementedError,
@@ -432,7 +440,7 @@ class CommentControllerTest {
             val actual = commentController(
                 notImplementedListCommentUseCase,
                 notImplementedCreateCommentUseCase,
-                deleteReturnCommentNotFoundError,
+                notFoundError,
                 authorizedMyAuth
             ).delete(requestHeader, pathParamSlug, pathParamCommentId)
             val expected = ResponseEntity("""{"errors":{"body":["コメントが見つかりませんでした"]}}""", HttpStatus.valueOf(404))
