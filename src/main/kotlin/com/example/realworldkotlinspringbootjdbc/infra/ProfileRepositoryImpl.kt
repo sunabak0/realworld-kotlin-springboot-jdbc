@@ -15,22 +15,29 @@ import org.springframework.stereotype.Repository
 
 @Repository
 class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTemplate) : ProfileRepository {
-    override fun show(username: Username): Either<ProfileRepository.ShowError, Profile> {
+    override fun show(username: Username, currentUserId: UserId): Either<ProfileRepository.ShowError, Profile> {
         val sql = """
             SELECT
                 users.username
                 , profiles.bio
                 , profiles.image
+                , CASE WHEN followings.id IS NOT NULL THEN 1 ELSE 0 END AS following_flg
             FROM
                 users
             JOIN
                 profiles
             ON
                 users.id = profiles.user_id
-            WHERE
-                username = :username;
+                AND users.username = :username
+            LEFT OUTER JOIN
+                followings
+            ON
+                followings.following_id = users.id
+                AND followings.follower_id = :current_user_id
+            ;
         """.trimIndent()
         val sqlParams = MapSqlParameterSource().addValue("username", username.value)
+            .addValue("current_user_id", currentUserId.value)
         return try {
             val profileFromDb = namedParameterJdbcTemplate.queryForList(sql, sqlParams)
             if (profileFromDb.isNotEmpty()) {
@@ -39,14 +46,14 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                         Username.newWithoutValidation(it["username"].toString()),
                         Bio.newWithoutValidation(it["bio"].toString()),
                         Image.newWithoutValidation(it["image"].toString()),
-                        false
+                        it["following_flg"].toString() == "1"
                     )
                 }[0].right()
             } else {
-                ProfileRepository.ShowError.NotFoundProfileByUsername(username).left()
+                ProfileRepository.ShowError.NotFoundProfileByUsername(username, currentUserId).left()
             }
         } catch (e: Throwable) {
-            ProfileRepository.ShowError.Unexpected(e, username).left()
+            ProfileRepository.ShowError.Unexpected(e, username, currentUserId).left()
         }
     }
 

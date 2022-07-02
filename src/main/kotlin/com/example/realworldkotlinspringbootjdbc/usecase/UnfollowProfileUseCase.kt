@@ -38,7 +38,7 @@ class UnfollowProfileUseCaseImpl(
             /**
              * Username が適切
              */
-            is Validated.Valid -> when (val showProfileResult = profileRepository.show(it.value)) {
+            is Validated.Valid -> when (val showProfileResult = profileRepository.show(it.value, currentUserId)) {
                 /**
                  * プロフィール検索失敗
                  */

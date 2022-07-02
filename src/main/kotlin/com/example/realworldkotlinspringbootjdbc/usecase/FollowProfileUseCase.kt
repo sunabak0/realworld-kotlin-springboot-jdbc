@@ -38,7 +38,7 @@ class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) :
             /**
              * Username が適切
              */
-            is Valid -> when (val showProfileResult = profileRepository.show(it.value)) {
+            is Valid -> when (val showProfileResult = profileRepository.show(it.value, currentUserId)) {
                 /**
                  * プロフィール検索失敗
                  */

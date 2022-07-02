@@ -6,19 +6,31 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface ProfileRepository {
-    fun show(username: Username): Either<ShowError, OtherUser> = TODO()
+    fun showWithoutAuthorized(username: Username): Either<ShowWithoutAuthorizedError, Profile> = TODO()
+    sealed interface ShowWithoutAuthorizedError : MyError {
+        data class NotFoundProfileByUsername(val username: Username) : ShowWithoutAuthorizedError, MyError.Basic
+        data class Unexpected(override val cause: Throwable, val username: Username) : ShowWithoutAuthorizedError,
+            MyError.MyErrorWithThrowable
+    }
+
+    fun show(username: Username, currentUserId: UserId): Either<ShowError, Profile> = TODO()
     sealed interface ShowError : MyError {
-        data class NotFoundProfileByUsername(val username: Username) : ShowError, MyError.Basic
-        data class Unexpected(override val cause: Throwable, val username: Username) : ShowError, MyError.MyErrorWithThrowable
+        data class NotFoundProfileByUsername(val username: Username, val currentUserId: UserId) : ShowError,
+            MyError.Basic
+
+        data class Unexpected(override val cause: Throwable, val username: Username, val currentUserId: UserId) :
+            ShowError, MyError.MyErrorWithThrowable
     }
 
     fun follow(username: Username, currentUserId: UserId): Either<FollowError, Unit> = TODO()
     sealed interface FollowError : MyError {
-        data class Unexpected(override val cause: Throwable, val username: Username, val currentUserId: UserId) : FollowError, MyError.MyErrorWithThrowable
+        data class Unexpected(override val cause: Throwable, val username: Username, val currentUserId: UserId) :
+            FollowError, MyError.MyErrorWithThrowable
     }
 
     fun unfollow(username: Username, currentUserId: UserId): Either<UnfollowError, Unit> = TODO()
     sealed interface UnfollowError : MyError {
-        data class Unexpected(override val cause: Throwable, val username: Username, val currentUserId: UserId) : UnfollowError, MyError.MyErrorWithThrowable
+        data class Unexpected(override val cause: Throwable, val username: Username, val currentUserId: UserId) :
+            UnfollowError, MyError.MyErrorWithThrowable
     }
 }
