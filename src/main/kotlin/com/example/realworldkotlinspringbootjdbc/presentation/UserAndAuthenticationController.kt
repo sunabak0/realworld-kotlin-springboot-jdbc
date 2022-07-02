@@ -238,7 +238,29 @@ class UserAndAuthenticationController(
                     /**
                      * User情報更新 失敗
                      */
-                    is Left -> { TODO() }
+                    is Left -> when (val useCaseError = useCaseResult.value) {
+                        /**
+                         * 原因: バリデーションエラー
+                         */
+                        is UpdateUserUseCase.Error.InvalidAttributesForUpdateUser -> ResponseEntity(
+                            serializeMyErrorListForResponseBody(useCaseError.errors),
+                            HttpStatus.valueOf(422)
+                        )
+                        /**
+                         * 原因: 元々のユーザー情報から更新するべき項目がない
+                         */
+                        is UpdateUserUseCase.Error.NoChange -> ResponseEntity(
+                            "更新する項目がありません",
+                            HttpStatus.valueOf(422)
+                        )
+                        /**
+                         * 原因: 不明
+                         */
+                        is UpdateUserUseCase.Error.Unexpected -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"),
+                            HttpStatus.valueOf(500)
+                        )
+                    }
                     /**
                      * User情報更新 成功
                      */
@@ -250,7 +272,7 @@ class UserAndAuthenticationController(
                              */
                             is Right -> ResponseEntity(
                                 CurrentUser.from(useCaseResult.value, token.value).serializeWithRootName(),
-                                HttpStatus.valueOf(201)
+                                HttpStatus.valueOf(200)
                             )
                             /**
                              * 原因: セッションのJWTエンコードで失敗

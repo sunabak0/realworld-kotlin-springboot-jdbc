@@ -3,6 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 import arrow.core.Either
 import arrow.core.Option
 import arrow.core.left
+import arrow.core.nonEmptyListOf
 import arrow.core.right
 import com.auth0.jwt.exceptions.JWTCreationException
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
@@ -209,6 +210,107 @@ class UserAndAuthenticationControllerTest {
             }
             val actual = userAndAuthenticationController(registerReturnFailedError).register(requestBody)
             val expected = ResponseEntity("""{"errors":{"body":["メールアドレスは既に登録されています"]}}""", HttpStatus.valueOf(422))
+            assertThat(actual).isEqualTo(expected)
+        }
+    }
+
+    @Nested
+    class `Update(ユーザー情報の更新)` {
+        private val currentUser =
+            RegisteredUser.newWithoutValidation(
+                UserId(1),
+                Email.newWithoutValidation("dummy@example.com"),
+                Username.newWithoutValidation("dummy-username"),
+                Bio.newWithoutValidation("dummy-bio"),
+                Image.newWithoutValidation("dummy-image"),
+            )
+        private val myAuthReturnCurrentUser = object : MyAuth {
+            override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> =
+                currentUser.right()
+        }
+        private val jwtEncodeSessionReturnSuccess = object : MySessionJwt {
+            override fun encode(session: MySession) = "dummy-jwt-token".right()
+        }
+        private fun newUserAndAuthenticationController(returnValue: Either<UpdateUserUseCase.Error, RegisteredUser>): UserAndAuthenticationController =
+            UserAndAuthenticationController(
+                jwtEncodeSessionReturnSuccess,
+                myAuthReturnCurrentUser,
+                object : RegisterUserUseCase {},
+                object : LoginUseCase {},
+                object : UpdateUserUseCase {
+                    override fun execute(
+                        currentUser: RegisteredUser,
+                        email: String?,
+                        username: String?,
+                        bio: String?,
+                        image: String?
+                    ): Either<UpdateUserUseCase.Error, RegisteredUser> = returnValue
+                },
+            )
+        @Test
+        fun `UseCase から "更新後のユーザー" を返し、セッションのエンコードに成功した場合、 200 レスポンスを返す`() {
+            val updatedUser = RegisteredUser.newWithoutValidation(
+                UserId(1),
+                Email.newWithoutValidation("new-dummy@example.com"),
+                Username.newWithoutValidation("dummy-username"),
+                Bio.newWithoutValidation("dummy-bio"),
+                Image.newWithoutValidation("dummy-image"),
+            )
+            val controller = newUserAndAuthenticationController(updatedUser.right())
+
+            val actual = controller.update("dummy", """{"user":{}}""")
+            val expected = ResponseEntity(
+                """{"user":{"email":"new-dummy@example.com","username":"dummy-username","bio":"dummy-bio","image":"dummy-image","token":"dummy-jwt-token"}}""",
+                HttpStatus.valueOf(200)
+            )
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        fun `UseCase から "ユーザー情報が不正である" 旨のエラーが返ってきた場合、 422 レスポンスを返す`() {
+            val invalidAttributesForUpdateUser = UpdateUserUseCase.Error.InvalidAttributesForUpdateUser(
+                currentUser,
+                nonEmptyListOf(object : MyError.ValidationError {
+                    override val key: String get() = "dummy-key"
+                    override val message: String get() = "dummy-message"
+                })
+            )
+            val controller = newUserAndAuthenticationController(invalidAttributesForUpdateUser.left())
+
+            val actual = controller.update("dummy", """{"user":{}}""")
+            val expected = ResponseEntity(
+                """{"errors":{"body":[{"key":"dummy-key","message":"dummy-message"}]}}""",
+                HttpStatus.valueOf(422)
+            )
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        fun `UseCase から "更新するべき情報が無い" 旨のエラーが返ってきた場合、 422 レスポンスを返す`() {
+            val noChangeError = UpdateUserUseCase.Error.NoChange(currentUser)
+            val controller = newUserAndAuthenticationController(noChangeError.left())
+
+            val actual = controller.update("dummy", """{"user":{}}""")
+            val expected = ResponseEntity(
+                """更新する項目がありません""",
+                HttpStatus.valueOf(422)
+            )
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        fun `UseCase から "原因不明である" 旨のエラーが返ってきた場合、 500 レスポンスを返す`() {
+            val unexpectedError = UpdateUserUseCase.Error.Unexpected(
+                currentUser,
+                object : MyError {}
+            )
+            val controller = newUserAndAuthenticationController(unexpectedError.left())
+
+            val actual = controller.update("dummy", """{"user":{}}""")
+            val expected = ResponseEntity(
+                """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
+                HttpStatus.valueOf(500)
+            )
             assertThat(actual).isEqualTo(expected)
         }
     }
