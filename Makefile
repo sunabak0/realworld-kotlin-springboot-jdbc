@@ -23,8 +23,13 @@ test.e2e: ## e2eテスト実行
 	bash e2e/run-api-tests.sh
 
 .PHONY: fmt
-fmt: ## format and lint
+fmt: ## format
 	./gradlew ktlintFormat
+
+.PHONY: lint
+lint: ## lint
+	./gradlew ktlintCheck
+
 
 ################################################################################
 # Utility-Command help
