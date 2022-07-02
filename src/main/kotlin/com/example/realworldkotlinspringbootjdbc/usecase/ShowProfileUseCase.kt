@@ -49,7 +49,7 @@ class ShowProfileUseCaseImpl(
                 /**
                  * JWT 認証 失敗 or 未ログイン
                  */
-                is None -> when (val showProfileResult = profileRepository.showWithoutAuthorized(it.value)) {
+                is None -> when (val showProfileResult = profileRepository.show(it.value)) {
                     /**
                      * プロフィール取得失敗
                      */

@@ -35,7 +35,7 @@ class ProfileRepositoryImplTest {
     private val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
 
     @Test
-    fun `ProfileRepository show() で 1 件取得時、フォロー済のときの正常系`() {
+    fun `ログイン時の ProfileRepository show() で 1 件取得時、フォロー済のときの正常系`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -87,7 +87,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ProfileRepository show() で 1 件取得時、未フォローのときの正常系`() {
+    fun `ログイン時の ProfileRepository show() で 1 件取得時、未フォローのときの正常系`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -130,7 +130,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ProfileRepository show() で 0 件だったときの異常系`() {
+    fun `ログイン時の ProfileRepository show() で 0 件だったときの異常系`() {
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
 
         val expect =
@@ -145,7 +145,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ProfileRepository show() で namedParameterJdbcTemplate が Exception を throw したときの異常系`() {
+    fun `ログイン時の ProfileRepository show() で namedParameterJdbcTemplate が Exception を throw したときの異常系`() {
         TODO()
         // fun dataSource(): DataSource {
         //     val hikariConfig = HikariConfig()
@@ -172,6 +172,68 @@ class ProfileRepositoryImplTest {
         // }
         //
         // val profileRepository = ProfileRepositoryImpl(Hoge)
+    }
+
+    @Test
+    fun `未ログイン時の ProfileRepository show() で 1 件取得時の正常系`() {
+        fun localPrepare() {
+            val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
+
+            val insertUserSql =
+                "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
+            val insertUserSqlParams = MapSqlParameterSource()
+                .addValue("id", 1)
+                .addValue("email", "dummy@example.com")
+                .addValue("username", "dummy-username")
+                .addValue("password", "Passw0rd")
+                .addValue("created_at", date)
+                .addValue("updated_at", date)
+            namedParameterJdbcTemplate.update(insertUserSql, insertUserSqlParams)
+
+            val insertProfileSql =
+                "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
+            val insertProfileSqlParams = MapSqlParameterSource()
+                .addValue("id", 1)
+                .addValue("user_id", 1)
+                .addValue("bio", "dummy-bio")
+                .addValue("image", "dummy-image")
+                .addValue("created_at", date)
+                .addValue("updated_at", date)
+            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams)
+        }
+        localPrepare()
+
+        val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+
+        val expect = Profile.newWithoutValidation(
+            Username.newWithoutValidation("dummy-username"),
+            Bio.newWithoutValidation("dummy-bio"),
+            Image.newWithoutValidation("dummy-image"),
+            false
+        )
+        when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"))) {
+            is Left -> assert(false)
+            is Right -> assertThat(actual.value).isEqualTo(expect)
+        }
+    }
+
+    @Test
+    fun `未ログイン時に ProfileRepository show() で 0 件だったときの異常系`() {
+        val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+
+        val expect =
+            ProfileRepository.ShowWithoutAuthorizedError.NotFoundProfileByUsername(
+                Username.newWithoutValidation("dummy-username"),
+            )
+        when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"))) {
+            is Left -> assertThat(actual.value).isEqualTo(expect)
+            is Right -> assert(false)
+        }
+    }
+
+    @Test
+    fun `未ログイン時の  ProfileRepository show() で namedParameterJdbcTemplate が Exception を throw したときの異常系`() {
+        TODO()
     }
 
     @Test

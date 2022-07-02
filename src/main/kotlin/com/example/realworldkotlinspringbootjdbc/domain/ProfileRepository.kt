@@ -6,7 +6,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface ProfileRepository {
-    fun showWithoutAuthorized(username: Username): Either<ShowWithoutAuthorizedError, Profile> = TODO()
+    fun show(username: Username): Either<ShowWithoutAuthorizedError, Profile> = TODO()
     sealed interface ShowWithoutAuthorizedError : MyError {
         data class NotFoundProfileByUsername(val username: Username) : ShowWithoutAuthorizedError, MyError.Basic
         data class Unexpected(override val cause: Throwable, val username: Username) : ShowWithoutAuthorizedError,

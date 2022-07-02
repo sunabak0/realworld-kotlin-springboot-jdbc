@@ -57,6 +57,62 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         }
     }
 
+    override fun show(username: Username): Either<ProfileRepository.ShowWithoutAuthorizedError, Profile> {
+        val sql = """
+                SELECT
+                    users.username
+                    , profiles.bio
+                    , profiles.image
+                    , 0 AS following_flg
+                FROM
+                    users
+                JOIN
+                    profiles
+                ON
+                    users.id = profiles.user_id
+                    AND users.username = :username
+                ;
+            """.trimIndent()
+        val sqlParams = MapSqlParameterSource().addValue("username", username.value)
+        return try {
+            val profileFromDb = namedParameterJdbcTemplate.queryForList(sql, sqlParams)
+            if (profileFromDb.isNotEmpty()) {
+                profileFromDb.map {
+                    Profile.newWithoutValidation(
+                        Username.newWithoutValidation(it["username"].toString()),
+                        Bio.newWithoutValidation(it["bio"].toString()),
+                        Image.newWithoutValidation(it["image"].toString()),
+                        it["following_flg"].toString() == "1"
+                    )
+                }[0].right()
+            } else {
+                ProfileRepository.ShowWithoutAuthorizedError.NotFoundProfileByUsername(username).left()
+            }
+        } catch (e: Throwable) {
+            ProfileRepository.ShowWithoutAuthorizedError.Unexpected(e, username).left()
+        }
+    }
+
+    // override fun show(username: Username): Either<ProfileRepository.ShowError, Profile> {
+    //     return try {
+    //         val profileFromDb = namedParameterJdbcTemplate.queryForList(sql, sqlParams)
+    //         if (profileFromDb.isNotEmpty()) {
+    //             profileFromDb.map {
+    //                 Profile.newWithoutValidation(
+    //                     Username.newWithoutValidation(it["username"].toString()),
+    //                     Bio.newWithoutValidation(it["bio"].toString()),
+    //                     Image.newWithoutValidation(it["image"].toString()),
+    //                     it["following_flg"].toString() == "1"
+    //                 )
+    //             }[0].right()
+    //         } else {
+    //             ProfileRepository.ShowError.NotFoundProfileByUsername(username).left()
+    //         }
+    //     } catch (e: Throwable) {
+    //         ProfileRepository.ShowError.Unexpected(e, username).left()
+    //     }
+    // }
+
     override fun follow(username: Username, currentUserId: UserId): Either<ProfileRepository.FollowError, Unit> {
         val sql = """
             INSERT INTO followings
