@@ -92,4 +92,27 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             ProfileRepository.FollowError.Unexpected(e, username, currentUserId).left()
         }
     }
+
+    override fun unfollow(username: Username, currentUserId: UserId): Either<ProfileRepository.UnfollowError, Unit> {
+        val sql = """
+            DELETE FROM
+                followings
+            USING
+                users
+            WHERE
+                users.username = :username
+                AND users.id = followings.following_id
+                AND followings.follower_id = :current_user_id
+            ;
+        """.trimIndent()
+        val sqlParams = MapSqlParameterSource()
+            .addValue("username", username.value)
+            .addValue("current_user_id", currentUserId.value)
+        return try {
+            namedParameterJdbcTemplate.update(sql, sqlParams)
+            Unit.right()
+        } catch (e: Throwable) {
+            ProfileRepository.UnfollowError.Unexpected(e, username, currentUserId).left()
+        }
+    }
 }
