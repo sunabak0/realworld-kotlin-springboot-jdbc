@@ -1,7 +1,7 @@
-name: My CI
+name: CI
 
 on:
-  workflow_dispatch:
+  push:
 
 #
 # actions/checkout
@@ -19,15 +19,21 @@ on:
 # 概要
 #   - JDK環境をセットアップ
 
-
+#
+# EnricoMi/publish-unit-test-result-action@v1
+#
+# URL
+#   - https://github.com/EnricoMi/publish-unit-test-result-action
+# 概要
+#   - テスト結果ファイルを解析し、結果をGitHubで公開する
+#   - JUnit XMLファイル形式をサポート
 
 jobs:
-  ci:
+  ci-test:
     runs-on: ubuntu-latest
     steps:
       - name: リポジトリのチェックアウト
         uses: actions/checkout@v3
-
       - name: Javaの環境をセットアップ
         uses: actions/setup-java@v3
         with:
@@ -35,11 +41,27 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: make fmt
-        run: make fmt
+      - name: make test
+        run: make test
 
-      - name: gradlew test
-        run: ./gradlew test || ls -al ./build/classes/kotlin/test/com/example/realworldkotlinspringbootjdbc/presentation/
+      - name: テスト結果レポートをGitHub Actionsの上部に公開
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          check_name: "JUnit5のテスト結果レポート"
+          files: "build/test-results/**/*.xml"
 
-      - name: whoami
-        run: echo '----' && whoami
+  ci-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v3
+      - name: Javaの環境をセットアップ
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: make lint
+        run: make lint
