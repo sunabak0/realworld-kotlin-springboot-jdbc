@@ -212,4 +212,21 @@ class UserAndAuthenticationControllerTest {
             assertThat(actual).isEqualTo(expected)
         }
     }
+
+    @Nested
+    class `Update(ユーザー情報の更新)` {
+        private val mySessionJwtEncodeReturnString = object : MySessionJwt {
+            override fun encode(session: MySession) = "dummy-jwt-token".right()
+        }
+        private val notImplementedMyAuth = object : MyAuth {}
+        private val notImplementedLoginUseCase = object : LoginUseCase {}
+
+        @Test
+        fun `ユーザー情報の更新に成功し、セッションのエンコードに成功した場合、 200 レスポンスを返す`() {
+        }
+
+        @Test
+        fun `失敗- `() {
+        }
+    }
 }
