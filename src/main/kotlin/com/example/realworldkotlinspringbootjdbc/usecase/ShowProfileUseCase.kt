@@ -3,17 +3,19 @@ package com.example.realworldkotlinspringbootjdbc.usecase
 import arrow.core.Either
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import arrow.core.Option
 import arrow.core.Validated.Invalid
 import arrow.core.Validated.Valid
 import arrow.core.left
 import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
+import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface ShowProfileUseCase {
-    fun execute(username: String?): Either<Error, OtherUser> = TODO()
+    fun execute(username: String?, currentUser: Option<RegisteredUser>): Either<Error, Profile> = TODO()
     sealed interface Error : MyError {
         data class InvalidUsername(override val errors: List<MyError.ValidationError>) :
             Error,
@@ -28,7 +30,7 @@ interface ShowProfileUseCase {
 class ShowProfileUseCaseImpl(
     val profileRepository: ProfileRepository
 ) : ShowProfileUseCase {
-    override fun execute(username: String?): Either<ShowProfileUseCase.Error, OtherUser> {
+    override fun execute(username: String?, currentUser: Option<RegisteredUser>): Either<ShowProfileUseCase.Error, Profile> {
         return when (val it = Username.new(username)) {
             /**
              * Username が不正

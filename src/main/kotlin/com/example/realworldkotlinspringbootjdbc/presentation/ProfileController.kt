@@ -2,6 +2,8 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import arrow.core.None
+import arrow.core.Some
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Profile
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
@@ -30,50 +32,106 @@ class ProfileController(
     val unfollowProfileUseCase: UnfollowProfileUseCase,
 ) {
     @GetMapping("/profiles/{username}")
-    fun showProfile(@PathParam("username") username: String?): ResponseEntity<String> {
-        return when (val result = showProfileUseCase.execute(username)) {
+    fun showProfile(
+        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
+        @PathParam("username") username: String?
+    ): ResponseEntity<String> {
+        return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
             /**
-             * プロフィール取得に成功
+             * JWT 認証 失敗 or 未ログイン
              */
-            is Right -> {
-                val profile = Profile(
-                    result.value.username.value,
-                    result.value.bio.value,
-                    result.value.image.value,
-                    result.value.following
-                )
-                ResponseEntity(
-                    ObjectMapper()
-                        .enable(SerializationFeature.WRAP_ROOT_VALUE)
-                        .writeValueAsString(profile),
-                    HttpStatus.valueOf(200)
-                )
+            is Left -> when (val result = showProfileUseCase.execute(username, None)) {
+                /**
+                 * プロフィール取得に失敗
+                 */
+                is Left -> when (result.value) {
+                    /**
+                     * 原因: バリデーションエラー
+                     */
+                    is ShowProfileUseCase.Error.InvalidUsername -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: プロフィールが見つからなかった
+                     */
+                    is ShowProfileUseCase.Error.NotFound -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: 不明
+                     */
+                    is ShowProfileUseCase.Error.Unexpected -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(500)
+                    )
+                }
+                /**
+                 * プロフィール取得に成功
+                 */
+                is Right -> {
+                    val profile = Profile(
+                        result.value.username.value,
+                        result.value.bio.value,
+                        result.value.image.value,
+                        result.value.following
+                    )
+                    ResponseEntity(
+                        ObjectMapper()
+                            .enable(SerializationFeature.WRAP_ROOT_VALUE)
+                            .writeValueAsString(profile),
+                        HttpStatus.valueOf(200)
+                    )
+                }
             }
             /**
-             * プロフィール取得に失敗
+             * JWT 認証 成功
              */
-            is Left -> when (val useCaseError = result.value) {
+            is Right -> when (val result = showProfileUseCase.execute(username, Some(authorizeResult.value))) {
                 /**
-                 * 原因: バリデーションエラー
+                 * プロフィール取得に成功
                  */
-                is ShowProfileUseCase.Error.InvalidUsername -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                    HttpStatus.valueOf(404)
-                )
+                is Right -> {
+                    val profile = Profile(
+                        result.value.username.value,
+                        result.value.bio.value,
+                        result.value.image.value,
+                        result.value.following
+                    )
+                    ResponseEntity(
+                        ObjectMapper()
+                            .enable(SerializationFeature.WRAP_ROOT_VALUE)
+                            .writeValueAsString(profile),
+                        HttpStatus.valueOf(200)
+                    )
+                }
                 /**
-                 * 原因: プロフィールが見つからなかった
+                 * プロフィール取得に失敗
                  */
-                is ShowProfileUseCase.Error.NotFound -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                    HttpStatus.valueOf(404)
-                )
-                /**
-                 * 原因: 不明
-                 */
-                is ShowProfileUseCase.Error.Unexpected -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                    HttpStatus.valueOf(500)
-                )
+                is Left -> when (result.value) {
+                    /**
+                     * 原因: バリデーションエラー
+                     */
+                    is ShowProfileUseCase.Error.InvalidUsername -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: プロフィールが見つからなかった
+                     */
+                    is ShowProfileUseCase.Error.NotFound -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: 不明
+                     */
+                    is ShowProfileUseCase.Error.Unexpected -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(500)
+                    )
+                }
             }
         }
     }
@@ -145,7 +203,8 @@ class ProfileController(
             /**
              * JWT 認証 成功
              */
-            is Right -> when (val unfollowedProfile = unfollowProfileUseCase.execute(username, authorizeResult.value.userId)) {
+            is Right -> when (val unfollowedProfile =
+                unfollowProfileUseCase.execute(username, authorizeResult.value.userId)) {
                 /**
                  * プロフィールのアンフォローに失敗
                  */
