@@ -246,16 +246,20 @@ class UserAndAuthenticationController(
                             serializeMyErrorListForResponseBody(useCaseError.errors),
                             HttpStatus.valueOf(422)
                         )
-
                         /**
                          * 原因: 元々のユーザー情報から更新するべき項目がない
                          */
-                        is UpdateUserUseCase.Error.NoChange -> TODO()
-
+                        is UpdateUserUseCase.Error.NoChange -> ResponseEntity(
+                            "更新する項目がありません",
+                            HttpStatus.valueOf(422)
+                        )
                         /**
                          * 原因: 不明
                          */
-                        is UpdateUserUseCase.Error.Unexpected -> TODO()
+                        is UpdateUserUseCase.Error.Unexpected -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"),
+                            HttpStatus.valueOf(500)
+                        )
                     }
                     /**
                      * User情報更新 成功

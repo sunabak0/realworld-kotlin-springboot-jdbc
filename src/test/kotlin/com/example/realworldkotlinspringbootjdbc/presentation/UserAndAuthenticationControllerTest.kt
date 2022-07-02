@@ -287,10 +287,31 @@ class UserAndAuthenticationControllerTest {
 
         @Test
         fun `UseCase から "更新するべき情報が無い" 旨のエラーが返ってきた場合、 422 レスポンスを返す`() {
+            val noChangeError = UpdateUserUseCase.Error.NoChange(currentUser)
+            val controller = newUserAndAuthenticationController(noChangeError.left())
+
+            val actual = controller.update("dummy", """{"user":{}}""")
+            val expected = ResponseEntity(
+                """更新する項目がありません""",
+                HttpStatus.valueOf(422)
+            )
+            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
         fun `UseCase から "原因不明である" 旨のエラーが返ってきた場合、 500 レスポンスを返す`() {
+            val unexpectedError = UpdateUserUseCase.Error.Unexpected(
+                currentUser,
+                object : MyError {}
+            )
+            val controller = newUserAndAuthenticationController(unexpectedError.left())
+
+            val actual = controller.update("dummy", """{"user":{}}""")
+            val expected = ResponseEntity(
+                """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
+                HttpStatus.valueOf(500)
+            )
+            assertThat(actual).isEqualTo(expected)
         }
     }
 }
