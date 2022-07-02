@@ -1,6 +1,7 @@
 package com.example.realworldkotlinspringbootjdbc.usecase
 
 import arrow.core.Either
+import arrow.core.NonEmptyList
 import arrow.core.Validated.Invalid
 import arrow.core.Validated.Valid
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
@@ -18,10 +19,8 @@ interface UpdateUserUseCase {
     ): Either<Error, RegisteredUser> = TODO()
 
     sealed interface Error : MyError {
-        data class AtLeastOneAttributeIsRequired(val currentUser: RegisteredUser) : Error, MyError.Basic
-        data class InvalidAttributesForUpdateUser(val currentUser: RegisteredUser) : Error, MyError.Basic
+        data class InvalidAttributesForUpdateUser(val currentUser: RegisteredUser, val errors: NonEmptyList<MyError.ValidationError>) : Error, MyError.Basic
         data class NoChange(val currentUser: RegisteredUser) : Error, MyError.Basic
-        data class NotFoundUser(val currentUser: RegisteredUser) : Error, MyError.Basic
         data class Unexpected(val currentUser: RegisteredUser, override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
 }
