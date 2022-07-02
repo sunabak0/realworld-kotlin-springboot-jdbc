@@ -195,9 +195,9 @@ class ProfileControllerTest {
                 override val message: String get() = "DummyValidationError InvalidUsername"
                 override val key: String get() = "DummyKey"
             }
-            val followProfileReturnInvalidUserNameError = object : FollowProfileUseCase {
+            val followProfileReturnInvalidUsernameError = object : FollowProfileUseCase {
                 override fun execute(username: String?, currentUserId: UserId): Either<FollowProfileUseCase.Error, Profile> =
-                    FollowProfileUseCase.Error.InvalidUserName(listOf(notImplementedValidationError)).left()
+                    FollowProfileUseCase.Error.InvalidUsername(listOf(notImplementedValidationError)).left()
             }
             val actual =
                 profileController(

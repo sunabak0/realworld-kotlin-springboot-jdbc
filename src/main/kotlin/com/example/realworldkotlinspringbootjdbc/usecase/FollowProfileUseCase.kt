@@ -26,7 +26,8 @@ interface FollowProfileUseCase {
 }
 
 @Service
-class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) : FollowProfileUseCase {
+class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) :
+    FollowProfileUseCase {
     override fun execute(username: String?, currentUserId: UserId): Either<FollowProfileUseCase.Error, Profile> {
         return when (val it = Username.new(username)) {
             /**
@@ -36,7 +37,22 @@ class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) : Follo
             /**
              * Username が適切
              */
-            is Validated.Valid -> when (val followProfileResult = profileRepository.follow(it.value, currentUserId)) {
+            is Valid -> when (val showProfileResult = profileRepository.show(it.value)) {
+                /**
+                 * プロフィール検索失敗
+                 */
+                is Left -> when (val error = showProfileResult.value) {
+                    /**
+                     * 原因: プロフィールが見つからなかった
+                     */
+                    is ProfileRepository.ShowError.NotFoundProfileByUsername -> FollowProfileUseCase.Error.NotFound(
+                        error
+                    ).left()
+                    /**
+                     * 原因: 不明
+                     */
+                    is ProfileRepository.ShowError.Unexpected -> FollowProfileUseCase.Error.Unexpected(error).left()
+                }
                 /**
                  * プロフィールフォロー失敗
                  */
