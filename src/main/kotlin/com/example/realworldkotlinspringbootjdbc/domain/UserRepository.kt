@@ -4,6 +4,8 @@ import arrow.core.Either
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.Password
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
+import com.example.realworldkotlinspringbootjdbc.domain.user.Username
+import com.example.realworldkotlinspringbootjdbc.usecase.UpdateUserUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface UserRepository {
@@ -32,6 +34,17 @@ interface UserRepository {
     sealed interface FindByUserIdError : MyError {
         data class NotFound(val id: UserId) : FindByUserIdError, MyError.Basic
         data class Unexpected(override val cause: Throwable, val userId: UserId) : FindByUserIdError, MyError.MyErrorWithThrowable
+    }
+
+    /**
+     * ユーザー情報更新
+     * (ユーザーが居る前提の挙動になる)
+     */
+    fun update(user: UpdatableRegisteredUser): Either<UpdateError, RegisteredUser>
+    sealed interface UpdateError : MyError {
+        data class AlreadyRegisteredEmail(val email: Email) : FindByUserIdError, MyError.Basic
+        data class AlreadyRegisteredUsername(val username: Username) : FindByUserIdError, MyError.Basic
+        data class Unexpected(override val cause: Throwable, val user: UpdatableRegisteredUser) : FindByUserIdError, MyError.MyErrorWithThrowable
     }
 }
 

@@ -5,6 +5,7 @@ import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UnregisteredUser
+import com.example.realworldkotlinspringbootjdbc.domain.UpdatableRegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UserRepository
 import com.example.realworldkotlinspringbootjdbc.domain.UserRepository.FindByEmailWithPasswordError
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
@@ -76,6 +77,17 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation(""),
             Image.newWithoutValidation("")
+        )
+        return registeredUser.right()
+    }
+
+    override fun update(user: UpdatableRegisteredUser): Either<UserRepository.UpdateError, RegisteredUser> {
+        val registeredUser = RegisteredUser.newWithoutValidation(
+            user.userId,
+            user.email,
+            user.username,
+            user.bio,
+            user.image
         )
         return registeredUser.right()
     }
