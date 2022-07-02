@@ -1,5 +1,6 @@
 # RealWorld
 
+![ci-status](https://github.com/sunakan/realworld-kotlin-springboot-jdbc/actions/workflows/ci.yml/badge.svg)
 [![Maintainability](https://api.codeclimate.com/v1/badges/de2d7acc6b617132951a/maintainability)](https://codeclimate.com/github/sunakan/realworld-kotlin-springboot-jdbc/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/de2d7acc6b617132951a/test_coverage)](https://codeclimate.com/github/sunakan/realworld-kotlin-springboot-jdbc/test_coverage)
 
