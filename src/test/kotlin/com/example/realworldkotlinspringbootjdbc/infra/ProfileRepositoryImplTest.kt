@@ -6,6 +6,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.Profile
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
+import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -119,7 +120,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ProfileRepository follow() で戻り値が Profile の正常系`() {
+    fun `ProfileRepository follow() で戻り値が Unit の正常系`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -149,15 +150,9 @@ class ProfileRepositoryImplTest {
 
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
 
-        val expect = Profile.newWithoutValidation(
-            Username.newWithoutValidation("dummy-username"),
-            Bio.newWithoutValidation("dummy-bio"),
-            Image.newWithoutValidation("dummy-image"),
-            true
-        )
-        when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"))) {
+        when (val actual = profileRepository.follow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
             is Left -> assert(false)
-            is Right -> assertThat(actual.value).isEqualTo(expect)
+            is Right -> assertThat(actual.value).isEqualTo(Unit)
         }
     }
 }

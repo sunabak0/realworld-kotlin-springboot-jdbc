@@ -6,7 +6,8 @@ import arrow.core.Either.Right
 import arrow.core.Validated.Invalid
 import arrow.core.Validated.Valid
 import arrow.core.left
-import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
+import arrow.core.right
+import com.example.realworldkotlinspringbootjdbc.domain.Profile
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username

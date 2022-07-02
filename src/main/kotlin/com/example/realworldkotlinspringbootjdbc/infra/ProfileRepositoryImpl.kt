@@ -30,8 +30,7 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             WHERE
                 username = :username;
         """.trimIndent()
-        val sqlParams = MapSqlParameterSource()
-            .addValue("username", username.value)
+        val sqlParams = MapSqlParameterSource().addValue("username", username.value)
         return try {
             val profileFromDb = namedParameterJdbcTemplate.queryForList(sql, sqlParams)
             if (profileFromDb.isNotEmpty()) {
@@ -51,7 +50,7 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         }
     }
 
-    override fun follow(username: Username, currentUserId: UserId): Either<ProfileRepository.FollowError, Profile> {
+    override fun follow(username: Username, currentUserId: UserId): Either<ProfileRepository.FollowError, Unit> {
         val sql = """
             INSERT INTO followings
                 (
@@ -62,28 +61,35 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             SELECT
                 users.id
                 , :current_user_id
-                , CURRENT_DATE
+                , NOW()
+            FROM
+                users
             WHERE
-                NOT EXISTS (
+                users.username = :username
+                AND NOT EXISTS (
                     SELECT
-                        follower_id
+                        1
                     FROM
                         followings
                     JOIN
                         users
                     ON
-                        followings.follower_id = users.user_id
+                        followings.following_id = users.id
                     WHERE
                         users.username = :username
-                        AND following.following_id = users.id
-                        AND following.follower_id = :current_user_id
+                        AND followings.following_id = users.id
+                        AND followings.follower_id = :current_user_id
                 )
             ;
         """.trimIndent()
-        val sqlParams =
-            MapSqlParameterSource()
-                .addValue("following_id", username.value)
-                .addValue("current_user_id", currentUserId.value)
-        return super.follow(username, currentUserId)
+        val sqlParams = MapSqlParameterSource()
+            .addValue("username", username.value)
+            .addValue("current_user_id", currentUserId.value)
+        return try {
+            namedParameterJdbcTemplate.update(sql, sqlParams)
+            Unit.right()
+        } catch (e: Throwable) {
+            ProfileRepository.FollowError.Unexpected(e, username, currentUserId).left()
+        }
     }
 }
