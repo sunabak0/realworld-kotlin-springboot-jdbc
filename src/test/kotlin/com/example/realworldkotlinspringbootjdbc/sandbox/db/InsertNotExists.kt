@@ -177,7 +177,7 @@ class InsertNotExists {
                         followings.following_id = users.id
                     WHERE
                         users.username = :username
-                        AND followings.following_id = :user_id
+                        AND followings.following_id = users.id
                         AND followings.follower_id = :current_user_id
                 )
             ;
@@ -186,7 +186,6 @@ class InsertNotExists {
 
         val sqlParams = MapSqlParameterSource()
             .addValue("username", "dummy")
-            .addValue("user_id", 1)
             .addValue("current_user_id", 2)
         val actual = namedParameterJdbcTemplate.update(sql, sqlParams)
         assertThat(actual).isEqualTo(1)
@@ -243,7 +242,7 @@ class InsertNotExists {
                         followings.following_id = users.id
                     WHERE
                         users.username = :username
-                        AND followings.following_id = :user_id
+                        AND followings.following_id = users.id
                         AND followings.follower_id = :current_user_id
                 )
             ;
@@ -252,7 +251,47 @@ class InsertNotExists {
 
         val sqlParams = MapSqlParameterSource()
             .addValue("username", "dummy")
-            .addValue("user_id", 1)
+            .addValue("current_user_id", 2)
+        val actual = namedParameterJdbcTemplate.update(sql, sqlParams)
+        assertThat(actual).isEqualTo(0)
+    }
+
+    @Test
+    fun `username が users テーブルに存在しないとき`() {
+        val sql = """
+            INSERT INTO followings
+                (
+                    following_id
+                    , follower_id 
+                    , created_at
+                )
+            SELECT
+                users.id
+                , :current_user_id
+                , NOW()
+            FROM
+                users
+            WHERE
+                users.username = :username
+                AND NOT EXISTS (
+                    SELECT
+                        1
+                    FROM
+                        followings
+                    JOIN
+                        users
+                    ON
+                        followings.following_id = users.id
+                    WHERE
+                        users.username = :username
+                        AND followings.following_id = users.id
+                        AND followings.follower_id = :current_user_id
+                )
+            ;
+        """.trimIndent()
+
+        val sqlParams = MapSqlParameterSource()
+            .addValue("username", "dummy")
             .addValue("current_user_id", 2)
         val actual = namedParameterJdbcTemplate.update(sql, sqlParams)
         assertThat(actual).isEqualTo(0)
