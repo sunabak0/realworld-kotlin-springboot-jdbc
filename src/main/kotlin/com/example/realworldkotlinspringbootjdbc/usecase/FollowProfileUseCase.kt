@@ -54,13 +54,28 @@ class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) :
                     is ProfileRepository.ShowError.Unexpected -> FollowProfileUseCase.Error.Unexpected(error).left()
                 }
                 /**
-                 * プロフィールフォロー失敗
+                 * プロフィール検索成功
                  */
-                is Left -> TODO()
-                /**
-                 * プロフィールフォロー成功
-                 */
-                is Right -> TODO()
+                is Right -> when (val followProfileResult = profileRepository.follow(it.value, currentUserId)) {
+                    /**
+                     * フォロー失敗
+                     */
+                    is Left -> when (val error = followProfileResult.value) {
+                        /**
+                         * 原因: 不明
+                         */
+                        is ProfileRepository.FollowError.Unexpected -> TODO()
+                    }
+                    /**
+                     * フォロー成功
+                     */
+                    is Right -> Profile.newWithoutValidation(
+                        showProfileResult.value.username,
+                        showProfileResult.value.bio,
+                        showProfileResult.value.image,
+                        true
+                    ).right()
+                }
             }
         }
     }
