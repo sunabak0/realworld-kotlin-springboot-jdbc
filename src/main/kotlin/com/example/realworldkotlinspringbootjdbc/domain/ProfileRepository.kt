@@ -9,13 +9,15 @@ interface ProfileRepository {
     fun show(username: Username): Either<ShowWithoutAuthorizedError, Profile> = TODO()
     sealed interface ShowWithoutAuthorizedError : MyError {
         data class NotFoundProfileByUsername(val username: Username) : ShowWithoutAuthorizedError, MyError.Basic
-        data class Unexpected(override val cause: Throwable, val username: Username) : ShowWithoutAuthorizedError,
+        data class Unexpected(override val cause: Throwable, val username: Username) :
+            ShowWithoutAuthorizedError,
             MyError.MyErrorWithThrowable
     }
 
     fun show(username: Username, currentUserId: UserId): Either<ShowError, Profile> = TODO()
     sealed interface ShowError : MyError {
-        data class NotFoundProfileByUsername(val username: Username, val currentUserId: UserId) : ShowError,
+        data class NotFoundProfileByUsername(val username: Username, val currentUserId: UserId) :
+            ShowError,
             MyError.Basic
 
         data class Unexpected(override val cause: Throwable, val username: Username, val currentUserId: UserId) :

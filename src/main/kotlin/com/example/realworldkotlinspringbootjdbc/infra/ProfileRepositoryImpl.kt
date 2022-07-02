@@ -72,7 +72,7 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                     users.id = profiles.user_id
                     AND users.username = :username
                 ;
-            """.trimIndent()
+        """.trimIndent()
         val sqlParams = MapSqlParameterSource().addValue("username", username.value)
         return try {
             val profileFromDb = namedParameterJdbcTemplate.queryForList(sql, sqlParams)

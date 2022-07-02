@@ -203,8 +203,10 @@ class ProfileController(
             /**
              * JWT 認証 成功
              */
-            is Right -> when (val unfollowedProfile =
-                unfollowProfileUseCase.execute(username, authorizeResult.value.userId)) {
+            is Right -> when (
+                val unfollowedProfile =
+                    unfollowProfileUseCase.execute(username, authorizeResult.value.userId)
+            ) {
                 /**
                  * プロフィールのアンフォローに失敗
                  */
