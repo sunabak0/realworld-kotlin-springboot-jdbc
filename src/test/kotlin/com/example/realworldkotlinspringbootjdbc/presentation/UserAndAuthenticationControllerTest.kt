@@ -1,10 +1,13 @@
 package com.example.realworldkotlinspringbootjdbc.presentation
 
-import arrow.core.*
+import arrow.core.Either
+import arrow.core.Option
+import arrow.core.left
+import arrow.core.nonEmptyListOf
+import arrow.core.right
 import com.auth0.jwt.exceptions.JWTCreationException
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UnregisteredUser
-import com.example.realworldkotlinspringbootjdbc.domain.UpdatableRegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
@@ -232,9 +235,9 @@ class UserAndAuthenticationControllerTest {
             UserAndAuthenticationController(
                 jwtEncodeSessionReturnSuccess,
                 myAuthReturnCurrentUser,
-                object: RegisterUserUseCase {},
-                object: LoginUseCase {},
-                object: UpdateUserUseCase {
+                object : RegisterUserUseCase {},
+                object : LoginUseCase {},
+                object : UpdateUserUseCase {
                     override fun execute(
                         currentUser: RegisteredUser,
                         email: String?,

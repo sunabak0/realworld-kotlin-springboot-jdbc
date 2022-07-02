@@ -242,7 +242,7 @@ class UserAndAuthenticationController(
                         /**
                          * 原因: バリデーションエラー
                          */
-                        is UpdateUserUseCase.Error.InvalidAttributesForUpdateUser ->  ResponseEntity(
+                        is UpdateUserUseCase.Error.InvalidAttributesForUpdateUser -> ResponseEntity(
                             serializeMyErrorListForResponseBody(useCaseError.errors),
                             HttpStatus.valueOf(422)
                         )
