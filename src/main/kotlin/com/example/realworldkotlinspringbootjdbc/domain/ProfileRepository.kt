@@ -17,9 +17,8 @@ interface ProfileRepository {
         data class Unexpected(override val cause: Throwable, val username: Username, val currentUserId: UserId) : FollowError, MyError.MyErrorWithThrowable
     }
 
-    fun unfollow(username: Username): Either<UnfollowError, OtherUser> = TODO()
+    fun unfollow(username: Username, currentUserId: UserId): Either<UnfollowError, Profile> = TODO()
     sealed interface UnfollowError : MyError {
-        data class NotFoundProfileByUsername(val username: Username) : UnfollowError, MyError.Basic
         data class Unexpected(override val cause: Throwable) : UnfollowError, MyError.MyErrorWithThrowable
     }
 }
