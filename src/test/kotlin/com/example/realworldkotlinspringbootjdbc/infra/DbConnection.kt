@@ -6,7 +6,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import javax.sql.DataSource
 
 object DbConnection {
-    private fun dataSource(): DataSource {
+    fun dataSource(): DataSource {
         val hikariConfig = HikariConfig()
         hikariConfig.jdbcUrl = "jdbc:postgresql://127.0.0.1:5432/realworld-db"
         hikariConfig.username = "realworld-user"
