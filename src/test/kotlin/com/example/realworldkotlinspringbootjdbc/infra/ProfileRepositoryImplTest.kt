@@ -147,12 +147,31 @@ class ProfileRepositoryImplTest {
             namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams)
         }
         localPrepare()
+        val confirmFollowingsSql =
+            "SELECT COUNT(*) AS CNT FROM followings WHERE follower_id = :current_user_id AND following_id = :user_id"
+        val confirmFollowingsParam = MapSqlParameterSource()
+            .addValue("user_id", 1)
+            .addValue("current_user_id", 2)
 
+        /**
+         * 実行前に挿入されていないことを確認
+         */
+        val beforeResult = namedParameterJdbcTemplate.queryForList(confirmFollowingsSql, confirmFollowingsParam)
+        assertThat(beforeResult[0]["CNT"]).isEqualTo(0L)
+
+        /**
+         * 実行時エラーが発生しないことを確認
+         */
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
-
         when (val actual = profileRepository.follow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
             is Left -> assert(false)
             is Right -> assertThat(actual.value).isEqualTo(Unit)
         }
+
+        /**
+         * 実行後に1件だけ挿入されていることを確認
+         */
+        val afterResult = namedParameterJdbcTemplate.queryForList(confirmFollowingsSql, confirmFollowingsParam)
+        assertThat(afterResult[0]["CNT"]).isEqualTo(1L)
     }
 }
