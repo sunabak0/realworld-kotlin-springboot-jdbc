@@ -240,4 +240,9 @@ class ProfileRepositoryImplTest {
         val afterResult = namedParameterJdbcTemplate.queryForList(confirmFollowingsSql, confirmFollowingsParam)
         assertThat(afterResult[0]["CNT"]).isEqualTo(1L)
     }
+
+    @Test
+    fun `ProfileRepository follow() でDBエラーが発生したときの異常系`() {
+        TODO()
+    }
 }
