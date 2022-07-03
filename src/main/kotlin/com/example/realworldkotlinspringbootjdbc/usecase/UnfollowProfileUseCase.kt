@@ -3,7 +3,8 @@ package com.example.realworldkotlinspringbootjdbc.usecase
 import arrow.core.Either
 import arrow.core.Either.Left
 import arrow.core.Either.Right
-import arrow.core.Validated
+import arrow.core.Validated.Invalid
+import arrow.core.Validated.Valid
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Profile
@@ -29,53 +30,41 @@ interface UnfollowProfileUseCase {
 class UnfollowProfileUseCaseImpl(
     val profileRepository: ProfileRepository
 ) : UnfollowProfileUseCase {
-    override fun execute(username: String?, currentUser: RegisteredUser): Either<UnfollowProfileUseCase.Error, Profile> {
+    override fun execute(
+        username: String?,
+        currentUser: RegisteredUser
+    ): Either<UnfollowProfileUseCase.Error, Profile> {
         return when (val it = Username.new(username)) {
             /**
              * Username が不正
              */
-            is Validated.Invalid -> UnfollowProfileUseCase.Error.InvalidUsername(it.value).left()
+            is Invalid -> UnfollowProfileUseCase.Error.InvalidUsername(it.value).left()
             /**
              * Username が適切
              */
-            is Validated.Valid -> when (val showProfileResult = profileRepository.show(it.value, currentUser.userId)) {
+            is Valid -> when (val unfollowResult = profileRepository.unfollow(it.value, currentUser.userId)) {
                 /**
-                 * プロフィール検索失敗
+                 * アンフォロー 失敗
                  */
-                is Left -> when (val error = showProfileResult.value) {
+                is Left -> when (val error = unfollowResult.value) {
                     /**
                      * 原因: プロフィールが見つからなかった
                      */
-                    is ProfileRepository.ShowError.NotFoundProfileByUsername -> TODO()
+                    is ProfileRepository.UnfollowError.NotFoundProfileByUsername -> TODO()
                     /**
                      * 原因: 不明
                      */
-                    is ProfileRepository.ShowError.Unexpected -> TODO()
+                    is ProfileRepository.UnfollowError.Unexpected -> TODO()
                 }
                 /**
-                 * プロフィール取得成功
+                 * アンフォロー 成功
                  */
-                is Right -> when (val unfollowProfileResult = profileRepository.unfollow(it.value, currentUser.userId)) {
-                    /**
-                     * アンフォロー失敗
-                     */
-                    is Left -> when (val error = unfollowProfileResult.value) {
-                        /**
-                         * 原因: 不明
-                         */
-                        is ProfileRepository.UnfollowError.Unexpected -> TODO()
-                        is ProfileRepository.UnfollowError.NotFoundProfileByUsername -> TODO()
-                    }
-                    /**
-                     * アンフォロー成功
-                     */
-                    is Right -> Profile.newWithoutValidation(
-                        showProfileResult.value.username,
-                        showProfileResult.value.bio,
-                        showProfileResult.value.image,
-                        false
-                    ).right()
-                }
+                is Right -> Profile.newWithoutValidation(
+                    unfollowResult.value.username,
+                    unfollowResult.value.bio,
+                    unfollowResult.value.image,
+                    unfollowResult.value.following,
+                ).right()
             }
         }
     }
