@@ -96,6 +96,9 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
     override fun follow(username: Username, currentUserId: UserId): Either<ProfileRepository.FollowError, Profile> {
         val profileFromDb: MutableList<MutableMap<String, Any>>
 
+        /**
+         * user を取得
+         */
         val selectUserSql = """
                 SELECT
                     users.username
@@ -119,11 +122,7 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         val sqlSelectUserSqlParams = MapSqlParameterSource()
             .addValue("username", username.value)
             .addValue("current_user_id", currentUserId.value)
-
         try {
-            /**
-             * user を取得
-             */
             profileFromDb = namedParameterJdbcTemplate.queryForList(selectUserSql, sqlSelectUserSqlParams)
         } catch (e: Throwable) {
             return ProfileRepository.FollowError.Unexpected(e, username, currentUserId).left()
@@ -135,9 +134,22 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         if (profileFromDb.isEmpty()) {
             return ProfileRepository.FollowError.NotFoundProfileByUsername(username, currentUserId).left()
         }
+        val it = profileFromDb.first()
 
         /**
-         * user が存在した時、フォロー
+         * フォロー済のとき、早期リターン
+         */
+        if (it["following_flg"].toString() == "1") {
+            return Profile.newWithoutValidation(
+                Username.newWithoutValidation(it["username"].toString()),
+                Bio.newWithoutValidation(it["bio"].toString()),
+                Image.newWithoutValidation(it["image"].toString()),
+                true
+            ).right()
+        }
+
+        /**
+         * 未フォローのとき、フォロー
          */
         val insertFollowingsSql = """
             INSERT INTO followings
@@ -173,16 +185,19 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         val insertFollowingsSqlParams = MapSqlParameterSource()
             .addValue("username", username.value)
             .addValue("current_user_id", currentUserId.value)
-        return try {
+        try {
             namedParameterJdbcTemplate.update(insertFollowingsSql, insertFollowingsSqlParams)
-            profileFromDb.map {
-                Profile.newWithoutValidation(
-                    Username.newWithoutValidation(it["username"].toString()),
-                    Bio.newWithoutValidation(it["bio"].toString()),
-                    Image.newWithoutValidation(it["image"].toString()),
-                    true
-                )
-            }[0].right()
+        } catch (e: Throwable) {
+            return ProfileRepository.FollowError.Unexpected(e, username, currentUserId).left()
+        }
+
+        return try {
+            Profile.newWithoutValidation(
+                Username.newWithoutValidation(it["username"].toString()),
+                Bio.newWithoutValidation(it["bio"].toString()),
+                Image.newWithoutValidation(it["image"].toString()),
+                true
+            ).right()
         } catch (e: Throwable) {
             ProfileRepository.FollowError.Unexpected(e, username, currentUserId).left()
         }
@@ -191,6 +206,9 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
     override fun unfollow(username: Username, currentUserId: UserId): Either<ProfileRepository.UnfollowError, Profile> {
         val profileFromDb: MutableList<MutableMap<String, Any>>
 
+        /**
+         * user を取得
+         */
         val selectUserSql = """
                 SELECT
                     users.username
@@ -211,11 +229,9 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                     AND followings.follower_id = :current_user_id
                 ;
         """.trimIndent()
-        val sqlSelectUserSqlParams = MapSqlParameterSource().addValue("username", username.value)
+        val sqlSelectUserSqlParams = MapSqlParameterSource()
+            .addValue("username", username.value)
             .addValue("current_user_id", currentUserId.value)
-        /**
-         * user を取得
-         */
         try {
             profileFromDb = namedParameterJdbcTemplate.queryForList(selectUserSql, sqlSelectUserSqlParams)
         } catch (e: Throwable) {
@@ -228,9 +244,22 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         if (profileFromDb.isEmpty()) {
             return ProfileRepository.UnfollowError.NotFoundProfileByUsername(username, currentUserId).left()
         }
+        val it = profileFromDb.first()
 
         /**
-         * user が存在した時 アンフォロー
+         * 未フォローのとき、早期リターン
+         */
+        if (it["following_flg"].toString() == "0") {
+            return Profile.newWithoutValidation(
+                Username.newWithoutValidation(it["username"].toString()),
+                Bio.newWithoutValidation(it["bio"].toString()),
+                Image.newWithoutValidation(it["image"].toString()),
+                false
+            ).right()
+        }
+
+        /**
+         * フォロー済のとき、アンフォロー
          */
         val deleteFollowingsSql = """
             DELETE FROM
@@ -246,16 +275,19 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         val deleteFollowingsSqlParams = MapSqlParameterSource()
             .addValue("username", username.value)
             .addValue("current_user_id", currentUserId.value)
-        return try {
+        try {
             namedParameterJdbcTemplate.update(deleteFollowingsSql, deleteFollowingsSqlParams)
-            profileFromDb.map {
-                Profile.newWithoutValidation(
-                    Username.newWithoutValidation(it["username"].toString()),
-                    Bio.newWithoutValidation(it["bio"].toString()),
-                    Image.newWithoutValidation(it["image"].toString()),
-                    false
-                )
-            }[0].right()
+        } catch (e: Throwable) {
+            return ProfileRepository.UnfollowError.Unexpected(e, username, currentUserId).left()
+        }
+
+        return try {
+            Profile.newWithoutValidation(
+                Username.newWithoutValidation(it["username"].toString()),
+                Bio.newWithoutValidation(it["bio"].toString()),
+                Image.newWithoutValidation(it["image"].toString()),
+                false
+            ).right()
         } catch (e: Throwable) {
             ProfileRepository.UnfollowError.Unexpected(e, username, currentUserId).left()
         }
