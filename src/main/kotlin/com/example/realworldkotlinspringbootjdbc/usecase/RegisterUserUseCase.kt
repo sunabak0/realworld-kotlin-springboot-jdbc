@@ -13,14 +13,15 @@ import com.example.realworldkotlinspringbootjdbc.domain.UserRepository
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
-//
-// ユーザー登録
-//
+/**
+ * ユーザー登録
+ */
 interface RegisterUserUseCase {
     fun execute(email: String?, password: String?, username: String?): Either<Error, RegisteredUser> = TODO()
     sealed interface Error : MyError {
         data class InvalidUser(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
         data class AlreadyRegisteredEmail(override val cause: MyError, val user: UnregisteredUser) : Error, MyError.MyErrorWithMyError
+        data class AlreadyRegisteredUsername(override val cause: MyError, val user: UnregisteredUser) : Error, MyError.MyErrorWithMyError
         data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
 }
@@ -33,25 +34,25 @@ class RegisterUserUseCaseImpl(
         when (val user = UnregisteredUser.new(email, password, username)) {
             is Invalid -> RegisterUserUseCase.Error.InvalidUser(user.value).left()
             is Valid -> when (val registerResult = userRepository.register(user.value)) {
-                //
-                // ユーザー登録 成功
-                //
+                /**
+                 * ユーザー登録 成功
+                 */
                 is Right -> registerResult.value.right()
-                //
-                // 何かしらが原因で登録失敗
-                //
+                /**
+                 * ユーザー登録 失敗
+                 */
                 is Left -> when (val registerError = registerResult.value) {
-                    //
-                    // 原因: Emailが既に登録されている
-                    //
+                    /**
+                     * 原因: Emailが既に登録されている
+                     */
                     is UserRepository.RegisterError.AlreadyRegisteredEmail -> RegisterUserUseCase.Error.AlreadyRegisteredEmail(registerError, user.value).left()
                     /**
                      * 原因: Usernameが既に登録されている
                      */
-                    is UserRepository.RegisterError.AlreadyRegisteredUsername -> TODO()
-                    //
-                    // 原因: 謎
-                    //
+                    is UserRepository.RegisterError.AlreadyRegisteredUsername -> RegisterUserUseCase.Error.AlreadyRegisteredUsername(registerError, user.value).left()
+                    /**
+                     * 原因: 不明
+                     */
                     is UserRepository.RegisterError.Unexpected -> RegisterUserUseCase.Error.Unexpected(registerError).left()
                 }
             }

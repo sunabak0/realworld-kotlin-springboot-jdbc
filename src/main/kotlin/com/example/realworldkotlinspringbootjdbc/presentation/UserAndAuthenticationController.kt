@@ -87,6 +87,13 @@ class UserAndAuthenticationController(
                     HttpStatus.valueOf(422)
                 )
                 /**
+                 * 原因: Usernameが既に登録されている
+                 */
+                is RegisterUserUseCase.Error.AlreadyRegisteredUsername -> ResponseEntity(
+                    serializeUnexpectedErrorForResponseBody("ユーザー名は既に登録されています"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                    HttpStatus.valueOf(422)
+                )
+                /**
                  * 原因: DB周りのエラー
                  */
                 is RegisterUserUseCase.Error.Unexpected -> ResponseEntity(
