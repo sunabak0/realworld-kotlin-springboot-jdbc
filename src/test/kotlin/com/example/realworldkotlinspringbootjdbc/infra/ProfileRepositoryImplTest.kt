@@ -260,8 +260,8 @@ class ProfileRepositoryImplTest {
         /**
          * 実行前に挿入されていないことを確認
          */
-        val beforeResult = namedParameterJdbcTemplate.queryForList(confirmFollowingsSql, confirmFollowingsParam)
-        assertThat(beforeResult[0]["CNT"]).isEqualTo(0L)
+        val beforeFollowingCount = namedParameterJdbcTemplate.queryForMap(confirmFollowingsSql, confirmFollowingsParam)["CNT"]
+        assertThat(beforeFollowingCount).isEqualTo(0L)
 
         /**
          * 戻り値がフォロー済の Profile であることを確認
