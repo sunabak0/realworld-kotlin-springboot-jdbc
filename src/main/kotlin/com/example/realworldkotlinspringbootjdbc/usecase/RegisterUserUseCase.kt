@@ -45,6 +45,10 @@ class RegisterUserUseCaseImpl(
                     // 原因: Emailが既に登録されている
                     //
                     is UserRepository.RegisterError.AlreadyRegisteredEmail -> RegisterUserUseCase.Error.AlreadyRegisteredEmail(registerError, user.value).left()
+                    /**
+                     * 原因: Usernameが既に登録されている
+                     */
+                    is UserRepository.RegisterError.AlreadyRegisteredUsername -> TODO()
                     //
                     // 原因: 謎
                     //
