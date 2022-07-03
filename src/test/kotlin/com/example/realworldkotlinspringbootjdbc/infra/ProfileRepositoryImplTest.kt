@@ -356,6 +356,21 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
+    fun `ProfileRepository follow() で Profile が見つからなかったときの異常系`() {
+        val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+
+        val expect = ProfileRepository.FollowError.NotFoundProfileByUsername(
+            Username.newWithoutValidation("dummy-username"),
+            UserId(2)
+        )
+
+        when (val actual = profileRepository.follow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
+            is Left -> assertThat(actual.value).isEqualTo(expect)
+            is Right -> assert(false)
+        }
+    }
+
+    @Test
     fun `ProfileRepository follow() でDBエラーが発生したときの異常系`() {
         TODO()
     }
@@ -449,8 +464,24 @@ class ProfileRepositoryImplTest {
             "SELECT COUNT(*) AS CNT FROM followings WHERE following_id = :user_id"
         val confirmAllFollowingsParam = MapSqlParameterSource()
             .addValue("user_id", 1)
-        val confirmAllFollowingsResult = namedParameterJdbcTemplate.queryForList(confirmAllFollowingsSql, confirmAllFollowingsParam)
+        val confirmAllFollowingsResult =
+            namedParameterJdbcTemplate.queryForList(confirmAllFollowingsSql, confirmAllFollowingsParam)
         assertThat(confirmAllFollowingsResult[0]["CNT"]).isEqualTo(1L)
+    }
+
+    @Test
+    fun `ProfileRepository unfollow() で Profile が見つからなかったときの異常系`() {
+        val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+
+        val expect = ProfileRepository.UnfollowError.NotFoundProfileByUsername(
+            Username.newWithoutValidation("dummy-username"),
+            UserId(2)
+        )
+
+        when (val actual = profileRepository.unfollow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
+            is Left -> assertThat(actual.value).isEqualTo(expect)
+            is Right -> assert(false)
+        }
     }
 
     @Test
