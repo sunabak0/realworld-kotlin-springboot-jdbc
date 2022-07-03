@@ -115,7 +115,7 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                     followings.following_id = users.id
                     AND followings.follower_id = :current_user_id
                 ;
-            """.trimIndent()
+        """.trimIndent()
         val sqlSelectUserSqlParams = MapSqlParameterSource()
             .addValue("username", username.value)
             .addValue("current_user_id", currentUserId.value)
@@ -210,7 +210,7 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                     followings.following_id = users.id
                     AND followings.follower_id = :current_user_id
                 ;
-            """.trimIndent()
+        """.trimIndent()
         val sqlSelectUserSqlParams = MapSqlParameterSource().addValue("username", username.value)
             .addValue("current_user_id", currentUserId.value)
         /**
