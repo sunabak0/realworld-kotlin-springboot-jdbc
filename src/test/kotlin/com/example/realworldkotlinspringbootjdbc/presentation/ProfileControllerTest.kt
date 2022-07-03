@@ -196,7 +196,7 @@ class ProfileControllerTest {
             val followProfileUseCase = object : FollowProfileUseCase {
                 override fun execute(
                     username: String?,
-                    currentUserId: UserId
+                    currentUser: RegisteredUser
                 ): Either<FollowProfileUseCase.Error, Profile> {
                     return returnProfile.right()
                 }
@@ -227,7 +227,7 @@ class ProfileControllerTest {
             val followProfileReturnInvalidUsernameError = object : FollowProfileUseCase {
                 override fun execute(
                     username: String?,
-                    currentUserId: UserId
+                    currentUser: RegisteredUser
                 ): Either<FollowProfileUseCase.Error, Profile> =
                     FollowProfileUseCase.Error.InvalidUsername(listOf(notImplementedValidationError)).left()
             }
@@ -251,7 +251,7 @@ class ProfileControllerTest {
             val followProfileReturnNotFoundError = object : FollowProfileUseCase {
                 override fun execute(
                     username: String?,
-                    currentUserId: UserId
+                    currentUser: RegisteredUser
                 ): Either<FollowProfileUseCase.Error, Profile> =
                     FollowProfileUseCase.Error.NotFound(notImplementedError).left()
             }
@@ -274,7 +274,7 @@ class ProfileControllerTest {
             val followProfileUnexpectedError = object : FollowProfileUseCase {
                 override fun execute(
                     username: String?,
-                    currentUserId: UserId
+                    currentUser: RegisteredUser
                 ): Either<FollowProfileUseCase.Error, Profile> =
                     FollowProfileUseCase.Error.Unexpected(notImplementedError).left()
             }
@@ -332,7 +332,7 @@ class ProfileControllerTest {
             val unfollowUseCase = object : UnfollowProfileUseCase {
                 override fun execute(
                     username: String?,
-                    currentUserId: UserId
+                    currentUser: RegisteredUser
                 ): Either<UnfollowProfileUseCase.Error, Profile> {
                     return returnProfile.right()
                 }
@@ -363,7 +363,7 @@ class ProfileControllerTest {
             val unfollowProfileReturnInvalidUsernameError = object : UnfollowProfileUseCase {
                 override fun execute(
                     username: String?,
-                    currentUserId: UserId
+                    currentUser: RegisteredUser
                 ): Either<UnfollowProfileUseCase.Error, Profile> =
                     UnfollowProfileUseCase.Error.InvalidUsername(listOf(notImplementedValidationError)).left()
             }
@@ -387,7 +387,7 @@ class ProfileControllerTest {
             val unfollowProfileReturnNotFoundError = object : UnfollowProfileUseCase {
                 override fun execute(
                     username: String?,
-                    currentUserId: UserId
+                    currentUser: RegisteredUser
                 ): Either<UnfollowProfileUseCase.Error, Profile> =
                     UnfollowProfileUseCase.Error.NotFound(notImplementedError).left()
             }
@@ -410,7 +410,7 @@ class ProfileControllerTest {
             val unfollowProfileUnexpectedError = object : UnfollowProfileUseCase {
                 override fun execute(
                     username: String?,
-                    currentUserId: UserId
+                    currentUser: RegisteredUser
                 ): Either<UnfollowProfileUseCase.Error, Profile> =
                     UnfollowProfileUseCase.Error.Unexpected(notImplementedError).left()
             }

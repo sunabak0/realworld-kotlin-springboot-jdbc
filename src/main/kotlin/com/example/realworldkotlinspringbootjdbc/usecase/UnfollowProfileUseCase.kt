@@ -8,13 +8,13 @@ import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Profile
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
-import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
+import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface UnfollowProfileUseCase {
-    fun execute(username: String?, currentUserId: UserId): Either<Error, Profile> = TODO()
+    fun execute(username: String?, currentUser: RegisteredUser): Either<Error, Profile> = TODO()
     sealed interface Error : MyError {
         data class InvalidUsername(override val errors: List<MyError.ValidationError>) :
             Error,
@@ -29,7 +29,7 @@ interface UnfollowProfileUseCase {
 class UnfollowProfileUseCaseImpl(
     val profileRepository: ProfileRepository
 ) : UnfollowProfileUseCase {
-    override fun execute(username: String?, currentUserId: UserId): Either<UnfollowProfileUseCase.Error, Profile> {
+    override fun execute(username: String?, currentUser: RegisteredUser): Either<UnfollowProfileUseCase.Error, Profile> {
         return when (val it = Username.new(username)) {
             /**
              * Username が不正
@@ -38,7 +38,7 @@ class UnfollowProfileUseCaseImpl(
             /**
              * Username が適切
              */
-            is Validated.Valid -> when (val showProfileResult = profileRepository.show(it.value, currentUserId)) {
+            is Validated.Valid -> when (val showProfileResult = profileRepository.show(it.value, currentUser.userId)) {
                 /**
                  * プロフィール検索失敗
                  */
@@ -55,7 +55,7 @@ class UnfollowProfileUseCaseImpl(
                 /**
                  * プロフィール取得成功
                  */
-                is Right -> when (val unfollowProfileResult = profileRepository.unfollow(it.value, currentUserId)) {
+                is Right -> when (val unfollowProfileResult = profileRepository.unfollow(it.value, currentUser.userId)) {
                     /**
                      * アンフォロー失敗
                      */

@@ -151,7 +151,7 @@ class ProfileController(
              */
             is Right -> when (
                 val followedProfile =
-                    followProfileUseCase.execute(username, authorizeResult.value.userId)
+                    followProfileUseCase.execute(username, authorizeResult.value)
             ) {
                 /**
                  * プロフィールのフォローに失敗
@@ -205,7 +205,7 @@ class ProfileController(
              */
             is Right -> when (
                 val unfollowedProfile =
-                    unfollowProfileUseCase.execute(username, authorizeResult.value.userId)
+                    unfollowProfileUseCase.execute(username, authorizeResult.value)
             ) {
                 /**
                  * プロフィールのアンフォローに失敗
