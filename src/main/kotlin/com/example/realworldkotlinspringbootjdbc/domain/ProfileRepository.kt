@@ -24,8 +24,12 @@ interface ProfileRepository {
             ShowError, MyError.MyErrorWithThrowable
     }
 
-    fun follow(username: Username, currentUserId: UserId): Either<FollowError, Unit> = TODO()
+    fun follow(username: Username, currentUserId: UserId): Either<FollowError, Profile> = TODO()
     sealed interface FollowError : MyError {
+        data class NotFoundProfileByUsername(val username: Username, val currentUserId: UserId) :
+            FollowError,
+            MyError.Basic
+
         data class Unexpected(override val cause: Throwable, val username: Username, val currentUserId: UserId) :
             FollowError, MyError.MyErrorWithThrowable
     }

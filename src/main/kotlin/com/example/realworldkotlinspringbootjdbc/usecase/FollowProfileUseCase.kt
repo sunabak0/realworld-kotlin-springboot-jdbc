@@ -38,45 +38,29 @@ class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) :
             /**
              * Username が適切
              */
-            is Valid -> when (val showProfileResult = profileRepository.show(it.value, currentUserId)) {
+            is Valid -> when (val followResult = profileRepository.follow(it.value, currentUserId)) {
                 /**
-                 * プロフィール検索失敗
+                 * フォロー 失敗
                  */
-                is Left -> when (val error = showProfileResult.value) {
+                is Left -> when (val error = followResult.value) {
                     /**
                      * 原因: プロフィールが見つからなかった
                      */
-                    is ProfileRepository.ShowError.NotFoundProfileByUsername -> FollowProfileUseCase.Error.NotFound(
-                        error
-                    ).left()
+                    is ProfileRepository.FollowError.NotFoundProfileByUsername -> TODO()
                     /**
                      * 原因: 不明
                      */
-                    is ProfileRepository.ShowError.Unexpected -> FollowProfileUseCase.Error.Unexpected(error).left()
+                    is ProfileRepository.FollowError.Unexpected -> TODO()
                 }
                 /**
-                 * プロフィール検索成功
+                 * フォロー 成功
                  */
-                is Right -> when (val followProfileResult = profileRepository.follow(it.value, currentUserId)) {
-                    /**
-                     * フォロー失敗
-                     */
-                    is Left -> when (val error = followProfileResult.value) {
-                        /**
-                         * 原因: 不明
-                         */
-                        is ProfileRepository.FollowError.Unexpected -> TODO()
-                    }
-                    /**
-                     * フォロー成功
-                     */
-                    is Right -> Profile.newWithoutValidation(
-                        showProfileResult.value.username,
-                        showProfileResult.value.bio,
-                        showProfileResult.value.image,
-                        true
-                    ).right()
-                }
+                is Right -> Profile.newWithoutValidation(
+                    followResult.value.username,
+                    followResult.value.bio,
+                    followResult.value.image,
+                    followResult.value.following
+                ).right()
             }
         }
     }

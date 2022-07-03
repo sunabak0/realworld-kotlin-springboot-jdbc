@@ -222,7 +222,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ProfileRepository follow() で戻り値が Unit、followings テーブルに登録されていないため、挿入されるときの正常系`() {
+    fun `ProfileRepository follow() で戻り値が Profile、followings テーブルに登録されていないため、挿入されるときの正常系`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -262,12 +262,18 @@ class ProfileRepositoryImplTest {
         assertThat(beforeResult[0]["CNT"]).isEqualTo(0L)
 
         /**
-         * 実行時エラーが発生しないことを確認
+         * 戻り値がフォロー済の Profile であることを確認
          */
+        val expectProfile = Profile.newWithoutValidation(
+            Username.newWithoutValidation("dummy-username"),
+            Bio.newWithoutValidation("dummy-bio"),
+            Image.newWithoutValidation("dummy-image"),
+            true
+        )
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
         when (val actual = profileRepository.follow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
             is Left -> assert(false)
-            is Right -> assertThat(actual.value).isEqualTo(Unit)
+            is Right -> assertThat(actual.value).isEqualTo(expectProfile)
         }
 
         /**
@@ -278,7 +284,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ProfileRepository follow() で戻り値が Unit、followings テーブルに登録されているため、挿入されないときの正常系`() {
+    fun `ProfileRepository follow() で戻り値が Profile、followings テーブルに登録されているため、挿入されないときの正常系`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -328,12 +334,18 @@ class ProfileRepositoryImplTest {
         assertThat(beforeResult[0]["CNT"]).isEqualTo(1L)
 
         /**
-         * 実行時エラーが発生しないことを確認
+         * 戻り値がフォロー済の Profile であることを確認
          */
+        val expectProfile = Profile.newWithoutValidation(
+            Username.newWithoutValidation("dummy-username"),
+            Bio.newWithoutValidation("dummy-bio"),
+            Image.newWithoutValidation("dummy-image"),
+            true
+        )
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
         when (val actual = profileRepository.follow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
             is Left -> assert(false)
-            is Right -> assertThat(actual.value).isEqualTo(Unit)
+            is Right -> assertThat(actual.value).isEqualTo(expectProfile)
         }
 
         /**
