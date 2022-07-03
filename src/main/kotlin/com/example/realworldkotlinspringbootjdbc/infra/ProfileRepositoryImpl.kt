@@ -191,11 +191,7 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
     override fun unfollow(username: Username, currentUserId: UserId): Either<ProfileRepository.UnfollowError, Profile> {
         val profileFromDb: MutableList<MutableMap<String, Any>>
 
-        /**
-         * user を取得
-         */
-        try {
-            val selectUserSql = """
+        val selectUserSql = """
                 SELECT
                     users.username
                     , profiles.bio
@@ -215,8 +211,12 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                     AND followings.follower_id = :current_user_id
                 ;
             """.trimIndent()
-            val sqlSelectUserSqlParams = MapSqlParameterSource().addValue("username", username.value)
-                .addValue("current_user_id", currentUserId.value)
+        val sqlSelectUserSqlParams = MapSqlParameterSource().addValue("username", username.value)
+            .addValue("current_user_id", currentUserId.value)
+        /**
+         * user を取得
+         */
+        try {
             profileFromDb = namedParameterJdbcTemplate.queryForList(selectUserSql, sqlSelectUserSqlParams)
         } catch (e: Throwable) {
             return ProfileRepository.UnfollowError.Unexpected(e, username, currentUserId).left()
