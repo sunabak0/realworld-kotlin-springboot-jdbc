@@ -266,7 +266,7 @@ class ProfileRepositoryImplTest {
         /**
          * 戻り値がフォロー済の Profile であることを確認
          */
-        val expectProfile = Profile.newWithoutValidation(
+        val expectedProfile = Profile.newWithoutValidation(
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
@@ -275,7 +275,7 @@ class ProfileRepositoryImplTest {
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
         when (val actual = profileRepository.follow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
             is Left -> assert(false)
-            is Right -> assertThat(actual.value).isEqualTo(expectProfile)
+            is Right -> assertThat(actual.value).isEqualTo(expectedProfile)
         }
 
         /**
@@ -338,7 +338,7 @@ class ProfileRepositoryImplTest {
         /**
          * 戻り値がフォロー済の Profile であることを確認
          */
-        val expectProfile = Profile.newWithoutValidation(
+        val expectedProfile = Profile.newWithoutValidation(
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
@@ -347,7 +347,7 @@ class ProfileRepositoryImplTest {
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
         when (val actual = profileRepository.follow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
             is Left -> assert(false)
-            is Right -> assertThat(actual.value).isEqualTo(expectProfile)
+            is Right -> assertThat(actual.value).isEqualTo(expectedProfile)
         }
 
         /**
@@ -442,7 +442,7 @@ class ProfileRepositoryImplTest {
         /**
          * 戻り値が未フォローの Profile であることを確認
          */
-        val expectProfile = Profile.newWithoutValidation(
+        val expectedProfile = Profile.newWithoutValidation(
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
@@ -451,7 +451,7 @@ class ProfileRepositoryImplTest {
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
         when (val actual = profileRepository.unfollow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
             is Left -> assert(false)
-            is Right -> assertThat(actual.value).isEqualTo(expectProfile)
+            is Right -> assertThat(actual.value).isEqualTo(expectedProfile)
         }
 
         /**
@@ -504,7 +504,7 @@ class ProfileRepositoryImplTest {
         /**
          * 戻り値が未フォローの Profile であることを確認
          */
-        val expectProfile = Profile.newWithoutValidation(
+        val expectedProfile = Profile.newWithoutValidation(
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
@@ -513,7 +513,7 @@ class ProfileRepositoryImplTest {
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
         when (val actual = profileRepository.unfollow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
             is Left -> assert(false)
-            is Right -> assertThat(actual.value).isEqualTo(expectProfile)
+            is Right -> assertThat(actual.value).isEqualTo(expectedProfile)
         }
     }
 
