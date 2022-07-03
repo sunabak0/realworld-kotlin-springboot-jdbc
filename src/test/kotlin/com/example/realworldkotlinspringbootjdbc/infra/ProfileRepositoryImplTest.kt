@@ -376,7 +376,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ProfileRepository unfollow() で戻り値が Profile の正常系`() {
+    fun `ProfileRepository unfollow() で削除対象があったときの戻り値が Profile の正常系`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -467,6 +467,51 @@ class ProfileRepositoryImplTest {
         val confirmAllFollowingsResult =
             namedParameterJdbcTemplate.queryForList(confirmAllFollowingsSql, confirmAllFollowingsParam)
         assertThat(confirmAllFollowingsResult[0]["CNT"]).isEqualTo(1L)
+    }
+
+    @Test
+    fun `ProfileRepository unfollow() で削除対象がなかったときの戻り値が Profile の正常系`() {
+        fun localPrepare() {
+            val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
+
+            val insertUserSql =
+                "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
+            val insertUserSqlParams = MapSqlParameterSource()
+                .addValue("id", 1)
+                .addValue("email", "dummy@example.com")
+                .addValue("username", "dummy-username")
+                .addValue("password", "Passw0rd")
+                .addValue("created_at", date)
+                .addValue("updated_at", date)
+            namedParameterJdbcTemplate.update(insertUserSql, insertUserSqlParams)
+
+            val insertProfileSql =
+                "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
+            val insertProfileSqlParams = MapSqlParameterSource()
+                .addValue("id", 1)
+                .addValue("user_id", 1)
+                .addValue("bio", "dummy-bio")
+                .addValue("image", "dummy-image")
+                .addValue("created_at", date)
+                .addValue("updated_at", date)
+            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams)
+        }
+        localPrepare()
+
+        /**
+         * 戻り値が未フォローの Profile であることを確認
+         */
+        val expectProfile = Profile.newWithoutValidation(
+            Username.newWithoutValidation("dummy-username"),
+            Bio.newWithoutValidation("dummy-bio"),
+            Image.newWithoutValidation("dummy-image"),
+            false
+        )
+        val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+        when (val actual = profileRepository.unfollow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
+            is Left -> assert(false)
+            is Right -> assertThat(actual.value).isEqualTo(expectProfile)
+        }
     }
 
     @Test
