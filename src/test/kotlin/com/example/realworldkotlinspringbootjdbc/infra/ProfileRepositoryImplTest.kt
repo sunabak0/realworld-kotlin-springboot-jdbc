@@ -11,6 +11,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -217,6 +218,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
+    @Disabled
     fun `未ログイン時の  ProfileRepository show() で namedParameterJdbcTemplate が Exception を throw したときの異常系`() {
         TODO()
     }
@@ -371,6 +373,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
+    @Disabled
     fun `ProfileRepository follow() でDBエラーが発生したときの異常系`() {
         TODO()
     }
@@ -530,6 +533,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
+    @Disabled
     fun `ProfileRepository unfollow() でDBエラーの異常系`() {
         TODO()
     }
