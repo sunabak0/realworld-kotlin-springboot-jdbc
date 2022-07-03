@@ -18,6 +18,8 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
+import java.util.*
 
 typealias RegisteredWithPassword = Pair<RegisteredUser, Password>
 
@@ -29,6 +31,47 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
     }
 
     override fun register(user: UnregisteredUser): Either<UserRepository.RegisterError, RegisteredUser> {
+        /**
+         * Email ユニーク check
+         */
+        val sql1 = """
+            SELECT count(*)
+            FROM users
+            WHERE users.email = :email
+            ;
+        """.trimIndent()
+        val sqlParams1 = MapSqlParameterSource().addValue("email", user.email.value)
+        try {
+            val count = namedParameterJdbcTemplate.queryForMap(sql1, sqlParams1)["count"] as Long
+            if (0 < count) {
+                return UserRepository.RegisterError.AlreadyRegisteredEmail(user.email).left()
+            }
+        } catch (e: Throwable) {
+            return UserRepository.RegisterError.Unexpected(e, user).left()
+        }
+
+        /**
+         * Username ユニーク check
+         */
+        val sql2 = """
+            SELECT count(*)
+            FROM users
+            WHERE users.username = :username
+            ;
+        """.trimIndent()
+        val sqlParams2 = MapSqlParameterSource().addValue("username", user.username.value)
+        try {
+            val count = namedParameterJdbcTemplate.queryForMap(sql2, sqlParams2)["count"] as Long
+            if (0 < count) {
+                return UserRepository.RegisterError.AlreadyRegisteredUsername(user.username).left()
+            }
+        } catch (e: Throwable) {
+            return UserRepository.RegisterError.Unexpected(e, user).left()
+        }
+
+        /**
+         * やっと登録処理
+         */
         val userId = try {
             registerTransactionApply(user)
         } catch (e: Throwable) {
@@ -45,13 +88,25 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
         return registeredUser.right()
     }
 
-    // @Transaction
-    private fun registerTransactionApply(user: UnregisteredUser): UserId {
-        // val sql0 = "SELECT count(email) FROM users WHERE users.email = ?"
-        // val sql1 = "INSERT INTO users(email, username, password, created_at, updated_at) VALUES (:email, :username, :password, :created_at, :updated_at) RETURNING id;"
-        // val sql2 = "INSERT INTO profiles(user_id, bio, image, created_at, updated_at) VALUES (:user_id, :bio, :image, :created_at, :updated_at);"
-
-        return UserId(999)
+    /**
+     * ユーザー登録処理
+     */
+    @Transactional
+    fun registerTransactionApply(user: UnregisteredUser): UserId {
+        val sql1 = "INSERT INTO users(email, username, password, created_at, updated_at) VALUES (:email, :username, :password, :created_at, :updated_at) RETURNING id;"
+        val sql2 = "INSERT INTO profiles(user_id, bio, image, created_at, updated_at) VALUES (:user_id, :bio, :image, :created_at, :updated_at);"
+        val sqlParams = MapSqlParameterSource()
+            .addValue("email", user.email.value)
+            .addValue("password", user.password.value)
+            .addValue("username", user.username.value)
+            .addValue("created_at", Date())
+            .addValue("updated_at", Date())
+            .addValue("bio", "")
+            .addValue("image", "")
+        val userId = namedParameterJdbcTemplate.queryForMap(sql1, sqlParams)["id"] as Int
+        sqlParams.addValue("user_id", userId)
+        namedParameterJdbcTemplate.update(sql2, sqlParams)
+        return UserId(userId)
     }
 
     // Transactionは不要(rollbackしないため)
@@ -94,7 +149,10 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
 
     private fun findByEmail(email: Email): Either<Error, RegisteredUser> {
         val sql = """
-            SELECT * FROM users WHERE users.email = :email;
+            SELECT *
+            FROM users
+                JOIN profiles ON profiles.user_id = users.id
+            WHERE users.email = :email;
         """.trimIndent()
         val sqlParams = MapSqlParameterSource()
             .addValue("email", email.value)
