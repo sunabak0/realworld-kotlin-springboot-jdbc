@@ -81,7 +81,7 @@ class ProfileRepositoryImplTest {
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
-            true
+            following = true
         )
         when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2))) {
             is Left -> assert(false)
@@ -124,7 +124,7 @@ class ProfileRepositoryImplTest {
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
-            false
+            following = false
         )
         when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2))) {
             is Left -> assert(false)
@@ -195,7 +195,7 @@ class ProfileRepositoryImplTest {
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
-            false
+            following = false
         )
         when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"))) {
             is Left -> assert(false)
@@ -270,7 +270,7 @@ class ProfileRepositoryImplTest {
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
-            true
+            following = true
         )
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
         when (val actual = profileRepository.follow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
@@ -342,7 +342,7 @@ class ProfileRepositoryImplTest {
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
-            true
+            following = true
         )
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
         when (val actual = profileRepository.follow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
@@ -446,7 +446,7 @@ class ProfileRepositoryImplTest {
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
-            false
+            following = false
         )
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
         when (val actual = profileRepository.unfollow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
@@ -508,7 +508,7 @@ class ProfileRepositoryImplTest {
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
-            false
+            following = false
         )
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
         when (val actual = profileRepository.unfollow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
