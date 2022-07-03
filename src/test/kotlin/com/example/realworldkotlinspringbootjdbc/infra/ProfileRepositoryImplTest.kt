@@ -38,7 +38,7 @@ class ProfileRepositoryImplTest {
     private val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
 
     @Test
-    fun `ログイン時の ProfileRepository show() で 1 件取得時、フォロー済のときの正常系`() {
+    fun `ProfileRepository show()-正常系-ログイン済み-フォロー済、 Profile が戻り値`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -90,7 +90,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ログイン時の ProfileRepository show() で 1 件取得時、未フォローのときの正常系`() {
+    fun `ProfileRepository show()-正常系-ログイン済み-未フォローのときの Profile が戻り値`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -133,7 +133,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ログイン時の ProfileRepository show() で 0 件だったときの異常系`() {
+    fun `ProfileRepository show()-異常系-ログイン済み、NotFoundProfileByUsername が戻り値`() {
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
 
         val expect =
@@ -148,7 +148,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ログイン時の ProfileRepository show() で namedParameterJdbcTemplate が Exception を throw したときの異常系`() {
+    fun `ProfileRepository show()-異常系-ログイン済み、UnexpectedError が戻り値`() {
         val throwDatabaseAccessException = object : NamedParameterJdbcTemplate(DbConnection.dataSource()) {
             override fun queryForList(
                 sql: String,
@@ -161,7 +161,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `未ログイン時の ProfileRepository show() で 1 件取得時の正常系`() {
+    fun `ProfileRepository show()-正常系-未ログイン、Profile が戻り値`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -204,7 +204,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `未ログイン時に ProfileRepository show() で 0 件だったときの異常系`() {
+    fun `ProfileRepository show()-異常系-未ログイン、NotFoundProfileByUsername が戻り値`() {
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
 
         val expect =
@@ -219,12 +219,12 @@ class ProfileRepositoryImplTest {
 
     @Test
     @Disabled
-    fun `未ログイン時の  ProfileRepository show() で namedParameterJdbcTemplate が Exception を throw したときの異常系`() {
+    fun `ProfileRepository show()-異常系-未ログイン、UnexpectedError が戻り値`() {
         TODO()
     }
 
     @Test
-    fun `ProfileRepository follow() で戻り値が Profile、followings テーブルに登録されていないため、挿入されるときの正常系`() {
+    fun `ProfileRepository follow()-正常系-未フォロー、Profile が戻り値-followings テーブルに登録される`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -286,7 +286,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ProfileRepository follow() で戻り値が Profile、followings テーブルに登録されているため、挿入されないときの正常系`() {
+    fun `ProfileRepository follow()-正常系-フォロー済、戻り値がProfile-followings テーブルに挿入されない`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -358,7 +358,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ProfileRepository follow() で Profile が見つからなかったときの異常系`() {
+    fun `ProfileRepository follow()-異常系、 戻り値が NotFoundProfileByUsername`() {
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
 
         val expect = ProfileRepository.FollowError.NotFoundProfileByUsername(
@@ -374,12 +374,12 @@ class ProfileRepositoryImplTest {
 
     @Test
     @Disabled
-    fun `ProfileRepository follow() でDBエラーが発生したときの異常系`() {
+    fun `ProfileRepository follow()-異常系、 UnexpectedError が戻り値`() {
         TODO()
     }
 
     @Test
-    fun `ProfileRepository unfollow() で削除対象があったときの戻り値が Profile の正常系`() {
+    fun `ProfileRepository unfollow()-正常系-フォロー済、 戻り値が Profile-followings テーブルから削除される`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -473,7 +473,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ProfileRepository unfollow() で削除対象がなかったときの戻り値が Profile の正常系`() {
+    fun `ProfileRepository unfollow()-異常系-未フォロー、戻り値が Profile-followingsテーブルに変化なし`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -518,7 +518,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ProfileRepository unfollow() で Profile が見つからなかったときの異常系`() {
+    fun `ProfileRepository unfollow()-異常系 NotFoundProfileByUsername が戻り値`() {
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
 
         val expect = ProfileRepository.UnfollowError.NotFoundProfileByUsername(
@@ -534,7 +534,7 @@ class ProfileRepositoryImplTest {
 
     @Test
     @Disabled
-    fun `ProfileRepository unfollow() でDBエラーの異常系`() {
+    fun `ProfileRepository unfollow()-異常系 UnexpectedError が戻り値`() {
         TODO()
     }
 }
