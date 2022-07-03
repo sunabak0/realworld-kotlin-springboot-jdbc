@@ -361,7 +361,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ProfileRepository unfollow() で戻り値が Unit の正常系`() {
+    fun `ProfileRepository unfollow() で戻り値が Profile の正常系`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -422,19 +422,35 @@ class ProfileRepositoryImplTest {
         assertThat(beforeResult[0]["CNT"]).isEqualTo(1L)
 
         /**
-         * 実行時エラーが発生しないことを確認
+         * 戻り値が未フォローの Profile であることを確認
          */
+        val expectProfile = Profile.newWithoutValidation(
+            Username.newWithoutValidation("dummy-username"),
+            Bio.newWithoutValidation("dummy-bio"),
+            Image.newWithoutValidation("dummy-image"),
+            false
+        )
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
         when (val actual = profileRepository.unfollow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
             is Left -> assert(false)
-            is Right -> assertThat(actual.value).isEqualTo(Unit)
+            is Right -> assertThat(actual.value).isEqualTo(expectProfile)
         }
 
         /**
-         * 実行後に0件になっていることを確認
+         * 実行後に削除されていることを確認
          */
         val afterResult = namedParameterJdbcTemplate.queryForList(confirmFollowingsSql, confirmFollowingsParam)
         assertThat(afterResult[0]["CNT"]).isEqualTo(0L)
+
+        /**
+         * 余分な行が削除されていないか確認。オリジナル 2 行 -> 実行後 1 行
+         */
+        val confirmAllFollowingsSql =
+            "SELECT COUNT(*) AS CNT FROM followings WHERE following_id = :user_id"
+        val confirmAllFollowingsParam = MapSqlParameterSource()
+            .addValue("user_id", 1)
+        val confirmAllFollowingsResult = namedParameterJdbcTemplate.queryForList(confirmAllFollowingsSql, confirmAllFollowingsParam)
+        assertThat(confirmAllFollowingsResult[0]["CNT"]).isEqualTo(1L)
     }
 
     @Test

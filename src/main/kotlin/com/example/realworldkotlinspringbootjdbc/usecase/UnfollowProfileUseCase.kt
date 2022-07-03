@@ -64,6 +64,7 @@ class UnfollowProfileUseCaseImpl(
                          * 原因: 不明
                          */
                         is ProfileRepository.UnfollowError.Unexpected -> TODO()
+                        is ProfileRepository.UnfollowError.NotFoundProfileByUsername -> TODO()
                     }
                     /**
                      * アンフォロー成功

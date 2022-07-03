@@ -177,8 +177,30 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         }
     }
 
-    override fun unfollow(username: Username, currentUserId: UserId): Either<ProfileRepository.UnfollowError, Unit> {
-        val sql = """
+    override fun unfollow(username: Username, currentUserId: UserId): Either<ProfileRepository.UnfollowError, Profile> {
+        val selectUserSql = """
+            SELECT
+                users.username
+                , profiles.bio
+                , profiles.image
+                , CASE WHEN followings.id IS NOT NULL THEN 1 ELSE 0 END AS following_flg
+            FROM
+                users
+            JOIN
+                profiles
+            ON
+                users.id = profiles.user_id
+                AND users.username = :username
+            LEFT OUTER JOIN
+                followings
+            ON
+                followings.following_id = users.id
+                AND followings.follower_id = :current_user_id
+            ;
+        """.trimIndent()
+        val sqlSelectUserSqlParams = MapSqlParameterSource().addValue("username", username.value)
+            .addValue("current_user_id", currentUserId.value)
+        val deleteFollowingsSql = """
             DELETE FROM
                 followings
             USING
@@ -189,12 +211,31 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                 AND followings.follower_id = :current_user_id
             ;
         """.trimIndent()
-        val sqlParams = MapSqlParameterSource()
+        val deleteFollowingsSqlParams = MapSqlParameterSource()
             .addValue("username", username.value)
             .addValue("current_user_id", currentUserId.value)
         return try {
-            namedParameterJdbcTemplate.update(sql, sqlParams)
-            Unit.right()
+            val profileFromDb = namedParameterJdbcTemplate.queryForList(selectUserSql, sqlSelectUserSqlParams)
+            when (profileFromDb.isEmpty()) {
+                /**
+                 * プロフィールが存在しなかったら、UnfollowError.NotFoundProfileByUsername
+                 */
+                true -> ProfileRepository.UnfollowError.NotFoundProfileByUsername(username, currentUserId).left()
+                /**
+                 * プロフィールが存在したら、アンフォロー
+                 */
+                false -> {
+                    namedParameterJdbcTemplate.update(deleteFollowingsSql, deleteFollowingsSqlParams)
+                    profileFromDb.map {
+                        Profile.newWithoutValidation(
+                            Username.newWithoutValidation(it["username"].toString()),
+                            Bio.newWithoutValidation(it["bio"].toString()),
+                            Image.newWithoutValidation(it["image"].toString()),
+                            false
+                        )
+                    }[0].right()
+                }
+            }
         } catch (e: Throwable) {
             ProfileRepository.UnfollowError.Unexpected(e, username, currentUserId).left()
         }
