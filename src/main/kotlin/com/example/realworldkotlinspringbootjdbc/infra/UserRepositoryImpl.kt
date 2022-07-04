@@ -109,20 +109,49 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
         return UserId(userId)
     }
 
-    // Transactionは不要(rollbackしないため)
     override fun findByEmailWithPassword(email: Email): Either<FindByEmailWithPasswordError, RegisteredWithPassword> {
-        // val sql0 = "SELECT count(email) FROM users WHERE users.email = :email"
-        // val sql1 = "SELECT * FROM users WHERE users.email = :email;"
-        // val sql2 = "INSERT INTO profiles(user_id, bio, image, created_at, updated_at) VALUES (:user_id, :bio, :image, :created_at, :updated_at);"
-        val registeredUser = RegisteredUser.newWithoutValidation(
-            UserId(888),
-            email,
-            Username.newWithoutValidation("dummy-username"),
-            Bio.newWithoutValidation(""),
-            Image.newWithoutValidation("")
-        )
-        val password = Password.newWithoutValidation("dummy-password")
-        return Pair(registeredUser, password).right()
+        val sql = """
+            SELECT
+                users.id
+                , users.email
+                , users.username
+                , users.password
+                , profiles.bio
+                , profiles.image
+            FROM
+                users
+            JOIN
+                profiles
+            ON
+                profiles.user_id = users.id
+                AND users.email = :email
+            ;
+        """.trimIndent()
+        val sqlParams = MapSqlParameterSource().addValue("email", email.value)
+        val users = try {
+            namedParameterJdbcTemplate.queryForList(sql, sqlParams)
+        } catch (e: Throwable) {
+            return FindByEmailWithPasswordError.Unexpected(e, email).left()
+        }
+
+        if (users.isEmpty()) {
+            return FindByEmailWithPasswordError.NotFound(email).left()
+        }
+        val userRecord = users.first()
+
+        return try {
+            val user = RegisteredUser.newWithoutValidation(
+                UserId(userRecord["id"] as Int),
+                Email.newWithoutValidation(userRecord["email"].toString()),
+                Username.newWithoutValidation(userRecord["username"].toString()),
+                Bio.newWithoutValidation(userRecord["bio"].toString()),
+                Image.newWithoutValidation(userRecord["image"].toString()),
+            )
+            val password = Password.newWithoutValidation(userRecord["password"].toString())
+            Pair(user, password).right()
+        } catch (e: Throwable) {
+            FindByEmailWithPasswordError.Unexpected(e, email).left()
+        }
     }
 
     override fun findByUserId(id: UserId): Either<UserRepository.FindByUserIdError, RegisteredUser> {
