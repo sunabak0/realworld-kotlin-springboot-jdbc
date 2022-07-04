@@ -5,19 +5,19 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface ProfileRepository {
-    fun show(username: Username): Either<ShowError, Profile> = TODO()
+    fun show(username: Username): Either<ShowError, OtherUser> = TODO()
     sealed interface ShowError : MyError {
         data class NotFoundProfileByUsername(val username: Username) : ShowError, MyError.Basic
         data class Unexpected(override val cause: Throwable) : ShowError, MyError.MyErrorWithThrowable
     }
 
-    fun follow(username: Username): Either<FollowError, Profile> = TODO()
+    fun follow(username: Username): Either<FollowError, OtherUser> = TODO()
     sealed interface FollowError : MyError {
         data class NotFoundProfileByUsername(val username: Username) : FollowError, MyError.Basic
         data class Unexpected(override val cause: Throwable) : FollowError, MyError.MyErrorWithThrowable
     }
 
-    fun unfollow(username: Username): Either<UnfollowError, Profile> = TODO()
+    fun unfollow(username: Username): Either<UnfollowError, OtherUser> = TODO()
     sealed interface UnfollowError : MyError {
         data class NotFoundProfileByUsername(val username: Username) : FollowError, MyError.Basic
         data class Unexpected(override val cause: Throwable) : UnfollowError, MyError.MyErrorWithThrowable

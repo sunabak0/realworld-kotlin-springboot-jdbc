@@ -9,7 +9,7 @@ interface Comment {
     val body: CommentBody
     val createdAt: Date
     val updatedAt: Date
-    val author: Profile
+    val author: OtherUser
 
     /**
      * 実装
@@ -19,7 +19,7 @@ interface Comment {
         override val body: CommentBody,
         override val createdAt: Date,
         override val updatedAt: Date,
-        override val author: Profile
+        override val author: OtherUser
     ) : Comment
 
     /**
@@ -29,7 +29,7 @@ interface Comment {
         /**
          * Validation 無し
          */
-        fun newWithoutValidation(id: CommentId, body: CommentBody, createdAt: Date, updatedAt: Date, author: Profile): Comment =
+        fun newWithoutValidation(id: CommentId, body: CommentBody, createdAt: Date, updatedAt: Date, author: OtherUser): Comment =
             CommentWithoutValidation(id, body, createdAt, updatedAt, author)
     }
 }

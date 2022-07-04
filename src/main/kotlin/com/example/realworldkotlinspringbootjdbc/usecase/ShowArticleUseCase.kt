@@ -6,12 +6,13 @@ import arrow.core.Validated.Valid
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Article
-import com.example.realworldkotlinspringbootjdbc.domain.Profile
+import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.article.Tag
 import com.example.realworldkotlinspringbootjdbc.domain.article.Title
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
+import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
@@ -52,12 +53,13 @@ class ShowArticleUseCaseImpl() : ShowArticleUseCase {
                         get() = "hoge-description"
                     override val tagList: List<Tag>
                         get() = listOf(Tag.newWithoutValidation("dragons"), Tag.newWithoutValidation("training"))
-                    override val author: Profile
-                        get() = Profile.newWithoutValidation(
+                    override val author: OtherUser
+                        get() = OtherUser.newWithoutValidation(
+                            UserId(1),
                             Username.newWithoutValidation("hoge-username"),
                             Bio.newWithoutValidation("hoge-bio"),
                             Image.newWithoutValidation("hoge-image"),
-                            true
+                            true,
                         )
                     override val favorited: Boolean
                         get() = true

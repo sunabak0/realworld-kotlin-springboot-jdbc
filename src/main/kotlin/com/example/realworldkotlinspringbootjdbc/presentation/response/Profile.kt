@@ -16,11 +16,11 @@ data class Profile(
      * Factory メソッド
      */
     companion object {
-        fun from(profile: com.example.realworldkotlinspringbootjdbc.domain.Profile): Profile = Profile(
-            profile.username.value,
-            profile.bio.value,
-            profile.image.value,
-            profile.following
+        fun from(otherUser: com.example.realworldkotlinspringbootjdbc.domain.OtherUser): Profile = Profile(
+            otherUser.username.value,
+            otherUser.bio.value,
+            otherUser.image.value,
+            otherUser.following
         )
     }
 

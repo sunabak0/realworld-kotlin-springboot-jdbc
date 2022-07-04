@@ -4,7 +4,7 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
-import com.example.realworldkotlinspringbootjdbc.domain.Profile
+import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
@@ -52,11 +52,12 @@ class CommentControllerTest {
                     CommentBody.newWithoutValidation("hoge-body-1"),
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                    Profile.newWithoutValidation(
+                    OtherUser.newWithoutValidation(
+                        UserId(1),
                         Username.newWithoutValidation("hoge-author-1"),
                         Bio.newWithoutValidation("hoge-bio-1"),
                         Image.newWithoutValidation("hoge-image-1"),
-                        false
+                        false,
                     )
                 ),
                 Comment.newWithoutValidation(
@@ -64,11 +65,12 @@ class CommentControllerTest {
                     CommentBody.newWithoutValidation("hoge-body-2"),
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
-                    Profile.newWithoutValidation(
+                    OtherUser.newWithoutValidation(
+                        UserId(1),
                         Username.newWithoutValidation("hoge-author-2"),
                         Bio.newWithoutValidation("hoge-bio-2"),
                         Image.newWithoutValidation("hoge-image-2"),
-                        false
+                        false,
                     )
                 ),
             )
@@ -193,11 +195,12 @@ class CommentControllerTest {
                 CommentBody.newWithoutValidation("hoge-body"),
                 SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
                 SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                Profile.newWithoutValidation(
+                OtherUser.newWithoutValidation(
+                    UserId(1),
                     Username.newWithoutValidation("hoge-username"),
                     Bio.newWithoutValidation(""),
                     Image.newWithoutValidation(""),
-                    true
+                    true,
                 )
             )
             val createCommentUseCase = object : CreateCommentUseCase {

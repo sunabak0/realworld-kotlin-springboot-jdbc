@@ -13,7 +13,7 @@ interface Article {
     val updatedAt: Date
     val description: String
     val tagList: List<Tag>
-    val author: Profile
+    val author: OtherUser
     val favorited: Boolean
     val favoritesCount: Int
 }

@@ -5,14 +5,14 @@ import arrow.core.Either.Left
 import arrow.core.Either.Right
 import arrow.core.Validated
 import arrow.core.left
-import com.example.realworldkotlinspringbootjdbc.domain.Profile
+import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface UnfollowProfileUseCase {
-    fun execute(username: String?): Either<Error, Profile> = TODO()
+    fun execute(username: String?): Either<Error, OtherUser> = TODO()
     sealed interface Error : MyError {
         data class InvalidUsername(override val errors: List<MyError.ValidationError>) :
             Error,
@@ -27,7 +27,7 @@ interface UnfollowProfileUseCase {
 class UnfollowProfileUseCaseImpl(
     val profileRepository: ProfileRepository
 ) : UnfollowProfileUseCase {
-    override fun execute(username: String?): Either<UnfollowProfileUseCase.Error, Profile> {
+    override fun execute(username: String?): Either<UnfollowProfileUseCase.Error, OtherUser> {
         return when (val it = Username.new(username)) {
             /**
              * Username が不正
