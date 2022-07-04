@@ -24,7 +24,7 @@ interface UserRepository {
     fun findByEmailWithPassword(email: Email): Either<FindByEmailWithPasswordError, RegisteredWithPassword> = TODO()
     sealed interface FindByEmailWithPasswordError : MyError {
         data class NotFound(val email: Email) : FindByEmailWithPasswordError, MyError.Basic
-        data class Unexpected(override val cause: Throwable, val user: UnregisteredUser) : FindByEmailWithPasswordError, MyError.MyErrorWithThrowable
+        data class Unexpected(override val cause: Throwable, val email: Email) : FindByEmailWithPasswordError, MyError.MyErrorWithThrowable
     }
 
     /**
