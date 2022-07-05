@@ -202,21 +202,28 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
             return FindByUserIdError.Unexpected(e, id).left()
         }
 
-        if (users.isEmpty()) {
-            return FindByUserIdError.NotFound(id).left()
-        }
-        val userRecord = users.first()
-
-        return try {
-            RegisteredUser.newWithoutValidation(
-                UserId(userRecord["id"] as Int),
-                Email.newWithoutValidation(userRecord["email"].toString()),
-                Username.newWithoutValidation(userRecord["username"].toString()),
-                Bio.newWithoutValidation(userRecord["bio"].toString()),
-                Image.newWithoutValidation(userRecord["image"].toString()),
-            ).right()
-        } catch (e: Throwable) {
-            FindByUserIdError.Unexpected(e, id).left()
+        return when {
+            /**
+             * エラー: ユーザーが見つからなかった
+             */
+            users.isEmpty() -> FindByUserIdError.NotFound(id).left()
+            /**
+             * ユーザーが見つかった
+             */
+            else -> {
+                val userRecord = users.first()
+                try {
+                    RegisteredUser.newWithoutValidation(
+                        UserId(userRecord["id"].toString().toInt()),
+                        Email.newWithoutValidation(userRecord["email"].toString()),
+                        Username.newWithoutValidation(userRecord["username"].toString()),
+                        Bio.newWithoutValidation(userRecord["bio"].toString()),
+                        Image.newWithoutValidation(userRecord["image"].toString()),
+                    ).right()
+                } catch (e: Throwable) {
+                    FindByUserIdError.Unexpected(e, id).left()
+                }
+            }
         }
     }
 
