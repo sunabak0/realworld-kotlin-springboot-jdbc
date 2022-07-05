@@ -249,7 +249,7 @@ class ProfileRepositoryImplTest {
         }
 
         @Test
-        fun `ProfileRepository show()-異常系-未ログイン、NotFoundProfileByUsername が戻り値`() {
+        fun `異常系-未ログイン、NotFoundProfileByUsername が戻り値`() {
             val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
 
             val expected =
@@ -261,12 +261,12 @@ class ProfileRepositoryImplTest {
                 is Right -> assert(false)
             }
         }
-    }
 
-    @Test
-    @Disabled
-    fun `ProfileRepository show()-異常系-未ログイン、UnexpectedError が戻り値`() {
-        TODO()
+        @Test
+        @Disabled
+        fun `ProfileRepository show()-異常系-未ログイン、UnexpectedError が戻り値`() {
+            TODO()
+        }
     }
 
     @Test
