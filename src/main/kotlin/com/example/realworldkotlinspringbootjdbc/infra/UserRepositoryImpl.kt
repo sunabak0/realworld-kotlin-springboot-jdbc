@@ -134,23 +134,30 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
             return FindByEmailWithPasswordError.Unexpected(e, email).left()
         }
 
-        if (users.isEmpty()) {
-            return FindByEmailWithPasswordError.NotFound(email).left()
-        }
-        val userRecord = users.first()
-
-        return try {
-            val user = RegisteredUser.newWithoutValidation(
-                UserId(userRecord["id"] as Int),
-                Email.newWithoutValidation(userRecord["email"].toString()),
-                Username.newWithoutValidation(userRecord["username"].toString()),
-                Bio.newWithoutValidation(userRecord["bio"].toString()),
-                Image.newWithoutValidation(userRecord["image"].toString()),
-            )
-            val password = Password.newWithoutValidation(userRecord["password"].toString())
-            Pair(user, password).right()
-        } catch (e: Throwable) {
-            FindByEmailWithPasswordError.Unexpected(e, email).left()
+        return when {
+            /**
+             * エラー: ユーザーが見つからなかった
+             */
+            users.isEmpty() -> FindByEmailWithPasswordError.NotFound(email).left()
+            /**
+             * ユーザーが見つかった
+             */
+            else -> {
+                val userRecord = users.first()
+                try {
+                    val user = RegisteredUser.newWithoutValidation(
+                        UserId(userRecord["id"].toString().toInt()),
+                        Email.newWithoutValidation(userRecord["email"].toString()),
+                        Username.newWithoutValidation(userRecord["username"].toString()),
+                        Bio.newWithoutValidation(userRecord["bio"].toString()),
+                        Image.newWithoutValidation(userRecord["image"].toString()),
+                    )
+                    val password = Password.newWithoutValidation(userRecord["password"].toString())
+                    Pair(user, password).right()
+                } catch (e: Throwable) {
+                    FindByEmailWithPasswordError.Unexpected(e, email).left()
+                }
+            }
         }
     }
 
