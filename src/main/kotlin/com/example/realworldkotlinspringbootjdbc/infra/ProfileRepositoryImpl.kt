@@ -45,19 +45,21 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             return ProfileRepository.ShowError.NotFoundProfileByUsername(username, currentUserId).left()
         }
 
-        return if (profileFromDb.isNotEmpty()) {
-            profileFromDb.map {
-                OtherUser.newWithoutValidation(
-                    UserId(it["id"].toString().toInt()),
-                    Username.newWithoutValidation(it["username"].toString()),
-                    Bio.newWithoutValidation(it["bio"].toString()),
-                    Image.newWithoutValidation(it["image"].toString()),
-                    it["following_flg"].toString() == "1"
-                )
-            }[0].right()
-        } else {
-            ProfileRepository.ShowError.NotFoundProfileByUsername(username, currentUserId).left()
+        /**
+         * user が存在しなかった時 NotFoundError
+         */
+        if (profileFromDb.isEmpty()) {
+            return ProfileRepository.ShowError.NotFoundProfileByUsername(username, currentUserId).left()
         }
+        val it = profileFromDb.first()
+
+        return OtherUser.newWithoutValidation(
+            UserId(it["id"].toString().toInt()),
+            Username.newWithoutValidation(it["username"].toString()),
+            Bio.newWithoutValidation(it["bio"].toString()),
+            Image.newWithoutValidation(it["image"].toString()),
+            it["following_flg"].toString() == "1"
+        ).right()
     }
 
     override fun show(username: Username): Either<ProfileRepository.ShowWithoutAuthorizedError, OtherUser> {
@@ -83,19 +85,22 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         } catch (e: Throwable) {
             return ProfileRepository.ShowWithoutAuthorizedError.Unexpected(e, username).left()
         }
-        return if (profileFromDb.isNotEmpty()) {
-            profileFromDb.map {
-                OtherUser.newWithoutValidation(
-                    UserId(it["id"].toString().toInt()),
-                    Username.newWithoutValidation(it["username"].toString()),
-                    Bio.newWithoutValidation(it["bio"].toString()),
-                    Image.newWithoutValidation(it["image"].toString()),
-                    it["following_flg"].toString() == "1"
-                )
-            }[0].right()
-        } else {
-            ProfileRepository.ShowWithoutAuthorizedError.NotFoundProfileByUsername(username).left()
+
+        /**
+         * user が存在しなかった時 NotFoundError
+         */
+        if (profileFromDb.isEmpty()) {
+            return ProfileRepository.ShowWithoutAuthorizedError.NotFoundProfileByUsername(username).left()
         }
+        val it = profileFromDb.first()
+
+        return OtherUser.newWithoutValidation(
+            UserId(it["id"].toString().toInt()),
+            Username.newWithoutValidation(it["username"].toString()),
+            Bio.newWithoutValidation(it["bio"].toString()),
+            Image.newWithoutValidation(it["image"].toString()),
+            it["following_flg"].toString() == "1"
+        ).right()
     }
 
     override fun follow(username: Username, currentUserId: UserId): Either<ProfileRepository.FollowError, OtherUser> {
