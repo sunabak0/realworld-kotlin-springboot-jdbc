@@ -350,87 +350,87 @@ class ProfileRepositoryImplTest {
             val afterResult = namedParameterJdbcTemplate.queryForList(confirmFollowingsSql, confirmFollowingsParam)
             assertThat(afterResult[0]["CNT"]).isEqualTo(1L)
         }
-    }
 
-    @Test
-    fun `ProfileRepository follow()-正常系-フォロー済、戻り値がProfile-followings テーブルに挿入されない`() {
-        fun localPrepare() {
-            val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
+        @Test
+        fun `ProfileRepository follow()-正常系-フォロー済、戻り値がProfile-followings テーブルに挿入されない`() {
+            fun localPrepare() {
+                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
-            val insertUserSql =
-                "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-            val insertUserSqlParams = MapSqlParameterSource()
-                .addValue("id", 1)
-                .addValue("email", "dummy@example.com")
-                .addValue("username", "dummy-username")
-                .addValue("password", "Passw0rd")
-                .addValue("created_at", date)
-                .addValue("updated_at", date)
-            namedParameterJdbcTemplate.update(insertUserSql, insertUserSqlParams)
+                val insertUserSql =
+                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
+                val insertUserSqlParams = MapSqlParameterSource()
+                    .addValue("id", 1)
+                    .addValue("email", "dummy@example.com")
+                    .addValue("username", "dummy-username")
+                    .addValue("password", "Passw0rd")
+                    .addValue("created_at", date)
+                    .addValue("updated_at", date)
+                namedParameterJdbcTemplate.update(insertUserSql, insertUserSqlParams)
 
-            val insertProfileSql =
-                "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-            val insertProfileSqlParams1 = MapSqlParameterSource()
-                .addValue("id", 1)
+                val insertProfileSql =
+                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
+                val insertProfileSqlParams1 = MapSqlParameterSource()
+                    .addValue("id", 1)
+                    .addValue("user_id", 1)
+                    .addValue("bio", "dummy-bio")
+                    .addValue("image", "dummy-image")
+                    .addValue("created_at", date)
+                    .addValue("updated_at", date)
+                namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams1)
+                val insertProfileSqlParams2 = MapSqlParameterSource()
+                    .addValue("id", 2)
+                    .addValue("user_id", 2)
+                    .addValue("bio", "dummy-bio")
+                    .addValue("image", "dummy-image")
+                    .addValue("created_at", date)
+                    .addValue("updated_at", date)
+                namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams2)
+
+                // followings テーブルにすでにフォロー済のレコードを追加
+                val sql2 =
+                    "INSERT INTO followings(id, following_id, follower_id, created_at) VALUES (:id, :following_id, :follower_id, :created_at);"
+                val sqlParams2 = MapSqlParameterSource()
+                    .addValue("id", 1)
+                    .addValue("following_id", 1)
+                    .addValue("follower_id", 2)
+                    .addValue("created_at", date)
+                namedParameterJdbcTemplate.update(sql2, sqlParams2)
+            }
+            localPrepare()
+            val confirmFollowingsSql =
+                "SELECT COUNT(*) AS CNT FROM followings WHERE follower_id = :current_user_id AND following_id = :user_id"
+            val confirmFollowingsParam = MapSqlParameterSource()
                 .addValue("user_id", 1)
-                .addValue("bio", "dummy-bio")
-                .addValue("image", "dummy-image")
-                .addValue("created_at", date)
-                .addValue("updated_at", date)
-            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams1)
-            val insertProfileSqlParams2 = MapSqlParameterSource()
-                .addValue("id", 2)
-                .addValue("user_id", 2)
-                .addValue("bio", "dummy-bio")
-                .addValue("image", "dummy-image")
-                .addValue("created_at", date)
-                .addValue("updated_at", date)
-            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams2)
+                .addValue("current_user_id", 2)
 
-            // followings テーブルにすでにフォロー済のレコードを追加
-            val sql2 =
-                "INSERT INTO followings(id, following_id, follower_id, created_at) VALUES (:id, :following_id, :follower_id, :created_at);"
-            val sqlParams2 = MapSqlParameterSource()
-                .addValue("id", 1)
-                .addValue("following_id", 1)
-                .addValue("follower_id", 2)
-                .addValue("created_at", date)
-            namedParameterJdbcTemplate.update(sql2, sqlParams2)
+            /**
+             * 実行前に既に挿入されていることを確認
+             */
+            val beforeResult = namedParameterJdbcTemplate.queryForList(confirmFollowingsSql, confirmFollowingsParam)
+            assertThat(beforeResult[0]["CNT"]).isEqualTo(1L)
+
+            /**
+             * 戻り値がフォロー済の OtherUser であることを確認
+             */
+            val expectedProfile = OtherUser.newWithoutValidation(
+                UserId(1),
+                Username.newWithoutValidation("dummy-username"),
+                Bio.newWithoutValidation("dummy-bio"),
+                Image.newWithoutValidation("dummy-image"),
+                following = true
+            )
+            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            when (val actual = profileRepository.follow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
+                is Left -> assert(false)
+                is Right -> assertThat(actual.value).isEqualTo(expectedProfile)
+            }
+
+            /**
+             * 実行後に挿入されていないことを確認
+             */
+            val afterResult = namedParameterJdbcTemplate.queryForList(confirmFollowingsSql, confirmFollowingsParam)
+            assertThat(afterResult[0]["CNT"]).isEqualTo(1L)
         }
-        localPrepare()
-        val confirmFollowingsSql =
-            "SELECT COUNT(*) AS CNT FROM followings WHERE follower_id = :current_user_id AND following_id = :user_id"
-        val confirmFollowingsParam = MapSqlParameterSource()
-            .addValue("user_id", 1)
-            .addValue("current_user_id", 2)
-
-        /**
-         * 実行前に既に挿入されていることを確認
-         */
-        val beforeResult = namedParameterJdbcTemplate.queryForList(confirmFollowingsSql, confirmFollowingsParam)
-        assertThat(beforeResult[0]["CNT"]).isEqualTo(1L)
-
-        /**
-         * 戻り値がフォロー済の OtherUser であることを確認
-         */
-        val expectedProfile = OtherUser.newWithoutValidation(
-            UserId(1),
-            Username.newWithoutValidation("dummy-username"),
-            Bio.newWithoutValidation("dummy-bio"),
-            Image.newWithoutValidation("dummy-image"),
-            following = true
-        )
-        val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
-        when (val actual = profileRepository.follow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
-            is Left -> assert(false)
-            is Right -> assertThat(actual.value).isEqualTo(expectedProfile)
-        }
-
-        /**
-         * 実行後に挿入されていないことを確認
-         */
-        val afterResult = namedParameterJdbcTemplate.queryForList(confirmFollowingsSql, confirmFollowingsParam)
-        assertThat(afterResult[0]["CNT"]).isEqualTo(1L)
     }
 
     @Test
