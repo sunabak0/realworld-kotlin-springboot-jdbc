@@ -143,7 +143,6 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         if (profileFromDb.isEmpty()) {
             return ProfileRepository.FollowError.NotFoundProfileByUsername(username, currentUserId).left()
         }
-        val it = profileFromDb.first()
 
         /**
          * 未フォローのとき、フォロー
@@ -188,6 +187,7 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             return ProfileRepository.FollowError.Unexpected(e, username, currentUserId).left()
         }
 
+        val it = profileFromDb.first()
         return try {
             OtherUser.newWithoutValidation(
                 UserId(it["id"].toString().toInt()),
@@ -244,7 +244,6 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         if (profileFromDb.isEmpty()) {
             return ProfileRepository.UnfollowError.NotFoundProfileByUsername(username, currentUserId).left()
         }
-        val it = profileFromDb.first()
 
         /**
          * フォロー済のとき、アンフォロー
@@ -269,6 +268,7 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             return ProfileRepository.UnfollowError.Unexpected(e, username, currentUserId).left()
         }
 
+        val it = profileFromDb.first()
         return try {
             OtherUser.newWithoutValidation(
                 UserId(it["id"].toString().toInt()),
