@@ -104,8 +104,6 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
     }
 
     override fun follow(username: Username, currentUserId: UserId): Either<ProfileRepository.FollowError, OtherUser> {
-        val profileFromDb: MutableList<MutableMap<String, Any>>
-
         /**
          * user を取得
          */
@@ -133,8 +131,8 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         val sqlSelectUserSqlParams = MapSqlParameterSource()
             .addValue("username", username.value)
             .addValue("current_user_id", currentUserId.value)
-        try {
-            profileFromDb = namedParameterJdbcTemplate.queryForList(selectUserSql, sqlSelectUserSqlParams)
+        val profileFromDb = try {
+            namedParameterJdbcTemplate.queryForList(selectUserSql, sqlSelectUserSqlParams)
         } catch (e: Throwable) {
             return ProfileRepository.FollowError.Unexpected(e, username, currentUserId).left()
         }
@@ -207,8 +205,6 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         username: Username,
         currentUserId: UserId
     ): Either<ProfileRepository.UnfollowError, OtherUser> {
-        val profileFromDb: MutableList<MutableMap<String, Any>>
-
         /**
          * user を取得
          */
@@ -236,8 +232,8 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         val sqlSelectUserSqlParams = MapSqlParameterSource()
             .addValue("username", username.value)
             .addValue("current_user_id", currentUserId.value)
-        try {
-            profileFromDb = namedParameterJdbcTemplate.queryForList(selectUserSql, sqlSelectUserSqlParams)
+        val profileFromDb = try {
+            namedParameterJdbcTemplate.queryForList(selectUserSql, sqlSelectUserSqlParams)
         } catch (e: Throwable) {
             return ProfileRepository.UnfollowError.Unexpected(e, username, currentUserId).left()
         }
