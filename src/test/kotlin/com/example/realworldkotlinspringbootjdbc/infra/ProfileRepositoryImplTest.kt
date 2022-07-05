@@ -150,6 +150,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
+    @Disabled
     fun `ProfileRepository show()-異常系-ログイン済み、UnexpectedError が戻り値`() {
         val throwDatabaseAccessException = object : NamedParameterJdbcTemplate(DbConnection.dataSource()) {
             override fun queryForList(
