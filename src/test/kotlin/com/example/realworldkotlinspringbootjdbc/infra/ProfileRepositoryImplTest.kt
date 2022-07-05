@@ -189,20 +189,19 @@ class ProfileRepositoryImplTest {
                 is Right -> assert(false)
             }
         }
-    }
-
-    @Test
-    @Disabled
-    fun `ProfileRepository show()-異常系-ログイン済み、UnexpectedError が戻り値`() {
-        val throwDatabaseAccessException = object : NamedParameterJdbcTemplate(DbConnection.dataSource()) {
-            override fun queryForList(
-                sql: String,
-                paramMap: MutableMap<String, *>
-            ): MutableList<MutableMap<String, Any>> {
-                throw object : DataAccessException("message") {}
+        @Test
+        @Disabled
+        fun `異常系-ログイン済み、UnexpectedError が戻り値`() {
+            val throwDatabaseAccessException = object : NamedParameterJdbcTemplate(DbConnection.dataSource()) {
+                override fun queryForList(
+                    sql: String,
+                    paramMap: MutableMap<String, *>
+                ): MutableList<MutableMap<String, Any>> {
+                    throw object : DataAccessException("message") {}
+                }
             }
+            val profileRepository = ProfileRepositoryImpl(throwDatabaseAccessException)
         }
-        val profileRepository = ProfileRepositoryImpl(throwDatabaseAccessException)
     }
 
     @Test
