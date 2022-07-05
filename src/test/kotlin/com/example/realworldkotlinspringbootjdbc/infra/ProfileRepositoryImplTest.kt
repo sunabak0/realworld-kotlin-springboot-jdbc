@@ -55,14 +55,22 @@ class ProfileRepositoryImplTest {
 
             val insertProfileSql =
                 "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-            val insertProfileSqlParams = MapSqlParameterSource()
+            val insertProfileSqlParams1 = MapSqlParameterSource()
                 .addValue("id", 1)
                 .addValue("user_id", 1)
                 .addValue("bio", "dummy-bio")
                 .addValue("image", "dummy-image")
                 .addValue("created_at", date)
                 .addValue("updated_at", date)
-            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams)
+            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams1)
+            val insertProfileSqlParams2 = MapSqlParameterSource()
+                .addValue("id", 2)
+                .addValue("user_id", 2)
+                .addValue("bio", "dummy-bio")
+                .addValue("image", "dummy-image")
+                .addValue("created_at", date)
+                .addValue("updated_at", date)
+            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams2)
 
             val insertFollowingsSql =
                 "INSERT INTO followings(id, following_id, follower_id, created_at) VALUES (:id, :following_id, :follower_id, :created_at);"
@@ -108,14 +116,22 @@ class ProfileRepositoryImplTest {
 
             val insertProfileSql =
                 "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-            val insertProfileSqlParams = MapSqlParameterSource()
+            val insertProfileSqlParams1 = MapSqlParameterSource()
                 .addValue("id", 1)
                 .addValue("user_id", 1)
                 .addValue("bio", "dummy-bio")
                 .addValue("image", "dummy-image")
                 .addValue("created_at", date)
                 .addValue("updated_at", date)
-            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams)
+            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams1)
+            val insertProfileSqlParams2 = MapSqlParameterSource()
+                .addValue("id", 2)
+                .addValue("user_id", 2)
+                .addValue("bio", "dummy-bio")
+                .addValue("image", "dummy-image")
+                .addValue("created_at", date)
+                .addValue("updated_at", date)
+            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams2)
         }
         localPrepare()
 
@@ -245,14 +261,22 @@ class ProfileRepositoryImplTest {
 
             val insertProfileSql =
                 "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-            val insertProfileSqlParams = MapSqlParameterSource()
+            val insertProfileSqlParams1 = MapSqlParameterSource()
                 .addValue("id", 1)
                 .addValue("user_id", 1)
                 .addValue("bio", "dummy-bio")
                 .addValue("image", "dummy-image")
                 .addValue("created_at", date)
                 .addValue("updated_at", date)
-            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams)
+            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams1)
+            val insertProfileSqlParams2 = MapSqlParameterSource()
+                .addValue("id", 2)
+                .addValue("user_id", 2)
+                .addValue("bio", "dummy-bio")
+                .addValue("image", "dummy-image")
+                .addValue("created_at", date)
+                .addValue("updated_at", date)
+            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams2)
         }
         localPrepare()
         val confirmFollowingsSql =
@@ -308,14 +332,22 @@ class ProfileRepositoryImplTest {
 
             val insertProfileSql =
                 "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-            val insertProfileSqlParams = MapSqlParameterSource()
+            val insertProfileSqlParams1 = MapSqlParameterSource()
                 .addValue("id", 1)
                 .addValue("user_id", 1)
                 .addValue("bio", "dummy-bio")
                 .addValue("image", "dummy-image")
                 .addValue("created_at", date)
                 .addValue("updated_at", date)
-            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams)
+            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams1)
+            val insertProfileSqlParams2 = MapSqlParameterSource()
+                .addValue("id", 2)
+                .addValue("user_id", 2)
+                .addValue("bio", "dummy-bio")
+                .addValue("image", "dummy-image")
+                .addValue("created_at", date)
+                .addValue("updated_at", date)
+            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams2)
 
             // followings テーブルにすでにフォロー済のレコードを追加
             val sql2 =
@@ -402,14 +434,22 @@ class ProfileRepositoryImplTest {
 
             val insertProfileSql =
                 "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-            val insertProfileSqlParams = MapSqlParameterSource()
+            val insertProfileSqlParams1 = MapSqlParameterSource()
                 .addValue("id", 1)
                 .addValue("user_id", 1)
                 .addValue("bio", "dummy-bio")
                 .addValue("image", "dummy-image")
                 .addValue("created_at", date)
                 .addValue("updated_at", date)
-            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams)
+            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams1)
+            val insertProfileSqlParams2 = MapSqlParameterSource()
+                .addValue("id", 2)
+                .addValue("user_id", 2)
+                .addValue("bio", "dummy-bio")
+                .addValue("image", "dummy-image")
+                .addValue("created_at", date)
+                .addValue("updated_at", date)
+            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams2)
 
             /**
              * followings テーブルにすでにフォロー済のレコードを追加
