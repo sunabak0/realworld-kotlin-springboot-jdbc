@@ -53,13 +53,17 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         }
         val it = profileFromDb.first()
 
-        return OtherUser.newWithoutValidation(
-            UserId(it["id"].toString().toInt()),
-            Username.newWithoutValidation(it["username"].toString()),
-            Bio.newWithoutValidation(it["bio"].toString()),
-            Image.newWithoutValidation(it["image"].toString()),
-            it["following_flg"].toString() == "1"
-        ).right()
+        return try {
+            OtherUser.newWithoutValidation(
+                UserId(it["id"].toString().toInt()),
+                Username.newWithoutValidation(it["username"].toString()),
+                Bio.newWithoutValidation(it["bio"].toString()),
+                Image.newWithoutValidation(it["image"].toString()),
+                it["following_flg"].toString() == "1"
+            ).right()
+        } catch (e: Throwable) {
+            ProfileRepository.ShowError.NotFoundProfileByUsername(username, currentUserId).left()
+        }
     }
 
     override fun show(username: Username): Either<ProfileRepository.ShowWithoutAuthorizedError, OtherUser> {
