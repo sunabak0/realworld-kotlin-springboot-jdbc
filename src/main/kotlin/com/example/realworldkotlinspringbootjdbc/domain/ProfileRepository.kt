@@ -6,7 +6,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface ProfileRepository {
-    fun show(username: Username): Either<ShowWithoutAuthorizedError, Profile> = TODO()
+    fun show(username: Username): Either<ShowWithoutAuthorizedError, OtherUser> = TODO()
     sealed interface ShowWithoutAuthorizedError : MyError {
         data class NotFoundProfileByUsername(val username: Username) : ShowWithoutAuthorizedError, MyError.Basic
         data class Unexpected(override val cause: Throwable, val username: Username) :
@@ -14,7 +14,7 @@ interface ProfileRepository {
             MyError.MyErrorWithThrowable
     }
 
-    fun show(username: Username, currentUserId: UserId): Either<ShowError, Profile> = TODO()
+    fun show(username: Username, currentUserId: UserId): Either<ShowError, OtherUser> = TODO()
     sealed interface ShowError : MyError {
         data class NotFoundProfileByUsername(val username: Username, val currentUserId: UserId) :
             ShowError,
@@ -24,7 +24,7 @@ interface ProfileRepository {
             ShowError, MyError.MyErrorWithThrowable
     }
 
-    fun follow(username: Username, currentUserId: UserId): Either<FollowError, Profile> = TODO()
+    fun follow(username: Username, currentUserId: UserId): Either<FollowError, OtherUser> = TODO()
     sealed interface FollowError : MyError {
         data class NotFoundProfileByUsername(val username: Username, val currentUserId: UserId) :
             FollowError,
@@ -34,7 +34,7 @@ interface ProfileRepository {
             FollowError, MyError.MyErrorWithThrowable
     }
 
-    fun unfollow(username: Username, currentUserId: UserId): Either<UnfollowError, Profile> = TODO()
+    fun unfollow(username: Username, currentUserId: UserId): Either<UnfollowError, OtherUser> = TODO()
     sealed interface UnfollowError : MyError {
         data class NotFoundProfileByUsername(val username: Username, val currentUserId: UserId) :
             UnfollowError,

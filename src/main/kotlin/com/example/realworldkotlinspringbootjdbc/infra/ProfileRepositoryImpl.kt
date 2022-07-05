@@ -3,7 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.infra
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import com.example.realworldkotlinspringbootjdbc.domain.Profile
+import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
@@ -15,10 +15,11 @@ import org.springframework.stereotype.Repository
 
 @Repository
 class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTemplate) : ProfileRepository {
-    override fun show(username: Username, currentUserId: UserId): Either<ProfileRepository.ShowError, Profile> {
+    override fun show(username: Username, currentUserId: UserId): Either<ProfileRepository.ShowError, OtherUser> {
         val sql = """
             SELECT
-                users.username
+                users.id
+                , users.username
                 , profiles.bio
                 , profiles.image
                 , CASE WHEN followings.id IS NOT NULL THEN 1 ELSE 0 END AS following_flg
@@ -38,29 +39,32 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         """.trimIndent()
         val sqlParams = MapSqlParameterSource().addValue("username", username.value)
             .addValue("current_user_id", currentUserId.value)
-        return try {
-            val profileFromDb = namedParameterJdbcTemplate.queryForList(sql, sqlParams)
-            if (profileFromDb.isNotEmpty()) {
-                profileFromDb.map {
-                    Profile.newWithoutValidation(
-                        Username.newWithoutValidation(it["username"].toString()),
-                        Bio.newWithoutValidation(it["bio"].toString()),
-                        Image.newWithoutValidation(it["image"].toString()),
-                        it["following_flg"].toString() == "1"
-                    )
-                }[0].right()
-            } else {
-                ProfileRepository.ShowError.NotFoundProfileByUsername(username, currentUserId).left()
-            }
+        val profileFromDb = try {
+            namedParameterJdbcTemplate.queryForList(sql, sqlParams)
         } catch (e: Throwable) {
-            ProfileRepository.ShowError.Unexpected(e, username, currentUserId).left()
+            return ProfileRepository.ShowError.NotFoundProfileByUsername(username, currentUserId).left()
+        }
+
+        return if (profileFromDb.isNotEmpty()) {
+            profileFromDb.map {
+                OtherUser.newWithoutValidation(
+                    UserId(it["id"].toString().toInt()),
+                    Username.newWithoutValidation(it["username"].toString()),
+                    Bio.newWithoutValidation(it["bio"].toString()),
+                    Image.newWithoutValidation(it["image"].toString()),
+                    it["following_flg"].toString() == "1"
+                )
+            }[0].right()
+        } else {
+            ProfileRepository.ShowError.NotFoundProfileByUsername(username, currentUserId).left()
         }
     }
 
-    override fun show(username: Username): Either<ProfileRepository.ShowWithoutAuthorizedError, Profile> {
+    override fun show(username: Username): Either<ProfileRepository.ShowWithoutAuthorizedError, OtherUser> {
         val sql = """
                 SELECT
-                    users.username
+                    users.id
+                    , users.username
                     , profiles.bio
                     , profiles.image
                     , 0 AS following_flg
@@ -74,26 +78,27 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                 ;
         """.trimIndent()
         val sqlParams = MapSqlParameterSource().addValue("username", username.value)
-        return try {
-            val profileFromDb = namedParameterJdbcTemplate.queryForList(sql, sqlParams)
-            if (profileFromDb.isNotEmpty()) {
-                profileFromDb.map {
-                    Profile.newWithoutValidation(
-                        Username.newWithoutValidation(it["username"].toString()),
-                        Bio.newWithoutValidation(it["bio"].toString()),
-                        Image.newWithoutValidation(it["image"].toString()),
-                        it["following_flg"].toString() == "1"
-                    )
-                }[0].right()
-            } else {
-                ProfileRepository.ShowWithoutAuthorizedError.NotFoundProfileByUsername(username).left()
-            }
+        val profileFromDb = try {
+            namedParameterJdbcTemplate.queryForList(sql, sqlParams)
         } catch (e: Throwable) {
-            ProfileRepository.ShowWithoutAuthorizedError.Unexpected(e, username).left()
+            return ProfileRepository.ShowWithoutAuthorizedError.Unexpected(e, username).left()
+        }
+        return if (profileFromDb.isNotEmpty()) {
+            profileFromDb.map {
+                OtherUser.newWithoutValidation(
+                    UserId(it["id"].toString().toInt()),
+                    Username.newWithoutValidation(it["username"].toString()),
+                    Bio.newWithoutValidation(it["bio"].toString()),
+                    Image.newWithoutValidation(it["image"].toString()),
+                    it["following_flg"].toString() == "1"
+                )
+            }[0].right()
+        } else {
+            ProfileRepository.ShowWithoutAuthorizedError.NotFoundProfileByUsername(username).left()
         }
     }
 
-    override fun follow(username: Username, currentUserId: UserId): Either<ProfileRepository.FollowError, Profile> {
+    override fun follow(username: Username, currentUserId: UserId): Either<ProfileRepository.FollowError, OtherUser> {
         val profileFromDb: MutableList<MutableMap<String, Any>>
 
         /**
@@ -101,7 +106,8 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
          */
         val selectUserSql = """
                 SELECT
-                    users.username
+                    users.id
+                    , users.username
                     , profiles.bio
                     , profiles.image
                     , CASE WHEN followings.id IS NOT NULL THEN 1 ELSE 0 END AS following_flg
@@ -135,18 +141,6 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             return ProfileRepository.FollowError.NotFoundProfileByUsername(username, currentUserId).left()
         }
         val it = profileFromDb.first()
-
-        /**
-         * フォロー済のとき、早期リターン
-         */
-        if (it["following_flg"].toString() == "1") {
-            return Profile.newWithoutValidation(
-                Username.newWithoutValidation(it["username"].toString()),
-                Bio.newWithoutValidation(it["bio"].toString()),
-                Image.newWithoutValidation(it["image"].toString()),
-                true
-            ).right()
-        }
 
         /**
          * 未フォローのとき、フォロー
@@ -192,7 +186,8 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         }
 
         return try {
-            Profile.newWithoutValidation(
+            OtherUser.newWithoutValidation(
+                UserId(it["id"].toString().toInt()),
                 Username.newWithoutValidation(it["username"].toString()),
                 Bio.newWithoutValidation(it["bio"].toString()),
                 Image.newWithoutValidation(it["image"].toString()),
@@ -203,7 +198,10 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         }
     }
 
-    override fun unfollow(username: Username, currentUserId: UserId): Either<ProfileRepository.UnfollowError, Profile> {
+    override fun unfollow(
+        username: Username,
+        currentUserId: UserId
+    ): Either<ProfileRepository.UnfollowError, OtherUser> {
         val profileFromDb: MutableList<MutableMap<String, Any>>
 
         /**
@@ -211,7 +209,8 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
          */
         val selectUserSql = """
                 SELECT
-                    users.username
+                    users.id
+                    , users.username
                     , profiles.bio
                     , profiles.image
                     , CASE WHEN followings.id IS NOT NULL THEN 1 ELSE 0 END AS following_flg
@@ -247,18 +246,6 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         val it = profileFromDb.first()
 
         /**
-         * 未フォローのとき、早期リターン
-         */
-        if (it["following_flg"].toString() == "0") {
-            return Profile.newWithoutValidation(
-                Username.newWithoutValidation(it["username"].toString()),
-                Bio.newWithoutValidation(it["bio"].toString()),
-                Image.newWithoutValidation(it["image"].toString()),
-                false
-            ).right()
-        }
-
-        /**
          * フォロー済のとき、アンフォロー
          */
         val deleteFollowingsSql = """
@@ -282,7 +269,8 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         }
 
         return try {
-            Profile.newWithoutValidation(
+            OtherUser.newWithoutValidation(
+                UserId(it["id"].toString().toInt()),
                 Username.newWithoutValidation(it["username"].toString()),
                 Bio.newWithoutValidation(it["bio"].toString()),
                 Image.newWithoutValidation(it["image"].toString()),

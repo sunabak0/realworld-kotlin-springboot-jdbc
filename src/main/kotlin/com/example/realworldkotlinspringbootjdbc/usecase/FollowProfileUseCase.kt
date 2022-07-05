@@ -7,7 +7,7 @@ import arrow.core.Validated.Invalid
 import arrow.core.Validated.Valid
 import arrow.core.left
 import arrow.core.right
-import com.example.realworldkotlinspringbootjdbc.domain.Profile
+import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
@@ -15,7 +15,7 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface FollowProfileUseCase {
-    fun execute(username: String?, currentUser: RegisteredUser): Either<Error, Profile> = TODO()
+    fun execute(username: String?, currentUser: RegisteredUser): Either<Error, OtherUser> = TODO()
     sealed interface Error : MyError {
         data class InvalidUsername(override val errors: List<MyError.ValidationError>) :
             Error,
@@ -29,7 +29,7 @@ interface FollowProfileUseCase {
 @Service
 class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) :
     FollowProfileUseCase {
-    override fun execute(username: String?, currentUser: RegisteredUser): Either<FollowProfileUseCase.Error, Profile> {
+    override fun execute(username: String?, currentUser: RegisteredUser): Either<FollowProfileUseCase.Error, OtherUser> {
         return when (val it = Username.new(username)) {
             /**
              * Username が不正
@@ -55,7 +55,8 @@ class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) :
                 /**
                  * フォロー 成功
                  */
-                is Right -> Profile.newWithoutValidation(
+                is Right -> OtherUser.newWithoutValidation(
+                    followResult.value.userId,
                     followResult.value.username,
                     followResult.value.bio,
                     followResult.value.image,

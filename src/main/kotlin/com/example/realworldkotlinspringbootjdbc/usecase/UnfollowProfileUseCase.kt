@@ -7,7 +7,7 @@ import arrow.core.Validated.Invalid
 import arrow.core.Validated.Valid
 import arrow.core.left
 import arrow.core.right
-import com.example.realworldkotlinspringbootjdbc.domain.Profile
+import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
@@ -15,7 +15,7 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface UnfollowProfileUseCase {
-    fun execute(username: String?, currentUser: RegisteredUser): Either<Error, Profile> = TODO()
+    fun execute(username: String?, currentUser: RegisteredUser): Either<Error, OtherUser> = TODO()
     sealed interface Error : MyError {
         data class InvalidUsername(override val errors: List<MyError.ValidationError>) :
             Error,
@@ -33,7 +33,7 @@ class UnfollowProfileUseCaseImpl(
     override fun execute(
         username: String?,
         currentUser: RegisteredUser
-    ): Either<UnfollowProfileUseCase.Error, Profile> {
+    ): Either<UnfollowProfileUseCase.Error, OtherUser> {
         return when (val it = Username.new(username)) {
             /**
              * Username が不正
@@ -59,7 +59,8 @@ class UnfollowProfileUseCaseImpl(
                 /**
                  * アンフォロー 成功
                  */
-                is Right -> Profile.newWithoutValidation(
+                is Right -> OtherUser.newWithoutValidation(
+                    unfollowResult.value.userId,
                     unfollowResult.value.username,
                     unfollowResult.value.bio,
                     unfollowResult.value.image,

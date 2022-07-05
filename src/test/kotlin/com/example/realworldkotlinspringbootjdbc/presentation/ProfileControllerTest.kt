@@ -53,7 +53,7 @@ class ProfileControllerTest {
         }
 
         @Test
-        fun `プロフィール取得時、 UseCase が「 Profile 」を返す場合、 200 レスポンスを返す`() {
+        fun `プロフィール取得時、 UseCase が「 OtherUser 」を返す場合、 200 レスポンスを返す`() {
             val mockOtherUser = OtherUser.newWithoutValidation(
                 UserId(1),
                 Username.newWithoutValidation("hoge-username"),
@@ -65,8 +65,8 @@ class ProfileControllerTest {
                 override fun execute(
                     username: String?,
                     currentUser: Option<RegisteredUser>
-                ): Either<ShowProfileUseCase.Error, Profile> =
-                    mockProfile.right()
+                ): Either<ShowProfileUseCase.Error, OtherUser> =
+                    mockOtherUser.right()
             }
             val actual = profileController(
                 authorizedMyAuth,
@@ -91,7 +91,7 @@ class ProfileControllerTest {
                 override fun execute(
                     username: String?,
                     currentUser: Option<RegisteredUser>
-                ): Either<ShowProfileUseCase.Error, Profile> =
+                ): Either<ShowProfileUseCase.Error, OtherUser> =
                     ShowProfileUseCase.Error.InvalidUsername(listOf(notImplementedValidationError)).left()
             }
             val actual =
@@ -115,7 +115,7 @@ class ProfileControllerTest {
                 override fun execute(
                     username: String?,
                     currentUser: Option<RegisteredUser>
-                ): Either<ShowProfileUseCase.Error, Profile> =
+                ): Either<ShowProfileUseCase.Error, OtherUser> =
                     ShowProfileUseCase.Error.NotFound(notImplementedError).left()
             }
             val actual = profileController(
@@ -138,7 +138,7 @@ class ProfileControllerTest {
                 override fun execute(
                     username: String?,
                     currentUser: Option<RegisteredUser>
-                ): Either<ShowProfileUseCase.Error, Profile> =
+                ): Either<ShowProfileUseCase.Error, OtherUser> =
                     ShowProfileUseCase.Error.Unexpected(notImplementedError).left()
             }
             val actual =
@@ -185,7 +185,7 @@ class ProfileControllerTest {
         }
 
         @Test
-        fun `プロフィールをフォロー時、 UseCase が「 Profile 」を返す場合、200 レスポンスを返す`() {
+        fun `プロフィールをフォロー時、 UseCase が「 OtherUser 」を返す場合、200 レスポンスを返す`() {
             val returnOtherUser = OtherUser.newWithoutValidation(
                 UserId(1),
                 Username.newWithoutValidation("hoge-username"),
@@ -197,15 +197,15 @@ class ProfileControllerTest {
                 override fun execute(
                     username: String?,
                     currentUser: RegisteredUser
-                ): Either<FollowProfileUseCase.Error, Profile> {
-                    return returnProfile.right()
+                ): Either<FollowProfileUseCase.Error, OtherUser> {
+                    return returnOtherUser.right()
                 }
             }
             val actual =
                 profileController(
                     authorizedMyAuth,
                     notImplementedShowProfileUseCase,
-                    followOtherUserUseCase,
+                    followProfileUseCase,
                     notImplementedUnfollowProfileUseCase,
                 ).follow(
                     requestHeader,
@@ -228,14 +228,14 @@ class ProfileControllerTest {
                 override fun execute(
                     username: String?,
                     currentUser: RegisteredUser
-                ): Either<FollowProfileUseCase.Error, Profile> =
+                ): Either<FollowProfileUseCase.Error, OtherUser> =
                     FollowProfileUseCase.Error.InvalidUsername(listOf(notImplementedValidationError)).left()
             }
             val actual =
                 profileController(
                     authorizedMyAuth,
                     notImplementedShowProfileUseCase,
-                    followOtherUserReturnInvalidUsernameError,
+                    followProfileReturnInvalidUsernameError,
                     notImplementedUnfollowProfileUseCase,
                 ).follow(requestHeader, pathParam)
             val expected = ResponseEntity(
@@ -252,13 +252,13 @@ class ProfileControllerTest {
                 override fun execute(
                     username: String?,
                     currentUser: RegisteredUser
-                ): Either<FollowProfileUseCase.Error, Profile> =
+                ): Either<FollowProfileUseCase.Error, OtherUser> =
                     FollowProfileUseCase.Error.NotFound(notImplementedError).left()
             }
             val actual = profileController(
                 authorizedMyAuth,
                 notImplementedShowProfileUseCase,
-                followOtherUserReturnNotFoundError,
+                followProfileReturnNotFoundError,
                 notImplementedUnfollowProfileUseCase,
             ).follow(requestHeader, pathParam)
             val expected = ResponseEntity(
@@ -275,13 +275,13 @@ class ProfileControllerTest {
                 override fun execute(
                     username: String?,
                     currentUser: RegisteredUser
-                ): Either<FollowProfileUseCase.Error, Profile> =
+                ): Either<FollowProfileUseCase.Error, OtherUser> =
                     FollowProfileUseCase.Error.Unexpected(notImplementedError).left()
             }
             val actual = profileController(
                 authorizedMyAuth,
                 notImplementedShowProfileUseCase,
-                followOtherUserUnexpectedError,
+                followProfileUnexpectedError,
                 notImplementedUnfollowProfileUseCase,
             ).follow(requestHeader, pathParam)
             val expected = ResponseEntity(
@@ -321,7 +321,7 @@ class ProfileControllerTest {
         }
 
         @Test
-        fun `プロフィールをアンフォロー時、UseCae が「 Profile 」を返す場合、200レスポンスを返す`() {
+        fun `プロフィールをアンフォロー時、UseCae が「 OtherUser 」を返す場合、200レスポンスを返す`() {
             val returnOtherUser = OtherUser.newWithoutValidation(
                 UserId(1),
                 Username.newWithoutValidation("hoge-username"),
@@ -333,8 +333,8 @@ class ProfileControllerTest {
                 override fun execute(
                     username: String?,
                     currentUser: RegisteredUser
-                ): Either<UnfollowProfileUseCase.Error, Profile> {
-                    return returnProfile.right()
+                ): Either<UnfollowProfileUseCase.Error, OtherUser> {
+                    return returnOtherUser.right()
                 }
             }
             val actual =
@@ -364,14 +364,14 @@ class ProfileControllerTest {
                 override fun execute(
                     username: String?,
                     currentUser: RegisteredUser
-                ): Either<UnfollowProfileUseCase.Error, Profile> =
+                ): Either<UnfollowProfileUseCase.Error, OtherUser> =
                     UnfollowProfileUseCase.Error.InvalidUsername(listOf(notImplementedValidationError)).left()
             }
             val actual =
                 profileController(
                     notImplementedShowProfileUseCase,
                     notImplementedFollowProfileUseCase,
-                    unfollowOtherUserReturnInvalidUsernameError,
+                    unfollowProfileReturnInvalidUsernameError,
                     authorizedMyAuth
                 ).unfollow(requestHeader, pathParam)
             val expected = ResponseEntity(
@@ -388,13 +388,13 @@ class ProfileControllerTest {
                 override fun execute(
                     username: String?,
                     currentUser: RegisteredUser
-                ): Either<UnfollowProfileUseCase.Error, Profile> =
+                ): Either<UnfollowProfileUseCase.Error, OtherUser> =
                     UnfollowProfileUseCase.Error.NotFound(notImplementedError).left()
             }
             val actual = profileController(
                 notImplementedShowProfileUseCase,
                 notImplementedFollowProfileUseCase,
-                unfollowOtherUserReturnNotFoundError,
+                unfollowProfileReturnNotFoundError,
                 authorizedMyAuth
             ).unfollow(requestHeader, pathParam)
             val expected = ResponseEntity(
@@ -411,13 +411,13 @@ class ProfileControllerTest {
                 override fun execute(
                     username: String?,
                     currentUser: RegisteredUser
-                ): Either<UnfollowProfileUseCase.Error, Profile> =
+                ): Either<UnfollowProfileUseCase.Error, OtherUser> =
                     UnfollowProfileUseCase.Error.Unexpected(notImplementedError).left()
             }
             val actual = profileController(
                 notImplementedShowProfileUseCase,
                 notImplementedFollowProfileUseCase,
-                unfollowOtherUserUnexpectedError,
+                unfollowProfileUnexpectedError,
                 authorizedMyAuth
             ).unfollow(requestHeader, pathParam)
             val expected = ResponseEntity(

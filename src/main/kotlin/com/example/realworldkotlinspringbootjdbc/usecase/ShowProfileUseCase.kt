@@ -10,7 +10,7 @@ import arrow.core.Validated.Invalid
 import arrow.core.Validated.Valid
 import arrow.core.left
 import arrow.core.right
-import com.example.realworldkotlinspringbootjdbc.domain.Profile
+import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
@@ -18,7 +18,7 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface ShowProfileUseCase {
-    fun execute(username: String?, currentUser: Option<RegisteredUser>): Either<Error, Profile> = TODO()
+    fun execute(username: String?, currentUser: Option<RegisteredUser>): Either<Error, OtherUser> = TODO()
     sealed interface Error : MyError {
         data class InvalidUsername(override val errors: List<MyError.ValidationError>) :
             Error,
@@ -36,7 +36,7 @@ class ShowProfileUseCaseImpl(
     override fun execute(
         username: String?,
         currentUser: Option<RegisteredUser>
-    ): Either<ShowProfileUseCase.Error, Profile> {
+    ): Either<ShowProfileUseCase.Error, OtherUser> {
         return when (val it = Username.new(username)) {
             /**
              * Username が不正
@@ -60,7 +60,8 @@ class ShowProfileUseCaseImpl(
                     /**
                      * プロフィール取得成功
                      */
-                    is Right -> Profile.newWithoutValidation(
+                    is Right -> OtherUser.newWithoutValidation(
+                        showProfileResult.value.userId,
                         showProfileResult.value.username,
                         showProfileResult.value.bio,
                         showProfileResult.value.image,
@@ -81,7 +82,8 @@ class ShowProfileUseCaseImpl(
                     /**
                      * プロフィール取得成功
                      */
-                    is Right -> Profile.newWithoutValidation(
+                    is Right -> OtherUser.newWithoutValidation(
+                        showProfileResult.value.userId,
                         showProfileResult.value.username,
                         showProfileResult.value.bio,
                         showProfileResult.value.image,

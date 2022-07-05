@@ -2,7 +2,7 @@ package com.example.realworldkotlinspringbootjdbc.infra
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
-import com.example.realworldkotlinspringbootjdbc.domain.Profile
+import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
@@ -38,7 +38,7 @@ class ProfileRepositoryImplTest {
     private val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
 
     @Test
-    fun `ProfileRepository show()-正常系-ログイン済み-フォロー済、 Profile が戻り値`() {
+    fun `ProfileRepository show()-正常系-ログイン済み-フォロー済、 OtherUser が戻り値`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -77,7 +77,8 @@ class ProfileRepositoryImplTest {
 
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
 
-        val expected = Profile.newWithoutValidation(
+        val expected = OtherUser.newWithoutValidation(
+            UserId(1),
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
@@ -90,7 +91,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ProfileRepository show()-正常系-ログイン済み-未フォローのときの Profile が戻り値`() {
+    fun `ProfileRepository show()-正常系-ログイン済み-未フォローのときの OtherUser が戻り値`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -120,7 +121,8 @@ class ProfileRepositoryImplTest {
 
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
 
-        val expected = Profile.newWithoutValidation(
+        val expected = OtherUser.newWithoutValidation(
+            UserId(1),
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
@@ -161,7 +163,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ProfileRepository show()-正常系-未ログイン、Profile が戻り値`() {
+    fun `ProfileRepository show()-正常系-未ログイン、OtherUser が戻り値`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -191,7 +193,8 @@ class ProfileRepositoryImplTest {
 
         val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
 
-        val expected = Profile.newWithoutValidation(
+        val expected = OtherUser.newWithoutValidation(
+            UserId(1),
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
@@ -224,7 +227,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ProfileRepository follow()-正常系-未フォロー、Profile が戻り値-followings テーブルに登録される`() {
+    fun `ProfileRepository follow()-正常系-未フォロー、OtherUser が戻り値-followings テーブルに登録される`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -264,9 +267,10 @@ class ProfileRepositoryImplTest {
         assertThat(beforeFollowingCount).isEqualTo(0L)
 
         /**
-         * 戻り値がフォロー済の Profile であることを確認
+         * 戻り値がフォロー済の OtherUser であることを確認
          */
-        val expectedProfile = Profile.newWithoutValidation(
+        val expectedProfile = OtherUser.newWithoutValidation(
+            UserId(1),
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
@@ -336,9 +340,10 @@ class ProfileRepositoryImplTest {
         assertThat(beforeResult[0]["CNT"]).isEqualTo(1L)
 
         /**
-         * 戻り値がフォロー済の Profile であることを確認
+         * 戻り値がフォロー済の OtherUser であることを確認
          */
-        val expectedProfile = Profile.newWithoutValidation(
+        val expectedProfile = OtherUser.newWithoutValidation(
+            UserId(1),
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
@@ -379,7 +384,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ProfileRepository unfollow()-正常系-フォロー済、 戻り値が Profile-followings テーブルから削除される`() {
+    fun `ProfileRepository unfollow()-正常系-フォロー済、 戻り値が OtherUser-followings テーブルから削除される`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -440,9 +445,10 @@ class ProfileRepositoryImplTest {
         assertThat(beforeResult[0]["CNT"]).isEqualTo(1L)
 
         /**
-         * 戻り値が未フォローの Profile であることを確認
+         * 戻り値が未フォローの OtherUser であることを確認
          */
-        val expectedProfile = Profile.newWithoutValidation(
+        val expectedProfile = OtherUser.newWithoutValidation(
+            UserId(1),
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
@@ -473,7 +479,7 @@ class ProfileRepositoryImplTest {
     }
 
     @Test
-    fun `ProfileRepository unfollow()-異常系-未フォロー、戻り値が Profile-followingsテーブルに変化なし`() {
+    fun `ProfileRepository unfollow()-異常系-未フォロー、戻り値が OtherUser-followingsテーブルに変化なし`() {
         fun localPrepare() {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -502,9 +508,10 @@ class ProfileRepositoryImplTest {
         localPrepare()
 
         /**
-         * 戻り値が未フォローの Profile であることを確認
+         * 戻り値が未フォローの OtherUser であることを確認
          */
-        val expectedProfile = Profile.newWithoutValidation(
+        val expectedProfile = OtherUser.newWithoutValidation(
+            UserId(1),
             Username.newWithoutValidation("dummy-username"),
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
