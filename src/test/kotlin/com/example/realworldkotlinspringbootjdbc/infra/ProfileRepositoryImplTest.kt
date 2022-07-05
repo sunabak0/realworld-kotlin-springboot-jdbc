@@ -431,20 +431,20 @@ class ProfileRepositoryImplTest {
             val afterResult = namedParameterJdbcTemplate.queryForList(confirmFollowingsSql, confirmFollowingsParam)
             assertThat(afterResult[0]["CNT"]).isEqualTo(1L)
         }
-    }
 
-    @Test
-    fun `ProfileRepository follow()-異常系、 戻り値が NotFoundProfileByUsername`() {
-        val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+        @Test
+        fun `異常系、 戻り値が NotFoundProfileByUsername`() {
+            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
 
-        val expected = ProfileRepository.FollowError.NotFoundProfileByUsername(
-            Username.newWithoutValidation("dummy-username"),
-            UserId(2)
-        )
+            val expected = ProfileRepository.FollowError.NotFoundProfileByUsername(
+                Username.newWithoutValidation("dummy-username"),
+                UserId(2)
+            )
 
-        when (val actual = profileRepository.follow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
-            is Left -> assertThat(actual.value).isEqualTo(expected)
-            is Right -> assert(false)
+            when (val actual = profileRepository.follow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
+                is Left -> assertThat(actual.value).isEqualTo(expected)
+                is Right -> assert(false)
+            }
         }
     }
 
