@@ -122,59 +122,60 @@ class ProfileRepositoryImplTest {
                 is Right -> assertThat(actual.value).isEqualTo(expected)
             }
         }
+
+        @Test
+        fun `正常系-ログイン済み-未フォローのときの OtherUser が戻り値`() {
+            fun localPrepare() {
+                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
+
+                val insertUserSql =
+                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
+                val insertUserSqlParams = MapSqlParameterSource()
+                    .addValue("id", 1)
+                    .addValue("email", "dummy@example.com")
+                    .addValue("username", "dummy-username")
+                    .addValue("password", "Passw0rd")
+                    .addValue("created_at", date)
+                    .addValue("updated_at", date)
+                namedParameterJdbcTemplate.update(insertUserSql, insertUserSqlParams)
+
+                val insertProfileSql =
+                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
+                val insertProfileSqlParams1 = MapSqlParameterSource()
+                    .addValue("id", 1)
+                    .addValue("user_id", 1)
+                    .addValue("bio", "dummy-bio")
+                    .addValue("image", "dummy-image")
+                    .addValue("created_at", date)
+                    .addValue("updated_at", date)
+                namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams1)
+                val insertProfileSqlParams2 = MapSqlParameterSource()
+                    .addValue("id", 2)
+                    .addValue("user_id", 2)
+                    .addValue("bio", "dummy-bio")
+                    .addValue("image", "dummy-image")
+                    .addValue("created_at", date)
+                    .addValue("updated_at", date)
+                namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams2)
+            }
+            localPrepare()
+
+            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+
+            val expected = OtherUser.newWithoutValidation(
+                UserId(1),
+                Username.newWithoutValidation("dummy-username"),
+                Bio.newWithoutValidation("dummy-bio"),
+                Image.newWithoutValidation("dummy-image"),
+                following = false
+            )
+            when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2))) {
+                is Left -> assert(false)
+                is Right -> assertThat(actual.value).isEqualTo(expected)
+            }
+        }
     }
 
-    @Test
-    fun `ProfileRepository show()-正常系-ログイン済み-未フォローのときの OtherUser が戻り値`() {
-        fun localPrepare() {
-            val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-
-            val insertUserSql =
-                "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-            val insertUserSqlParams = MapSqlParameterSource()
-                .addValue("id", 1)
-                .addValue("email", "dummy@example.com")
-                .addValue("username", "dummy-username")
-                .addValue("password", "Passw0rd")
-                .addValue("created_at", date)
-                .addValue("updated_at", date)
-            namedParameterJdbcTemplate.update(insertUserSql, insertUserSqlParams)
-
-            val insertProfileSql =
-                "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-            val insertProfileSqlParams1 = MapSqlParameterSource()
-                .addValue("id", 1)
-                .addValue("user_id", 1)
-                .addValue("bio", "dummy-bio")
-                .addValue("image", "dummy-image")
-                .addValue("created_at", date)
-                .addValue("updated_at", date)
-            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams1)
-            val insertProfileSqlParams2 = MapSqlParameterSource()
-                .addValue("id", 2)
-                .addValue("user_id", 2)
-                .addValue("bio", "dummy-bio")
-                .addValue("image", "dummy-image")
-                .addValue("created_at", date)
-                .addValue("updated_at", date)
-            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams2)
-        }
-        localPrepare()
-
-        val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
-
-        val expected = OtherUser.newWithoutValidation(
-            UserId(1),
-            Username.newWithoutValidation("dummy-username"),
-            Bio.newWithoutValidation("dummy-bio"),
-            Image.newWithoutValidation("dummy-image"),
-            following = false
-        )
-        when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2))) {
-            is Left -> assert(false)
-            is Right -> assertThat(actual.value).isEqualTo(expected)
-        }
-    }
 
     @Test
     fun `ProfileRepository show()-異常系-ログイン済み、NotFoundProfileByUsername が戻り値`() {
