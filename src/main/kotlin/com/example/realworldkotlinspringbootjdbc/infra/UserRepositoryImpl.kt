@@ -32,60 +32,75 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
 
     override fun register(user: UnregisteredUser): Either<UserRepository.RegisterError, RegisteredUser> {
         /**
-         * Email ユニーク check
+         * Email と Username の数をそれぞれカウント
          */
-        val sql1 = """
-            SELECT count(*)
-            FROM users
-            WHERE users.email = :email
+        val sql = """
+            SELECT
+                COUNT(
+                    CASE
+                         WHEN
+                             users.email = :email
+                         THEN 1
+                         ELSE NULL
+                    END
+                ) AS EMAIL_CNT
+                , COUNT(
+                    CASE
+                         WHEN
+                             users.username = :username
+                         THEN 1
+                         ELSE NULL
+                    END
+                ) AS USERNAME_CNT
+            FROM
+                users
             ;
         """.trimIndent()
-        val sqlParams1 = MapSqlParameterSource().addValue("email", user.email.value)
-        try {
-            val count = namedParameterJdbcTemplate.queryForMap(sql1, sqlParams1)["count"] as Long
-            if (0 < count) {
-                return UserRepository.RegisterError.AlreadyRegisteredEmail(user.email).left()
-            }
+        val sqlParams = MapSqlParameterSource()
+            .addValue("email", user.email.value)
+            .addValue("username", user.username.value)
+        val emailAndUsernameCountMap = try {
+            namedParameterJdbcTemplate.queryForMap(sql, sqlParams)
         } catch (e: Throwable) {
             return UserRepository.RegisterError.Unexpected(e, user).left()
         }
 
-        /**
-         * Username ユニーク check
-         */
-        val sql2 = """
-            SELECT count(*)
-            FROM users
-            WHERE users.username = :username
-            ;
-        """.trimIndent()
-        val sqlParams2 = MapSqlParameterSource().addValue("username", user.username.value)
-        try {
-            val count = namedParameterJdbcTemplate.queryForMap(sql2, sqlParams2)["count"] as Long
-            if (0 < count) {
-                return UserRepository.RegisterError.AlreadyRegisteredUsername(user.username).left()
-            }
+        val (emailCount, usernameCount) = try {
+            Pair(
+                emailAndUsernameCountMap["email_cnt"].toString().toInt(),
+                emailAndUsernameCountMap["username_cnt"].toString().toInt()
+            )
         } catch (e: Throwable) {
             return UserRepository.RegisterError.Unexpected(e, user).left()
         }
 
-        /**
-         * やっと登録処理
-         */
-        val userId = try {
-            registerTransactionApply(user)
-        } catch (e: Throwable) {
-            // Timeoutや他の原因を別で扱いたかったら、Infra層でエラーを定義する
-            return UserRepository.RegisterError.Unexpected(e, user).left()
+        return when {
+            /**
+             * エラー: Email が既に使われている
+             */
+            0 < emailCount -> UserRepository.RegisterError.AlreadyRegisteredEmail(user.email).left()
+            /**
+             * エラー: Username が既に使われている
+             */
+            0 < usernameCount -> UserRepository.RegisterError.AlreadyRegisteredUsername(user.username).left()
+            /**
+             * ユーザー登録
+             */
+            else -> {
+                val userId = try {
+                    registerTransactionApply(user)
+                } catch (e: Throwable) {
+                    return UserRepository.RegisterError.Unexpected(e, user).left()
+                }
+                RegisteredUser.newWithoutValidation(
+                    userId,
+                    user.email,
+                    user.username,
+                    Bio.newWithoutValidation(""),
+                    Image.newWithoutValidation("")
+                ).right()
+            }
         }
-        val registeredUser = RegisteredUser.newWithoutValidation(
-            userId,
-            user.email,
-            user.username,
-            Bio.newWithoutValidation(""),
-            Image.newWithoutValidation("")
-        )
-        return registeredUser.right()
     }
 
     /**
