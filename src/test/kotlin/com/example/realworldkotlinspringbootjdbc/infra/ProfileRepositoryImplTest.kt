@@ -9,9 +9,11 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -35,66 +37,90 @@ class ProfileRepositoryImplTest {
         namedParameterJdbcTemplate.update(sql, MapSqlParameterSource())
     }
 
+    companion object {
+        val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
+        fun resetDb() {
+            val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
+            val sql = """
+                DELETE FROM users;
+                DELETE FROM profiles;
+                DELETE FROM followings;
+            """.trimIndent()
+            namedParameterJdbcTemplate.update(sql, MapSqlParameterSource())
+        }
+    }
+
     private val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
 
-    @Test
-    fun `ProfileRepository show()-正常系-ログイン済み-フォロー済、 OtherUser が戻り値`() {
-        fun localPrepare() {
-            val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-
-            val insertUserSql =
-                "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-            val insertUserSqlParams = MapSqlParameterSource()
-                .addValue("id", 1)
-                .addValue("email", "dummy@example.com")
-                .addValue("username", "dummy-username")
-                .addValue("password", "Passw0rd")
-                .addValue("created_at", date)
-                .addValue("updated_at", date)
-            namedParameterJdbcTemplate.update(insertUserSql, insertUserSqlParams)
-
-            val insertProfileSql =
-                "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-            val insertProfileSqlParams1 = MapSqlParameterSource()
-                .addValue("id", 1)
-                .addValue("user_id", 1)
-                .addValue("bio", "dummy-bio")
-                .addValue("image", "dummy-image")
-                .addValue("created_at", date)
-                .addValue("updated_at", date)
-            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams1)
-            val insertProfileSqlParams2 = MapSqlParameterSource()
-                .addValue("id", 2)
-                .addValue("user_id", 2)
-                .addValue("bio", "dummy-bio")
-                .addValue("image", "dummy-image")
-                .addValue("created_at", date)
-                .addValue("updated_at", date)
-            namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams2)
-
-            val insertFollowingsSql =
-                "INSERT INTO followings(id, following_id, follower_id, created_at) VALUES (:id, :following_id, :follower_id, :created_at);"
-            val insertFollowingsSqlParams = MapSqlParameterSource()
-                .addValue("id", 1)
-                .addValue("following_id", 1)
-                .addValue("follower_id", 2)
-                .addValue("created_at", date)
-            namedParameterJdbcTemplate.update(insertFollowingsSql, insertFollowingsSqlParams)
+    @Nested
+    @Tag("WithLocalDb")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    class `Show(プロフィールを表示)` {
+        @BeforeEach
+        @AfterAll
+        fun reset() {
+            resetDb()
         }
-        localPrepare()
 
-        val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+        @Test
+        fun `正常系-ログイン済み-フォロー済、 OtherUser が戻り値`() {
+            fun localPrepare() {
+                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
-        val expected = OtherUser.newWithoutValidation(
-            UserId(1),
-            Username.newWithoutValidation("dummy-username"),
-            Bio.newWithoutValidation("dummy-bio"),
-            Image.newWithoutValidation("dummy-image"),
-            following = true
-        )
-        when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2))) {
-            is Left -> assert(false)
-            is Right -> assertThat(actual.value).isEqualTo(expected)
+                val insertUserSql =
+                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
+                val insertUserSqlParams = MapSqlParameterSource()
+                    .addValue("id", 1)
+                    .addValue("email", "dummy@example.com")
+                    .addValue("username", "dummy-username")
+                    .addValue("password", "Passw0rd")
+                    .addValue("created_at", date)
+                    .addValue("updated_at", date)
+                namedParameterJdbcTemplate.update(insertUserSql, insertUserSqlParams)
+
+                val insertProfileSql =
+                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
+                val insertProfileSqlParams1 = MapSqlParameterSource()
+                    .addValue("id", 1)
+                    .addValue("user_id", 1)
+                    .addValue("bio", "dummy-bio")
+                    .addValue("image", "dummy-image")
+                    .addValue("created_at", date)
+                    .addValue("updated_at", date)
+                namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams1)
+                val insertProfileSqlParams2 = MapSqlParameterSource()
+                    .addValue("id", 2)
+                    .addValue("user_id", 2)
+                    .addValue("bio", "dummy-bio")
+                    .addValue("image", "dummy-image")
+                    .addValue("created_at", date)
+                    .addValue("updated_at", date)
+                namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams2)
+
+                val insertFollowingsSql =
+                    "INSERT INTO followings(id, following_id, follower_id, created_at) VALUES (:id, :following_id, :follower_id, :created_at);"
+                val insertFollowingsSqlParams = MapSqlParameterSource()
+                    .addValue("id", 1)
+                    .addValue("following_id", 1)
+                    .addValue("follower_id", 2)
+                    .addValue("created_at", date)
+                namedParameterJdbcTemplate.update(insertFollowingsSql, insertFollowingsSqlParams)
+            }
+            localPrepare()
+
+            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+
+            val expected = OtherUser.newWithoutValidation(
+                UserId(1),
+                Username.newWithoutValidation("dummy-username"),
+                Bio.newWithoutValidation("dummy-bio"),
+                Image.newWithoutValidation("dummy-image"),
+                following = true
+            )
+            when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2))) {
+                is Left -> assert(false)
+                is Right -> assertThat(actual.value).isEqualTo(expected)
+            }
         }
     }
 
@@ -288,7 +314,8 @@ class ProfileRepositoryImplTest {
         /**
          * 実行前に挿入されていないことを確認
          */
-        val beforeFollowingCount = namedParameterJdbcTemplate.queryForMap(confirmFollowingsSql, confirmFollowingsParam)["CNT"]
+        val beforeFollowingCount =
+            namedParameterJdbcTemplate.queryForMap(confirmFollowingsSql, confirmFollowingsParam)["CNT"]
         assertThat(beforeFollowingCount).isEqualTo(0L)
 
         /**
