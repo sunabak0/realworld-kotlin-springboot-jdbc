@@ -247,19 +247,19 @@ class ProfileRepositoryImplTest {
                 is Right -> assertThat(actual.value).isEqualTo(expected)
             }
         }
-    }
 
-    @Test
-    fun `ProfileRepository show()-異常系-未ログイン、NotFoundProfileByUsername が戻り値`() {
-        val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+        @Test
+        fun `ProfileRepository show()-異常系-未ログイン、NotFoundProfileByUsername が戻り値`() {
+            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
 
-        val expected =
-            ProfileRepository.ShowWithoutAuthorizedError.NotFoundProfileByUsername(
-                Username.newWithoutValidation("dummy-username"),
-            )
-        when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"))) {
-            is Left -> assertThat(actual.value).isEqualTo(expected)
-            is Right -> assert(false)
+            val expected =
+                ProfileRepository.ShowWithoutAuthorizedError.NotFoundProfileByUsername(
+                    Username.newWithoutValidation("dummy-username"),
+                )
+            when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"))) {
+                is Left -> assertThat(actual.value).isEqualTo(expected)
+                is Right -> assert(false)
+            }
         }
     }
 
