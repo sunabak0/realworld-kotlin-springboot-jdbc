@@ -251,7 +251,7 @@ class ProfileRepositoryImplTest {
 
         @Test
         @Disabled
-        fun `ProfileRepository show()-異常系-未ログイン、UnexpectedError が戻り値`() {
+        fun `異常系-未ログイン、UnexpectedError が戻り値`() {
             TODO()
         }
     }
@@ -339,7 +339,7 @@ class ProfileRepositoryImplTest {
         }
 
         @Test
-        fun `ProfileRepository follow()-正常系-フォロー済、戻り値がProfile-followings テーブルに挿入されない`() {
+        fun `正常系-フォロー済、戻り値がProfile-followings テーブルに挿入されない`() {
             fun localPrepare() {
                 val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -555,7 +555,7 @@ class ProfileRepositoryImplTest {
         }
 
         @Test
-        fun `ProfileRepository unfollow()-異常系-未フォロー、戻り値が OtherUser-followingsテーブルに変化なし`() {
+        fun `未フォロー、戻り値が OtherUser-followingsテーブルに変化なし`() {
             fun localPrepare() {
                 val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -617,7 +617,7 @@ class ProfileRepositoryImplTest {
 
         @Test
         @Disabled
-        fun `ProfileRepository unfollow()-異常系 UnexpectedError が戻り値`() {
+        fun `異常系 UnexpectedError が戻り値`() {
             TODO()
         }
     }
