@@ -627,11 +627,11 @@ class ProfileRepositoryImplTest {
                 is Right -> assert(false)
             }
         }
-    }
 
-    @Test
-    @Disabled
-    fun `ProfileRepository unfollow()-異常系 UnexpectedError が戻り値`() {
-        TODO()
+        @Test
+        @Disabled
+        fun `ProfileRepository unfollow()-異常系 UnexpectedError が戻り値`() {
+            TODO()
+        }
     }
 }
