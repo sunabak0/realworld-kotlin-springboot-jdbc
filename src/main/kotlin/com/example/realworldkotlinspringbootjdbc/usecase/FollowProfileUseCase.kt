@@ -6,14 +6,16 @@ import arrow.core.Either.Right
 import arrow.core.Validated.Invalid
 import arrow.core.Validated.Valid
 import arrow.core.left
+import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
+import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface FollowProfileUseCase {
-    fun execute(username: String?): Either<Error, OtherUser> = TODO()
+    fun execute(username: String?, currentUser: RegisteredUser): Either<Error, OtherUser> = TODO()
     sealed interface Error : MyError {
         data class InvalidUsername(override val errors: List<MyError.ValidationError>) :
             Error,
@@ -25,8 +27,9 @@ interface FollowProfileUseCase {
 }
 
 @Service
-class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) : FollowProfileUseCase {
-    override fun execute(username: String?): Either<FollowProfileUseCase.Error, OtherUser> {
+class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) :
+    FollowProfileUseCase {
+    override fun execute(username: String?, currentUser: RegisteredUser): Either<FollowProfileUseCase.Error, OtherUser> {
         return when (val it = Username.new(username)) {
             /**
              * Username が不正
@@ -35,15 +38,30 @@ class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) : Follo
             /**
              * Username が適切
              */
-            is Valid -> when (val followProfileResult = profileRepository.follow(it.value)) {
+            is Valid -> when (val followResult = profileRepository.follow(it.value, currentUser.userId)) {
                 /**
-                 * プロフィールフォロー失敗
+                 * フォロー 失敗
                  */
-                is Left -> TODO()
+                is Left -> when (val error = followResult.value) {
+                    /**
+                     * 原因: プロフィールが見つからなかった
+                     */
+                    is ProfileRepository.FollowError.NotFoundProfileByUsername -> TODO()
+                    /**
+                     * 原因: 不明
+                     */
+                    is ProfileRepository.FollowError.Unexpected -> TODO()
+                }
                 /**
-                 * プロフィールフォロー成功
+                 * フォロー 成功
                  */
-                is Right -> TODO()
+                is Right -> OtherUser.newWithoutValidation(
+                    followResult.value.userId,
+                    followResult.value.username,
+                    followResult.value.bio,
+                    followResult.value.image,
+                    followResult.value.following
+                ).right()
             }
         }
     }
