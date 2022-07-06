@@ -7,6 +7,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.Password
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
@@ -26,11 +27,11 @@ class UserRepositoryImplTest {
         val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
         fun resetDb() {
             val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
-            val sql1 = """
+            val sql = """
                 DELETE FROM users;
                 DELETE FROM profiles;
             """.trimIndent()
-            namedParameterJdbcTemplate.update(sql1, MapSqlParameterSource())
+            namedParameterJdbcTemplate.update(sql, MapSqlParameterSource())
         }
     }
 
@@ -38,6 +39,7 @@ class UserRepositoryImplTest {
     @Tag("WithLocalDb")
     class `Register(ユーザー登録)` {
         @BeforeEach
+        @AfterEach
         fun reset() { resetDb() }
 
         @Test
