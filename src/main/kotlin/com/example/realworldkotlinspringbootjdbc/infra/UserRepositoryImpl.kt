@@ -228,14 +228,96 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
     }
 
     override fun update(user: UpdatableRegisteredUser): Either<UserRepository.UpdateError, RegisteredUser> {
-        val registeredUser = RegisteredUser.newWithoutValidation(
+        /**
+         * UserId と Email と Username の数をそれぞれカウント
+         */
+        val sql = """
+            SELECT
+                COUNT(
+                    CASE
+                         WHEN
+                             users.id = :user_id
+                         THEN 1
+                         ELSE NULL
+                    END
+                ) AS USER_CNT
+                ,COUNT(
+                    CASE
+                         WHEN
+                             users.id != :user_id
+                             AND users.email = :email
+                         THEN 1
+                         ELSE NULL
+                    END
+                ) AS EMAIL_CNT
+                , COUNT(
+                    CASE
+                         WHEN
+                             users.id != :user_id
+                             AND users.username = :username
+                         THEN 1
+                         ELSE NULL
+                    END
+                ) AS USERNAME_CNT
+            FROM
+                users
+            ;
+        """.trimIndent()
+        val sqlParams = MapSqlParameterSource()
+            .addValue("user_id", user.userId.value)
+            .addValue("email", user.email.value)
+            .addValue("username", user.username.value)
+        val countMap = try {
+            namedParameterJdbcTemplate.queryForMap(sql, sqlParams)
+        } catch (e: Throwable) {
+            return UserRepository.UpdateError.Unexpected(e, user).left()
+        }
+
+        val (userCount, emailCount, usernameCount) = try {
+            Triple(
+                countMap["user_cnt"].toString().toInt(),
+                countMap["email_cnt"].toString().toInt(),
+                countMap["username_cnt"].toString().toInt()
+            )
+        } catch (e: Throwable) {
+            return UserRepository.UpdateError.Unexpected(e, user).left()
+        }
+        return when {
+            /**
+             * エラー: ユーザー が見つからなかった
+             */
+            userCount < 1 -> UserRepository.UpdateError.NotFound(user.userId).left()
+            /**
+             * エラー: Email が既に使われている
+             */
+            0 < emailCount -> UserRepository.UpdateError.AlreadyRegisteredEmail(user.email).left()
+            /**
+             * エラー: Username が既に使われている
+             */
+            0 < usernameCount -> UserRepository.UpdateError.AlreadyRegisteredUsername(user.username).left()
+            /**
+             * ユーザー 更新
+             */
+            else -> try {
+                    updateTransactionApply(user)
+                } catch (e: Throwable) {
+                    UserRepository.UpdateError.Unexpected(e, user).left()
+                }
+        }
+    }
+
+    @Transactional
+    fun updateTransactionApply(user: UpdatableRegisteredUser): Either<Nothing, RegisteredUser> {
+        /**
+         * TODO: users, profiles テーブルの更新
+         */
+        return RegisteredUser.newWithoutValidation(
             user.userId,
             user.email,
             user.username,
             user.bio,
             user.image
-        )
-        return registeredUser.right()
+        ).right()
     }
 
     private fun findByEmail(email: Email): Either<Error, RegisteredUser> {
