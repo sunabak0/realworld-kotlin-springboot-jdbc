@@ -299,25 +299,50 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
              * ユーザー 更新
              */
             else -> try {
-                    updateTransactionApply(user)
-                } catch (e: Throwable) {
-                    UserRepository.UpdateError.Unexpected(e, user).left()
-                }
+                updateTransactionApply(user)
+                RegisteredUser.newWithoutValidation(
+                    user.userId,
+                    user.email,
+                    user.username,
+                    user.bio,
+                    user.image
+                ).right()
+            } catch (e: Throwable) {
+                UserRepository.UpdateError.Unexpected(e, user).left()
+            }
         }
     }
 
     @Transactional
-    fun updateTransactionApply(user: UpdatableRegisteredUser): Either<Nothing, RegisteredUser> {
-        /**
-         * TODO: users, profiles テーブルの更新
-         */
-        return RegisteredUser.newWithoutValidation(
-            user.userId,
-            user.email,
-            user.username,
-            user.bio,
-            user.image
-        ).right()
+    fun updateTransactionApply(user: UpdatableRegisteredUser) {
+        val sql = """
+            UPDATE users
+            SET
+                email = :email
+                , username = :username
+                , updated_at = :updated_at
+            WHERE
+                id = :user_id
+            ;
+            UPDATE
+                profiles
+            SET
+                bio = :bio
+                , image = :image
+                , updated_at = :updated_at
+            WHERE
+                user_id = :user_id
+            ;
+        """.trimIndent()
+        val sqlParams = MapSqlParameterSource()
+            .addValue("user_id", user.userId.value)
+            .addValue("email", user.email.value)
+            .addValue("username", user.username.value)
+            .addValue("bio", user.bio.value)
+            .addValue("image", user.image.value)
+            .addValue("updated_at", Date())
+
+        namedParameterJdbcTemplate.update(sql, sqlParams)
     }
 
     private fun findByEmail(email: Email): Either<Error, RegisteredUser> {
