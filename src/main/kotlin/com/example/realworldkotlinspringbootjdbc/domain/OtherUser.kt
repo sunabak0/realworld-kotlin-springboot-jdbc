@@ -5,21 +5,13 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 
-interface OtherUser {
-    val userId: UserId
-    val username: Username
-    val bio: Bio
-    val image: Image
+class OtherUser private constructor(
+    val userId: UserId,
+    val username: Username,
+    val bio: Bio,
+    val image: Image,
     val following: Boolean
-
-    private data class OtherUserWithoutValidation(
-        override val userId: UserId,
-        override val username: Username,
-        override val bio: Bio,
-        override val image: Image,
-        override val following: Boolean
-    ) : OtherUser
-
+) {
     companion object {
         fun newWithoutValidation(
             userId: UserId,
@@ -28,6 +20,17 @@ interface OtherUser {
             image: Image,
             following: Boolean
         ): OtherUser =
-            OtherUserWithoutValidation(userId, username, bio, image, following)
+            OtherUser(userId, username, bio, image, following)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as OtherUser
+        return this.userId == other.userId
+    }
+
+    override fun hashCode(): Int {
+        return userId.value * 31
     }
 }
