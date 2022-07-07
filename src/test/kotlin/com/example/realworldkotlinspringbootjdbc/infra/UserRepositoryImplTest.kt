@@ -333,6 +333,7 @@ class UserRepositoryImplTest {
     @Tag("WithLocalDb")
     class `update(ユーザーの更新)` {
         @BeforeEach
+        @AfterEach
         fun reset() {
             resetDb()
         }
@@ -365,7 +366,7 @@ class UserRepositoryImplTest {
             localPrepare()
             val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
 
-            val newUser = object: UpdatableRegisteredUser {
+            val newUser = object : UpdatableRegisteredUser {
                 override val userId: UserId get() = UserId(1)
                 override val email: Email get() = Email.newWithoutValidation("new@example.com")
                 override val username: Username get() = Username.newWithoutValidation("new-dummy-username")
@@ -412,7 +413,7 @@ class UserRepositoryImplTest {
             localPrepare()
             val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
 
-            val newUser = object: UpdatableRegisteredUser {
+            val newUser = object : UpdatableRegisteredUser {
                 override val userId: UserId get() = UserId(1)
                 override val email: Email get() = Email.newWithoutValidation("dummy@example.com")
                 override val username: Username get() = Username.newWithoutValidation("dummy-username")
@@ -469,7 +470,7 @@ class UserRepositoryImplTest {
                 val sql4 =
                     "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
                 val sqlParams4 = MapSqlParameterSource()
-                    .addValue("id", 1)
+                    .addValue("id", 2)
                     .addValue("user_id", 2)
                     .addValue("bio", "dummy-bio")
                     .addValue("image", "dummy-image")
@@ -480,7 +481,7 @@ class UserRepositoryImplTest {
             localPrepare()
             val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
 
-            val newUser = object: UpdatableRegisteredUser {
+            val newUser = object : UpdatableRegisteredUser {
                 override val userId: UserId get() = UserId(1)
                 override val email: Email get() = Email.newWithoutValidation("dummy2@example.com")
                 override val username: Username get() = Username.newWithoutValidation("dummy-username")
@@ -489,7 +490,7 @@ class UserRepositoryImplTest {
             }
 
             val actual = repository.update(newUser)
-            val expected = UserRepository.UpdateError.AlreadyRegisteredEmail(newUser.email)
+            val expected = UserRepository.UpdateError.AlreadyRegisteredEmail(newUser.email).left()
             assertThat(actual).isEqualTo(expected)
         }
 
@@ -531,7 +532,7 @@ class UserRepositoryImplTest {
                 val sql4 =
                     "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
                 val sqlParams4 = MapSqlParameterSource()
-                    .addValue("id", 1)
+                    .addValue("id", 2)
                     .addValue("user_id", 2)
                     .addValue("bio", "dummy-bio")
                     .addValue("image", "dummy-image")
@@ -542,7 +543,7 @@ class UserRepositoryImplTest {
             localPrepare()
             val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
 
-            val newUser = object: UpdatableRegisteredUser {
+            val newUser = object : UpdatableRegisteredUser {
                 override val userId: UserId get() = UserId(1)
                 override val email: Email get() = Email.newWithoutValidation("dummy@example.com")
                 override val username: Username get() = Username.newWithoutValidation("dummy-username2")
@@ -551,7 +552,7 @@ class UserRepositoryImplTest {
             }
 
             val actual = repository.update(newUser)
-            val expected = UserRepository.UpdateError.AlreadyRegisteredUsername(newUser.username)
+            val expected = UserRepository.UpdateError.AlreadyRegisteredUsername(newUser.username).left()
             assertThat(actual).isEqualTo(expected)
         }
 
@@ -559,7 +560,7 @@ class UserRepositoryImplTest {
         fun `該当するユーザーが存在しない場合、その旨のエラーが戻り値となる`() {
             val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
 
-            val newUser = object: UpdatableRegisteredUser {
+            val newUser = object : UpdatableRegisteredUser {
                 override val userId: UserId get() = UserId(1)
                 override val email: Email get() = Email.newWithoutValidation("new@example.com")
                 override val username: Username get() = Username.newWithoutValidation("new-dummy-username")
@@ -568,9 +569,8 @@ class UserRepositoryImplTest {
             }
 
             val actual = repository.update(newUser)
-            val expected = UserRepository.UpdateError.NotFound(newUser.userId)
+            val expected = UserRepository.UpdateError.NotFound(newUser.userId).left()
             assertThat(actual).isEqualTo(expected)
         }
-
     }
 }
