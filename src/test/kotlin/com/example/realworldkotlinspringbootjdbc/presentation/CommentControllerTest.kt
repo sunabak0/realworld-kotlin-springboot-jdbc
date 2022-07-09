@@ -1,6 +1,7 @@
 package com.example.realworldkotlinspringbootjdbc.presentation
 
 import arrow.core.Either
+import arrow.core.Option
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
@@ -33,12 +34,12 @@ class CommentControllerTest {
     @Nested
     class ListComment {
         private fun commentController(
+            myAuth: MyAuth,
             commentsUseCase: ListCommentUseCase,
             createCommentUseCase: CreateCommentUseCase,
-            deleteCommentUseCase: DeleteCommentUseCase,
-            myAuth: MyAuth
+            deleteCommentUseCase: DeleteCommentUseCase
         ): CommentController =
-            CommentController(commentsUseCase, createCommentUseCase, deleteCommentUseCase, myAuth)
+            CommentController(myAuth, commentsUseCase, createCommentUseCase, deleteCommentUseCase)
 
         data class TestCase(
             val title: String,
@@ -323,12 +324,12 @@ class CommentControllerTest {
         )
 
         private fun commentController(
+            myAuth: MyAuth,
             listCommentUseCase: ListCommentUseCase,
             createCommentUseCase: CreateCommentUseCase,
-            deleteCommentUseCase: DeleteCommentUseCase,
-            myAuth: MyAuth
+            deleteCommentUseCase: DeleteCommentUseCase
         ): CommentController =
-            CommentController(listCommentUseCase, createCommentUseCase, deleteCommentUseCase, myAuth)
+            CommentController(myAuth, listCommentUseCase, createCommentUseCase, deleteCommentUseCase)
 
         data class TestCase(
             val title: String,
@@ -431,12 +432,12 @@ class CommentControllerTest {
             Image.newWithoutValidation("dummy-image"),
         )
         private fun commentController(
+            myAuth: MyAuth,
             listCommentUseCase: ListCommentUseCase,
             createCommentUseCase: CreateCommentUseCase,
-            deleteCommentUseCase: DeleteCommentUseCase,
-            myAuth: MyAuth
+            deleteCommentUseCase: DeleteCommentUseCase
         ): CommentController =
-            CommentController(listCommentUseCase, createCommentUseCase, deleteCommentUseCase, myAuth)
+            CommentController(myAuth, listCommentUseCase, createCommentUseCase, deleteCommentUseCase)
 
         data class TestCase(
             val title: String,
