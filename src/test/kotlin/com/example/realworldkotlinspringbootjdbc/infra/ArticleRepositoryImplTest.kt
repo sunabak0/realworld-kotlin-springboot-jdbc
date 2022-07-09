@@ -12,7 +12,9 @@ class ArticleRepositoryImplTest {
     class Tags() {
         @Test
         fun `タグ一覧取得に成功した場合、タグの一覧が戻り値となる`() {
-            TODO("RepositoryImplを実装時に記述する")
+            /**
+             * TODO("RepositoryImplを実装時に記述する")
+             */
         }
     }
 }
