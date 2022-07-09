@@ -33,11 +33,12 @@ help                 Make タスク一覧
 
 ## UseCase
 
-- UseCase層は必ず `Either<UseCaseError, DomainObject>` を返す
-  - DomainErrorをそのまま返さないこと（必要であればWrapする）
+- UseCase層は必ず `Either<UseCaseError, UseCaseOutput>` を返す（例外：認証時の戻り値はDomainObjectで良い）
+  - Domain〇〇をそのまま返さないこと（必要であればWrapする）
+    - 詰め替える
     - Wrapする時、Either自体の入れ子はやめること(取り出して中身をWrapする)
-- 基本的にUseCase層はDomainObjectをインスタンス化する時、バリデーションをかける
-- UseCaseErrorの命名では技術的用語を使わないようにする
+- 基本的にUseCase層でDomainObjectをインスタンス化する時、バリデーションをかける
+- UseCaseError、UseCaseOutputの命名では技術的用語を使わないようにする
 
 ## Infra
 
@@ -46,10 +47,11 @@ help                 Make タスク一覧
 
 ## Either<E, T>とValidatedNel<E, T>
 
-|型   |説明                                |
-|:---:|:----------------------------------|
-|E    |自作エラー(例: NotFoundRegisteredUser)|
-|T    |DomainObject                       |
+|型        |自作/他作|言葉      |説明、代替表現                                                                                                                |
+|:--------:|:-------:|:---------|:-----------------------------------------------------------------------------------------------------------------------------|
+|T         |自作     |正常系    |- 晴れの日<br />- 基本コース                                                                                                  |
+|E         |自作     |準正常系  |- 雨の日<br />- 代替コース<br />- ビジネス例外<br />- 予期する例外<br />- 回復可能なエラー<br />- データとして定義されるエラー|
+|Throwable |他作     |異常系    |- 技術的例外<br />- 予期しない例外<br />- 回復不可能なエラー                                                                  |
 
 ## 他レイヤーやテスト方法等
 
