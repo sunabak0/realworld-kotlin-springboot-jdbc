@@ -39,7 +39,13 @@ class CommentController(
         @PathVariable("slug") slug: String?
     ): ResponseEntity<String> {
         return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
+            /**
+             * JWT 認証 失敗 or 未ログイン
+             */
             is Left -> TODO()
+            /**
+             * JWT 認証 成功
+             */
             is Right -> when (val result = listCommentUseCase.execute(slug, Some(authorizeResult.value))) {
                 /**
                  * コメント取得に成功
