@@ -38,7 +38,7 @@ class CommentControllerTest {
             createCommentUseCase: CreateCommentUseCase,
             deleteCommentUseCase: DeleteCommentUseCase
         ): CommentController =
-            CommentController(commentsUseCase, createCommentUseCase, deleteCommentUseCase, myAuth)
+            CommentController(myAuth, commentsUseCase, createCommentUseCase, deleteCommentUseCase)
 
         data class TestCase(
             val title: String,
@@ -152,7 +152,7 @@ class CommentControllerTest {
             createCommentUseCase: CreateCommentUseCase,
             deleteCommentUseCase: DeleteCommentUseCase
         ): CommentController =
-            CommentController(listCommentUseCase, createCommentUseCase, deleteCommentUseCase, myAuth)
+            CommentController(myAuth, listCommentUseCase, createCommentUseCase, deleteCommentUseCase)
 
         data class TestCase(
             val title: String,
@@ -260,7 +260,7 @@ class CommentControllerTest {
             createCommentUseCase: CreateCommentUseCase,
             deleteCommentUseCase: DeleteCommentUseCase
         ): CommentController =
-            CommentController(listCommentUseCase, createCommentUseCase, deleteCommentUseCase, myAuth)
+            CommentController(myAuth, listCommentUseCase, createCommentUseCase, deleteCommentUseCase)
 
         data class TestCase(
             val title: String,
