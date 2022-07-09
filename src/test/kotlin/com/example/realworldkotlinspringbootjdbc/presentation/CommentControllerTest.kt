@@ -229,7 +229,12 @@ class CommentControllerTest {
 
         @Test
         fun `JWT 認証失敗 or 未ログイン-コメント取得-UseCase が「バリデーションエラー」を返す場合、404 エラーレスポンスを返す`() {
-            val notImplementedValidationError = object : MyError.ValidationError {
+            /**
+             * FIXME
+             * ローカルでは動作するが、Github Actions で動作しない変数名を一時的に mock に修正
+             * 命名規則の方針が決まり次第修正
+             */
+            val mockError = object : MyError.ValidationError {
                 override val message: String get() = "DummyValidationError"
                 override val key: String get() = "DummyKey"
             }
@@ -239,17 +244,17 @@ class CommentControllerTest {
              * ローカルでは動作するが、Github Actions で動作しない変数名を一時的に mock に修正
              * 命名規則の方針が決まり次第修正
              */
-            val mock = object : ListCommentUseCase {
+            val mockUseCase = object : ListCommentUseCase {
                 override fun execute(
                     slug: String?,
                     currentUser: Option<RegisteredUser>
                 ): Either<ListCommentUseCase.Error, List<Comment>> {
-                    return ListCommentUseCase.Error.InvalidSlug(listOf(notImplementedValidationError)).left()
+                    return ListCommentUseCase.Error.InvalidSlug(listOf(mockError)).left()
                 }
             }
             val actual = commentController(
                 unauthorizedMyAuth,
-                mock,
+                mockUseCase,
                 notImplementedCreateCommentUseCase,
                 notImplementedDeleteCommentUseCase
             ).list(
