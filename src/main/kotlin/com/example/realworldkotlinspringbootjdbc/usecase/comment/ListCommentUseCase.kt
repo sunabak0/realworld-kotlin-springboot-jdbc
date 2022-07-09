@@ -46,7 +46,29 @@ class ShowCommentUseCaseImpl(
                 /**
                  * JWT 認証 失敗 or 未ログイン
                  */
-                is None -> TODO()
+                is None -> when (val listResult = commentRepository.list(it.value)) {
+                    /**
+                     * コメントの取得失敗
+                     */
+                    is Left -> when (val listError = listResult.value) {
+                        /**
+                         * 原因: Slug に該当する記事が見つからなかった
+                         */
+                        is CommentRepository.ListUnauthorizedError.NotFoundArticleBySlug -> ListCommentUseCase.Error.NotFound(
+                            listError
+                        ).left()
+                        /**
+                         * 原因: 不明
+                         */
+                        is CommentRepository.ListUnauthorizedError.Unexpected -> ListCommentUseCase.Error.Unexpected(
+                            listError
+                        ).left()
+                    }
+                    /**
+                     * コメントの取得 成功
+                     */
+                    is Right -> listResult.value.right()
+                }
                 /**
                  * JWT 認証成功
                  */
