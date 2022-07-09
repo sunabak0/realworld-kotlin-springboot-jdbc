@@ -2,6 +2,7 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import arrow.core.None
 import arrow.core.Some
 import com.example.realworldkotlinspringbootjdbc.presentation.request.NullableComment
 import com.example.realworldkotlinspringbootjdbc.presentation.request.NullableCommentId
@@ -42,7 +43,56 @@ class CommentController(
             /**
              * JWT 認証 失敗 or 未ログイン
              */
-            is Left -> TODO()
+            is Left -> when (val result = listCommentUseCase.execute(slug, None)) {
+                /**
+                 * コメント取得に失敗
+                 */
+                is Left -> when (result.value) {
+                    /**
+                     * 原因: バリデーションエラー
+                     */
+                    is ListCommentUseCase.Error.InvalidSlug -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: 記事が見つからなかった
+                     */
+                    is ListCommentUseCase.Error.NotFound -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: 不明
+                     */
+                    is ListCommentUseCase.Error.Unexpected -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(500)
+                    )
+                }
+                /**
+                 * コメント取得に成功
+                 */
+                is Right -> {
+                    val comments = result.value.map {
+                        Comment(
+                            it.id.value,
+                            it.body.value,
+                            it.createdAt,
+                            it.updatedAt,
+                            it.author.username.value
+                        )
+                    }
+                    ResponseEntity(
+                        ObjectMapper().writeValueAsString(
+                            mapOf(
+                                "comments" to comments,
+                            )
+                        ),
+                        HttpStatus.valueOf(200)
+                    )
+                }
+            }
             /**
              * JWT 認証 成功
              */
