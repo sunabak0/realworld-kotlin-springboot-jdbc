@@ -225,7 +225,7 @@ class CommentControllerTest {
                         Username.newWithoutValidation("hoge-author-1"),
                         Bio.newWithoutValidation("hoge-bio-1"),
                         Image.newWithoutValidation("hoge-image-1"),
-                        false,
+                        following = false,
                     )
                 ),
                 Comment.newWithoutValidation(
@@ -238,7 +238,7 @@ class CommentControllerTest {
                         Username.newWithoutValidation("hoge-author-2"),
                         Bio.newWithoutValidation("hoge-bio-2"),
                         Image.newWithoutValidation("hoge-image-2"),
-                        false,
+                        following = false,
                     )
                 ),
             )
@@ -338,6 +338,7 @@ class CommentControllerTest {
              * 命名規則の方針が決まり次第修正
              */
             val mockE = object : MyError {}
+
             /**
              * FIXME
              * ローカルでは動作するが、Github Actions で動作しない変数名を一時的に mockUE に修正
