@@ -9,7 +9,6 @@ import arrow.core.Some
 import arrow.core.Validated.Invalid
 import arrow.core.Validated.Valid
 import arrow.core.left
-import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
 import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
@@ -67,7 +66,7 @@ class ShowCommentUseCaseImpl(
                     /**
                      * コメントの取得 成功
                      */
-                    is Right -> listResult.value.right()
+                    is Right -> listResult
                 }
                 /**
                  * JWT 認証成功
@@ -92,7 +91,7 @@ class ShowCommentUseCaseImpl(
                     /**
                      * コメントの取得 成功
                      */
-                    is Right -> listResult.value.right()
+                    is Right -> listResult
                 }
             }
         }
