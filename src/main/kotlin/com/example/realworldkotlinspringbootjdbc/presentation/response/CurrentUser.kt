@@ -1,6 +1,7 @@
 package com.example.realworldkotlinspringbootjdbc.presentation.response
 
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
+import com.example.realworldkotlinspringbootjdbc.usecase.UpdateUserUseCase
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonRootName
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -16,6 +17,14 @@ data class CurrentUser(
 ) {
     companion object {
         fun from(user: RegisteredUser, token: String): CurrentUser =
+            CurrentUser(
+                user.email.value,
+                user.username.value,
+                user.bio.value,
+                user.image.value,
+                token,
+            )
+        fun from(user: UpdateUserUseCase.UpdatedUser, token: String): CurrentUser =
             CurrentUser(
                 user.email.value,
                 user.username.value,

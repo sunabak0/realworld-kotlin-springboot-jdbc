@@ -231,7 +231,7 @@ class UserAndAuthenticationControllerTest {
         private val jwtEncodeSessionReturnSuccess = object : MySessionJwt {
             override fun encode(session: MySession) = "dummy-jwt-token".right()
         }
-        private fun newUserAndAuthenticationController(returnValue: Either<UpdateUserUseCase.Error, RegisteredUser>): UserAndAuthenticationController =
+        private fun newUserAndAuthenticationController(returnValue: Either<UpdateUserUseCase.Error, UpdateUserUseCase.UpdatedUser>): UserAndAuthenticationController =
             UserAndAuthenticationController(
                 jwtEncodeSessionReturnSuccess,
                 myAuthReturnCurrentUser,
@@ -244,13 +244,12 @@ class UserAndAuthenticationControllerTest {
                         username: String?,
                         bio: String?,
                         image: String?
-                    ): Either<UpdateUserUseCase.Error, RegisteredUser> = returnValue
+                    ): Either<UpdateUserUseCase.Error, UpdateUserUseCase.UpdatedUser> = returnValue
                 },
             )
         @Test
         fun `UseCase から "更新後のユーザー" を返し、セッションのエンコードに成功した場合、 200 レスポンスを返す`() {
-            val updatedUser = RegisteredUser.newWithoutValidation(
-                UserId(1),
+            val updatedUser = UpdateUserUseCase.UpdatedUser(
                 Email.newWithoutValidation("new-dummy@example.com"),
                 Username.newWithoutValidation("dummy-username"),
                 Bio.newWithoutValidation("dummy-bio"),

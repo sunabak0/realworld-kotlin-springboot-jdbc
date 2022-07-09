@@ -247,6 +247,13 @@ class UserAndAuthenticationController(
                      */
                     is Left -> when (val useCaseError = useCaseResult.value) {
                         /**
+                         * 原因: ユーザーが見つからない
+                         */
+                        is UpdateUserUseCase.Error.NotFound -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("ユーザーが見つかりませんでした"),
+                            HttpStatus.valueOf(404)
+                        )
+                        /**
                          * 原因: バリデーションエラー
                          */
                         is UpdateUserUseCase.Error.InvalidAttributesForUpdateUser -> ResponseEntity(

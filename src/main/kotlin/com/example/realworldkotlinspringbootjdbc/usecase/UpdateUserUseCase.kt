@@ -1,6 +1,7 @@
 package com.example.realworldkotlinspringbootjdbc.usecase
 
 import arrow.core.Either
+import arrow.core.NonEmptyList
 import arrow.core.Validated.Invalid
 import arrow.core.Validated.Valid
 import arrow.core.left
