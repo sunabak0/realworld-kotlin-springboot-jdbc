@@ -212,7 +212,7 @@ class CommentControllerTest {
         private val notImplementedDeleteCommentUseCase = object : DeleteCommentUseCase {}
 
         @Test
-        fun `JWT 認証失敗-コメント取得-UseCase が「Comment」のリストを返す場合、200レスポンスを返す`() {
+        fun `JWT 認証失敗 or 未ログイン-コメント取得-UseCase が「Comment」のリストを返す場合、200レスポンスを返す`() {
             val mockComments = listOf(
                 Comment.newWithoutValidation(
                     CommentId.newWithoutValidation(1),
@@ -266,7 +266,7 @@ class CommentControllerTest {
         }
 
         @Test
-        fun `JWT 認証失敗-コメント取得-UseCase が「NotFound」を返す場合、404 エラーレスポンスを返す`() {
+        fun `JWT 認証失敗 or 未ログイン-コメント取得-UseCase が「NotFound」を返す場合、404 エラーレスポンスを返す`() {
             val notImplementedError = object : MyError {}
             val listReturnNotFoundError = object : ListCommentUseCase {
                 override fun execute(
@@ -289,7 +289,7 @@ class CommentControllerTest {
         }
 
         @Test
-        fun `JWT 認証失敗-コメント取得-UseCase が「バリデーションエラー」を返す場合、404 エラーレスポンスを返す`() {
+        fun `JWT 認証失敗 or 未ログイン-コメント取得-UseCase が「バリデーションエラー」を返す場合、404 エラーレスポンスを返す`() {
             val notImplementedValidationError = object : MyError.ValidationError {
                 override val message: String get() = "DummyValidationError"
                 override val key: String get() = "DummyKey"
@@ -319,7 +319,7 @@ class CommentControllerTest {
         }
 
         @Test
-        fun `JWT 認証失敗-コメント取得-UseCase が原因不明のエラーを返す場合、500 エラーレスポンスを返す`() {
+        fun `JWT 認証失敗 or 未ログイン-コメント取得-UseCase が原因不明のエラーを返す場合、500 エラーレスポンスを返す`() {
             val notImplementedError = object : MyError {}
             val listReturnUnexpectedError = object : ListCommentUseCase {
                 override fun execute(
