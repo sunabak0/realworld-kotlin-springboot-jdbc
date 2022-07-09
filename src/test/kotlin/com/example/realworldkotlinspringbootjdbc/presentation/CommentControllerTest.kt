@@ -158,8 +158,8 @@ class CommentControllerTest {
                 pathParam
             )
             val expected = ResponseEntity(
-                """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError"}]}}""",
-                HttpStatus.valueOf(422)
+                """{"errors":{"body":["記事が見つかりませんでした"]}}""",
+                HttpStatus.valueOf(404)
             )
             assertThat(actual).isEqualTo(expected)
         }
