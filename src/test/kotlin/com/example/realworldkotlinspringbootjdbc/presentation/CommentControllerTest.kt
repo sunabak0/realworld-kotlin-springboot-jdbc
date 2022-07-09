@@ -1,6 +1,7 @@
 package com.example.realworldkotlinspringbootjdbc.presentation
 
 import arrow.core.Either
+import arrow.core.Option
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
@@ -29,7 +30,15 @@ import com.example.realworldkotlinspringbootjdbc.domain.comment.Body as CommentB
 class CommentControllerTest {
     @Nested
     class List {
+        private val requestHeader = "hoge-authorize"
         private val pathParam = "hoge-slug"
+        val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
+            UserId(1),
+            Email.newWithoutValidation("dummy@example.com"),
+            Username.newWithoutValidation("dummy-name"),
+            Bio.newWithoutValidation("dummy-bio"),
+            Image.newWithoutValidation("dummy-image"),
+        )
         private fun commentController(
             commentsUseCase: ListCommentUseCase,
             createCommentUseCase: CreateCommentUseCase,
@@ -38,7 +47,11 @@ class CommentControllerTest {
         ): CommentController =
             CommentController(myAuth, commentsUseCase, createCommentUseCase, deleteCommentUseCase)
 
-        private val notImplementedMyAuth = object : MyAuth {}
+        private val authorizedMyAuth = object : MyAuth {
+            override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
+                return dummyRegisteredUser.right()
+            }
+        }
 
         private val notImplementedCreateCommentUseCase = object : CreateCommentUseCase {}
 
@@ -75,7 +88,10 @@ class CommentControllerTest {
                 ),
             )
             val listReturnComment = object : ListCommentUseCase {
-                override fun execute(slug: String?): Either<ListCommentUseCase.Error, kotlin.collections.List<Comment>> =
+                override fun execute(
+                    slug: String?,
+                    currentUser: Option<RegisteredUser>
+                ): Either<ListCommentUseCase.Error, kotlin.collections.List<Comment>> =
                     mockComments.right()
             }
             val actual =
@@ -83,8 +99,9 @@ class CommentControllerTest {
                     listReturnComment,
                     notImplementedCreateCommentUseCase,
                     notImplementedDeleteCommentUseCase,
-                    notImplementedMyAuth
+                    authorizedMyAuth
                 ).list(
+                    requestHeader,
                     pathParam
                 )
             val expected = ResponseEntity(
@@ -98,15 +115,21 @@ class CommentControllerTest {
         fun `コメント取得時、UseCase が「NotFound」を返す場合、404 エラーレスポンスを返す`() {
             val notImplementedError = object : MyError {}
             val listReturnNotFoundError = object : ListCommentUseCase {
-                override fun execute(slug: String?): Either<ListCommentUseCase.Error, kotlin.collections.List<Comment>> =
+                override fun execute(
+                    slug: String?,
+                    currentUser: Option<RegisteredUser>
+                ): Either<ListCommentUseCase.Error, kotlin.collections.List<Comment>> =
                     ListCommentUseCase.Error.NotFound(notImplementedError).left()
             }
             val actual = commentController(
                 listReturnNotFoundError,
                 notImplementedCreateCommentUseCase,
                 notImplementedDeleteCommentUseCase,
-                notImplementedMyAuth
-            ).list(pathParam)
+                authorizedMyAuth
+            ).list(
+                requestHeader,
+                pathParam
+            )
             val expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404))
             assertThat(actual).isEqualTo(expected)
         }
@@ -118,7 +141,10 @@ class CommentControllerTest {
                 override val key: String get() = "DummyKey"
             }
             val listReturnValidationError = object : ListCommentUseCase {
-                override fun execute(slug: String?): Either<ListCommentUseCase.Error, kotlin.collections.List<Comment>> {
+                override fun execute(
+                    slug: String?,
+                    currentUser: Option<RegisteredUser>
+                ): Either<ListCommentUseCase.Error, kotlin.collections.List<Comment>> {
                     return ListCommentUseCase.Error.InvalidSlug(listOf(notImplementedValidationError)).left()
                 }
             }
@@ -126,8 +152,11 @@ class CommentControllerTest {
                 listReturnValidationError,
                 notImplementedCreateCommentUseCase,
                 notImplementedDeleteCommentUseCase,
-                notImplementedMyAuth
-            ).list(pathParam)
+                authorizedMyAuth
+            ).list(
+                requestHeader,
+                pathParam
+            )
             val expected = ResponseEntity(
                 """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError"}]}}""",
                 HttpStatus.valueOf(422)
@@ -139,7 +168,10 @@ class CommentControllerTest {
         fun `コメント取得時、UseCase が原因不明のエラーを返す場合、500 エラーレスポンスを返す`() {
             val notImplementedError = object : MyError {}
             val listReturnUnexpectedError = object : ListCommentUseCase {
-                override fun execute(slug: String?): Either<ListCommentUseCase.Error, kotlin.collections.List<Comment>> {
+                override fun execute(
+                    slug: String?,
+                    currentUser: Option<RegisteredUser>
+                ): Either<ListCommentUseCase.Error, kotlin.collections.List<Comment>> {
                     return ListCommentUseCase.Error.Unexpected(notImplementedError).left()
                 }
             }
@@ -147,8 +179,11 @@ class CommentControllerTest {
                 listReturnUnexpectedError,
                 notImplementedCreateCommentUseCase,
                 notImplementedDeleteCommentUseCase,
-                notImplementedMyAuth
-            ).list(pathParam)
+                authorizedMyAuth
+            ).list(
+                requestHeader,
+                pathParam
+            )
             val expected = ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500))
             assertThat(actual).isEqualTo(expected)
         }
@@ -424,6 +459,7 @@ class CommentControllerTest {
         @Test
         fun `コメント削除時、UseCase が CommentId に該当するコメントが見つからなかったことに起因する「NotFound」エラーのとき、404 エラーレスポンスを返す`() {
             val notImplementedError = object : MyError {}
+
             /**
              * FIXME
              *   - DeleteCommentUseCaseの実装をもっと良い名前にする
