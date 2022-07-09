@@ -82,8 +82,7 @@ class ShowCommentUseCaseImpl(
                          */
                         is CommentRepository.ListError.NotFoundArticleBySlug -> ListCommentUseCase.Error.NotFound(
                             listError
-                        )
-                            .left()
+                        ).left()
                         /**
                          * 原因: 不明
                          */
