@@ -2,7 +2,6 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
-import arrow.core.None
 import arrow.core.Some
 import com.example.realworldkotlinspringbootjdbc.presentation.request.NullableComment
 import com.example.realworldkotlinspringbootjdbc.presentation.request.NullableCommentId
@@ -43,7 +42,7 @@ class CommentController(
             /**
              * JWT 認証 失敗 or 未ログイン
              */
-            is Left -> when (val result = listCommentUseCase.execute(slug, None)) {
+            is Left -> when (val result = listCommentUseCase.execute(slug)) {
                 /**
                  * コメント取得に失敗
                  */
