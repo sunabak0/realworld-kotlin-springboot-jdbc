@@ -360,7 +360,7 @@ class CommentControllerTest {
                 override fun execute(
                     slug: String?,
                     currentUser: Option<RegisteredUser>
-                ): Either<ListCommentUseCase.Error, kotlin.collections.List<Comment>> =
+                ): Either<ListCommentUseCase.Error, List<Comment>> =
                     mockComments.right()
             }
             val actual =
