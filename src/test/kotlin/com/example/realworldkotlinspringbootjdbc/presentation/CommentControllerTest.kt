@@ -332,13 +332,18 @@ class CommentControllerTest {
 
         @Test
         fun `JWT 認証失敗 or 未ログイン-コメント取得-UseCase が原因不明のエラーを返す場合、500 エラーレスポンスを返す`() {
-            val notImplementedError = object : MyError {}
+            /**
+             * FIXME
+             * ローカルでは動作するが、Github Actions で動作しない変数名を一時的に mockE に修正
+             * 命名規則の方針が決まり次第修正
+             */
+            val mockE = object : MyError {}
             val listReturnUnexpectedError = object : ListCommentUseCase {
                 override fun execute(
                     slug: String?,
                     currentUser: Option<RegisteredUser>
                 ): Either<ListCommentUseCase.Error, List<Comment>> {
-                    return ListCommentUseCase.Error.Unexpected(notImplementedError).left()
+                    return ListCommentUseCase.Error.Unexpected(mockE).left()
                 }
             }
             val actual = commentController(
