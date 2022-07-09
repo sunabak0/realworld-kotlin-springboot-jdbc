@@ -30,6 +30,13 @@ fmt: ## format
 lint: ## lint
 	./gradlew ktlintCheck
 
+.PHONY: docs.generate-db-docs-schemaspy
+docs.generate-db-docs-schemaspy: ## schemaspyでDB用のドキュメントを作成、表示する(gitに含めない)
+	mkdir -p ./tmp/db-drivers/
+	ls ./tmp/db-drivers/postgresql-42.4.0.jar || curl -o ./tmp/db-drivers/postgresql-42.4.0.jar https://jdbc.postgresql.org/download/postgresql-42.4.0.jar
+	mkdir -p ./tmp/schemaspy-output/
+	docker run --rm -it --net "host" --mount type=bind,source=${PWD}/tmp/schemaspy-output/,target=/output --mount type=bind,source=${PWD}/tmp/db-drivers/,target=/drivers/ schemaspy/schemaspy:6.1.0 -t pgsql11 -host localhost:5432 -db realworld-db -u realworld-user -p realworld-pass
+	open ./tmp/schemaspy-output/index.html
 
 ################################################################################
 # Utility-Command help

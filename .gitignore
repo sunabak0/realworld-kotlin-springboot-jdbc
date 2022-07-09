@@ -43,3 +43,9 @@ out/
 # 用途がわかって、必要そうであれば、ignorelistから削除する
 #
 .jqwik-database
+
+#
+# tmpディレクトリ
+# 適当なやつをDLする時に利用する
+#
+tmp/
