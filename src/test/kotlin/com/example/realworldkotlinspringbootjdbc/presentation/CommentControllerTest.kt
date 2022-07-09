@@ -235,9 +235,9 @@ class CommentControllerTest {
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
                     OtherUser.newWithoutValidation(
                         UserId(1),
-                        Username.newWithoutValidation("hoge-author-2"),
-                        Bio.newWithoutValidation("hoge-bio-2"),
-                        Image.newWithoutValidation("hoge-image-2"),
+                        Username.newWithoutValidation("hoge-author-1"),
+                        Bio.newWithoutValidation("hoge-bio-1"),
+                        Image.newWithoutValidation("hoge-image-1"),
                         following = false,
                     )
                 ),
