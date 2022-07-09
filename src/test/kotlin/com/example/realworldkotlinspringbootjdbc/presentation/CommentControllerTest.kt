@@ -36,7 +36,7 @@ class CommentControllerTest {
             deleteCommentUseCase: DeleteCommentUseCase,
             myAuth: MyAuth
         ): CommentController =
-            CommentController(commentsUseCase, createCommentUseCase, deleteCommentUseCase, myAuth)
+            CommentController(myAuth, commentsUseCase, createCommentUseCase, deleteCommentUseCase)
 
         private val notImplementedMyAuth = object : MyAuth {}
 
@@ -180,7 +180,7 @@ class CommentControllerTest {
             deleteCommentUseCase: DeleteCommentUseCase,
             myAuth: MyAuth
         ): CommentController =
-            CommentController(listCommentUseCase, createCommentUseCase, deleteCommentUseCase, myAuth)
+            CommentController(myAuth, listCommentUseCase, createCommentUseCase, deleteCommentUseCase)
 
         private val authorizedMyAuth = object : MyAuth {
             override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
@@ -327,7 +327,7 @@ class CommentControllerTest {
             deleteCommentUseCase: DeleteCommentUseCase,
             myAuth: MyAuth
         ): CommentController =
-            CommentController(listCommentUseCase, createCommentUseCase, deleteCommentUseCase, myAuth)
+            CommentController(myAuth, listCommentUseCase, createCommentUseCase, deleteCommentUseCase)
 
         private val authorizedMyAuth = object : MyAuth {
             override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {

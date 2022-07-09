@@ -27,10 +27,10 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @Tag(name = "Comments")
 class CommentController(
+    val myAuth: MyAuth,
     val listCommentUseCase: ListCommentUseCase,
     val createCommentUseCase: CreateCommentUseCase,
-    val deleteCommentUseCase: DeleteCommentUseCase,
-    val myAuth: MyAuth
+    val deleteCommentUseCase: DeleteCommentUseCase
 ) {
     @GetMapping("/articles/{slug}/comments")
     fun list(@PathVariable("slug") slug: String?): ResponseEntity<String> {
