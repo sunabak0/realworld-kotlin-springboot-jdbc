@@ -5,6 +5,7 @@ import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UnregisteredUser
+import com.example.realworldkotlinspringbootjdbc.domain.UpdatableRegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UserRepository
 import com.example.realworldkotlinspringbootjdbc.domain.UserRepository.FindByEmailWithPasswordError
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
@@ -17,6 +18,8 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
+import java.util.Date
 
 typealias RegisteredWithPassword = Pair<RegisteredUser, Password>
 
@@ -28,29 +31,97 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
     }
 
     override fun register(user: UnregisteredUser): Either<UserRepository.RegisterError, RegisteredUser> {
-        val userId = try {
-            registerTransactionApply(user)
+        /**
+         * Email と Username の数をそれぞれカウント
+         */
+        val sql = """
+            SELECT
+                COUNT(
+                    CASE
+                         WHEN
+                             users.email = :email
+                         THEN 1
+                         ELSE NULL
+                    END
+                ) AS EMAIL_CNT
+                , COUNT(
+                    CASE
+                         WHEN
+                             users.username = :username
+                         THEN 1
+                         ELSE NULL
+                    END
+                ) AS USERNAME_CNT
+            FROM
+                users
+            ;
+        """.trimIndent()
+        val sqlParams = MapSqlParameterSource()
+            .addValue("email", user.email.value)
+            .addValue("username", user.username.value)
+        val emailAndUsernameCountMap = try {
+            namedParameterJdbcTemplate.queryForMap(sql, sqlParams)
         } catch (e: Throwable) {
-            // Timeoutや他の原因を別で扱いたかったら、Infra層でエラーを定義する
             return UserRepository.RegisterError.Unexpected(e, user).left()
         }
-        val registeredUser = RegisteredUser.newWithoutValidation(
-            userId,
-            user.email,
-            user.username,
-            Bio.newWithoutValidation(""),
-            Image.newWithoutValidation("")
-        )
-        return registeredUser.right()
+
+        val (emailCount, usernameCount) = try {
+            Pair(
+                emailAndUsernameCountMap["email_cnt"].toString().toInt(),
+                emailAndUsernameCountMap["username_cnt"].toString().toInt()
+            )
+        } catch (e: Throwable) {
+            return UserRepository.RegisterError.Unexpected(e, user).left()
+        }
+
+        return when {
+            /**
+             * エラー: Email が既に使われている
+             */
+            0 < emailCount -> UserRepository.RegisterError.AlreadyRegisteredEmail(user.email).left()
+            /**
+             * エラー: Username が既に使われている
+             */
+            0 < usernameCount -> UserRepository.RegisterError.AlreadyRegisteredUsername(user.username).left()
+            /**
+             * ユーザー登録
+             */
+            else -> {
+                val userId = try {
+                    registerTransactionApply(user)
+                } catch (e: Throwable) {
+                    return UserRepository.RegisterError.Unexpected(e, user).left()
+                }
+                RegisteredUser.newWithoutValidation(
+                    userId,
+                    user.email,
+                    user.username,
+                    Bio.newWithoutValidation(""),
+                    Image.newWithoutValidation("")
+                ).right()
+            }
+        }
     }
 
-    // @Transaction
-    private fun registerTransactionApply(user: UnregisteredUser): UserId {
-        // val sql0 = "SELECT count(email) FROM users WHERE users.email = ?"
-        // val sql1 = "INSERT INTO users(email, username, password, created_at, updated_at) VALUES (:email, :username, :password, :created_at, :updated_at) RETURNING id;"
-        // val sql2 = "INSERT INTO profiles(user_id, bio, image, created_at, updated_at) VALUES (:user_id, :bio, :image, :created_at, :updated_at);"
-
-        return UserId(999)
+    /**
+     * ユーザー登録処理
+     */
+    @Transactional
+    fun registerTransactionApply(user: UnregisteredUser): UserId {
+        val sql1 = "INSERT INTO users(email, username, password, created_at, updated_at) VALUES (:email, :username, :password, :created_at, :updated_at) RETURNING id;"
+        val sql2 = "INSERT INTO profiles(user_id, bio, image, created_at, updated_at) VALUES (:user_id, :bio, :image, :created_at, :updated_at);"
+        val sqlParams = MapSqlParameterSource()
+            .addValue("email", user.email.value)
+            .addValue("password", user.password.value)
+            .addValue("username", user.username.value)
+            .addValue("created_at", Date())
+            .addValue("updated_at", Date())
+            .addValue("bio", "")
+            .addValue("image", "")
+        val userId = namedParameterJdbcTemplate.queryForMap(sql1, sqlParams)["id"] as Int
+        sqlParams.addValue("user_id", userId)
+        namedParameterJdbcTemplate.update(sql2, sqlParams)
+        return UserId(userId)
     }
 
     // Transactionは不要(rollbackしないため)
@@ -80,9 +151,23 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
         return registeredUser.right()
     }
 
+    override fun update(user: UpdatableRegisteredUser): Either<UserRepository.UpdateError, RegisteredUser> {
+        val registeredUser = RegisteredUser.newWithoutValidation(
+            user.userId,
+            user.email,
+            user.username,
+            user.bio,
+            user.image
+        )
+        return registeredUser.right()
+    }
+
     private fun findByEmail(email: Email): Either<Error, RegisteredUser> {
         val sql = """
-            SELECT * FROM users WHERE users.email = :email;
+            SELECT *
+            FROM users
+                JOIN profiles ON profiles.user_id = users.id
+            WHERE users.email = :email;
         """.trimIndent()
         val sqlParams = MapSqlParameterSource()
             .addValue("email", email.value)
