@@ -338,7 +338,12 @@ class CommentControllerTest {
              * 命名規則の方針が決まり次第修正
              */
             val mockE = object : MyError {}
-            val listReturnUnexpectedError = object : ListCommentUseCase {
+            /**
+             * FIXME
+             * ローカルでは動作するが、Github Actions で動作しない変数名を一時的に mockUE に修正
+             * 命名規則の方針が決まり次第修正
+             */
+            val mockUE = object : ListCommentUseCase {
                 override fun execute(
                     slug: String?,
                     currentUser: Option<RegisteredUser>
@@ -348,7 +353,7 @@ class CommentControllerTest {
             }
             val actual = commentController(
                 unauthorizedMyAuth,
-                listReturnUnexpectedError,
+                mockUE,
                 notImplementedCreateCommentUseCase,
                 notImplementedDeleteCommentUseCase
             ).list(
