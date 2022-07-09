@@ -124,13 +124,13 @@ class CommentController(
                 /**
                  * コメント取得に失敗
                  */
-                is Left -> when (val useCaseError = result.value) {
+                is Left -> when (result.value) {
                     /**
                      * 原因: バリデーションエラー
                      */
                     is ListCommentUseCase.Error.InvalidSlug -> ResponseEntity(
-                        serializeMyErrorListForResponseBody(useCaseError.errors),
-                        HttpStatus.valueOf(422)
+                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
                     )
                     /**
                      * 原因: 記事が見つかりませんでした
