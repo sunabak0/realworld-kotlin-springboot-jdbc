@@ -40,10 +40,10 @@ class CommentControllerTest {
             Image.newWithoutValidation("dummy-image"),
         )
         private fun commentController(
+            myAuth: MyAuth,
             commentsUseCase: ListCommentUseCase,
             createCommentUseCase: CreateCommentUseCase,
-            deleteCommentUseCase: DeleteCommentUseCase,
-            myAuth: MyAuth
+            deleteCommentUseCase: DeleteCommentUseCase
         ): CommentController =
             CommentController(myAuth, commentsUseCase, createCommentUseCase, deleteCommentUseCase)
 
@@ -96,10 +96,10 @@ class CommentControllerTest {
             }
             val actual =
                 commentController(
+                    authorizedMyAuth,
                     listReturnComment,
                     notImplementedCreateCommentUseCase,
-                    notImplementedDeleteCommentUseCase,
-                    authorizedMyAuth
+                    notImplementedDeleteCommentUseCase
                 ).list(
                     requestHeader,
                     pathParam
@@ -122,10 +122,10 @@ class CommentControllerTest {
                     ListCommentUseCase.Error.NotFound(notImplementedError).left()
             }
             val actual = commentController(
+                authorizedMyAuth,
                 listReturnNotFoundError,
                 notImplementedCreateCommentUseCase,
-                notImplementedDeleteCommentUseCase,
-                authorizedMyAuth
+                notImplementedDeleteCommentUseCase
             ).list(
                 requestHeader,
                 pathParam
@@ -149,10 +149,10 @@ class CommentControllerTest {
                 }
             }
             val actual = commentController(
+                authorizedMyAuth,
                 listReturnValidationError,
                 notImplementedCreateCommentUseCase,
-                notImplementedDeleteCommentUseCase,
-                authorizedMyAuth
+                notImplementedDeleteCommentUseCase
             ).list(
                 requestHeader,
                 pathParam
@@ -176,10 +176,10 @@ class CommentControllerTest {
                 }
             }
             val actual = commentController(
+                authorizedMyAuth,
                 listReturnUnexpectedError,
                 notImplementedCreateCommentUseCase,
-                notImplementedDeleteCommentUseCase,
-                authorizedMyAuth
+                notImplementedDeleteCommentUseCase
             ).list(
                 requestHeader,
                 pathParam
@@ -210,10 +210,10 @@ class CommentControllerTest {
         private val notImplementedListCommentUseCase = object : ListCommentUseCase {}
         private val notImplementedDeleteCommentUseCase = object : DeleteCommentUseCase {}
         private fun commentController(
+            myAuth: MyAuth,
             listCommentUseCase: ListCommentUseCase,
             createCommentUseCase: CreateCommentUseCase,
-            deleteCommentUseCase: DeleteCommentUseCase,
-            myAuth: MyAuth
+            deleteCommentUseCase: DeleteCommentUseCase
         ): CommentController =
             CommentController(myAuth, listCommentUseCase, createCommentUseCase, deleteCommentUseCase)
 
@@ -245,10 +245,10 @@ class CommentControllerTest {
             }
             val actual =
                 commentController(
+                    authorizedMyAuth,
                     notImplementedListCommentUseCase,
                     createCommentUseCase,
-                    notImplementedDeleteCommentUseCase,
-                    authorizedMyAuth
+                    notImplementedDeleteCommentUseCase
                 ).create(pathParam, pathParam, requestBody)
             val expected = ResponseEntity(
                 """{"Comment":{"id":1,"body":"hoge-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-username"}}""",
@@ -269,10 +269,10 @@ class CommentControllerTest {
                 }
             }
             val actual = commentController(
+                authorizedMyAuth,
                 notImplementedListCommentUseCase,
                 createReturnValidationError,
-                notImplementedDeleteCommentUseCase,
-                authorizedMyAuth
+                notImplementedDeleteCommentUseCase
             ).create(requestHeader, pathParam, requestBody)
             val expected = ResponseEntity(
                 """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid Slug"}]}}""",
@@ -293,10 +293,10 @@ class CommentControllerTest {
                 }
             }
             val actual = commentController(
+                authorizedMyAuth,
                 notImplementedListCommentUseCase,
                 createReturnValidationError,
-                notImplementedDeleteCommentUseCase,
-                authorizedMyAuth
+                notImplementedDeleteCommentUseCase
             ).create(requestHeader, pathParam, requestBody)
             val expected = ResponseEntity(
                 """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because invalid CommentBody"}]}}""",
@@ -314,10 +314,10 @@ class CommentControllerTest {
                 }
             }
             val actual = commentController(
+                authorizedMyAuth,
                 notImplementedListCommentUseCase,
                 createReturnNotFoundError,
-                notImplementedDeleteCommentUseCase,
-                authorizedMyAuth
+                notImplementedDeleteCommentUseCase
             ).create(requestHeader, pathParam, requestBody)
             val expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404))
             assertThat(actual).isEqualTo(expected)
@@ -332,10 +332,10 @@ class CommentControllerTest {
                 }
             }
             val actual = commentController(
+                authorizedMyAuth,
                 notImplementedListCommentUseCase,
                 createReturnUnexpectedError,
                 notImplementedDeleteCommentUseCase,
-                authorizedMyAuth,
             ).create(requestHeader, pathParam, requestBody)
             val expected = ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500))
             assertThat(actual).isEqualTo(expected)
@@ -357,10 +357,10 @@ class CommentControllerTest {
         private val notImplementedListCommentUseCase = object : ListCommentUseCase {}
         private val notImplementedCreateCommentUseCase = object : CreateCommentUseCase {}
         private fun commentController(
+            myAuth: MyAuth,
             listCommentUseCase: ListCommentUseCase,
             createCommentUseCase: CreateCommentUseCase,
-            deleteCommentUseCase: DeleteCommentUseCase,
-            myAuth: MyAuth
+            deleteCommentUseCase: DeleteCommentUseCase
         ): CommentController =
             CommentController(myAuth, listCommentUseCase, createCommentUseCase, deleteCommentUseCase)
 
@@ -378,10 +378,10 @@ class CommentControllerTest {
                 }
             }
             val actual = commentController(
+                authorizedMyAuth,
                 notImplementedListCommentUseCase,
                 notImplementedCreateCommentUseCase,
-                deleteCommentUseCase,
-                authorizedMyAuth
+                deleteCommentUseCase
             ).delete(requestHeader, pathParamSlug, pathParamCommentId)
             val expected = ResponseEntity("", HttpStatus.valueOf(200))
             assertThat(actual).isEqualTo(expected)
@@ -399,10 +399,10 @@ class CommentControllerTest {
                 }
             }
             val actual = commentController(
+                authorizedMyAuth,
                 notImplementedListCommentUseCase,
                 notImplementedCreateCommentUseCase,
-                deleteReturnValidationError,
-                authorizedMyAuth
+                deleteReturnValidationError
             ).delete(requestHeader, pathParamSlug, pathParamCommentId)
             val expected = ResponseEntity(
                 """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid Slug"}]}}""",
@@ -423,10 +423,10 @@ class CommentControllerTest {
                 }
             }
             val actual = commentController(
+                authorizedMyAuth,
                 notImplementedListCommentUseCase,
                 notImplementedCreateCommentUseCase,
-                deleteReturnValidationError,
-                authorizedMyAuth
+                deleteReturnValidationError
             ).delete(requestHeader, pathParamSlug, pathParamCommentId)
             val expected = ResponseEntity(
                 """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid CommentId"}]}}""",
@@ -447,10 +447,10 @@ class CommentControllerTest {
                 }
             }
             val actual = commentController(
+                authorizedMyAuth,
                 notImplementedListCommentUseCase,
                 notImplementedCreateCommentUseCase,
-                deleteReturnArticleNotFoundError,
-                authorizedMyAuth
+                deleteReturnArticleNotFoundError
             ).delete(requestHeader, pathParamSlug, pathParamCommentId)
             val expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404))
             assertThat(actual).isEqualTo(expected)
@@ -477,10 +477,10 @@ class CommentControllerTest {
                 }
             }
             val actual = commentController(
+                authorizedMyAuth,
                 notImplementedListCommentUseCase,
                 notImplementedCreateCommentUseCase,
-                notFoundError,
-                authorizedMyAuth
+                notFoundError
             ).delete(requestHeader, pathParamSlug, pathParamCommentId)
             val expected = ResponseEntity("""{"errors":{"body":["コメントが見つかりませんでした"]}}""", HttpStatus.valueOf(404))
             assertThat(actual).isEqualTo(expected)
@@ -495,10 +495,10 @@ class CommentControllerTest {
                 }
             }
             val actual = commentController(
+                authorizedMyAuth,
                 notImplementedListCommentUseCase,
                 notImplementedCreateCommentUseCase,
                 deleteReturnUnexpectedError,
-                authorizedMyAuth,
             ).delete(requestHeader, pathParamSlug, pathParamCommentId)
             val expected = ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500))
             assertThat(actual).isEqualTo(expected)
