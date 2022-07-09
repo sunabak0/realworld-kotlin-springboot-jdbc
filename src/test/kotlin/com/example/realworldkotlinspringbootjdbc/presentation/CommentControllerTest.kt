@@ -234,14 +234,14 @@ class CommentControllerTest {
              * ローカルでは動作するが、Github Actions で動作しない変数名を一時的に mock に修正
              * 命名規則の方針が決まり次第修正
              */
-            val mockErr = object : MyError.ValidationError {
+            val mock = object : MyError.ValidationError {
                 override val message: String get() = "DummyValidationError"
                 override val key: String get() = "DummyKey"
             }
 
             /**
              * FIXME
-             * ローカルでは動作するが、Github Actions で動作しない変数名を一時的に mock に修正
+             * ローカルでは動作するが、Github Actions で動作しない変数名を一時的に mockUseCase に修正
              * 命名規則の方針が決まり次第修正
              */
             val mockUseCase = object : ListCommentUseCase {
@@ -249,7 +249,7 @@ class CommentControllerTest {
                     slug: String?,
                     currentUser: Option<RegisteredUser>
                 ): Either<ListCommentUseCase.Error, List<Comment>> {
-                    return ListCommentUseCase.Error.InvalidSlug(listOf(mockErr)).left()
+                    return ListCommentUseCase.Error.InvalidSlug(listOf(mock)).left()
                 }
             }
             val actual = commentController(
