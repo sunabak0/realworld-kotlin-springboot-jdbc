@@ -2,6 +2,7 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import arrow.core.Some
 import com.example.realworldkotlinspringbootjdbc.presentation.request.NullableComment
 import com.example.realworldkotlinspringbootjdbc.presentation.request.NullableCommentId
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Comment
@@ -27,63 +28,124 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @Tag(name = "Comments")
 class CommentController(
+    val myAuth: MyAuth,
     val listCommentUseCase: ListCommentUseCase,
     val createCommentUseCase: CreateCommentUseCase,
-    val deleteCommentUseCase: DeleteCommentUseCase,
-    val myAuth: MyAuth
+    val deleteCommentUseCase: DeleteCommentUseCase
 ) {
     @GetMapping("/articles/{slug}/comments")
-    fun list(@PathVariable("slug") slug: String?): ResponseEntity<String> {
-        return when (val result = listCommentUseCase.execute(slug)) {
+    fun list(
+        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
+        @PathVariable("slug") slug: String?
+    ): ResponseEntity<String> {
+        return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
             /**
-             * コメント取得に成功
+             * JWT 認証 失敗 or 未ログイン
              */
-            is Right -> {
-                val comments =
-                    result.value.map {
+            is Left -> when (val result = listCommentUseCase.execute(slug)) {
+                /**
+                 * コメント取得に失敗
+                 */
+                is Left -> when (result.value) {
+                    /**
+                     * 原因: バリデーションエラー
+                     */
+                    is ListCommentUseCase.Error.InvalidSlug -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: 記事が見つからなかった
+                     */
+                    is ListCommentUseCase.Error.NotFound -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: 不明
+                     */
+                    is ListCommentUseCase.Error.Unexpected -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(500)
+                    )
+                }
+                /**
+                 * コメント取得に成功
+                 */
+                is Right -> {
+                    val comments = result.value.map {
                         Comment(
                             it.id.value,
                             it.body.value,
                             it.createdAt,
                             it.updatedAt,
-                            it.author.username.value,
+                            it.author.username.value
                         )
                     }
-
-                return ResponseEntity(
-                    ObjectMapper().writeValueAsString(
-                        mapOf(
-                            "comments" to comments,
-                        )
-                    ),
-                    HttpStatus.valueOf(200)
-                )
+                    ResponseEntity(
+                        ObjectMapper().writeValueAsString(
+                            mapOf(
+                                "comments" to comments,
+                            )
+                        ),
+                        HttpStatus.valueOf(200)
+                    )
+                }
             }
             /**
-             * コメント取得に失敗
+             * JWT 認証 成功
              */
-            is Left -> when (val useCaseError = result.value) {
+            is Right -> when (val result = listCommentUseCase.execute(slug, Some(authorizeResult.value))) {
                 /**
-                 * 原因: バリデーションエラー
+                 * コメント取得に成功
                  */
-                is ListCommentUseCase.Error.InvalidSlug -> ResponseEntity(
-                    serializeMyErrorListForResponseBody(useCaseError.errors),
-                    HttpStatus.valueOf(422)
-                )
+                is Right -> {
+                    val comments =
+                        result.value.map {
+                            Comment(
+                                it.id.value,
+                                it.body.value,
+                                it.createdAt,
+                                it.updatedAt,
+                                it.author.username.value,
+                            )
+                        }
+
+                    ResponseEntity(
+                        ObjectMapper().writeValueAsString(
+                            mapOf(
+                                "comments" to comments,
+                            )
+                        ),
+                        HttpStatus.valueOf(200)
+                    )
+                }
                 /**
-                 * 原因: 記事が見つかりませんでした
+                 * コメント取得に失敗
                  */
-                is ListCommentUseCase.Error.NotFound -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                    HttpStatus.valueOf(404)
-                )
-                /**
-                 * 原因: 不明
-                 */
-                is ListCommentUseCase.Error.Unexpected -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                    HttpStatus.valueOf(500)
-                )
+                is Left -> when (result.value) {
+                    /**
+                     * 原因: バリデーションエラー
+                     */
+                    is ListCommentUseCase.Error.InvalidSlug -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: 記事が見つかりませんでした
+                     */
+                    is ListCommentUseCase.Error.NotFound -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: 不明
+                     */
+                    is ListCommentUseCase.Error.Unexpected -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(500)
+                    )
+                }
             }
         }
     }
