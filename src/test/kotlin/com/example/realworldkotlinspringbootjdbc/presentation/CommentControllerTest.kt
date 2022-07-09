@@ -266,28 +266,28 @@ class CommentControllerTest {
             assertThat(actual).isEqualTo(expected)
         }
 
-        // @Test
-        // fun `JWT 認証失敗 or 未ログイン-コメント取得-UseCase が「NotFound」を返す場合、404 エラーレスポンスを返す`() {
-        //     val notImplementedError = object : MyError {}
-        //     val listReturnNotFoundError = object : ListCommentUseCase {
-        //         override fun execute(
-        //             slug: String?,
-        //             currentUser: Option<RegisteredUser>
-        //         ): Either<ListCommentUseCase.Error, List<Comment>> =
-        //             ListCommentUseCase.Error.NotFound(notImplementedError).left()
-        //     }
-        //     val actual = commentController(
-        //         unauthorizedMyAuth,
-        //         listReturnNotFoundError,
-        //         notImplementedCreateCommentUseCase,
-        //         notImplementedDeleteCommentUseCase
-        //     ).list(
-        //         requestHeader,
-        //         pathParam
-        //     )
-        //     val expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404))
-        //     assertThat(actual).isEqualTo(expected)
-        // }
+        @Test
+        fun `JWT 認証失敗 or 未ログイン-コメント取得-UseCase が「NotFound」を返す場合、404 エラーレスポンスを返す`() {
+            val notImplementedError = object : MyError {}
+            val listReturnNotFoundError = object : ListCommentUseCase {
+                override fun execute(
+                    slug: String?,
+                    currentUser: Option<RegisteredUser>
+                ): Either<ListCommentUseCase.Error, List<Comment>> =
+                    ListCommentUseCase.Error.NotFound(notImplementedError).left()
+            }
+            val actual = commentController(
+                unauthorizedMyAuth,
+                listReturnNotFoundError,
+                notImplementedCreateCommentUseCase,
+                notImplementedDeleteCommentUseCase
+            ).list(
+                requestHeader,
+                pathParam
+            )
+            val expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404))
+            assertThat(actual).isEqualTo(expected)
+        }
 
         // @Test
         // fun `JWT 認証失敗 or 未ログイン-コメント取得-UseCase が「バリデーションエラー」を返す場合、404 エラーレスポンスを返す`() {
