@@ -233,7 +233,13 @@ class CommentControllerTest {
                 override val message: String get() = "DummyValidationError"
                 override val key: String get() = "DummyKey"
             }
-            val listReturnValidationError = object : ListCommentUseCase {
+
+            /**
+             * FIXME
+             * ローカルでは動作するが、Github Actions で動作しない変数名を一時的に mock に修正
+             * 命名規則の方針が決まり次第修正
+             */
+            val mock = object : ListCommentUseCase {
                 override fun execute(
                     slug: String?,
                     currentUser: Option<RegisteredUser>
@@ -243,7 +249,7 @@ class CommentControllerTest {
             }
             val actual = commentController(
                 unauthorizedMyAuth,
-                listReturnValidationError,
+                mock,
                 notImplementedCreateCommentUseCase,
                 notImplementedDeleteCommentUseCase
             ).list(
