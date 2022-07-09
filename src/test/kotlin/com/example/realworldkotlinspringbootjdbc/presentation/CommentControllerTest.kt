@@ -293,30 +293,30 @@ class CommentControllerTest {
         fun `JWT 認証失敗 or 未ログイン-コメント取得-UseCase が「バリデーションエラー」を返す場合、404 エラーレスポンスを返す`() {
             /**
              * FIXME
-             * ローカルでは動作するが、Github Actions で動作しない変数名を一時的に mock に修正
+             * ローカルでは動作するが、Github Actions で動作しない変数名を一時的に mockE に修正
              * 命名規則の方針が決まり次第修正
              */
-            val mock = object : MyError.ValidationError {
+            val mockE = object : MyError.ValidationError {
                 override val message: String get() = "DummyValidationError"
                 override val key: String get() = "DummyKey"
             }
 
             /**
              * FIXME
-             * ローカルでは動作するが、Github Actions で動作しない変数名を一時的に mockUseCase に修正
+             * ローカルでは動作するが、Github Actions で動作しない変数名を一時的に mockUC に修正
              * 命名規則の方針が決まり次第修正
              */
-            val mockUseCase = object : ListCommentUseCase {
+            val mockUC = object : ListCommentUseCase {
                 override fun execute(
                     slug: String?,
                     currentUser: Option<RegisteredUser>
                 ): Either<ListCommentUseCase.Error, List<Comment>> {
-                    return ListCommentUseCase.Error.InvalidSlug(listOf(mock)).left()
+                    return ListCommentUseCase.Error.InvalidSlug(listOf(mockE)).left()
                 }
             }
             val actual = commentController(
                 unauthorizedMyAuth,
-                mockUseCase,
+                mockUC,
                 notImplementedCreateCommentUseCase,
                 notImplementedDeleteCommentUseCase
             ).list(
