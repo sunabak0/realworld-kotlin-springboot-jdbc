@@ -1,0 +1,104 @@
+Table "article_comments" {
+  "id" int [not null, increment]
+  "author_id" bigint [not null]
+  "article_id" bigint [not null]
+  "body" text [not null]
+  "created_at" timestamp(6) [not null]
+  "updated_at" timestamp(6) [not null]
+}
+
+Table "article_tags" {
+  "id" int [not null, increment]
+  "article_id" bigint [not null]
+  "tag_id" bigint [not null]
+  "created_at" timestamp(6) [not null]
+
+Indexes {
+  (article_id, tag_id) [type: btree, unique, name: "article_tags_index"]
+}
+}
+
+Table "articles" {
+  "id" int [not null, increment]
+  "author_id" bigint [not null]
+  "title" "character varying" [not null]
+  "slug" "character varying" [not null]
+  "body" text [not null]
+  "description" "character varying" [not null]
+  "created_at" timestamp(6) [not null]
+  "updated_at" timestamp(6) [not null]
+
+Indexes {
+  slug [type: btree, unique, name: "index_articles_on_slug"]
+}
+}
+
+Table "favorites" {
+  "id" int [not null, increment]
+  "user_id" bigint [not null]
+  "article_id" bigint [not null]
+  "created_at" timestamp(6) [not null]
+
+Indexes {
+  (user_id, article_id) [type: btree, unique, name: "favorites_index"]
+}
+}
+
+Table "followings" {
+  "id" int [not null, increment]
+  "following_id" bigint [not null]
+  "follower_id" bigint [not null]
+  "created_at" timestamp(6) [not null]
+
+Indexes {
+  (following_id, follower_id) [type: btree, unique, name: "followings_index"]
+}
+}
+
+Table "profiles" {
+  "id" int [not null, increment]
+  "user_id" bigint [not null]
+  "bio" text [not null]
+  "image" text [not null]
+  "created_at" timestamp(6) [not null]
+  "updated_at" timestamp(6) [not null]
+}
+
+Table "tags" {
+  "id" int [not null, increment]
+  "name" "character varying" [not null]
+  "created_at" timestamp(6) [not null]
+  "updated_at" timestamp(6) [not null]
+}
+
+Table "users" {
+  "id" int [not null, increment]
+  "email" "character varying" [not null]
+  "username" text [not null]
+  "password" text [not null]
+  "created_at" timestamp(6) [not null]
+  "updated_at" timestamp(6) [not null]
+
+Indexes {
+  email [type: btree, unique, name: "index_users_on_email"]
+  username [type: btree, unique, name: "index_users_on_username"]
+}
+}
+
+
+Ref:"users"."id" < "followings"."follower_id"
+Ref:"users"."id" < "followings"."following_id"
+
+Ref:"users"."id" < "article_comments"."author_id"
+Ref:"articles"."id" < "article_comments"."article_id"
+
+Ref:"articles"."id" < "article_tags"."article_id"
+
+Ref:"tags"."id" < "article_tags"."tag_id"
+
+Ref:"users"."id" < "favorites"."user_id"
+Ref:"articles"."id" < "favorites"."article_id"
+
+Ref:"users"."id" < "profiles"."user_id"
+
+Ref:"users"."id" < "articles"."author_id"
