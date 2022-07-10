@@ -96,6 +96,17 @@ class CommentControllerTest {
                     "UseCase:失敗（NotFound）を返す場合、404 エラーレスポンスを返す",
                     ListCommentUseCase.Error.NotFound(object : MyError {}).left(),
                     ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
+                ),
+                TestCase(
+                    "UseCase:失敗（ValidationError）を返す場合、422 エラーレスポンスを返す",
+                    ListCommentUseCase.Error.InvalidSlug(listOf(object : MyError.ValidationError {
+                        override val message: String get() = "DummyValidationError"
+                        override val key: String get() = "DummyKey"
+                    })).left(),
+                    ResponseEntity(
+                        """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError"}]}}""",
+                        HttpStatus.valueOf(422)
+                    ),
                 )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
@@ -114,30 +125,6 @@ class CommentControllerTest {
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-        }
-
-        @Test
-        fun `コメント取得時、UseCase が「バリデーションエラー」を返す場合、422 エラーレスポンスを返す`() {
-            val notImplementedValidationError = object : MyError.ValidationError {
-                override val message: String get() = "DummyValidationError"
-                override val key: String get() = "DummyKey"
-            }
-            val listReturnValidationError = object : ListCommentUseCase {
-                override fun execute(slug: String?): Either<ListCommentUseCase.Error, kotlin.collections.List<Comment>> {
-                    return ListCommentUseCase.Error.InvalidSlug(listOf(notImplementedValidationError)).left()
-                }
-            }
-            val actual = commentController(
-                listReturnValidationError,
-                notImplementedCreateCommentUseCase,
-                notImplementedDeleteCommentUseCase,
-                notImplementedMyAuth
-            ).list(pathParam)
-            val expected = ResponseEntity(
-                """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError"}]}}""",
-                HttpStatus.valueOf(422)
-            )
-            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
