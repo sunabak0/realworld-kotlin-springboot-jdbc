@@ -98,6 +98,14 @@ class ProfileControllerTest {
                         HttpStatus.valueOf(404)
                     ),
                 ),
+                TestCase(
+                    "UseCase:失敗（Unexpected）を返す場合、500 レスポンスを返す",
+                    ShowProfileUseCase.Error.Unexpected(object : MyError {}).left(),
+                    ResponseEntity(
+                        """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
+                        HttpStatus.valueOf(500)
+                    ),
+                )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     val actual = profileController(
@@ -120,30 +128,6 @@ class ProfileControllerTest {
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-        }
-
-        @Test
-        fun `プロフィール取得時、 UseCase が原因不明のエラーを返す場合、500 レスポンスを返す`() {
-            val notImplementedError = object : MyError {}
-            val showProfileReturnUnexpectedError = object : ShowProfileUseCase {
-                override fun execute(
-                    username: String?,
-                    currentUser: Option<RegisteredUser>
-                ): Either<ShowProfileUseCase.Error, OtherUser> =
-                    ShowProfileUseCase.Error.Unexpected(notImplementedError).left()
-            }
-            val actual =
-                profileController(
-                    authorizedMyAuth,
-                    showProfileReturnUnexpectedError,
-                    notImplementedFollowProfileUseCase,
-                    notImplementedUnfollowProfileUseCase,
-                ).showProfile(requestHeader, pathParam)
-            val expected = ResponseEntity(
-                """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
-                HttpStatus.valueOf(500)
-            )
-            assertThat(actual).isEqualTo(expected)
         }
     }
 
