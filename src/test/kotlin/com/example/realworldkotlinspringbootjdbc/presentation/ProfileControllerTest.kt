@@ -70,10 +70,12 @@ class ProfileControllerTest {
                 ),
                 TestCase(
                     "UseCase:失敗（ValidationError）を返す場合、404 レスポンスを返す",
-                    ShowProfileUseCase.Error.InvalidUsername(listOf(object : MyError.ValidationError {
-                        override val message: String get() = "DummyValidationError InvalidUsername"
-                        override val key: String get() = "DummyKey"
-                    })).left(),
+                    ShowProfileUseCase.Error.InvalidUsername(
+                        listOf(object : MyError.ValidationError {
+                            override val message: String get() = "DummyValidationError InvalidUsername"
+                            override val key: String get() = "DummyKey"
+                        })
+                    ).left(),
                     ResponseEntity(
                         """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
                         HttpStatus.valueOf(404)
