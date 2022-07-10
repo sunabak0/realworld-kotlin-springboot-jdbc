@@ -131,6 +131,7 @@ class ProfileControllerTest {
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
         )
+
         private fun profileController(
             myAuth: MyAuth,
             showProfileUseCase: ShowProfileUseCase,
@@ -254,7 +255,7 @@ class ProfileControllerTest {
         fun unfollowTest(): Stream<DynamicNode> {
             return Stream.of(
                 TestCase(
-                    "UseCase:成功（OtherUser）を返す場合、200レスポンスを返す",
+                    "UseCase:成功（OtherUser）を返す場合、200 レスポンスを返す",
                     OtherUser.newWithoutValidation(
                         UserId(1),
                         Username.newWithoutValidation("hoge-username"),
@@ -267,6 +268,19 @@ class ProfileControllerTest {
                         HttpStatus.valueOf(200)
                     )
                 ),
+                TestCase(
+                    "UseCase:失敗（ValidationError）を返す場合、404 レスポンスを返す",
+                    UnfollowProfileUseCase.Error.InvalidUsername(
+                        listOf(object : MyError.ValidationError {
+                            override val message: String get() = "DummyValidationError InvalidUsername"
+                            override val key: String get() = "DummyKey"
+                        })
+                    ).left(),
+                    ResponseEntity(
+                        """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
+                        HttpStatus.valueOf(404)
+                    ),
+                )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     val actual = profileController(
@@ -290,34 +304,7 @@ class ProfileControllerTest {
                 }
             }
         }
-
-        @Test
-        fun `プロフィールをアンフォロー時、UseCase がバリデーションエラーを返す場合、404 を返す`() {
-            val notImplementedValidationError = object : MyError.ValidationError {
-                override val message: String get() = "DummyValidationError InvalidUsername"
-                override val key: String get() = "DummyKey"
-            }
-            val unfollowProfileReturnInvalidUsernameError = object : UnfollowProfileUseCase {
-                override fun execute(
-                    username: String?,
-                    currentUser: RegisteredUser
-                ): Either<UnfollowProfileUseCase.Error, OtherUser> =
-                    UnfollowProfileUseCase.Error.InvalidUsername(listOf(notImplementedValidationError)).left()
-            }
-            val actual =
-                profileController(
-                    authorizedMyAuth,
-                    notImplementedShowProfileUseCase,
-                    notImplementedFollowProfileUseCase,
-                    unfollowProfileReturnInvalidUsernameError
-                ).unfollow(requestHeader, pathParam)
-            val expected = ResponseEntity(
-                """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
-                HttpStatus.valueOf(404)
-            )
-            assertThat(actual).isEqualTo(expected)
-        }
-
+        
         @Test
         fun `プロフィールをアンフォロー時、UseCase が NotFound を返す場合、404 レスポンスを返す`() {
             val notImplementedError = object : MyError {}
