@@ -17,10 +17,14 @@ import com.example.realworldkotlinspringbootjdbc.usecase.UnfollowProfileUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
+import org.junit.jupiter.api.DynamicNode
+import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import java.util.stream.Stream
 
 class ProfileControllerTest {
     @Nested
@@ -52,33 +56,51 @@ class ProfileControllerTest {
             }
         }
 
-        @Test
-        fun `プロフィール取得時、 UseCase が「 OtherUser 」を返す場合、 200 レスポンスを返す`() {
-            val mockOtherUser = OtherUser.newWithoutValidation(
-                UserId(1),
-                Username.newWithoutValidation("hoge-username"),
-                Bio.newWithoutValidation("hoge-bio"),
-                Image.newWithoutValidation("hoge-image"),
-                true,
-            )
-            val showProfileReturnProfile = object : ShowProfileUseCase {
-                override fun execute(
-                    username: String?,
-                    currentUser: Option<RegisteredUser>
-                ): Either<ShowProfileUseCase.Error, OtherUser> =
-                    mockOtherUser.right()
+        data class TestCase(
+            val title: String,
+            val useCaseExecuteResult: Either<ShowProfileUseCase.Error, OtherUser>,
+            val expected: ResponseEntity<String>,
+        )
+
+        @TestFactory
+        fun showProfileTest(): Stream<DynamicNode> {
+            return Stream.of(
+                TestCase(
+                    "UseCase:成功（OtherUser）を返す場合、200 レスポンスを返す",
+                    OtherUser.newWithoutValidation(
+                        UserId(1),
+                        Username.newWithoutValidation("hoge-username"),
+                        Bio.newWithoutValidation("hoge-bio"),
+                        Image.newWithoutValidation("hoge-image"),
+                        true,
+                    ).right(),
+                    ResponseEntity<String>(
+                        """{"profile":{"username":"hoge-username","bio":"hoge-bio","image":"hoge-image","following":true}}""",
+                        HttpStatus.valueOf(200),
+                    ),
+                )
+            ).map { testCase ->
+                dynamicTest(testCase.title) {
+                    val actual = profileController(
+                        object : MyAuth {
+                            override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
+                                return dummyRegisteredUser.right()
+                            }
+                        },
+                        object : ShowProfileUseCase {
+                            override fun execute(
+                                username: String?,
+                                currentUser: Option<RegisteredUser>
+                            ): Either<ShowProfileUseCase.Error, OtherUser> =
+                                testCase.useCaseExecuteResult
+                        },
+                        object : FollowProfileUseCase {},
+                        object : UnfollowProfileUseCase {}
+                    ).showProfile(rawAuthorizationHeader = "hoge-authorize", username = "hoge-username")
+
+                    assertThat(actual).isEqualTo(testCase.expected)
+                }
             }
-            val actual = profileController(
-                authorizedMyAuth,
-                showProfileReturnProfile,
-                notImplementedFollowProfileUseCase,
-                notImplementedUnfollowProfileUseCase,
-            ).showProfile(requestHeader, pathParam)
-            val expected = ResponseEntity(
-                """{"profile":{"username":"hoge-username","bio":"hoge-bio","image":"hoge-image","following":true}}""",
-                HttpStatus.valueOf(200)
-            )
-            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
