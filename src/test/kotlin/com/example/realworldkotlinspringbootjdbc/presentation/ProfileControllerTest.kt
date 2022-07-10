@@ -150,38 +150,51 @@ class ProfileControllerTest {
             }
         }
 
-        @Test
-        fun `プロフィールをフォロー時、 UseCase が「 OtherUser 」を返す場合、200 レスポンスを返す`() {
-            val returnOtherUser = OtherUser.newWithoutValidation(
-                UserId(1),
-                Username.newWithoutValidation("hoge-username"),
-                Bio.newWithoutValidation("hoge-bio"),
-                Image.newWithoutValidation("hoge-image"),
-                following = true,
-            )
-            val followProfileUseCase = object : FollowProfileUseCase {
-                override fun execute(
-                    username: String?,
-                    currentUser: RegisteredUser
-                ): Either<FollowProfileUseCase.Error, OtherUser> {
-                    return returnOtherUser.right()
+        data class TestCase(
+            val title: String,
+            val useCaseExecuteResult: Either<FollowProfileUseCase.Error, OtherUser>,
+            val expected: ResponseEntity<String>,
+        )
+
+        @TestFactory
+        fun followTest(): Stream<DynamicNode> {
+            return Stream.of(
+                TestCase(
+                    "UseCase:成功（OtherUser）を返す場合、200 レスポンスを返す",
+                    OtherUser.newWithoutValidation(
+                        UserId(1),
+                        Username.newWithoutValidation("hoge-username"),
+                        Bio.newWithoutValidation("hoge-bio"),
+                        Image.newWithoutValidation("hoge-image"),
+                        true,
+                    ).right(),
+                    ResponseEntity<String>(
+                        """{"profile":{"username":"hoge-username","bio":"hoge-bio","image":"hoge-image","following":true}}""",
+                        HttpStatus.valueOf(200)
+                    )
+                )
+            ).map { testCase ->
+                dynamicTest(testCase.title) {
+                    val actual = profileController(
+                        object : MyAuth {
+                            override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
+                                return dummyRegisteredUser.right()
+                            }
+                        },
+                        object : ShowProfileUseCase {},
+                        object : FollowProfileUseCase {
+                            override fun execute(
+                                username: String?,
+                                currentUser: RegisteredUser
+                            ): Either<FollowProfileUseCase.Error, OtherUser> =
+                                testCase.useCaseExecuteResult
+                        },
+                        object : UnfollowProfileUseCase {}
+                    ).follow(rawAuthorizationHeader = "hoge-authorize", username = "hoge-username")
+
+                    assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-            val actual =
-                profileController(
-                    authorizedMyAuth,
-                    notImplementedShowProfileUseCase,
-                    followProfileUseCase,
-                    notImplementedUnfollowProfileUseCase,
-                ).follow(
-                    requestHeader,
-                    pathParam
-                )
-            val expected = ResponseEntity(
-                """{"profile":{"username":"hoge-username","bio":"hoge-bio","image":"hoge-image","following":true}}""",
-                HttpStatus.valueOf(200)
-            )
-            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
