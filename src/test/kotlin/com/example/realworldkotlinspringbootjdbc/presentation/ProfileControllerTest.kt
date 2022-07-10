@@ -29,8 +29,6 @@ import java.util.stream.Stream
 class ProfileControllerTest {
     @Nested
     class ShowProfile {
-        private val requestHeader = "hoge-authorize"
-        private val pathParam = "hoge-username"
         val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
             UserId(1),
             Email.newWithoutValidation("dummy@example.com"),
@@ -39,9 +37,6 @@ class ProfileControllerTest {
             Image.newWithoutValidation("dummy-image"),
         )
 
-        private val notImplementedFollowProfileUseCase = object : FollowProfileUseCase {}
-        private val notImplementedUnfollowProfileUseCase = object : UnfollowProfileUseCase {}
-
         private fun profileController(
             myAuth: MyAuth,
             showProfileUseCase: ShowProfileUseCase,
@@ -49,12 +44,6 @@ class ProfileControllerTest {
             unfollowProfileUseCase: UnfollowProfileUseCase,
         ): ProfileController =
             ProfileController(myAuth, showProfileUseCase, followProfileUseCase, unfollowProfileUseCase)
-
-        private val authorizedMyAuth = object : MyAuth {
-            override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
-                return dummyRegisteredUser.right()
-            }
-        }
 
         data class TestCase(
             val title: String,
