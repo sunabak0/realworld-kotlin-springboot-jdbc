@@ -33,7 +33,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.comment.Body as CommentB
 class CommentControllerTest {
     @Nested
     class ListComment {
-        val pathParam = "hoge-slug"
+        private val pathParam = "hoge-slug"
         private fun commentController(
             myAuth: MyAuth,
             commentsUseCase: ListCommentUseCase,
