@@ -20,7 +20,6 @@ import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -219,8 +218,6 @@ class ProfileControllerTest {
 
     @Nested
     class Unfollow() {
-        private val requestHeader = "hoge-authorize"
-        private val pathParam = "hoge-username"
         val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
             UserId(1),
             Email.newWithoutValidation("dummy@example.com"),
@@ -228,8 +225,6 @@ class ProfileControllerTest {
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
         )
-        private val notImplementedShowProfileUseCase = object : ShowProfileUseCase {}
-        private val notImplementedFollowProfileUseCase = object : FollowProfileUseCase {}
 
         private fun profileController(
             myAuth: MyAuth,
@@ -238,12 +233,6 @@ class ProfileControllerTest {
             unfollowProfileUseCase: UnfollowProfileUseCase
         ): ProfileController =
             ProfileController(myAuth, showProfileUseCase, followProfileUseCase, unfollowProfileUseCase)
-
-        private val authorizedMyAuth = object : MyAuth {
-            override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
-                return dummyRegisteredUser.right()
-            }
-        }
 
         data class TestCase(
             val title: String,
@@ -288,6 +277,14 @@ class ProfileControllerTest {
                         """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
                         HttpStatus.valueOf(404)
                     ),
+                ),
+                TestCase(
+                    "UseCase:失敗（Unexpected）を返す場合、500 レスポンスを返す",
+                    UnfollowProfileUseCase.Error.Unexpected(object : MyError {}).left(),
+                    ResponseEntity(
+                        """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
+                        HttpStatus.valueOf(500)
+                    )
                 )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
@@ -311,29 +308,6 @@ class ProfileControllerTest {
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-        }
-
-        @Test
-        fun `プロフィールをアンフォロー時、UseCase が原因不明のエラーを返す場合、500 レスポンスを返す`() {
-            val notImplementedError = object : MyError {}
-            val unfollowProfileUnexpectedError = object : UnfollowProfileUseCase {
-                override fun execute(
-                    username: String?,
-                    currentUser: RegisteredUser
-                ): Either<UnfollowProfileUseCase.Error, OtherUser> =
-                    UnfollowProfileUseCase.Error.Unexpected(notImplementedError).left()
-            }
-            val actual = profileController(
-                authorizedMyAuth,
-                notImplementedShowProfileUseCase,
-                notImplementedFollowProfileUseCase,
-                unfollowProfileUnexpectedError
-            ).unfollow(requestHeader, pathParam)
-            val expected = ResponseEntity(
-                """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
-                HttpStatus.valueOf(500)
-            )
-            assertThat(actual).isEqualTo(expected)
         }
     }
 }
