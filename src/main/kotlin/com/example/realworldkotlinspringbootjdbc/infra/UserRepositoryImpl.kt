@@ -8,6 +8,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.UnregisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UpdatableRegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UserRepository
 import com.example.realworldkotlinspringbootjdbc.domain.UserRepository.FindByEmailWithPasswordError
+import com.example.realworldkotlinspringbootjdbc.domain.UserRepository.FindByUserIdError
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
@@ -177,14 +178,53 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
     }
 
     override fun findByUserId(id: UserId): Either<UserRepository.FindByUserIdError, RegisteredUser> {
-        val registeredUser = RegisteredUser.newWithoutValidation(
-            id,
-            Email.newWithoutValidation("dummy@example.com"),
-            Username.newWithoutValidation("dummy-username"),
-            Bio.newWithoutValidation(""),
-            Image.newWithoutValidation("")
-        )
-        return registeredUser.right()
+        val sql = """
+            SELECT
+                users.id
+                , users.email
+                , users.username
+                , users.password
+                , profiles.bio
+                , profiles.image
+            FROM
+                users
+            JOIN
+                profiles
+            ON
+                profiles.user_id = users.id
+                AND users.id = :user_id
+            ;
+        """.trimIndent()
+        val sqlParams = MapSqlParameterSource().addValue("user_id", id.value)
+        val users = try {
+            namedParameterJdbcTemplate.queryForList(sql, sqlParams)
+        } catch (e: Throwable) {
+            return FindByUserIdError.Unexpected(e, id).left()
+        }
+
+        return when {
+            /**
+             * エラー: ユーザーが見つからなかった
+             */
+            users.isEmpty() -> FindByUserIdError.NotFound(id).left()
+            /**
+             * ユーザーが見つかった
+             */
+            else -> {
+                val userRecord = users.first()
+                try {
+                    RegisteredUser.newWithoutValidation(
+                        UserId(userRecord["id"].toString().toInt()),
+                        Email.newWithoutValidation(userRecord["email"].toString()),
+                        Username.newWithoutValidation(userRecord["username"].toString()),
+                        Bio.newWithoutValidation(userRecord["bio"].toString()),
+                        Image.newWithoutValidation(userRecord["image"].toString()),
+                    ).right()
+                } catch (e: Throwable) {
+                    FindByUserIdError.Unexpected(e, id).left()
+                }
+            }
+        }
     }
 
     override fun update(user: UpdatableRegisteredUser): Either<UserRepository.UpdateError, RegisteredUser> {
