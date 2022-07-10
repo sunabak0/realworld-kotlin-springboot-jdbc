@@ -231,10 +231,10 @@ class ProfileControllerTest {
         private val notImplementedFollowProfileUseCase = object : FollowProfileUseCase {}
 
         private fun profileController(
+            myAuth: MyAuth,
             showProfileUseCase: ShowProfileUseCase,
             followProfileUseCase: FollowProfileUseCase,
-            unfollowProfileUseCase: UnfollowProfileUseCase,
-            myAuth: MyAuth
+            unfollowProfileUseCase: UnfollowProfileUseCase
         ): ProfileController =
             ProfileController(myAuth, showProfileUseCase, followProfileUseCase, unfollowProfileUseCase)
 
@@ -244,38 +244,51 @@ class ProfileControllerTest {
             }
         }
 
-        @Test
-        fun `プロフィールをアンフォロー時、UseCae が「 OtherUser 」を返す場合、200レスポンスを返す`() {
-            val returnOtherUser = OtherUser.newWithoutValidation(
-                UserId(1),
-                Username.newWithoutValidation("hoge-username"),
-                Bio.newWithoutValidation("hoge-bio"),
-                Image.newWithoutValidation("hoge-image"),
-                false,
-            )
-            val unfollowUseCase = object : UnfollowProfileUseCase {
-                override fun execute(
-                    username: String?,
-                    currentUser: RegisteredUser
-                ): Either<UnfollowProfileUseCase.Error, OtherUser> {
-                    return returnOtherUser.right()
+        data class TestCase(
+            val title: String,
+            val useCaseExecuteResult: Either<UnfollowProfileUseCase.Error, OtherUser>,
+            val expected: ResponseEntity<String>,
+        )
+
+        @TestFactory
+        fun unfollowTest(): Stream<DynamicNode> {
+            return Stream.of(
+                TestCase(
+                    "UseCase:成功（OtherUser）を返す場合、200レスポンスを返す",
+                    OtherUser.newWithoutValidation(
+                        UserId(1),
+                        Username.newWithoutValidation("hoge-username"),
+                        Bio.newWithoutValidation("hoge-bio"),
+                        Image.newWithoutValidation("hoge-image"),
+                        false,
+                    ).right(),
+                    ResponseEntity(
+                        """{"profile":{"username":"hoge-username","bio":"hoge-bio","image":"hoge-image","following":false}}""",
+                        HttpStatus.valueOf(200)
+                    )
+                ),
+            ).map { testCase ->
+                dynamicTest(testCase.title) {
+                    val actual = profileController(
+                        object : MyAuth {
+                            override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
+                                return dummyRegisteredUser.right()
+                            }
+                        },
+                        object : ShowProfileUseCase {},
+                        object : FollowProfileUseCase {},
+                        object : UnfollowProfileUseCase {
+                            override fun execute(
+                                username: String?,
+                                currentUser: RegisteredUser
+                            ): Either<UnfollowProfileUseCase.Error, OtherUser> =
+                                testCase.useCaseExecuteResult
+                        }
+                    ).unfollow(rawAuthorizationHeader = "hoge-authorize", username = "hoge-username")
+
+                    assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-            val actual =
-                profileController(
-                    notImplementedShowProfileUseCase,
-                    notImplementedFollowProfileUseCase,
-                    unfollowUseCase,
-                    authorizedMyAuth
-                ).unfollow(
-                    requestHeader,
-                    pathParam
-                )
-            val expected = ResponseEntity(
-                """{"profile":{"username":"hoge-username","bio":"hoge-bio","image":"hoge-image","following":false}}""",
-                HttpStatus.valueOf(200)
-            )
-            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
@@ -293,10 +306,10 @@ class ProfileControllerTest {
             }
             val actual =
                 profileController(
+                    authorizedMyAuth,
                     notImplementedShowProfileUseCase,
                     notImplementedFollowProfileUseCase,
-                    unfollowProfileReturnInvalidUsernameError,
-                    authorizedMyAuth
+                    unfollowProfileReturnInvalidUsernameError
                 ).unfollow(requestHeader, pathParam)
             val expected = ResponseEntity(
                 """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
@@ -316,10 +329,10 @@ class ProfileControllerTest {
                     UnfollowProfileUseCase.Error.NotFound(notImplementedError).left()
             }
             val actual = profileController(
+                authorizedMyAuth,
                 notImplementedShowProfileUseCase,
                 notImplementedFollowProfileUseCase,
-                unfollowProfileReturnNotFoundError,
-                authorizedMyAuth
+                unfollowProfileReturnNotFoundError
             ).unfollow(requestHeader, pathParam)
             val expected = ResponseEntity(
                 """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
@@ -339,10 +352,10 @@ class ProfileControllerTest {
                     UnfollowProfileUseCase.Error.Unexpected(notImplementedError).left()
             }
             val actual = profileController(
+                authorizedMyAuth,
                 notImplementedShowProfileUseCase,
                 notImplementedFollowProfileUseCase,
-                unfollowProfileUnexpectedError,
-                authorizedMyAuth
+                unfollowProfileUnexpectedError
             ).unfollow(requestHeader, pathParam)
             val expected = ResponseEntity(
                 """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
