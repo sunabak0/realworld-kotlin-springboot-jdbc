@@ -172,6 +172,19 @@ class ProfileControllerTest {
                         """{"profile":{"username":"hoge-username","bio":"hoge-bio","image":"hoge-image","following":true}}""",
                         HttpStatus.valueOf(200)
                     )
+                ),
+                TestCase(
+                    "UseCase:失敗（ValidationError）を返す場合、404 レスポンスを返す",
+                    FollowProfileUseCase.Error.InvalidUsername(
+                        listOf(object : MyError.ValidationError {
+                            override val message: String get() = "DummyValidationError InvalidUsername"
+                            override val key: String get() = "DummyKey"
+                        })
+                    ).left(),
+                    ResponseEntity(
+                        """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
+                        HttpStatus.valueOf(404)
+                    )
                 )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
@@ -195,33 +208,6 @@ class ProfileControllerTest {
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-        }
-
-        @Test
-        fun `プロフィールをフォロー時、 UseCase がバリデーションエラーを返す場合、 404 を返す`() {
-            val notImplementedValidationError = object : MyError.ValidationError {
-                override val message: String get() = "DummyValidationError InvalidUsername"
-                override val key: String get() = "DummyKey"
-            }
-            val followProfileReturnInvalidUsernameError = object : FollowProfileUseCase {
-                override fun execute(
-                    username: String?,
-                    currentUser: RegisteredUser
-                ): Either<FollowProfileUseCase.Error, OtherUser> =
-                    FollowProfileUseCase.Error.InvalidUsername(listOf(notImplementedValidationError)).left()
-            }
-            val actual =
-                profileController(
-                    authorizedMyAuth,
-                    notImplementedShowProfileUseCase,
-                    followProfileReturnInvalidUsernameError,
-                    notImplementedUnfollowProfileUseCase,
-                ).follow(requestHeader, pathParam)
-            val expected = ResponseEntity(
-                """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
-                HttpStatus.valueOf(404)
-            )
-            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
