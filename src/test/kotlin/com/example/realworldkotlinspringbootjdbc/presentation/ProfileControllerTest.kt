@@ -80,7 +80,7 @@ class ProfileControllerTest {
                     ),
                 ),
                 TestCase(
-                    "UseCase:失敗（）を返す場合、404 レスポンスを返す",
+                    "UseCase:失敗（ValidationError）を返す場合、404 レスポンスを返す",
                     ShowProfileUseCase.Error.InvalidUsername(listOf(object : MyError.ValidationError {
                         override val message: String get() = "DummyValidationError InvalidUsername"
                         override val key: String get() = "DummyKey"
@@ -89,7 +89,15 @@ class ProfileControllerTest {
                         """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
                         HttpStatus.valueOf(404)
                     ),
-                )
+                ),
+                TestCase(
+                    "UseCase:失敗（ValidationError）を返す場合、404 レスポンスを返す",
+                    ShowProfileUseCase.Error.NotFound(object : MyError {}).left(),
+                    ResponseEntity(
+                        """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
+                        HttpStatus.valueOf(404)
+                    ),
+                ),
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     val actual = profileController(
@@ -112,29 +120,6 @@ class ProfileControllerTest {
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-        }
-
-        @Test
-        fun `プロフィール取得時、 UseCase が NotFound を返す場合、 404 レスポンスを返す`() {
-            val notImplementedError = object : MyError {}
-            val showProfileReturnNotFoundError = object : ShowProfileUseCase {
-                override fun execute(
-                    username: String?,
-                    currentUser: Option<RegisteredUser>
-                ): Either<ShowProfileUseCase.Error, OtherUser> =
-                    ShowProfileUseCase.Error.NotFound(notImplementedError).left()
-            }
-            val actual = profileController(
-                authorizedMyAuth,
-                showProfileReturnNotFoundError,
-                notImplementedFollowProfileUseCase,
-                notImplementedUnfollowProfileUseCase,
-            ).showProfile(requestHeader, pathParam)
-            val expected = ResponseEntity(
-                """{"errors":{"body":["プロフィールが見つかりませんでした"]}}""",
-                HttpStatus.valueOf(404)
-            )
-            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
