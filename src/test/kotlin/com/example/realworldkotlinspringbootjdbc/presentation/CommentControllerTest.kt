@@ -34,10 +34,10 @@ class CommentControllerTest {
     @Nested
     class ListComment {
         private fun commentController(
+            myAuth: MyAuth,
             commentsUseCase: ListCommentUseCase,
             createCommentUseCase: CreateCommentUseCase,
-            deleteCommentUseCase: DeleteCommentUseCase,
-            myAuth: MyAuth
+            deleteCommentUseCase: DeleteCommentUseCase
         ): CommentController =
             CommentController(commentsUseCase, createCommentUseCase, deleteCommentUseCase, myAuth)
 
@@ -112,13 +112,13 @@ class CommentControllerTest {
                 dynamicTest(testCase.title) {
                     val actual =
                         commentController(
+                            object : MyAuth {},
                             object : ListCommentUseCase {
                                 override fun execute(slug: String?): Either<ListCommentUseCase.Error, kotlin.collections.List<Comment>> =
                                     testCase.useCaseExecuteResult
                             },
                             object : CreateCommentUseCase {},
-                            object : DeleteCommentUseCase {},
-                            object : MyAuth {}
+                            object : DeleteCommentUseCase {}
                         ).list(
                             slug = "hoge-slug"
                         )
