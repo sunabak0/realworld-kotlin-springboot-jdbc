@@ -124,8 +124,6 @@ class ProfileControllerTest {
 
     @Nested
     class Follow() {
-        private val requestHeader = "hoge-authorize"
-        private val pathParam = "hoge-username"
         val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
             UserId(1),
             Email.newWithoutValidation("dummy@example.com"),
@@ -133,9 +131,6 @@ class ProfileControllerTest {
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
         )
-        private val notImplementedShowProfileUseCase = object : ShowProfileUseCase {}
-        private val notImplementedUnfollowProfileUseCase = object : UnfollowProfileUseCase {}
-
         private fun profileController(
             myAuth: MyAuth,
             showProfileUseCase: ShowProfileUseCase,
@@ -143,12 +138,6 @@ class ProfileControllerTest {
             unfollowProfileUseCase: UnfollowProfileUseCase,
         ): ProfileController =
             ProfileController(myAuth, showProfileUseCase, followProfileUseCase, unfollowProfileUseCase)
-
-        private val authorizedMyAuth = object : MyAuth {
-            override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
-                return dummyRegisteredUser.right()
-            }
-        }
 
         data class TestCase(
             val title: String,
