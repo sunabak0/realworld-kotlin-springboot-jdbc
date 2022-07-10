@@ -91,6 +91,11 @@ class CommentControllerTest {
                         """{"comments":[{"id":1,"body":"hoge-body-1","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-author-1"},{"id":2,"body":"hoge-body-2","createdAt":"2022-02-01T15:00:00.000Z","updatedAt":"2022-02-01T15:00:00.000Z","author":"hoge-author-2"}]}""",
                         HttpStatus.valueOf(200)
                     )
+                ),
+                TestCase(
+                    "UseCase:失敗（NotFound）を返す場合、404 エラーレスポンスを返す",
+                    ListCommentUseCase.Error.NotFound(object : MyError {}).left(),
+                    ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
                 )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
@@ -109,23 +114,6 @@ class CommentControllerTest {
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-        }
-
-        @Test
-        fun `コメント取得時、UseCase が「NotFound」を返す場合、404 エラーレスポンスを返す`() {
-            val notImplementedError = object : MyError {}
-            val listReturnNotFoundError = object : ListCommentUseCase {
-                override fun execute(slug: String?): Either<ListCommentUseCase.Error, kotlin.collections.List<Comment>> =
-                    ListCommentUseCase.Error.NotFound(notImplementedError).left()
-            }
-            val actual = commentController(
-                listReturnNotFoundError,
-                notImplementedCreateCommentUseCase,
-                notImplementedDeleteCommentUseCase,
-                notImplementedMyAuth
-            ).list(pathParam)
-            val expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404))
-            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
