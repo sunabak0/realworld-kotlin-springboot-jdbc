@@ -109,6 +109,11 @@ class CommentControllerTest {
                         """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError"}]}}""",
                         HttpStatus.valueOf(422)
                     ),
+                ),
+                TestCase(
+                    "UseCase:失敗（Unexpected）を返す場合、500 エラーレスポンスを返す",
+                    ListCommentUseCase.Error.Unexpected(object : MyError {}).left(),
+                    ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500)),
                 )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
