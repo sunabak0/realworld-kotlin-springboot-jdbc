@@ -99,10 +99,12 @@ class CommentControllerTest {
                 ),
                 TestCase(
                     "UseCase:失敗（ValidationError）を返す場合、422 エラーレスポンスを返す",
-                    ListCommentUseCase.Error.InvalidSlug(listOf(object : MyError.ValidationError {
-                        override val message: String get() = "DummyValidationError"
-                        override val key: String get() = "DummyKey"
-                    })).left(),
+                    ListCommentUseCase.Error.InvalidSlug(
+                        listOf(object : MyError.ValidationError {
+                            override val message: String get() = "DummyValidationError"
+                            override val key: String get() = "DummyKey"
+                        })
+                    ).left(),
                     ResponseEntity(
                         """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError"}]}}""",
                         HttpStatus.valueOf(422)
