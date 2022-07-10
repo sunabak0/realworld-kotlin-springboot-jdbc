@@ -33,7 +33,6 @@ import com.example.realworldkotlinspringbootjdbc.domain.comment.Body as CommentB
 class CommentControllerTest {
     @Nested
     class ListComment {
-        private val pathParam = "hoge-slug"
         private fun commentController(
             myAuth: MyAuth,
             commentsUseCase: ListCommentUseCase,
@@ -121,7 +120,7 @@ class CommentControllerTest {
                             object : CreateCommentUseCase {},
                             object : DeleteCommentUseCase {}
                         ).list(
-                            pathParam
+                            slug = "hoge-slug"
                         )
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
