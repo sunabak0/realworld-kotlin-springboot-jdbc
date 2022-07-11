@@ -190,6 +190,19 @@ class CommentControllerTest {
                         """{"Comment":{"id":1,"body":"hoge-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-username"}}""",
                         HttpStatus.valueOf(200)
                     )
+                ),
+                TestCase(
+                    "UseCase:失敗（Slug が不正によるValidationError）を返す場合、422 エラーレスポンスを返す",
+                    CreateCommentUseCase.Error.InvalidSlug(listOf(
+                        object : MyError.ValidationError {
+                            override val message: String get() = "DummyValidationError because Invalid Slug"
+                            override val key: String get() = "DummyKey"
+                        }
+                    )).left(),
+                    ResponseEntity(
+                        """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid Slug"}]}}""",
+                        HttpStatus.valueOf(422)
+                    )
                 )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
@@ -214,30 +227,6 @@ class CommentControllerTest {
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-        }
-
-        @Test
-        fun `コメント作成時、Slug が不正であることに起因する「バリデーションエラー」のとき、422 エラーレスポンスを返す`() {
-            val notImplementedValidationError = object : MyError.ValidationError {
-                override val message: String get() = "DummyValidationError because Invalid Slug"
-                override val key: String get() = "DummyKey"
-            }
-            val createReturnValidationError = object : CreateCommentUseCase {
-                override fun execute(slug: String?, body: String?): Either<CreateCommentUseCase.Error, Comment> {
-                    return CreateCommentUseCase.Error.InvalidSlug(listOf(notImplementedValidationError)).left()
-                }
-            }
-            val actual = commentController(
-                authorizedMyAuth,
-                notImplementedListCommentUseCase,
-                createReturnValidationError,
-                notImplementedDeleteCommentUseCase
-            ).create(requestHeader, pathParam, requestBody)
-            val expected = ResponseEntity(
-                """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid Slug"}]}}""",
-                HttpStatus.valueOf(422)
-            )
-            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
