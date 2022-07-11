@@ -203,6 +203,17 @@ class CommentControllerTest {
                         """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid Slug"}]}}""",
                         HttpStatus.valueOf(422)
                     )
+                ),
+                TestCase(
+                    "コメント作成時、CommentBody が不正であることに起因する「バリデーションエラー」のとき、422 エラーレスポンスを返す",
+                    CreateCommentUseCase.Error.InvalidCommentBody(listOf(object : MyError.ValidationError {
+                        override val message: String get() = "DummyValidationError because invalid CommentBody"
+                        override val key: String get() = "DummyKey"
+                    })).left(),
+                    ResponseEntity(
+                        """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because invalid CommentBody"}]}}""",
+                        HttpStatus.valueOf(422)
+                    )
                 )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
@@ -250,24 +261,6 @@ class CommentControllerTest {
                 """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because invalid CommentBody"}]}}""",
                 HttpStatus.valueOf(422)
             )
-            assertThat(actual).isEqualTo(expected)
-        }
-
-        @Test
-        fun `コメント作成時、Slug に該当する Article が見つからなかったことに起因する「Not Found」エラーのとき、404 エラーレスポンスを返す`() {
-            val notImplementedError = object : MyError {}
-            val createReturnNotFoundError = object : CreateCommentUseCase {
-                override fun execute(slug: String?, body: String?): Either<CreateCommentUseCase.Error, Comment> {
-                    return CreateCommentUseCase.Error.NotFound(notImplementedError).left()
-                }
-            }
-            val actual = commentController(
-                authorizedMyAuth,
-                notImplementedListCommentUseCase,
-                createReturnNotFoundError,
-                notImplementedDeleteCommentUseCase
-            ).create(requestHeader, pathParam, requestBody)
-            val expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404))
             assertThat(actual).isEqualTo(expected)
         }
 
