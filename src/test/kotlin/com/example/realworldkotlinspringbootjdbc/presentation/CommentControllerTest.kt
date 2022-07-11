@@ -296,6 +296,17 @@ class CommentControllerTest {
                         HttpStatus.valueOf(422)
                     ),
                 ),
+                TestCase(
+                    "UseCase:失敗（CommentId が不正のため ValidationError）を返す場合、422 エラーレスポンスを返す",
+                    DeleteCommentUseCase.Error.InvalidCommentId(listOf(object : MyError.ValidationError {
+                        override val message: String get() = "DummyValidationError because Invalid CommentId"
+                        override val key: String get() = "DummyKey"
+                    })).left(),
+                    ResponseEntity(
+                        """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid CommentId"}]}}""",
+                        HttpStatus.valueOf(422)
+                    ),
+                ),
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     val actual =
@@ -319,30 +330,6 @@ class CommentControllerTest {
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-        }
-
-        @Test
-        fun `コメント削除時、CommentId が不正であることに起因する「バリデーションエラー」のとき、422 エラーレスポンスを返す`() {
-            val notImplementedValidationError = object : MyError.ValidationError {
-                override val message: String get() = "DummyValidationError because Invalid CommentId"
-                override val key: String get() = "DummyKey"
-            }
-            val deleteReturnValidationError = object : DeleteCommentUseCase {
-                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentUseCase.Error, Unit> {
-                    return DeleteCommentUseCase.Error.InvalidCommentId(listOf(notImplementedValidationError)).left()
-                }
-            }
-            val actual = commentController(
-                authorizedMyAuth,
-                notImplementedListCommentUseCase,
-                notImplementedCreateCommentUseCase,
-                deleteReturnValidationError
-            ).delete(requestHeader, pathParamSlug, pathParamCommentId)
-            val expected = ResponseEntity(
-                """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid CommentId"}]}}""",
-                HttpStatus.valueOf(422)
-            )
-            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
