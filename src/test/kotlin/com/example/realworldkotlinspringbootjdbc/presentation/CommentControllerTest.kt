@@ -314,7 +314,15 @@ class CommentControllerTest {
                         Slug.newWithoutValidation(pathParamSlug)
                     ).left(),
                     ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
-                )
+                ),
+                TestCase(
+                    "UseCase:失敗（commentId に該当する記事が見つからなかったため NotFound）を返す場合、404 エラーレスポンスを返す",
+                    DeleteCommentUseCase.Error.CommentsNotFoundByCommentId(
+                        object : MyError {},
+                        CommentId.newWithoutValidation(pathParamCommentId.toInt())
+                    ).left(),
+                    ResponseEntity("""{"errors":{"body":["コメントが見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
+                ),
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     val actual =
@@ -338,36 +346,6 @@ class CommentControllerTest {
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-        }
-
-        @Test
-        fun `コメント削除時、UseCase が CommentId に該当するコメントが見つからなかったことに起因する「NotFound」エラーのとき、404 エラーレスポンスを返す`() {
-            val notImplementedError = object : MyError {}
-
-            /**
-             * FIXME
-             *   - DeleteCommentUseCaseの実装をもっと良い名前にする
-             *   問題
-             *   - GitHub Actionsで〇〇ReturnCommentNotFoundErrorという変数(object)を用意しようとすると、Permission deniedで落ちる
-             *   問題に対して行った対応
-             *   - 変数名を変える
-             */
-            val notFoundError = object : DeleteCommentUseCase {
-                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentUseCase.Error, Unit> {
-                    return DeleteCommentUseCase.Error.CommentsNotFoundByCommentId(
-                        notImplementedError,
-                        CommentId.newWithoutValidation(pathParamCommentId.toInt())
-                    ).left()
-                }
-            }
-            val actual = commentController(
-                authorizedMyAuth,
-                notImplementedListCommentUseCase,
-                notImplementedCreateCommentUseCase,
-                notFoundError
-            ).delete(requestHeader, pathParamSlug, pathParamCommentId)
-            val expected = ResponseEntity("""{"errors":{"body":["コメントが見つかりませんでした"]}}""", HttpStatus.valueOf(404))
-            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
