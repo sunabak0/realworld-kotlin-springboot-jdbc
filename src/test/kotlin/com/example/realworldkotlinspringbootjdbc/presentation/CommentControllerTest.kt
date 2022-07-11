@@ -284,7 +284,18 @@ class CommentControllerTest {
                     "UseCase:成功（Unit）を返す場合、200 レスポンスを返す",
                     Unit.right(),
                     ResponseEntity("", HttpStatus.valueOf(200))
-                )
+                ),
+                TestCase(
+                    "UseCase:失敗（Slug が不正のためValidationError）を返す場合、422 エラーレスポンスを返す",
+                    DeleteCommentUseCase.Error.InvalidSlug(listOf(object : MyError.ValidationError {
+                        override val message: String get() = "DummyValidationError because Invalid Slug"
+                        override val key: String get() = "DummyKey"
+                    })).left(),
+                    ResponseEntity(
+                        """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid Slug"}]}}""",
+                        HttpStatus.valueOf(422)
+                    ),
+                ),
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     val actual =
@@ -308,30 +319,6 @@ class CommentControllerTest {
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-        }
-
-        @Test
-        fun `コメント削除時、Slug が不正であることに起因する「バリデーションエラー」のとき、422 エラーレスポンスを返す`() {
-            val notImplementedValidationError = object : MyError.ValidationError {
-                override val message: String get() = "DummyValidationError because Invalid Slug"
-                override val key: String get() = "DummyKey"
-            }
-            val deleteReturnValidationError = object : DeleteCommentUseCase {
-                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentUseCase.Error, Unit> {
-                    return DeleteCommentUseCase.Error.InvalidSlug(listOf(notImplementedValidationError)).left()
-                }
-            }
-            val actual = commentController(
-                authorizedMyAuth,
-                notImplementedListCommentUseCase,
-                notImplementedCreateCommentUseCase,
-                deleteReturnValidationError
-            ).delete(requestHeader, pathParamSlug, pathParamCommentId)
-            val expected = ResponseEntity(
-                """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid Slug"}]}}""",
-                HttpStatus.valueOf(422)
-            )
-            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
