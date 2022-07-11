@@ -278,10 +278,12 @@ class CommentControllerTest {
                 ),
                 TestCase(
                     "UseCase:失敗（Slug が不正のためValidationError）を返す場合、422 エラーレスポンスを返す",
-                    DeleteCommentUseCase.Error.InvalidSlug(listOf(object : MyError.ValidationError {
-                        override val message: String get() = "DummyValidationError because Invalid Slug"
-                        override val key: String get() = "DummyKey"
-                    })).left(),
+                    DeleteCommentUseCase.Error.InvalidSlug(
+                        listOf(object : MyError.ValidationError {
+                            override val message: String get() = "DummyValidationError because Invalid Slug"
+                            override val key: String get() = "DummyKey"
+                        })
+                    ).left(),
                     ResponseEntity(
                         """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid Slug"}]}}""",
                         HttpStatus.valueOf(422)
@@ -289,10 +291,12 @@ class CommentControllerTest {
                 ),
                 TestCase(
                     "UseCase:失敗（CommentId が不正のため ValidationError）を返す場合、422 エラーレスポンスを返す",
-                    DeleteCommentUseCase.Error.InvalidCommentId(listOf(object : MyError.ValidationError {
-                        override val message: String get() = "DummyValidationError because Invalid CommentId"
-                        override val key: String get() = "DummyKey"
-                    })).left(),
+                    DeleteCommentUseCase.Error.InvalidCommentId(
+                        listOf(object : MyError.ValidationError {
+                            override val message: String get() = "DummyValidationError because Invalid CommentId"
+                            override val key: String get() = "DummyKey"
+                        })
+                    ).left(),
                     ResponseEntity(
                         """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid CommentId"}]}}""",
                         HttpStatus.valueOf(422)
