@@ -207,20 +207,7 @@ class CommentControllerTest {
                     )
                 ),
                 TestCase(
-                    "コメント作成時、CommentBody が不正であることに起因する「バリデーションエラー」のとき、422 エラーレスポンスを返す",
-                    CreateCommentUseCase.Error.InvalidCommentBody(
-                        listOf(object : MyError.ValidationError {
-                            override val message: String get() = "DummyValidationError because invalid CommentBody"
-                            override val key: String get() = "DummyKey"
-                        })
-                    ).left(),
-                    ResponseEntity(
-                        """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because invalid CommentBody"}]}}""",
-                        HttpStatus.valueOf(422)
-                    )
-                ),
-                TestCase(
-                    "コメント作成時、CommentBody が不正であることに起因する「バリデーションエラー」のとき、422 エラーレスポンスを返す",
+                    "UseCase:失敗（CommentBody が不正による ValidationError）を返す場合、422 エラーレスポンスを返す",
                     CreateCommentUseCase.Error.InvalidCommentBody(
                         listOf(object : MyError.ValidationError {
                             override val message: String get() = "DummyValidationError because invalid CommentBody"
@@ -231,6 +218,11 @@ class CommentControllerTest {
                         """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because invalid CommentBody"}]}}""",
                         HttpStatus.valueOf(422)
                     ),
+                ),
+                TestCase(
+                    "UseCase:失敗（Unexpected）を返す場合、500 エラーレスポンスを返す",
+                    CreateCommentUseCase.Error.Unexpected(object : MyError {}).left(),
+                    ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500)),
                 )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
@@ -255,24 +247,6 @@ class CommentControllerTest {
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-        }
-
-        @Test
-        fun `コメント作成時、UseCase が原因不明のエラーを返す場合、500 エラーレスポンスを返す`() {
-            val notImplementedError = object : MyError {}
-            val createReturnUnexpectedError = object : CreateCommentUseCase {
-                override fun execute(slug: String?, body: String?): Either<CreateCommentUseCase.Error, Comment> {
-                    return CreateCommentUseCase.Error.Unexpected(notImplementedError).left()
-                }
-            }
-            val actual = commentController(
-                authorizedMyAuth,
-                notImplementedListCommentUseCase,
-                createReturnUnexpectedError,
-                notImplementedDeleteCommentUseCase,
-            ).create(requestHeader, pathParam, requestBody)
-            val expected = ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500))
-            assertThat(actual).isEqualTo(expected)
         }
     }
 
