@@ -149,10 +149,10 @@ class CommentControllerTest {
         private val notImplementedListCommentUseCase = object : ListCommentUseCase {}
         private val notImplementedDeleteCommentUseCase = object : DeleteCommentUseCase {}
         private fun commentController(
+            myAuth: MyAuth,
             listCommentUseCase: ListCommentUseCase,
             createCommentUseCase: CreateCommentUseCase,
-            deleteCommentUseCase: DeleteCommentUseCase,
-            myAuth: MyAuth
+            deleteCommentUseCase: DeleteCommentUseCase
         ): CommentController =
             CommentController(listCommentUseCase, createCommentUseCase, deleteCommentUseCase, myAuth)
 
@@ -162,38 +162,58 @@ class CommentControllerTest {
             }
         }
 
-        @Test
-        fun `コメント作成時、UseCase がコメント作成したコメントを返す場合、200 レスポンスを返す`() {
-            val returnComment = Comment.newWithoutValidation(
-                CommentId.newWithoutValidation(1),
-                CommentBody.newWithoutValidation("hoge-body"),
-                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                OtherUser.newWithoutValidation(
-                    UserId(1),
-                    Username.newWithoutValidation("hoge-username"),
-                    Bio.newWithoutValidation(""),
-                    Image.newWithoutValidation(""),
-                    true,
+        data class TestCase(
+            val title: String,
+            val useCaseExecuteResult: Either<CreateCommentUseCase.Error, Comment>,
+            val expected: ResponseEntity<String>,
+        )
+
+        @TestFactory
+        fun createTest(): Stream<DynamicNode> {
+            return Stream.of(
+                TestCase(
+                    "UseCase:成功（作成したComment）を返す場合、200 レスポンスを返す",
+                    Comment.newWithoutValidation(
+                        CommentId.newWithoutValidation(1),
+                        CommentBody.newWithoutValidation("hoge-body"),
+                        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                        OtherUser.newWithoutValidation(
+                            UserId(1),
+                            Username.newWithoutValidation("hoge-username"),
+                            Bio.newWithoutValidation(""),
+                            Image.newWithoutValidation(""),
+                            true,
+                        )
+                    ).right(),
+                    ResponseEntity(
+                        """{"Comment":{"id":1,"body":"hoge-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-username"}}""",
+                        HttpStatus.valueOf(200)
+                    )
                 )
-            )
-            val createCommentUseCase = object : CreateCommentUseCase {
-                override fun execute(slug: String?, body: String?): Either<CreateCommentUseCase.Error, Comment> {
-                    return returnComment.right()
+            ).map { testCase ->
+                dynamicTest(testCase.title) {
+                    val actual =
+                        commentController(
+                            object : MyAuth {
+                                override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
+                                    return dummyRegisteredUser.right()
+                                }
+                            },
+                            object : ListCommentUseCase {},
+                            object : CreateCommentUseCase {
+                                override fun execute(
+                                    slug: String?,
+                                    body: String?
+                                ): Either<CreateCommentUseCase.Error, Comment> {
+                                    return testCase.useCaseExecuteResult
+                                }
+                            },
+                            object : DeleteCommentUseCase {}
+                        ).create(pathParam, pathParam, requestBody)
+                    assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-            val actual =
-                commentController(
-                    notImplementedListCommentUseCase,
-                    createCommentUseCase,
-                    notImplementedDeleteCommentUseCase,
-                    authorizedMyAuth
-                ).create(pathParam, pathParam, requestBody)
-            val expected = ResponseEntity(
-                """{"Comment":{"id":1,"body":"hoge-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-username"}}""",
-                HttpStatus.valueOf(200)
-            )
-            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
@@ -208,10 +228,10 @@ class CommentControllerTest {
                 }
             }
             val actual = commentController(
+                authorizedMyAuth,
                 notImplementedListCommentUseCase,
                 createReturnValidationError,
-                notImplementedDeleteCommentUseCase,
-                authorizedMyAuth
+                notImplementedDeleteCommentUseCase
             ).create(requestHeader, pathParam, requestBody)
             val expected = ResponseEntity(
                 """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid Slug"}]}}""",
@@ -232,10 +252,10 @@ class CommentControllerTest {
                 }
             }
             val actual = commentController(
+                authorizedMyAuth,
                 notImplementedListCommentUseCase,
                 createReturnValidationError,
-                notImplementedDeleteCommentUseCase,
-                authorizedMyAuth
+                notImplementedDeleteCommentUseCase
             ).create(requestHeader, pathParam, requestBody)
             val expected = ResponseEntity(
                 """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because invalid CommentBody"}]}}""",
@@ -253,10 +273,10 @@ class CommentControllerTest {
                 }
             }
             val actual = commentController(
+                authorizedMyAuth,
                 notImplementedListCommentUseCase,
                 createReturnNotFoundError,
-                notImplementedDeleteCommentUseCase,
-                authorizedMyAuth
+                notImplementedDeleteCommentUseCase
             ).create(requestHeader, pathParam, requestBody)
             val expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404))
             assertThat(actual).isEqualTo(expected)
@@ -271,10 +291,10 @@ class CommentControllerTest {
                 }
             }
             val actual = commentController(
+                authorizedMyAuth,
                 notImplementedListCommentUseCase,
                 createReturnUnexpectedError,
                 notImplementedDeleteCommentUseCase,
-                authorizedMyAuth,
             ).create(requestHeader, pathParam, requestBody)
             val expected = ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500))
             assertThat(actual).isEqualTo(expected)
