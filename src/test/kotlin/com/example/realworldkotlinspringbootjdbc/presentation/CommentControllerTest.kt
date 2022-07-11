@@ -254,8 +254,6 @@ class CommentControllerTest {
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
         )
-        private val notImplementedListCommentUseCase = object : ListCommentUseCase {}
-        private val notImplementedCreateCommentUseCase = object : CreateCommentUseCase {}
         private fun commentController(
             myAuth: MyAuth,
             listCommentUseCase: ListCommentUseCase,
@@ -263,12 +261,6 @@ class CommentControllerTest {
             deleteCommentUseCase: DeleteCommentUseCase
         ): CommentController =
             CommentController(listCommentUseCase, createCommentUseCase, deleteCommentUseCase, myAuth)
-
-        private val authorizedMyAuth = object : MyAuth {
-            override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
-                return dummyRegisteredUser.right()
-            }
-        }
 
         data class TestCase(
             val title: String,
