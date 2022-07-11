@@ -22,7 +22,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -323,6 +322,11 @@ class CommentControllerTest {
                     ).left(),
                     ResponseEntity("""{"errors":{"body":["コメントが見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
                 ),
+                TestCase(
+                    "UseCase:失敗（Undefined）を返す場合、500 エラーレスポンスを返す",
+                    DeleteCommentUseCase.Error.Unexpected(object : MyError {}).left(),
+                    ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500)),
+                )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     val actual =
@@ -346,24 +350,6 @@ class CommentControllerTest {
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-        }
-
-        @Test
-        fun `コメント削除時、UseCase が原因不明のエラーを返す場合、500 エラーレスポンスを返す`() {
-            val notImplementedError = object : MyError {}
-            val deleteReturnUnexpectedError = object : DeleteCommentUseCase {
-                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentUseCase.Error, Unit> {
-                    return DeleteCommentUseCase.Error.Unexpected(notImplementedError).left()
-                }
-            }
-            val actual = commentController(
-                authorizedMyAuth,
-                notImplementedListCommentUseCase,
-                notImplementedCreateCommentUseCase,
-                deleteReturnUnexpectedError,
-            ).delete(requestHeader, pathParamSlug, pathParamCommentId)
-            val expected = ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500))
-            assertThat(actual).isEqualTo(expected)
         }
     }
 }
