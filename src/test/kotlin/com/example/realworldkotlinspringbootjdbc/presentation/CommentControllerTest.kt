@@ -307,6 +307,14 @@ class CommentControllerTest {
                         HttpStatus.valueOf(422)
                     ),
                 ),
+                TestCase(
+                    "UseCase:失敗（slugに該当する記事が見つからなかったため NotFound）を返す場合、404 エラーレスポンスを返す",
+                    DeleteCommentUseCase.Error.ArticleNotFoundBySlug(
+                        object : MyError {},
+                        Slug.newWithoutValidation(pathParamSlug)
+                    ).left(),
+                    ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
+                )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     val actual =
@@ -330,27 +338,6 @@ class CommentControllerTest {
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-        }
-
-        @Test
-        fun `コメント削除時、UseCase がSlug に該当する記事が見つからなかったことに起因する「NotFound」エラーのとき、404 エラーレスポンスを返す`() {
-            val notImplementedError = object : MyError {}
-            val deleteReturnArticleNotFoundError = object : DeleteCommentUseCase {
-                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentUseCase.Error, Unit> {
-                    return DeleteCommentUseCase.Error.ArticleNotFoundBySlug(
-                        notImplementedError,
-                        Slug.newWithoutValidation(pathParamSlug)
-                    ).left()
-                }
-            }
-            val actual = commentController(
-                authorizedMyAuth,
-                notImplementedListCommentUseCase,
-                notImplementedCreateCommentUseCase,
-                deleteReturnArticleNotFoundError
-            ).delete(requestHeader, pathParamSlug, pathParamCommentId)
-            val expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404))
-            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
