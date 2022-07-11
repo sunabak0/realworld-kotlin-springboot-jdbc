@@ -114,7 +114,7 @@ class CommentControllerTest {
                         commentController(
                             object : MyAuth {},
                             object : ListCommentUseCase {
-                                override fun execute(slug: String?): Either<ListCommentUseCase.Error, kotlin.collections.List<Comment>> =
+                                override fun execute(slug: String?): Either<ListCommentUseCase.Error, List<Comment>> =
                                     testCase.useCaseExecuteResult
                             },
                             object : CreateCommentUseCase {},
@@ -146,8 +146,6 @@ class CommentControllerTest {
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
         )
-        private val notImplementedListCommentUseCase = object : ListCommentUseCase {}
-        private val notImplementedDeleteCommentUseCase = object : DeleteCommentUseCase {}
         private fun commentController(
             myAuth: MyAuth,
             listCommentUseCase: ListCommentUseCase,
@@ -155,12 +153,6 @@ class CommentControllerTest {
             deleteCommentUseCase: DeleteCommentUseCase
         ): CommentController =
             CommentController(listCommentUseCase, createCommentUseCase, deleteCommentUseCase, myAuth)
-
-        private val authorizedMyAuth = object : MyAuth {
-            override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
-                return dummyRegisteredUser.right()
-            }
-        }
 
         data class TestCase(
             val title: String,
@@ -243,7 +235,7 @@ class CommentControllerTest {
                                 }
                             },
                             object : DeleteCommentUseCase {}
-                        ).create(pathParam, pathParam, requestBody)
+                        ).create(requestHeader, pathParam, requestBody)
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
