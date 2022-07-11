@@ -193,12 +193,14 @@ class CommentControllerTest {
                 ),
                 TestCase(
                     "UseCase:失敗（Slug が不正によるValidationError）を返す場合、422 エラーレスポンスを返す",
-                    CreateCommentUseCase.Error.InvalidSlug(listOf(
-                        object : MyError.ValidationError {
-                            override val message: String get() = "DummyValidationError because Invalid Slug"
-                            override val key: String get() = "DummyKey"
-                        }
-                    )).left(),
+                    CreateCommentUseCase.Error.InvalidSlug(
+                        listOf(
+                            object : MyError.ValidationError {
+                                override val message: String get() = "DummyValidationError because Invalid Slug"
+                                override val key: String get() = "DummyKey"
+                            }
+                        )
+                    ).left(),
                     ResponseEntity(
                         """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid Slug"}]}}""",
                         HttpStatus.valueOf(422)
@@ -206,14 +208,29 @@ class CommentControllerTest {
                 ),
                 TestCase(
                     "コメント作成時、CommentBody が不正であることに起因する「バリデーションエラー」のとき、422 エラーレスポンスを返す",
-                    CreateCommentUseCase.Error.InvalidCommentBody(listOf(object : MyError.ValidationError {
-                        override val message: String get() = "DummyValidationError because invalid CommentBody"
-                        override val key: String get() = "DummyKey"
-                    })).left(),
+                    CreateCommentUseCase.Error.InvalidCommentBody(
+                        listOf(object : MyError.ValidationError {
+                            override val message: String get() = "DummyValidationError because invalid CommentBody"
+                            override val key: String get() = "DummyKey"
+                        })
+                    ).left(),
                     ResponseEntity(
                         """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because invalid CommentBody"}]}}""",
                         HttpStatus.valueOf(422)
                     )
+                ),
+                TestCase(
+                    "コメント作成時、CommentBody が不正であることに起因する「バリデーションエラー」のとき、422 エラーレスポンスを返す",
+                    CreateCommentUseCase.Error.InvalidCommentBody(
+                        listOf(object : MyError.ValidationError {
+                            override val message: String get() = "DummyValidationError because invalid CommentBody"
+                            override val key: String get() = "DummyKey"
+                        })
+                    ).left(),
+                    ResponseEntity(
+                        """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because invalid CommentBody"}]}}""",
+                        HttpStatus.valueOf(422)
+                    ),
                 )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
@@ -238,30 +255,6 @@ class CommentControllerTest {
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-        }
-
-        @Test
-        fun `コメント作成時、CommentBody が不正であることに起因する「バリデーションエラー」のとき、422 エラーレスポンスを返す`() {
-            val notImplementedValidationError = object : MyError.ValidationError {
-                override val message: String get() = "DummyValidationError because invalid CommentBody"
-                override val key: String get() = "DummyKey"
-            }
-            val createReturnValidationError = object : CreateCommentUseCase {
-                override fun execute(slug: String?, body: String?): Either<CreateCommentUseCase.Error, Comment> {
-                    return CreateCommentUseCase.Error.InvalidCommentBody(listOf(notImplementedValidationError)).left()
-                }
-            }
-            val actual = commentController(
-                authorizedMyAuth,
-                notImplementedListCommentUseCase,
-                createReturnValidationError,
-                notImplementedDeleteCommentUseCase
-            ).create(requestHeader, pathParam, requestBody)
-            val expected = ResponseEntity(
-                """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because invalid CommentBody"}]}}""",
-                HttpStatus.valueOf(422)
-            )
-            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
