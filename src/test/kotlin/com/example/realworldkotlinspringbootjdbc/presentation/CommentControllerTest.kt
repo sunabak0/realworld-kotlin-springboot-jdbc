@@ -177,7 +177,7 @@ class CommentControllerTest {
                             Username.newWithoutValidation("hoge-username"),
                             Bio.newWithoutValidation(""),
                             Image.newWithoutValidation(""),
-                            true,
+                            following = true,
                         )
                     ).right(),
                     ResponseEntity(
