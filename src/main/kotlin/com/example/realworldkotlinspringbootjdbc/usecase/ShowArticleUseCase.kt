@@ -5,7 +5,7 @@ import arrow.core.Validated.Invalid
 import arrow.core.Validated.Valid
 import arrow.core.left
 import arrow.core.right
-import com.example.realworldkotlinspringbootjdbc.domain.Article
+import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
 import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.article.Tag
@@ -20,7 +20,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 interface ShowArticleUseCase {
-    fun execute(slug: String?): Either<Error, Article> = Error.NotImplemented.left()
+    fun execute(slug: String?): Either<Error, CreatedArticle> = Error.NotImplemented.left()
     sealed interface Error : MyError {
         data class ValidationErrors(override val errors: List<MyError.ValidationError>) :
             Error,
@@ -34,11 +34,11 @@ interface ShowArticleUseCase {
 
 @Service
 class ShowArticleUseCaseImpl() : ShowArticleUseCase {
-    override fun execute(slug: String?): Either<ShowArticleUseCase.Error, Article> {
+    override fun execute(slug: String?): Either<ShowArticleUseCase.Error, CreatedArticle> {
         return when (val it = Slug.new(slug)) {
             is Invalid -> ShowArticleUseCase.Error.ValidationErrors(it.value).left()
             is Valid -> {
-                val a = object : Article {
+                val a = object : CreatedArticle {
                     override val title: Title
                         get() = Title.newWithoutValidation("hoge-title")
                     override val slug: Slug
