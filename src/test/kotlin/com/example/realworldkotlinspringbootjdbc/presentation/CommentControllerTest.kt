@@ -22,7 +22,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -33,7 +32,6 @@ import com.example.realworldkotlinspringbootjdbc.domain.comment.Body as CommentB
 class CommentControllerTest {
     @Nested
     class ListComment {
-        val pathParam = "hoge-slug"
         private fun commentController(
             myAuth: MyAuth,
             commentsUseCase: ListCommentUseCase,
@@ -121,7 +119,7 @@ class CommentControllerTest {
                             object : CreateCommentUseCase {},
                             object : DeleteCommentUseCase {}
                         ).list(
-                            pathParam
+                            slug = "hoge-slug"
                         )
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
@@ -256,154 +254,98 @@ class CommentControllerTest {
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
         )
-        private val notImplementedListCommentUseCase = object : ListCommentUseCase {}
-        private val notImplementedCreateCommentUseCase = object : CreateCommentUseCase {}
         private fun commentController(
+            myAuth: MyAuth,
             listCommentUseCase: ListCommentUseCase,
             createCommentUseCase: CreateCommentUseCase,
-            deleteCommentUseCase: DeleteCommentUseCase,
-            myAuth: MyAuth
+            deleteCommentUseCase: DeleteCommentUseCase
         ): CommentController =
             CommentController(listCommentUseCase, createCommentUseCase, deleteCommentUseCase, myAuth)
 
-        private val authorizedMyAuth = object : MyAuth {
-            override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
-                return dummyRegisteredUser.right()
-            }
-        }
+        data class TestCase(
+            val title: String,
+            val useCaseExecuteResult: Either<DeleteCommentUseCase.Error, Unit>,
+            val expected: ResponseEntity<String>,
+        )
 
-        @Test
-        fun `コメント削除時、UseCase が Unit を返す場合、200 レスポンスを返す`() {
-            val deleteCommentUseCase = object : DeleteCommentUseCase {
-                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentUseCase.Error, Unit> {
-                    return Unit.right()
-                }
-            }
-            val actual = commentController(
-                notImplementedListCommentUseCase,
-                notImplementedCreateCommentUseCase,
-                deleteCommentUseCase,
-                authorizedMyAuth
-            ).delete(requestHeader, pathParamSlug, pathParamCommentId)
-            val expected = ResponseEntity("", HttpStatus.valueOf(200))
-            assertThat(actual).isEqualTo(expected)
-        }
-
-        @Test
-        fun `コメント削除時、Slug が不正であることに起因する「バリデーションエラー」のとき、422 エラーレスポンスを返す`() {
-            val notImplementedValidationError = object : MyError.ValidationError {
-                override val message: String get() = "DummyValidationError because Invalid Slug"
-                override val key: String get() = "DummyKey"
-            }
-            val deleteReturnValidationError = object : DeleteCommentUseCase {
-                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentUseCase.Error, Unit> {
-                    return DeleteCommentUseCase.Error.InvalidSlug(listOf(notImplementedValidationError)).left()
-                }
-            }
-            val actual = commentController(
-                notImplementedListCommentUseCase,
-                notImplementedCreateCommentUseCase,
-                deleteReturnValidationError,
-                authorizedMyAuth
-            ).delete(requestHeader, pathParamSlug, pathParamCommentId)
-            val expected = ResponseEntity(
-                """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid Slug"}]}}""",
-                HttpStatus.valueOf(422)
-            )
-            assertThat(actual).isEqualTo(expected)
-        }
-
-        @Test
-        fun `コメント削除時、CommentId が不正であることに起因する「バリデーションエラー」のとき、422 エラーレスポンスを返す`() {
-            val notImplementedValidationError = object : MyError.ValidationError {
-                override val message: String get() = "DummyValidationError because Invalid CommentId"
-                override val key: String get() = "DummyKey"
-            }
-            val deleteReturnValidationError = object : DeleteCommentUseCase {
-                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentUseCase.Error, Unit> {
-                    return DeleteCommentUseCase.Error.InvalidCommentId(listOf(notImplementedValidationError)).left()
-                }
-            }
-            val actual = commentController(
-                notImplementedListCommentUseCase,
-                notImplementedCreateCommentUseCase,
-                deleteReturnValidationError,
-                authorizedMyAuth
-            ).delete(requestHeader, pathParamSlug, pathParamCommentId)
-            val expected = ResponseEntity(
-                """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid CommentId"}]}}""",
-                HttpStatus.valueOf(422)
-            )
-            assertThat(actual).isEqualTo(expected)
-        }
-
-        @Test
-        fun `コメント削除時、UseCase がSlug に該当する記事が見つからなかったことに起因する「NotFound」エラーのとき、404 エラーレスポンスを返す`() {
-            val notImplementedError = object : MyError {}
-            val deleteReturnArticleNotFoundError = object : DeleteCommentUseCase {
-                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentUseCase.Error, Unit> {
-                    return DeleteCommentUseCase.Error.ArticleNotFoundBySlug(
-                        notImplementedError,
+        @TestFactory
+        fun deleteTest(): Stream<DynamicNode> {
+            return Stream.of(
+                TestCase(
+                    "UseCase:成功（Unit）を返す場合、200 レスポンスを返す",
+                    Unit.right(),
+                    ResponseEntity("", HttpStatus.valueOf(200))
+                ),
+                TestCase(
+                    "UseCase:失敗（Slug が不正のためValidationError）を返す場合、422 エラーレスポンスを返す",
+                    DeleteCommentUseCase.Error.InvalidSlug(
+                        listOf(object : MyError.ValidationError {
+                            override val message: String get() = "DummyValidationError because Invalid Slug"
+                            override val key: String get() = "DummyKey"
+                        })
+                    ).left(),
+                    ResponseEntity(
+                        """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid Slug"}]}}""",
+                        HttpStatus.valueOf(422)
+                    ),
+                ),
+                TestCase(
+                    "UseCase:失敗（CommentId が不正のため ValidationError）を返す場合、422 エラーレスポンスを返す",
+                    DeleteCommentUseCase.Error.InvalidCommentId(
+                        listOf(object : MyError.ValidationError {
+                            override val message: String get() = "DummyValidationError because Invalid CommentId"
+                            override val key: String get() = "DummyKey"
+                        })
+                    ).left(),
+                    ResponseEntity(
+                        """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError because Invalid CommentId"}]}}""",
+                        HttpStatus.valueOf(422)
+                    ),
+                ),
+                TestCase(
+                    "UseCase:失敗（slugに該当する記事が見つからなかったため NotFound）を返す場合、404 エラーレスポンスを返す",
+                    DeleteCommentUseCase.Error.ArticleNotFoundBySlug(
+                        object : MyError {},
                         Slug.newWithoutValidation(pathParamSlug)
-                    ).left()
-                }
-            }
-            val actual = commentController(
-                notImplementedListCommentUseCase,
-                notImplementedCreateCommentUseCase,
-                deleteReturnArticleNotFoundError,
-                authorizedMyAuth
-            ).delete(requestHeader, pathParamSlug, pathParamCommentId)
-            val expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404))
-            assertThat(actual).isEqualTo(expected)
-        }
-
-        @Test
-        fun `コメント削除時、UseCase が CommentId に該当するコメントが見つからなかったことに起因する「NotFound」エラーのとき、404 エラーレスポンスを返す`() {
-            val notImplementedError = object : MyError {}
-
-            /**
-             * FIXME
-             *   - DeleteCommentUseCaseの実装をもっと良い名前にする
-             *   問題
-             *   - GitHub Actionsで〇〇ReturnCommentNotFoundErrorという変数(object)を用意しようとすると、Permission deniedで落ちる
-             *   問題に対して行った対応
-             *   - 変数名を変える
-             */
-            val notFoundError = object : DeleteCommentUseCase {
-                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentUseCase.Error, Unit> {
-                    return DeleteCommentUseCase.Error.CommentsNotFoundByCommentId(
-                        notImplementedError,
+                    ).left(),
+                    ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
+                ),
+                TestCase(
+                    "UseCase:失敗（commentId に該当する記事が見つからなかったため NotFound）を返す場合、404 エラーレスポンスを返す",
+                    DeleteCommentUseCase.Error.CommentsNotFoundByCommentId(
+                        object : MyError {},
                         CommentId.newWithoutValidation(pathParamCommentId.toInt())
-                    ).left()
+                    ).left(),
+                    ResponseEntity("""{"errors":{"body":["コメントが見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
+                ),
+                TestCase(
+                    "UseCase:失敗（Undefined）を返す場合、500 エラーレスポンスを返す",
+                    DeleteCommentUseCase.Error.Unexpected(object : MyError {}).left(),
+                    ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500)),
+                )
+            ).map { testCase ->
+                dynamicTest(testCase.title) {
+                    val actual =
+                        commentController(
+                            object : MyAuth {
+                                override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
+                                    return dummyRegisteredUser.right()
+                                }
+                            },
+                            object : ListCommentUseCase {},
+                            object : CreateCommentUseCase {},
+                            object : DeleteCommentUseCase {
+                                override fun execute(
+                                    slug: String?,
+                                    commentId: Int?
+                                ): Either<DeleteCommentUseCase.Error, Unit> {
+                                    return testCase.useCaseExecuteResult
+                                }
+                            },
+                        ).delete(requestHeader, pathParamSlug, pathParamCommentId)
+                    assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-            val actual = commentController(
-                notImplementedListCommentUseCase,
-                notImplementedCreateCommentUseCase,
-                notFoundError,
-                authorizedMyAuth
-            ).delete(requestHeader, pathParamSlug, pathParamCommentId)
-            val expected = ResponseEntity("""{"errors":{"body":["コメントが見つかりませんでした"]}}""", HttpStatus.valueOf(404))
-            assertThat(actual).isEqualTo(expected)
-        }
-
-        @Test
-        fun `コメント削除時、UseCase が原因不明のエラーを返す場合、500 エラーレスポンスを返す`() {
-            val notImplementedError = object : MyError {}
-            val deleteReturnUnexpectedError = object : DeleteCommentUseCase {
-                override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentUseCase.Error, Unit> {
-                    return DeleteCommentUseCase.Error.Unexpected(notImplementedError).left()
-                }
-            }
-            val actual = commentController(
-                notImplementedListCommentUseCase,
-                notImplementedCreateCommentUseCase,
-                deleteReturnUnexpectedError,
-                authorizedMyAuth,
-            ).delete(requestHeader, pathParamSlug, pathParamCommentId)
-            val expected = ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500))
-            assertThat(actual).isEqualTo(expected)
         }
     }
 }
