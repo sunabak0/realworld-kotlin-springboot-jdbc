@@ -226,6 +226,11 @@ class CommentControllerTest {
                         """{"errors":{"body":["記事が見つかりませんでした"]}}""",
                         HttpStatus.valueOf(404)
                     )
+                ),
+                TestCase(
+                    "UseCase:失敗（Unexpectedを返す場合、404 レスポンスを返す",
+                    ListCommentUseCase.Error.Unexpected(object : MyError {}).left(),
+                    ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500))
                 )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
@@ -251,41 +256,6 @@ class CommentControllerTest {
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-        }
-
-        @Test
-        fun `JWT 認証失敗 or 未ログイン-コメント取得-UseCase が原因不明のエラーを返す場合、500 エラーレスポンスを返す`() {
-            /**
-             * FIXME
-             * ローカルでは動作するが、Github Actions で動作しない変数名を一時的に mockE に修正
-             * 命名規則の方針が決まり次第修正
-             */
-            val mockE = object : MyError {}
-
-            /**
-             * FIXME
-             * ローカルでは動作するが、Github Actions で動作しない変数名を一時的に mockUE に修正
-             * 命名規則の方針が決まり次第修正
-             */
-            val mockUE = object : ListCommentUseCase {
-                override fun execute(
-                    slug: String?,
-                    currentUser: Option<RegisteredUser>
-                ): Either<ListCommentUseCase.Error, List<Comment>> {
-                    return ListCommentUseCase.Error.Unexpected(mockE).left()
-                }
-            }
-            val actual = commentController(
-                unauthorizedMyAuth,
-                mockUE,
-                notImplementedCreateCommentUseCase,
-                notImplementedDeleteCommentUseCase
-            ).list(
-                requestHeader,
-                pathParam
-            )
-            val expected = ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500))
-            assertThat(actual).isEqualTo(expected)
         }
     }
 
