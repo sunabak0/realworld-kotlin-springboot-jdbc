@@ -43,4 +43,37 @@ class CommentTest {
         val actual = comment1 == comment2
         assertThat(actual).isTrue
     }
+
+    @Test
+    fun `Comment は識別子 CommentId が一致していない場合、他が同じでも異なる値であることを期待する`() {
+        val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
+        val comment1 = Comment.newWithoutValidation(
+            CommentId.newWithoutValidation(1),
+            CommentBody.newWithoutValidation("dummy-body-1"),
+            createdAt = date,
+            updatedAt = date,
+            OtherUser.newWithoutValidation(
+                UserId(1),
+                Username.newWithoutValidation("dummy-name1"),
+                Bio.newWithoutValidation("dummy-bio1"),
+                Image.newWithoutValidation("dummy-image1"),
+                false
+            )
+        )
+        val comment2 = Comment.newWithoutValidation(
+            CommentId.newWithoutValidation(2),
+            CommentBody.newWithoutValidation("dummy-body-1"),
+            createdAt = date,
+            updatedAt = date,
+            OtherUser.newWithoutValidation(
+                UserId(1),
+                Username.newWithoutValidation("dummy-name1"),
+                Bio.newWithoutValidation("dummy-bio1"),
+                Image.newWithoutValidation("dummy-image1"),
+                false
+            )
+        )
+        val actual = comment1 != comment2
+        assertThat(actual).isTrue
+    }
 }
