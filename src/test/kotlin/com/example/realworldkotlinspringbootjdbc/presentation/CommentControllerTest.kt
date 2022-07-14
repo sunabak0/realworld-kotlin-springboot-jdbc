@@ -157,16 +157,6 @@ class CommentControllerTest {
         ): CommentController =
             CommentController(myAuth, commentsUseCase, createCommentUseCase, deleteCommentUseCase)
 
-        private val unauthorizedMyAuth = object : MyAuth {
-            override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
-                return MyAuth.Unauthorized.RequiredBearerToken.left()
-            }
-        }
-
-        private val notImplementedCreateCommentUseCase = object : CreateCommentUseCase {}
-
-        private val notImplementedDeleteCommentUseCase = object : DeleteCommentUseCase {}
-
         data class TestCase(
             val title: String,
             val useCaseExecuteResult: Either<ListCommentUseCase.Error, List<Comment>>,
