@@ -23,6 +23,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -145,7 +146,7 @@ class CommentControllerTest {
     }
 
     @Nested
-    class `List(コメント取得) JWT 認証失敗 or 未ログイン` {
+    class ListCommentUnauthorized {
         private val requestHeader = "hoge-authorize"
         private val pathParam = "hoge-slug"
         private fun commentController(
@@ -166,58 +167,74 @@ class CommentControllerTest {
 
         private val notImplementedDeleteCommentUseCase = object : DeleteCommentUseCase {}
 
-        @Test
-        fun `JWT 認証失敗 or 未ログイン-コメント取得-UseCase が「Comment」のリストを返す場合、200レスポンスを返す`() {
-            val mockComments = listOf(
-                Comment.newWithoutValidation(
-                    CommentId.newWithoutValidation(1),
-                    CommentBody.newWithoutValidation("hoge-body-1"),
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                    OtherUser.newWithoutValidation(
-                        UserId(1),
-                        Username.newWithoutValidation("hoge-author-1"),
-                        Bio.newWithoutValidation("hoge-bio-1"),
-                        Image.newWithoutValidation("hoge-image-1"),
-                        following = false,
+        data class TestCase(
+            val title: String,
+            val useCaseExecuteResult: Either<ListCommentUseCase.Error, List<Comment>>,
+            val expected: ResponseEntity<String>
+        )
+
+        @TestFactory
+        fun unauthorizedListTest(): Stream<DynamicNode> {
+            return Stream.of(
+                TestCase(
+                    "UseCase:成功（LIst<Comment>）を返す場合、200 レスポンスを返す",
+                    listOf(
+                        Comment.newWithoutValidation(
+                            CommentId.newWithoutValidation(1),
+                            CommentBody.newWithoutValidation("hoge-body-1"),
+                            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                            OtherUser.newWithoutValidation(
+                                UserId(1),
+                                Username.newWithoutValidation("hoge-author-1"),
+                                Bio.newWithoutValidation("hoge-bio-1"),
+                                Image.newWithoutValidation("hoge-image-1"),
+                                following = false,
+                            )
+                        ),
+                        Comment.newWithoutValidation(
+                            CommentId.newWithoutValidation(2),
+                            CommentBody.newWithoutValidation("hoge-body-2"),
+                            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
+                            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
+                            OtherUser.newWithoutValidation(
+                                UserId(1),
+                                Username.newWithoutValidation("hoge-author-1"),
+                                Bio.newWithoutValidation("hoge-bio-1"),
+                                Image.newWithoutValidation("hoge-image-1"),
+                                following = false,
+                            )
+                        ),
+                    ).right(),
+                    ResponseEntity(
+                        """{"comments":[{"id":1,"body":"hoge-body-1","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-author-1"},{"id":2,"body":"hoge-body-2","createdAt":"2022-02-01T15:00:00.000Z","updatedAt":"2022-02-01T15:00:00.000Z","author":"hoge-author-1"}]}""",
+                        HttpStatus.valueOf(200)
                     )
-                ),
-                Comment.newWithoutValidation(
-                    CommentId.newWithoutValidation(2),
-                    CommentBody.newWithoutValidation("hoge-body-2"),
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
-                    OtherUser.newWithoutValidation(
-                        UserId(1),
-                        Username.newWithoutValidation("hoge-author-1"),
-                        Bio.newWithoutValidation("hoge-bio-1"),
-                        Image.newWithoutValidation("hoge-image-1"),
-                        following = false,
-                    )
-                ),
-            )
-            val listReturnComment = object : ListCommentUseCase {
-                override fun execute(
-                    slug: String?,
-                    currentUser: Option<RegisteredUser>
-                ): Either<ListCommentUseCase.Error, List<Comment>> =
-                    mockComments.right()
-            }
-            val actual =
-                commentController(
-                    unauthorizedMyAuth,
-                    listReturnComment,
-                    notImplementedCreateCommentUseCase,
-                    notImplementedDeleteCommentUseCase
-                ).list(
-                    requestHeader,
-                    pathParam
                 )
-            val expected = ResponseEntity(
-                """{"comments":[{"id":1,"body":"hoge-body-1","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-author-1"},{"id":2,"body":"hoge-body-2","createdAt":"2022-02-01T15:00:00.000Z","updatedAt":"2022-02-01T15:00:00.000Z","author":"hoge-author-1"}]}""",
-                HttpStatus.valueOf(200)
-            )
-            assertThat(actual).isEqualTo(expected)
+            ).map { testCase ->
+                dynamicTest(testCase.title) {
+                    val actual =
+                        commentController(
+                            object : MyAuth {
+                                override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
+                                    return MyAuth.Unauthorized.RequiredBearerToken.left()
+                                }
+                            },
+                            object : ListCommentUseCase {
+                                override fun execute(
+                                    slug: String?,
+                                    currentUser: Option<RegisteredUser>
+                                ): Either<ListCommentUseCase.Error, List<Comment>> = testCase.useCaseExecuteResult
+                            },
+                            object : CreateCommentUseCase {},
+                            object : DeleteCommentUseCase {}
+                        ).list(
+                            slug = pathParam,
+                            rawAuthorizationHeader = requestHeader
+                        )
+                    assertThat(actual).isEqualTo(testCase.expected)
+                }
+            }
         }
 
         @Test
@@ -447,6 +464,7 @@ class CommentControllerTest {
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
         )
+
         private fun commentController(
             myAuth: MyAuth,
             listCommentUseCase: ListCommentUseCase,
