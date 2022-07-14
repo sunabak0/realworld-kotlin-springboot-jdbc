@@ -33,6 +33,16 @@ import com.example.realworldkotlinspringbootjdbc.domain.comment.Body as CommentB
 class CommentControllerTest {
     @Nested
     class ListComment {
+        private val requestHeader = "hoge-authorize"
+        private val pathParam = "hoge-slug"
+        val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
+            UserId(1),
+            Email.newWithoutValidation("dummy@example.com"),
+            Username.newWithoutValidation("dummy-name"),
+            Bio.newWithoutValidation("dummy-bio"),
+            Image.newWithoutValidation("dummy-image"),
+        )
+
         private fun commentController(
             myAuth: MyAuth,
             commentsUseCase: ListCommentUseCase,
@@ -91,17 +101,14 @@ class CommentControllerTest {
                     ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
                 ),
                 TestCase(
-                    "UseCase:失敗（ValidationError）を返す場合、422 エラーレスポンスを返す",
+                    "UseCase:失敗（ValidationError）を返す場合、404 エラーレスポンスを返す",
                     ListCommentUseCase.Error.InvalidSlug(
                         listOf(object : MyError.ValidationError {
                             override val message: String get() = "DummyValidationError"
                             override val key: String get() = "DummyKey"
                         })
                     ).left(),
-                    ResponseEntity(
-                        """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError"}]}}""",
-                        HttpStatus.valueOf(422)
-                    ),
+                    ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
                 ),
                 TestCase(
                     "UseCase:失敗（Unexpected）を返す場合、500 エラーレスポンスを返す",
@@ -112,15 +119,24 @@ class CommentControllerTest {
                 dynamicTest(testCase.title) {
                     val actual =
                         commentController(
-                            object : MyAuth {},
+                            object : MyAuth {
+                                override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
+                                    return dummyRegisteredUser.right()
+                                }
+                            },
                             object : ListCommentUseCase {
-                                override fun execute(slug: String?): Either<ListCommentUseCase.Error, List<Comment>> =
-                                    testCase.useCaseExecuteResult
+                                override fun execute(
+                                    slug: String?,
+                                    currentUser: Option<RegisteredUser>
+                                ): Either<ListCommentUseCase.Error, List<Comment>> {
+                                    return testCase.useCaseExecuteResult
+                                }
                             },
                             object : CreateCommentUseCase {},
                             object : DeleteCommentUseCase {}
                         ).list(
-                            slug = "hoge-slug"
+                            slug = pathParam,
+                            rawAuthorizationHeader = requestHeader
                         )
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
