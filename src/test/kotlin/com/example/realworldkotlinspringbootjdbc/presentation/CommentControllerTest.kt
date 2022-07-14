@@ -5,7 +5,6 @@ import arrow.core.Option
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
-import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
@@ -68,30 +67,18 @@ class CommentControllerTest {
                             CommentBody.newWithoutValidation("hoge-body-1"),
                             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
                             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                            OtherUser.newWithoutValidation(
-                                UserId(1),
-                                Username.newWithoutValidation("hoge-author-1"),
-                                Bio.newWithoutValidation("hoge-bio-1"),
-                                Image.newWithoutValidation("hoge-image-1"),
-                                false,
-                            )
+                            UserId(1),
                         ),
                         Comment.newWithoutValidation(
                             CommentId.newWithoutValidation(2),
                             CommentBody.newWithoutValidation("hoge-body-2"),
                             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
                             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
-                            OtherUser.newWithoutValidation(
-                                UserId(1),
-                                Username.newWithoutValidation("hoge-author-2"),
-                                Bio.newWithoutValidation("hoge-bio-2"),
-                                Image.newWithoutValidation("hoge-image-2"),
-                                false,
-                            )
+                            UserId(1),
                         ),
                     ).right(),
                     ResponseEntity(
-                        """{"comments":[{"id":1,"body":"hoge-body-1","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-author-1"},{"id":2,"body":"hoge-body-2","createdAt":"2022-02-01T15:00:00.000Z","updatedAt":"2022-02-01T15:00:00.000Z","author":"hoge-author-2"}]}""",
+                        """{"comments":[{"id":1,"body":"hoge-body-1","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","authorId":1},{"id":2,"body":"hoge-body-2","createdAt":"2022-02-01T15:00:00.000Z","updatedAt":"2022-02-01T15:00:00.000Z","authorId":1}]}""",
                         HttpStatus.valueOf(200)
                     )
                 ),
@@ -173,30 +160,18 @@ class CommentControllerTest {
                             CommentBody.newWithoutValidation("hoge-body-1"),
                             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
                             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                            OtherUser.newWithoutValidation(
-                                UserId(1),
-                                Username.newWithoutValidation("hoge-author-1"),
-                                Bio.newWithoutValidation("hoge-bio-1"),
-                                Image.newWithoutValidation("hoge-image-1"),
-                                following = false,
-                            )
+                            UserId(1),
                         ),
                         Comment.newWithoutValidation(
                             CommentId.newWithoutValidation(2),
                             CommentBody.newWithoutValidation("hoge-body-2"),
                             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
                             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
-                            OtherUser.newWithoutValidation(
-                                UserId(1),
-                                Username.newWithoutValidation("hoge-author-1"),
-                                Bio.newWithoutValidation("hoge-bio-1"),
-                                Image.newWithoutValidation("hoge-image-1"),
-                                following = false,
-                            )
+                            UserId(1),
                         ),
                     ).right(),
                     ResponseEntity(
-                        """{"comments":[{"id":1,"body":"hoge-body-1","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-author-1"},{"id":2,"body":"hoge-body-2","createdAt":"2022-02-01T15:00:00.000Z","updatedAt":"2022-02-01T15:00:00.000Z","author":"hoge-author-1"}]}""",
+                        """{"comments":[{"id":1,"body":"hoge-body-1","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","authorId":1},{"id":2,"body":"hoge-body-2","createdAt":"2022-02-01T15:00:00.000Z","updatedAt":"2022-02-01T15:00:00.000Z","authorId":1}]}""",
                         HttpStatus.valueOf(200)
                     )
                 ),
@@ -291,16 +266,10 @@ class CommentControllerTest {
                         CommentBody.newWithoutValidation("hoge-body"),
                         SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
                         SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                        OtherUser.newWithoutValidation(
-                            UserId(1),
-                            Username.newWithoutValidation("hoge-username"),
-                            Bio.newWithoutValidation(""),
-                            Image.newWithoutValidation(""),
-                            following = true,
-                        )
+                        UserId(1),
                     ).right(),
                     ResponseEntity(
-                        """{"Comment":{"id":1,"body":"hoge-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-username"}}""",
+                        """{"Comment":{"id":1,"body":"hoge-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","authorId":1}}""",
                         HttpStatus.valueOf(200)
                     )
                 ),
