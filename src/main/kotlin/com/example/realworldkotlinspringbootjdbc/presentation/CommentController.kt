@@ -71,6 +71,7 @@ class CommentController(
                 }
                 /**
                  * コメント取得に成功
+                 * TODO authorId ではなく、author を戻すように修正する
                  */
                 is Right -> {
                     val comments = result.value.map {
@@ -79,7 +80,7 @@ class CommentController(
                             it.body.value,
                             it.createdAt,
                             it.updatedAt,
-                            it.author.username.value
+                            it.authorId.value
                         )
                     }
                     ResponseEntity(
@@ -98,6 +99,7 @@ class CommentController(
             is Right -> when (val result = listCommentUseCase.execute(slug, Some(authorizeResult.value))) {
                 /**
                  * コメント取得に成功
+                 * TODO authorId ではなく、author を戻すように修正する
                  */
                 is Right -> {
                     val comments =
@@ -107,7 +109,7 @@ class CommentController(
                                 it.body.value,
                                 it.createdAt,
                                 it.updatedAt,
-                                it.author.username.value,
+                                it.authorId.value,
                             )
                         }
 
@@ -202,6 +204,7 @@ class CommentController(
                     }
                     /**
                      * コメントの登録に成功
+                     * TODO authorId ではなく、author を戻すように修正する
                      */
                     is Right -> ResponseEntity(
                         Comment.from(createdComment.value).serializeWithRootName(),
