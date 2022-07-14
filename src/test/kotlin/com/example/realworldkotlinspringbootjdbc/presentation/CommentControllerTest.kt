@@ -215,6 +215,17 @@ class CommentControllerTest {
                     "UseCase:失敗（NotFound）を返す場合、404 レスポンスを返す",
                     ListCommentUseCase.Error.NotFound(object : MyError {}).left(),
                     ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
+                ),
+                TestCase(
+                    "UseCase:失敗（ValidationError）を返す場合、404 レスポンスを返す",
+                    ListCommentUseCase.Error.InvalidSlug(listOf(object : MyError.ValidationError {
+                        override val message: String get() = "DummyValidationError"
+                        override val key: String get() = "DummyKey"
+                    })).left(),
+                    ResponseEntity(
+                        """{"errors":{"body":["記事が見つかりませんでした"]}}""",
+                        HttpStatus.valueOf(404)
+                    )
                 )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
@@ -240,47 +251,6 @@ class CommentControllerTest {
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-        }
-
-        @Test
-        fun `JWT 認証失敗 or 未ログイン-コメント取得-UseCase が「バリデーションエラー」を返す場合、404 エラーレスポンスを返す`() {
-            /**
-             * FIXME
-             * ローカルでは動作するが、Github Actions で動作しない変数名を一時的に mockE に修正
-             * 命名規則の方針が決まり次第修正
-             */
-            val mockE = object : MyError.ValidationError {
-                override val message: String get() = "DummyValidationError"
-                override val key: String get() = "DummyKey"
-            }
-
-            /**
-             * FIXME
-             * ローカルでは動作するが、Github Actions で動作しない変数名を一時的に mockUC に修正
-             * 命名規則の方針が決まり次第修正
-             */
-            val mockUC = object : ListCommentUseCase {
-                override fun execute(
-                    slug: String?,
-                    currentUser: Option<RegisteredUser>
-                ): Either<ListCommentUseCase.Error, List<Comment>> {
-                    return ListCommentUseCase.Error.InvalidSlug(listOf(mockE)).left()
-                }
-            }
-            val actual = commentController(
-                unauthorizedMyAuth,
-                mockUC,
-                notImplementedCreateCommentUseCase,
-                notImplementedDeleteCommentUseCase
-            ).list(
-                requestHeader,
-                pathParam
-            )
-            val expected = ResponseEntity(
-                """{"errors":{"body":["記事が見つかりませんでした"]}}""",
-                HttpStatus.valueOf(404)
-            )
-            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
