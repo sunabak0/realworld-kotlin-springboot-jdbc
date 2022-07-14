@@ -2,10 +2,7 @@ package com.example.realworldkotlinspringbootjdbc.domain
 
 import com.example.realworldkotlinspringbootjdbc.domain.comment.Body as CommentBody
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
-import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
-import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
-import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.text.SimpleDateFormat
@@ -19,26 +16,14 @@ class CommentTest {
             CommentBody.newWithoutValidation("dummy-body-1"),
             createdAt = date,
             updatedAt = date,
-            OtherUser.newWithoutValidation(
-                UserId(1),
-                Username.newWithoutValidation("dummy-name1"),
-                Bio.newWithoutValidation("dummy-bio1"),
-                Image.newWithoutValidation("dummy-image1"),
-                false
-            )
+            UserId(1),
         )
         val comment2 = Comment.newWithoutValidation(
             CommentId.newWithoutValidation(1),
             CommentBody.newWithoutValidation("dummy-body-2"),
             createdAt = date,
             updatedAt = date,
-            OtherUser.newWithoutValidation(
-                UserId(1),
-                Username.newWithoutValidation("dummy-name1"),
-                Bio.newWithoutValidation("dummy-bio1"),
-                Image.newWithoutValidation("dummy-image1"),
-                false
-            )
+            UserId(1)
         )
         val actual = comment1 == comment2
         assertThat(actual).isTrue
@@ -52,26 +37,14 @@ class CommentTest {
             CommentBody.newWithoutValidation("dummy-body-1"),
             createdAt = date,
             updatedAt = date,
-            OtherUser.newWithoutValidation(
-                UserId(1),
-                Username.newWithoutValidation("dummy-name1"),
-                Bio.newWithoutValidation("dummy-bio1"),
-                Image.newWithoutValidation("dummy-image1"),
-                false
-            )
+            UserId(1)
         )
         val comment2 = Comment.newWithoutValidation(
             CommentId.newWithoutValidation(2),
             CommentBody.newWithoutValidation("dummy-body-1"),
             createdAt = date,
             updatedAt = date,
-            OtherUser.newWithoutValidation(
-                UserId(1),
-                Username.newWithoutValidation("dummy-name1"),
-                Bio.newWithoutValidation("dummy-bio1"),
-                Image.newWithoutValidation("dummy-image1"),
-                false
-            )
+            UserId(1)
         )
         val actual = comment1 != comment2
         assertThat(actual).isTrue
