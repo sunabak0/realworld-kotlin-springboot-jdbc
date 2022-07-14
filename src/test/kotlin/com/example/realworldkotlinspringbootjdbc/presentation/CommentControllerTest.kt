@@ -182,10 +182,12 @@ class CommentControllerTest {
                 ),
                 TestCase(
                     "UseCase:失敗（ValidationError）を返す場合、404 レスポンスを返す",
-                    ListCommentUseCase.Error.InvalidSlug(listOf(object : MyError.ValidationError {
-                        override val message: String get() = "DummyValidationError"
-                        override val key: String get() = "DummyKey"
-                    })).left(),
+                    ListCommentUseCase.Error.InvalidSlug(
+                        listOf(object : MyError.ValidationError {
+                            override val message: String get() = "DummyValidationError"
+                            override val key: String get() = "DummyKey"
+                        })
+                    ).left(),
                     ResponseEntity(
                         """{"errors":{"body":["記事が見つかりませんでした"]}}""",
                         HttpStatus.valueOf(404)

@@ -1,11 +1,11 @@
 package com.example.realworldkotlinspringbootjdbc.domain
 
-import com.example.realworldkotlinspringbootjdbc.domain.comment.Body as CommentBody
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.text.SimpleDateFormat
+import com.example.realworldkotlinspringbootjdbc.domain.comment.Body as CommentBody
 
 class CommentTest {
     @Test
