@@ -1,6 +1,7 @@
 package com.example.realworldkotlinspringbootjdbc.domain
 
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
+import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import java.util.Date
 import com.example.realworldkotlinspringbootjdbc.domain.comment.Body as CommentBody
 
@@ -9,7 +10,7 @@ class Comment private constructor(
     val body: CommentBody,
     val createdAt: Date,
     val updatedAt: Date,
-    val author: OtherUser
+    val authorId: UserId
 ) {
     companion object {
         fun newWithoutValidation(
@@ -17,9 +18,9 @@ class Comment private constructor(
             body: CommentBody,
             createdAt: Date,
             updatedAt: Date,
-            author: OtherUser
+            authorId: UserId
         ): Comment =
-            Comment(id, body, createdAt, updatedAt, author)
+            Comment(id, body, createdAt, updatedAt, authorId)
     }
 
     override fun equals(other: Any?): Boolean {
