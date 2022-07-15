@@ -1,7 +1,9 @@
 package com.example.realworldkotlinspringbootjdbc.infra
 
-import arrow.core.Either
+import arrow.core.Either.Left
+import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
+import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.Body
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
@@ -142,8 +144,18 @@ class CommentRepositoryImplTest {
                 ),
             )
             when (val actual = commentRepository.list(Slug.newWithoutValidation("dummy-slug"), UserId(1))) {
-                is Either.Left -> assert(false)
-                is Either.Right -> assertThat(actual.value).isEqualTo(expected)
+                is Left -> assert(false)
+                is Right -> assertThat(actual.value).isEqualTo(expected)
+            }
+        }
+
+        @Test
+        fun `異常系、NotFoundError が戻り値`() {
+            val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
+            val expected = CommentRepository.ListError.NotFoundArticleBySlug(Slug.newWithoutValidation("dummy-slug"))
+            when (val actual = commentRepository.list(Slug.newWithoutValidation("dummy-slug"), UserId(1))) {
+                is Left -> assertThat(actual.value).isEqualTo(expected)
+                is Right -> assert(false)
             }
         }
     }
