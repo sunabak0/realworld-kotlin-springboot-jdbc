@@ -47,7 +47,7 @@ class CommentRepositoryImplTest {
         }
 
         @Test
-        fun `正常系、Comment の List が戻り値`() {
+        fun `正常系-articles テーブルに slug に該当する記事が存在した場合、Comment の List が戻り値`() {
             fun localPrepare() {
                 val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
 
@@ -150,7 +150,7 @@ class CommentRepositoryImplTest {
         }
 
         @Test
-        fun `異常系、NotFoundError が戻り値`() {
+        fun `異常系-articles テーブルに slug に該当する記事がなかった場合、NotFoundError が戻り値`() {
             val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
             val expected = CommentRepository.ListError.NotFoundArticleBySlug(Slug.newWithoutValidation("dummy-slug"))
             when (val actual = commentRepository.list(Slug.newWithoutValidation("dummy-slug"), UserId(1))) {
