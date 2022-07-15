@@ -5,14 +5,10 @@ import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
 import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
-import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.Body
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
-import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
-import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
-import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
@@ -109,13 +105,7 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                     Body.newWithoutValidation(it["body"].toString()),
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse(it["created_at"].toString()),
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse(it["updated_at"].toString()),
-                    OtherUser.newWithoutValidation(
-                        UserId(it["user_id"].toString().toInt()),
-                        Username.newWithoutValidation(it["username"].toString()),
-                        Bio.newWithoutValidation(it["bio"].toString()),
-                        Image.newWithoutValidation(it["image"].toString()),
-                        it["following_flg"].toString() == "1"
-                    )
+                    UserId(it["user_id"].toString().toInt()),
                 )
             }.right()
         } catch (e: Throwable) {
