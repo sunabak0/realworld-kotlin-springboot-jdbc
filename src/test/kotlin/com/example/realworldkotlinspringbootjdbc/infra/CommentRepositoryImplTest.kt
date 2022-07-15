@@ -1,14 +1,10 @@
 package com.example.realworldkotlinspringbootjdbc.infra
 
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
-import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.Body
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
-import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
-import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
-import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
@@ -136,26 +132,14 @@ class CommentRepositoryImplTest {
                     Body.newWithoutValidation("dummy-1"),
                     date,
                     date,
-                    OtherUser.newWithoutValidation(
-                        UserId(1),
-                        Username.newWithoutValidation("dummy-username-1"),
-                        Bio.newWithoutValidation("dummy-bio-1"),
-                        Image.newWithoutValidation("dummy-image-1"),
-                        following = false
-                    )
+                    UserId(1),
                 ),
                 Comment.newWithoutValidation(
                     CommentId.newWithoutValidation(2),
                     Body.newWithoutValidation("dummy-2"),
                     date,
                     date,
-                    OtherUser.newWithoutValidation(
-                        UserId(2),
-                        Username.newWithoutValidation("dummy-username-2"),
-                        Bio.newWithoutValidation("dummy-bio-2"),
-                        Image.newWithoutValidation("dummy-image-2"),
-                        following = false
-                    )
+                    UserId(2),
                 ),
             )
             assertThat(actual).isEqualTo(expected)
