@@ -54,58 +54,33 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
          */
         val selectCommentsSql = """
             SELECT
-                article_comments.id AS id
-                , article_comments.body AS body
-                , article_comments.created_at AS created_at
-                , article_comments.updated_at AS updated_at
-                , comment_author_profile.user_id AS user_id
-                , comment_author_profile.username AS username
-                , comment_author_profile.bio AS bio
-                , comment_author_profile.image AS image
-                , comment_author_profile.following_flg AS following_flg
+                id AS id
+                , body AS body
+                , created_at AS created_at
+                , updated_at AS updated_at
+                , author_id
             FROM
                 article_comments
-            JOIN (
-                SELECT
-                    users.id AS user_id
-                    , users.username AS username
-                    , profiles.bio AS bio
-                    , profiles.image AS image
-                    , CASE WHEN followings.id IS NOT NULL THEN 1 ELSE 0 END AS following_flg
-                FROM
-                    users
-                JOIN
-                    profiles
-                ON
-                    users.id = profiles.user_id
-                    AND users.id = article_comments.author_id 
-                LEFT OUTER JOIN
-                    followings
-                ON
-                    followings.following_id = users.id
-                    AND followings.follower_id = :current_user_id
-            ) AS comment_author_profile
-            ON
-                article_comments.author_id = comment_author_profile.user_id
-                AND article_comments.article_id = :article_id
+            WHERE
+                article_comments.article_id = :article_id
+            ;
         """.trimIndent()
         val selectCommentsSqlParams = MapSqlParameterSource()
-            .addValue("current_user_id", currentUserId.value)
             .addValue("article_id", articleId.value)
-        val commentsFromDb = try {
+        val commentsMap = try {
             namedParameterJdbcTemplate.queryForList(selectCommentsSql, selectCommentsSqlParams)
         } catch (e: Throwable) {
             return CommentRepository.ListError.Unexpected(e, slug).left()
         }
 
         return try {
-            commentsFromDb.map {
+            commentsMap.map {
                 Comment.newWithoutValidation(
                     CommentId.newWithoutValidation(it["id"].toString().toInt()),
                     Body.newWithoutValidation(it["body"].toString()),
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse(it["created_at"].toString()),
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse(it["updated_at"].toString()),
-                    UserId(it["user_id"].toString().toInt()),
+                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
+                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
+                    UserId(it["author_id"].toString().toInt()),
                 )
             }.right()
         } catch (e: Throwable) {
