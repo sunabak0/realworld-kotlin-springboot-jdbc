@@ -15,7 +15,7 @@ class CommentTest {
         val title: String,
         val comment: Comment,
         val otherComment: Comment,
-        val expect: Boolean
+        val expected: Boolean
     )
 
     @TestFactory
@@ -61,7 +61,7 @@ class CommentTest {
             )
         ).map { testCase ->
             dynamicTest(testCase.title) {
-                assertThat(testCase.comment == testCase.otherComment).isEqualTo(testCase.expect)
+                assertThat(testCase.comment == testCase.otherComment).isEqualTo(testCase.expected)
             }
         }
     }
