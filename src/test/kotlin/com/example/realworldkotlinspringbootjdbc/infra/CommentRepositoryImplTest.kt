@@ -144,7 +144,7 @@ class CommentRepositoryImplTest {
                     UserId(2),
                 ),
             )
-            when (val actual = commentRepository.list(Slug.newWithoutValidation("dummy-slug"), UserId(1))) {
+            when (val actual = commentRepository.list(Slug.newWithoutValidation("dummy-slug"))) {
                 is Left -> assert(false)
                 is Right -> assertThat(actual.value).isEqualTo(expected)
             }
@@ -194,7 +194,7 @@ class CommentRepositoryImplTest {
             val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
 
             val expected = listOf<Comment>()
-            when (val actual = commentRepository.list(Slug.newWithoutValidation("dummy-slug"), UserId(1))) {
+            when (val actual = commentRepository.list(Slug.newWithoutValidation("dummy-slug"))) {
                 is Left -> assert(false)
                 is Right -> assertThat(actual.value).isEqualTo(expected)
             }
@@ -204,7 +204,7 @@ class CommentRepositoryImplTest {
         fun `異常系-articles テーブルに slug に該当する記事がなかった場合、NotFoundError が戻り値`() {
             val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
             val expected = CommentRepository.ListError.NotFoundArticleBySlug(Slug.newWithoutValidation("dummy-slug"))
-            when (val actual = commentRepository.list(Slug.newWithoutValidation("dummy-slug"), UserId(1))) {
+            when (val actual = commentRepository.list(Slug.newWithoutValidation("dummy-slug"))) {
                 is Left -> assertThat(actual.value).isEqualTo(expected)
                 is Right -> assert(false)
             }

@@ -16,7 +16,7 @@ import java.text.SimpleDateFormat
 
 @Repository
 class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTemplate) : CommentRepository {
-    override fun list(slug: Slug, currentUserId: UserId): Either<CommentRepository.ListError, List<Comment>> {
+    override fun list(slug: Slug): Either<CommentRepository.ListError, List<Comment>> {
         /**
          * article を取得
          */
