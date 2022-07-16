@@ -180,4 +180,72 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             CommentRepository.CreateError.Unexpected(e, slug, body, currentUserId).left()
         }
     }
+
+    override fun delete(
+        slug: Slug,
+        commentId: CommentId,
+        currentUserId: UserId
+    ): Either<CommentRepository.DeleteError, Unit> {
+        /**
+         * article を取得
+         */
+        val selectArticleSql = """
+            SELECT
+                id
+            FROM
+                articles
+            WHERE
+                slug = :slug
+        """.trimIndent()
+
+        val selectArticleSqlParams = MapSqlParameterSource()
+            .addValue("slug", slug.value)
+        val articleIdMap = try {
+            namedParameterJdbcTemplate.queryForList(selectArticleSql, selectArticleSqlParams)
+        } catch (e: Throwable) {
+            return CommentRepository.DeleteError.ArticleNotFoundBySlug(slug, commentId, currentUserId).left()
+        }
+
+        /**
+         * article が存在しなかった時 NotFoundError
+         */
+        val articleId = when (articleIdMap.isEmpty()) {
+            true -> return CommentRepository.DeleteError.ArticleNotFoundBySlug(slug, commentId, currentUserId).left()
+            false -> try {
+                articleIdMap.first()["id"].toString().toInt()
+            } catch (e: Throwable) {
+                return CommentRepository.DeleteError.Unexpected(e, slug, commentId, currentUserId).left()
+            }
+        }
+
+        /**
+         * comment を削除
+         */
+        val deleteCommentsSql = """
+            DELETE FROM
+                article_comments
+            WHERE
+                article_comments.author_id = :current_user_id
+                article_comments.article_id = :article_id
+                article_comments.id = :comment_id
+        """.trimIndent()
+        val deleteCommentSqlParams = MapSqlParameterSource()
+            .addValue("current_user_id", currentUserId.value)
+            .addValue("article_id", articleId)
+            .addValue("comment_id", commentId.value)
+        val affected = try {
+            namedParameterJdbcTemplate.update(deleteCommentsSql, deleteCommentSqlParams)
+        } catch (e: Throwable) {
+            return CommentRepository.DeleteError.Unexpected(e, slug, commentId, currentUserId).left()
+        }
+
+        /**
+         * 削除されたのが 0 件だった場合 CommentNotFoundByCommentId エラー、そうでない場合 Unit
+         */
+        return if (affected == 0) {
+            CommentRepository.DeleteError.CommentNotFoundByCommentId(slug, commentId, currentUserId).left()
+        } else {
+            Unit.right()
+        }
+    }
 }
