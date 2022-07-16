@@ -1,12 +1,12 @@
 package com.example.realworldkotlinspringbootjdbc.domain
 
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
-import com.example.realworldkotlinspringbootjdbc.domain.article.Body as ArticleBody
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.article.Tag
 import com.example.realworldkotlinspringbootjdbc.domain.article.Title
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import java.util.Date
+import com.example.realworldkotlinspringbootjdbc.domain.article.Body as ArticleBody
 
 class CreatedArticle private constructor(
     val id: ArticleId,

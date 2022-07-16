@@ -8,7 +8,6 @@ import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
-import com.example.realworldkotlinspringbootjdbc.domain.article.Body as ArticleBody
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.article.Tag
 import com.example.realworldkotlinspringbootjdbc.domain.article.Title
@@ -16,6 +15,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 import java.text.SimpleDateFormat
+import com.example.realworldkotlinspringbootjdbc.domain.article.Body as ArticleBody
 
 interface ShowArticleUseCase {
     fun execute(slug: String?): Either<Error, CreatedArticle> = Error.NotImplemented.left()
