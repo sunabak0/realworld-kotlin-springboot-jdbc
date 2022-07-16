@@ -343,11 +343,13 @@ class CommentRepositoryImplTest {
 
             val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
 
-            when (commentRepository.delete(
-                Slug.newWithoutValidation("dummy-slug"),
-                CommentId.newWithoutValidation(1),
-                UserId(1)
-            )) {
+            when (
+                commentRepository.delete(
+                    Slug.newWithoutValidation("dummy-slug"),
+                    CommentId.newWithoutValidation(1),
+                    UserId(1)
+                )
+            ) {
                 is Left -> assert(false)
                 is Right -> assert(true)
             }
