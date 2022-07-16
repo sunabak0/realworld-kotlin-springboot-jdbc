@@ -158,4 +158,79 @@ class CommentRepositoryImplTest {
             assertThat(actual).isEqualTo(expected)
         }
     }
+
+    @Nested
+    @Tag("WithLocalDb")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    class `Create（コメントを作成）` {
+        @BeforeEach
+        @AfterAll
+        fun reset() {
+            resetDb()
+        }
+
+        @Test
+        fun `正常系-articles テーブルに slug に該当する記事が存在し、comments テーブルに挿入できた場合、戻り値が Comments`() {
+            fun localPrepare() {
+                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
+                val insertArticleSql = """
+                    INSERT INTO
+                        articles (
+                            id
+                            , author_id
+                            , title
+                            , slug
+                            , body
+                            , description
+                            , created_at
+                            , updated_at
+                        )
+                    VALUES (
+                        :id
+                        , :author_id
+                        , :title
+                        , :slug
+                        , :body
+                        , :description
+                        , :created_at
+                        , :updated_at
+                    );
+                """.trimIndent()
+                val insertArticleSqlParams = MapSqlParameterSource()
+                    .addValue("id", 1)
+                    .addValue("author_id", 1)
+                    .addValue("title", "dummy-title")
+                    .addValue("slug", "dummy-slug")
+                    .addValue("body", "dummy-body")
+                    .addValue("description", "dummy-description")
+                    .addValue("created_at", date)
+                    .addValue("updated_at", date)
+                namedParameterJdbcTemplate.update(insertArticleSql, insertArticleSqlParams)
+            }
+            localPrepare()
+            /**
+             * 実行前に挿入されていないことを確認
+             */
+            val confirmCommentsSql = "SELECT COUNT(*) AS CNT FROM article_comments;"
+            val confirmCommentsSqlParam = MapSqlParameterSource()
+            val beforeCommentsCount = namedParameterJdbcTemplate.queryForMap(confirmCommentsSql, confirmCommentsSqlParam)["CNT"]
+            assertThat(beforeCommentsCount).isEqualTo(0L)
+
+            val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
+
+            /**
+             * TODO: 戻り値（Comment）を期待値（expected）と比較するのか要検討。CommentId を DB のオートインクリメントにしているので期待値を予測できない。他のプロパティで比較するか、CommentId を他の方法で生成するか検討する
+             */
+            when (commentRepository.create(Slug.newWithoutValidation("dummy-slug"), Body.newWithoutValidation("dummy-body-1"), UserId(1))) {
+                is Left -> assert(false)
+                is Right -> assert(true)
+            }
+
+            /**
+             * 実行後に1行だけ挿入されていることを確認
+             */
+            val afterCommentsCount = namedParameterJdbcTemplate.queryForMap(confirmCommentsSql, confirmCommentsSqlParam)["CNT"]
+            assertThat(afterCommentsCount).isEqualTo(1L)
+        }
+    }
 }

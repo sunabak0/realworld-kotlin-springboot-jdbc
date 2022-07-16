@@ -15,6 +15,7 @@ interface CommentRepository {
 
     fun create(slug: Slug, body: Body, currentUserId: UserId): Either<CreateError, Comment> = TODO()
     sealed interface CreateError : MyError {
-        data class Unexpected(override val cause: Throwable, val body: Body) : CreateError, MyError.MyErrorWithThrowable
+        data class NotFoundArticleBySlug(val slug: Slug) : CreateError, MyError.Basic
+        data class Unexpected(override val cause: Throwable, val slug: Slug, val body: Body, val currentUserId: UserId) : CreateError, MyError.MyErrorWithThrowable
     }
 }
