@@ -48,7 +48,7 @@ class CreateCommentUseCaseImpl(
                 /**
                  * CommentBody が適切
                  */
-                is Valid -> when (val createResult = commentRepository.create(commentBody.value, currentUser.userId)) {
+                is Valid -> when (val createResult = commentRepository.create(it.value, commentBody.value, currentUser.userId)) {
                     /**
                      * コメント登録成功
                      */
