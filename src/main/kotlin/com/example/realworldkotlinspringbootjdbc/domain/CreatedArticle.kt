@@ -48,4 +48,15 @@ class CreatedArticle private constructor(
             favoritesCount
         )
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as CreatedArticle
+        return this.id == other.id
+    }
+
+    override fun hashCode(): Int {
+        return id.value * 31
+    }
 }
