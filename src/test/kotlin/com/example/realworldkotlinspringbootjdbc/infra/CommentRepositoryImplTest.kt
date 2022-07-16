@@ -234,7 +234,7 @@ class CommentRepositoryImplTest {
         }
 
         @Test
-        fun `異常系-articles テーブルに slug に該当する記事が存在しない場合、戻り値が NotFoundError`(){
+        fun `異常系-articles テーブルに slug に該当する記事が存在しない場合、戻り値が NotFoundError`() {
             /**
              * 実行前に挿入されていないことを確認
              */
@@ -250,6 +250,12 @@ class CommentRepositoryImplTest {
                 is Left -> assertThat(actual.value).isEqualTo(expected)
                 is Right -> assert(false)
             }
+        }
+
+        @Test
+        @Disabled
+        fun `異常系-原因不明のため UnexpectedError が戻り値`() {
+            TODO()
         }
     }
 }
