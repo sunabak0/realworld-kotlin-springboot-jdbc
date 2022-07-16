@@ -13,7 +13,7 @@ interface CommentRepository {
         data class Unexpected(override val cause: Throwable, val slug: Slug) : ListError, MyError.MyErrorWithThrowable
     }
 
-    fun create(body: Body, currentUserId: UserId): Either<CreateError, Comment> = TODO()
+    fun create(slug: Slug, body: Body, currentUserId: UserId): Either<CreateError, Comment> = TODO()
     sealed interface CreateError : MyError {
         data class Unexpected(override val cause: Throwable, val body: Body) : CreateError, MyError.MyErrorWithThrowable
     }
