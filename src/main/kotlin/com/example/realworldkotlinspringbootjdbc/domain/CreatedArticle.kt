@@ -23,6 +23,29 @@ class CreatedArticle private constructor(
 ) {
     companion object {
         fun newWithoutValidation(
-        ): CreatedArticle = TODO()
+            id: ArticleId,
+            title: Title,
+            slug: Slug,
+            body: ArticleBody,
+            createdAt: Date,
+            updatedAt: Date,
+            description: Description,
+            tagList: List<Tag>,
+            authorId: UserId,
+            favorited: Boolean,
+            favoritesCount: Int,
+        ): CreatedArticle = CreatedArticle(
+            id,
+            title,
+            slug,
+            body,
+            createdAt,
+            updatedAt,
+            description,
+            tagList,
+            authorId,
+            favorited,
+            favoritesCount
+        )
     }
 }
