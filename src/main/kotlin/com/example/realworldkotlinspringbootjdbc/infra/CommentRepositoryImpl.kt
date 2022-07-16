@@ -13,6 +13,9 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.util.Date
 
 @Repository
 class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTemplate) : CommentRepository {
@@ -85,6 +88,96 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             }.right()
         } catch (e: Throwable) {
             CommentRepository.ListError.Unexpected(e, slug).left()
+        }
+    }
+
+    override fun create(slug: Slug, body: Body, currentUserId: UserId): Either<CommentRepository.CreateError, Comment> {
+        /**
+         * article を取得
+         */
+        val selectArticleSql = """
+            SELECT
+                id
+            FROM
+                articles
+            WHERE
+                slug = :slug
+        """.trimIndent()
+
+        val selectArticleSqlParams = MapSqlParameterSource()
+            .addValue("slug", slug.value)
+        val articleFromDb = try {
+            namedParameterJdbcTemplate.queryForList(selectArticleSql, selectArticleSqlParams)
+        } catch (e: Throwable) {
+            return CommentRepository.CreateError.Unexpected(e, slug, body, currentUserId).left()
+        }
+
+        /**
+         * article が存在しなかった時 NotFoundError
+         */
+        if (articleFromDb.isEmpty()) {
+            return CommentRepository.CreateError.NotFoundArticleBySlug(slug).left()
+        }
+        val articleId = try {
+            val it = articleFromDb.first()
+            UserId(it["id"].toString().toInt())
+        } catch (e: Throwable) {
+            return CommentRepository.CreateError.Unexpected(e, slug, body, currentUserId).left()
+        }
+
+        /**
+         * comment を作成
+         */
+        val insertCommentSql = """
+            INSERT INTO
+                article_comments (
+                    author_id
+                    , article_id
+                    , body
+                    , created_at
+                    , updated_at
+                )
+            VALUES (
+                :author_id
+                , :article_id
+                , :body
+                , :created_at
+                , :updated_at
+            )
+            RETURNING
+                id
+            ;
+        """.trimIndent()
+        val now = LocalDateTime.now()
+        val insertCommentSqlParams = MapSqlParameterSource()
+            .addValue("author_id", currentUserId.value)
+            .addValue("article_id", articleId.value)
+            .addValue("body", body.value)
+            .addValue("created_at", now)
+            .addValue("updated_at", now)
+        val commentMap = try {
+            namedParameterJdbcTemplate.queryForList(insertCommentSql, insertCommentSqlParams)
+        } catch (e: Throwable) {
+            return CommentRepository.CreateError.Unexpected(e, slug, body, currentUserId).left()
+        }
+
+        val commentId = try {
+            val it = commentMap.first()
+            CommentId.newWithoutValidation(it["id"].toString().toInt())
+        } catch (e: Throwable) {
+            return CommentRepository.CreateError.Unexpected(e, slug, body, currentUserId).left()
+        }
+
+        return try {
+            Comment.newWithoutValidation(
+                commentId,
+                body,
+                createdAt = Date.from(now.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant()),
+                updatedAt = Date.from(now.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant()),
+                currentUserId
+            ).right()
+        } catch (e: Throwable) {
+            CommentRepository.CreateError.Unexpected(e, slug, body, currentUserId).left()
         }
     }
 }
