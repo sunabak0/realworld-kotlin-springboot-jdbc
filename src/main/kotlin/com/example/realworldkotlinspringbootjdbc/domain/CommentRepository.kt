@@ -37,7 +37,7 @@ interface CommentRepository {
         data class Unexpected(
             override val cause: Throwable,
             val slug: Slug,
-            val body: Body,
+            val commentId: CommentId,
             val currentUserId: UserId
         ) : DeleteError, MyError.MyErrorWithThrowable
     }
