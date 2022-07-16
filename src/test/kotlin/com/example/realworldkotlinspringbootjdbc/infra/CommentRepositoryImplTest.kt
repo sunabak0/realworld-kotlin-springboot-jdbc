@@ -280,11 +280,13 @@ class CommentRepositoryImplTest {
             /**
              * TODO: 戻り値（Comment）を期待値（expected）と比較するのか要検討。CommentId を DB のオートインクリメントにしているので期待値を予測できない。他のプロパティで比較するか、CommentId を他の方法で生成するか検討する
              */
-            when (commentRepository.create(
-                Slug.newWithoutValidation("dummy-slug"),
-                Body.newWithoutValidation("dummy-body-1"),
-                UserId(1)
-            )) {
+            when (
+                commentRepository.create(
+                    Slug.newWithoutValidation("dummy-slug"),
+                    Body.newWithoutValidation("dummy-body-1"),
+                    UserId(1)
+                )
+            ) {
                 is Left -> assert(false)
                 is Right -> assert(true)
             }
@@ -311,11 +313,13 @@ class CommentRepositoryImplTest {
             val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
             val expected = CommentRepository.CreateError.NotFoundArticleBySlug(Slug.newWithoutValidation("dummy-slug"))
 
-            when (val actual = commentRepository.create(
-                Slug.newWithoutValidation("dummy-slug"),
-                Body.newWithoutValidation("dummy-body-1"),
-                UserId(1)
-            )) {
+            when (
+                val actual = commentRepository.create(
+                    Slug.newWithoutValidation("dummy-slug"),
+                    Body.newWithoutValidation("dummy-body-1"),
+                    UserId(1)
+                )
+            ) {
                 is Left -> assertThat(actual.value).isEqualTo(expected)
                 is Right -> assert(false)
             }
@@ -426,11 +430,13 @@ class CommentRepositoryImplTest {
 
             val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
 
-            when (commentRepository.delete(
-                Slug.newWithoutValidation("dummy-slug"),
-                CommentId.newWithoutValidation(1),
-                UserId(1)
-            )) {
+            when (
+                commentRepository.delete(
+                    Slug.newWithoutValidation("dummy-slug"),
+                    CommentId.newWithoutValidation(1),
+                    UserId(1)
+                )
+            ) {
                 is Left -> assert(false)
                 is Right -> assert(true)
             }
