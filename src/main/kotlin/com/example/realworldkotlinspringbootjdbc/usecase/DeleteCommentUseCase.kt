@@ -5,13 +5,14 @@ import arrow.core.Validated.Invalid
 import arrow.core.Validated.Valid
 import arrow.core.left
 import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
+import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface DeleteCommentUseCase {
-    fun execute(slug: String?, commentId: Int?): Either<Error, Unit> = TODO()
+    fun execute(slug: String?, commentId: Int?, currentUser: RegisteredUser): Either<Error, Unit> = TODO()
 
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
@@ -35,7 +36,7 @@ interface DeleteCommentUseCase {
 class DeleteCommentUseCaseImpl(
     val commentRepository: CommentRepository
 ) : DeleteCommentUseCase {
-    override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentUseCase.Error, Unit> {
+    override fun execute(slug: String?, commentId: Int?, currentUser: RegisteredUser): Either<DeleteCommentUseCase.Error, Unit> {
         return when (val slugResult = Slug.new(slug)) {
             /**
              * Slug が不正

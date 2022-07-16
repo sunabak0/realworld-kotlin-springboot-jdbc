@@ -431,7 +431,8 @@ class CommentControllerTest {
                             object : DeleteCommentUseCase {
                                 override fun execute(
                                     slug: String?,
-                                    commentId: Int?
+                                    commentId: Int?,
+                                    currentUser: RegisteredUser
                                 ): Either<DeleteCommentUseCase.Error, Unit> {
                                     return testCase.useCaseExecuteResult
                                 }

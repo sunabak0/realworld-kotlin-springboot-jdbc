@@ -230,7 +230,8 @@ class CommentController(
              * JWT 認証 成功
              */
             is Right -> {
-                when (val result = deleteCommentUseCase.execute(slug, NullableCommentId.from(commentId))) {
+                when (val result =
+                    deleteCommentUseCase.execute(slug, NullableCommentId.from(commentId), authorizeResult.value)) {
                     /**
                      * コメントの削除に失敗
                      */
