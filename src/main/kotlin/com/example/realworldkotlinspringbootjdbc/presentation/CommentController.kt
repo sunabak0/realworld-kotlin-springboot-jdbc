@@ -168,7 +168,7 @@ class CommentController(
              */
             is Right -> {
                 val comment = NullableComment.from(rawRequestBody)
-                when (val createdComment = createCommentUseCase.execute(slug, comment.body)) {
+                when (val createdComment = createCommentUseCase.execute(slug, comment.body, authorizeResult.value)) {
                     /**
                      * コメントの登録に失敗
                      */

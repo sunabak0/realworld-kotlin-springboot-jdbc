@@ -8,13 +8,14 @@ import arrow.core.Valid
 import arrow.core.left
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
 import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
+import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.Body
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface CreateCommentUseCase {
-    fun execute(slug: String?, body: String?): Either<Error, Comment> = TODO()
+    fun execute(slug: String?, body: String?, currentUser: RegisteredUser): Either<Error, Comment> = TODO()
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
         data class InvalidCommentBody(override val errors: List<MyError.ValidationError>) :
@@ -30,7 +31,7 @@ interface CreateCommentUseCase {
 class CreateCommentUseCaseImpl(
     val commentRepository: CommentRepository
 ) : CreateCommentUseCase {
-    override fun execute(slug: String?, body: String?): Either<CreateCommentUseCase.Error, Comment> {
+    override fun execute(slug: String?, body: String?, currentUser: RegisteredUser): Either<CreateCommentUseCase.Error, Comment> {
         return when (val it = Slug.new(slug)) {
             /**
              * Slug が不正
@@ -47,7 +48,7 @@ class CreateCommentUseCaseImpl(
                 /**
                  * CommentBody が適切
                  */
-                is Valid -> when (val createResult = commentRepository.create(commentBody.value)) {
+                is Valid -> when (val createResult = commentRepository.create(commentBody.value, currentUser.userId)) {
                     /**
                      * コメント登録成功
                      */
