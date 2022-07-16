@@ -1,6 +1,10 @@
 package com.example.realworldkotlinspringbootjdbc.usecase.comment
 
 import arrow.core.Either
+import arrow.core.Validated.Invalid
+import arrow.core.Validated.Valid
+import arrow.core.left
+import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
 import com.example.realworldkotlinspringbootjdbc.util.MyError
@@ -28,4 +32,28 @@ interface DeleteCommentUseCase {
 }
 
 @Service
-class DeleteCommentUseCaseImpl : DeleteCommentUseCase
+class DeleteCommentUseCaseImpl(
+    val commentRepository: CommentRepository
+) : DeleteCommentUseCase {
+    override fun execute(slug: String?, commentId: Int?): Either<DeleteCommentUseCase.Error, Unit> {
+        return when (val slugResult = Slug.new(slug)) {
+            /**
+             * Slug が不正
+             */
+            is Invalid -> DeleteCommentUseCase.Error.InvalidSlug(slugResult.value).left()
+            /**
+             * Slug が適切
+             */
+            is Valid -> when (val commentIdResult = CommentId.new(commentId)) {
+                /**
+                 * CommentId が不正
+                 */
+                is Invalid -> DeleteCommentUseCase.Error.InvalidCommentId(commentIdResult.value).left()
+                /**
+                 * CommentId が適切
+                 */
+                is Valid -> TODO()
+            }
+        }
+    }
+}
