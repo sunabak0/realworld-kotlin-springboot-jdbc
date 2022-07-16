@@ -292,7 +292,7 @@ class CommentRepositoryImplTest {
         }
 
         @Test
-        fun `正常系-articles テーブルに slug に該当する記事が存在しない場合、戻り値が NotFoundError`(){
+        fun `異常系-articles テーブルに slug に該当する記事が存在しない場合、戻り値が NotFoundError`(){
             /**
              * 実行前に挿入されていないことを確認
              */
