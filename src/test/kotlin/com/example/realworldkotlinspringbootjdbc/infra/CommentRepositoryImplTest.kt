@@ -290,5 +290,24 @@ class CommentRepositoryImplTest {
             val afterCommentsCount = namedParameterJdbcTemplate.queryForMap(confirmCommentsSql, confirmCommentsSqlParam)["CNT"]
             assertThat(afterCommentsCount).isEqualTo(1L)
         }
+
+        @Test
+        fun `正常系-articles テーブルに slug に該当する記事が存在しない場合、戻り値が NotFoundError`(){
+            /**
+             * 実行前に挿入されていないことを確認
+             */
+            val confirmCommentsSql = "SELECT COUNT(*) AS CNT FROM article_comments;"
+            val confirmCommentsSqlParam = MapSqlParameterSource()
+            val beforeCommentsCount = namedParameterJdbcTemplate.queryForMap(confirmCommentsSql, confirmCommentsSqlParam)["CNT"]
+            assertThat(beforeCommentsCount).isEqualTo(0L)
+
+            val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
+            val expected = CommentRepository.CreateError.NotFoundArticleBySlug(Slug.newWithoutValidation("dummy-slug"))
+
+            when (val actual = commentRepository.create(Slug.newWithoutValidation("dummy-slug"), Body.newWithoutValidation("dummy-body-1"), UserId(1))) {
+                is Left -> assertThat(actual.value).isEqualTo(expected)
+                is Right -> assert(false)
+            }
+        }
     }
 }
