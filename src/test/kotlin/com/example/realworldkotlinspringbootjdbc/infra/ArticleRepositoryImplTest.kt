@@ -1,17 +1,115 @@
 package com.example.realworldkotlinspringbootjdbc.infra
 
+<<<<<<< HEAD
 import arrow.core.right
 import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
+=======
+import arrow.core.Either
+import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
+import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
+import com.example.realworldkotlinspringbootjdbc.domain.article.Description
+import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
+import com.example.realworldkotlinspringbootjdbc.domain.article.Title
+import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import com.example.realworldkotlinspringbootjdbc.domain.article.Tag as ArticleTag
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
+import java.text.SimpleDateFormat
+import com.example.realworldkotlinspringbootjdbc.domain.article.Body as ArticleBody
 
 class ArticleRepositoryImplTest {
+    companion object {
+        val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
+        fun resetDb() {
+            val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
+            val sql = """
+                DELETE FROM articles;
+            """.trimIndent()
+            namedParameterJdbcTemplate.update(sql, MapSqlParameterSource())
+        }
+    }
+
+    @Nested
+    @Tag("WithLocalDb")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    class Find() {
+        @BeforeEach
+        @AfterAll
+        fun reset() {
+            resetDb()
+        }
+
+        @Test
+        fun `成功 articles テーブルに slug 該当する記事が存在する場合、Article を戻す`() {
+            fun localPrepare() {
+                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
+                val insertArticlesSql = """
+                    INSERT INTO
+                        articles (
+                            id
+                            , author_id
+                            , title
+                            , slug
+                            , body
+                            , description
+                            , created_at
+                            , updated_at
+                        )
+                    VALUES (
+                        :id
+                        , :author_id
+                        , :title
+                        , :slug
+                        , :body
+                        , :description
+                        , :created_at
+                        , :updated_at
+                    )
+                """.trimIndent()
+                val insertArticlesSqlParams = MapSqlParameterSource()
+                    .addValue("id", 1)
+                    .addValue("author_id", 1)
+                    .addValue("title", "dummy-title")
+                    .addValue("slug", "dummy-slug")
+                    .addValue("body", "dummy-body")
+                    .addValue("description", "dummy-description")
+                    .addValue("created_at", date)
+                    .addValue("updated_at", date)
+                namedParameterJdbcTemplate.update(insertArticlesSql, insertArticlesSqlParams)
+            }
+            localPrepare()
+            val repository = ArticleRepositoryImpl(namedParameterJdbcTemplate)
+            val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
+            val expected = CreatedArticle.newWithoutValidation(
+                ArticleId(1),
+                Title.newWithoutValidation("dummy-title"),
+                Slug.newWithoutValidation("dummy-slug"),
+                ArticleBody.newWithoutValidation("dummy-body"),
+                createdAt = date,
+                updatedAt = date,
+                Description.newWithoutValidation("dummy-description"),
+                listOf(),
+                UserId(1),
+                favorited = false,
+                favoritesCount = 0
+            )
+
+            when (val actual = repository.findBySlug(Slug.newWithoutValidation("dummy-slug"))) {
+                is Either.Left -> assert(false)
+                is Either.Right -> assertThat(actual.value).isEqualTo(expected)
+            }
+        }
+    }
+
     @Nested
     @Tag("WithLocalDb")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
