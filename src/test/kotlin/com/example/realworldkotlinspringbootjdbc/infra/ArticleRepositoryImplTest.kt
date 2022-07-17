@@ -18,6 +18,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -121,6 +122,12 @@ class ArticleRepositoryImplTest {
                 is Either.Left -> assertThat(actual.value).isEqualTo(expected)
                 is Either.Right -> assertThat(false)
             }
+        }
+
+        @Test
+        @Disabled
+        fun `異常系 UnexpectedError が戻り値`() {
+            TODO()
         }
     }
 
