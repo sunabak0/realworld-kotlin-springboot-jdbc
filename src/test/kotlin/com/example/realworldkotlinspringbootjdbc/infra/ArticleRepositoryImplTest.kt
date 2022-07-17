@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName
 =======
 import arrow.core.Either
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
+import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
@@ -106,6 +107,19 @@ class ArticleRepositoryImplTest {
             when (val actual = repository.findBySlug(Slug.newWithoutValidation("dummy-slug"))) {
                 is Either.Left -> assert(false)
                 is Either.Right -> assertThat(actual.value).isEqualTo(expected)
+            }
+        }
+
+        @Test
+        fun `失敗 slug に該当する記事がなかった場合、FindBySlugErrorNotFound を戻す`() {
+            val repository = ArticleRepositoryImpl(namedParameterJdbcTemplate)
+
+            val expected = ArticleRepository.FindBySlugError.NotFound(
+                Slug.newWithoutValidation("dummy-slug")
+            )
+            when (val actual = repository.findBySlug(Slug.newWithoutValidation("dummy-slug"))) {
+                is Either.Left -> assertThat(actual.value).isEqualTo(expected)
+                is Either.Right -> assertThat(false)
             }
         }
     }
