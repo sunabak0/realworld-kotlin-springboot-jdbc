@@ -241,7 +241,7 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
                          ELSE NULL
                     END
                 ) AS USER_CNT
-                ,COUNT(
+                , COUNT(
                     CASE
                          WHEN
                              users.id != :user_id
