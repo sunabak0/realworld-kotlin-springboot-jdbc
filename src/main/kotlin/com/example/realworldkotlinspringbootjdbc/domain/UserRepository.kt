@@ -42,6 +42,7 @@ interface UserRepository {
      */
     fun update(user: UpdatableRegisteredUser): Either<UpdateError, RegisteredUser> = TODO()
     sealed interface UpdateError : MyError {
+        data class NotFound(val userId: UserId) : UpdateError, MyError.Basic
         data class AlreadyRegisteredEmail(val email: Email) : UpdateError, MyError.Basic
         data class AlreadyRegisteredUsername(val username: Username) : UpdateError, MyError.Basic
         data class Unexpected(override val cause: Throwable, val user: UpdatableRegisteredUser) : UpdateError, MyError.MyErrorWithThrowable
