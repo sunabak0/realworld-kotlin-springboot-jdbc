@@ -51,7 +51,7 @@ class ArticleRepositoryImplTest {
         }
 
         @Test
-        fun `成功 articles テーブルに slug 該当する記事が存在する場合、Article を戻す`() {
+        fun `異常系 articles テーブルに slug 該当する記事が存在し、findBySlug を実行したとき、Article を戻す`() {
             fun localPrepare() {
                 val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
                 val insertArticlesSql = """
@@ -112,7 +112,7 @@ class ArticleRepositoryImplTest {
         }
 
         @Test
-        fun `失敗 slug に該当する記事がなかった場合、FindBySlugErrorNotFound を戻す`() {
+        fun `異常系 articles テーブルに slug に該当する記事が存在せずに、findBySlug を実行したとき、NotFound を戻す`() {
             val repository = ArticleRepositoryImpl(namedParameterJdbcTemplate)
 
             val expected = ArticleRepository.FindBySlugError.NotFound(
