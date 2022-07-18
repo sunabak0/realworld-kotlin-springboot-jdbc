@@ -316,7 +316,8 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
     @Transactional
     fun updateTransactionApply(user: UpdatableRegisteredUser) {
         val sql = """
-            UPDATE users
+            UPDATE
+                users
             SET
                 email = :email
                 , username = :username
