@@ -274,10 +274,15 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
         }
 
         val (userCount, emailCount, usernameCount) = try {
-            Triple(
-                countMap["user_cnt"].toString().toInt(),
-                countMap["email_cnt"].toString().toInt(),
-                countMap["username_cnt"].toString().toInt()
+            data class Counts(
+                val userCount: Int,
+                val emailCount: Int,
+                val usernameCount: Int
+            )
+            Counts(
+                userCount = countMap["user_cnt"].toString().toInt(),
+                emailCount = countMap["email_cnt"].toString().toInt(),
+                usernameCount = countMap["username_cnt"].toString().toInt()
             )
         } catch (e: Throwable) {
             return UserRepository.UpdateError.Unexpected(e, user).left()
