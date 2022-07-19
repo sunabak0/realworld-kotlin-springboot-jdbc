@@ -235,6 +235,120 @@ class UserAndAuthenticationControllerTest {
     }
 
     @Nested
+    @DisplayName("(ログイン済みである)自分自身のユーザー情報取得")
+    class ShowCurrentUserTest {
+        data class TestCase(
+            val title: String,
+            val authorizeResult: Either<MyAuth.Unauthorized, RegisteredUser>,
+            val expected: ResponseEntity<String>
+        )
+
+        /**
+         * MyAuthのauthorize の戻り値を固定した MyAuth を作成
+         *
+         * JWTエンコーディングは必ず '成功' する
+         *
+         * @param[authorizeResult] UseCaseの実行の戻り値となる値
+         * @return 引数を戻り値とする login が実装された Controller
+         */
+        private fun createUserAndAuthenticationController(authorizeResult: Either<MyAuth.Unauthorized, RegisteredUser>): UserAndAuthenticationController =
+            UserAndAuthenticationController(
+                object : MySessionJwt {
+                    override fun encode(session: MySession) = "dummy-jwt-token".right()
+                },
+                object : MyAuth {
+                    override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> = authorizeResult
+                },
+                object : RegisterUserUseCase {}, // 関係ない
+                object : LoginUseCase {}, // 関係ない
+                object : UpdateUserUseCase {}, // 関係ない
+            )
+
+        @TestFactory
+        fun test(): Stream<DynamicNode> {
+            return Stream.of(
+                TestCase(
+                    title = "成功: authorize の実行結果が '登録されたユーザー' の場合、 201 レスポンスを返す",
+                    authorizeResult = RegisteredUser.newWithoutValidation(
+                        UserId(1),
+                        Email.newWithoutValidation("dummy@example.com"),
+                        Username.newWithoutValidation("dummy-username"),
+                        Bio.newWithoutValidation("dummy-bio"),
+                        Image.newWithoutValidation("dummy-image")
+                    ).right(),
+                    expected = ResponseEntity(
+                        """{"user":{"email":"dummy@example.com","username":"dummy-username","bio":"dummy-bio","image":"dummy-image","token":"dummy-jwt-token"}}""",
+                        HttpStatus.valueOf(201)
+                    )
+                ),
+                TestCase(
+                    title = "失敗: authorize の実行結果が 'BearerTokenが無い' 旨のエラーの場合、 401 レスポンスを返す",
+                    authorizeResult = MyAuth.Unauthorized.RequiredBearerToken.left(),
+                    expected = ResponseEntity(
+                        "",
+                        HttpStatus.valueOf(401)
+                    )
+                ),
+                TestCase(
+                    title = "失敗: authorize の実行結果が 'BearerTokenのパースに失敗した' 旨のエラーの場合、 401 レスポンスを返す",
+                    authorizeResult = MyAuth.Unauthorized.FailedParseBearerToken(
+                        cause = Throwable("dummy-例外"),
+                        authorizationHeader = "Authorization: Bearer dummy.dummy.dummy"
+                    ).left(),
+                    expected = ResponseEntity(
+                        "",
+                        HttpStatus.valueOf(401)
+                    )
+                ),
+                TestCase(
+                    title = "失敗: authorize の実行結果が 'Decodeに失敗した' 旨のエラーの場合、 401 レスポンスを返す",
+                    authorizeResult = MyAuth.Unauthorized.FailedDecodeToken(
+                        cause = object : MyError {},
+                        token = "dummy.dummy.dummy"
+                    ).left(),
+                    expected = ResponseEntity(
+                        "",
+                        HttpStatus.valueOf(401)
+                    )
+                ),
+                TestCase(
+                    title = "失敗: authorize の実行結果が 'ユーザーが見つからなかった' 旨のエラーの場合、 401 レスポンスを返す",
+                    authorizeResult = MyAuth.Unauthorized.NotFound(
+                        cause = object : MyError {},
+                        id = UserId(1)
+                    ).left(),
+                    expected = ResponseEntity(
+                        "",
+                        HttpStatus.valueOf(401)
+                    )
+                ),
+                TestCase(
+                    title = "失敗: authorize の実行結果が 'Emailが変わり、最新のEmailと異なる' 旨のエラーの場合、 401 レスポンスを返す",
+                    authorizeResult = MyAuth.Unauthorized.NotMatchEmail(
+                        oldEmail = Email.newWithoutValidation("dummy@example.com"),
+                        newEmail = Email.newWithoutValidation("changed-dummy@example.com")
+                    ).left(),
+                    expected = ResponseEntity(
+                        "",
+                        HttpStatus.valueOf(401)
+                    )
+                ),
+            ).map { testCase ->
+                dynamicTest(testCase.title) {
+                    // given:
+                    val controller = createUserAndAuthenticationController(testCase.authorizeResult)
+
+                    // when:
+                    val actual = controller.showCurrentUser("Authorization: Bearer dummy.dummy.dummy")
+
+                    // then:
+                    assertThat(actual).isEqualTo(testCase.expected)
+                }
+            }
+        }
+    }
+
+    @Nested
     class `Update(ユーザー情報の更新)` {
         private val currentUser =
             RegisteredUser.newWithoutValidation(
