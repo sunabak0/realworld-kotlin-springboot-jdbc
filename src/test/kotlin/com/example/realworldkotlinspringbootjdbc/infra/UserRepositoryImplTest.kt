@@ -175,117 +175,48 @@ class UserRepositoryImplTest {
             val expected = UserRepository.FindByEmailWithPasswordError.NotFound(searchingEmail).left()
             assertThat(actual).isEqualTo(expected)
         }
-
-        @Nested
-        @Tag("WithLocalDb")
-        class `findByUserId(UserIdでユーザー検索)` {
-            @BeforeEach
-            fun reset() {
-                resetDb()
-            }
-
-            @Test
-            fun `該当するユーザーが存在する場合、ユーザーが戻り値となる`() {
-                fun localPrepare() { // 事前に User を 1 レコード分追加
-                    val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-                    val sql1 =
-                        "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                    val sqlParams1 = MapSqlParameterSource()
-                        .addValue("id", 1)
-                        .addValue("email", "dummy@example.com")
-                        .addValue("username", "dummy-username")
-                        .addValue("password", "Passw0rd")
-                        .addValue("created_at", date)
-                        .addValue("updated_at", date)
-                    namedParameterJdbcTemplate.update(sql1, sqlParams1)
-                    val sql2 =
-                        "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                    val sqlParams2 = MapSqlParameterSource()
-                        .addValue("id", 1)
-                        .addValue("user_id", 1)
-                        .addValue("bio", "dummy-bio")
-                        .addValue("image", "dummy-image")
-                        .addValue("created_at", date)
-                        .addValue("updated_at", date)
-                    namedParameterJdbcTemplate.update(sql2, sqlParams2)
-                }
-                localPrepare()
-                val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
-
-                val actual = repository.findByUserId(UserId(1))
-                val expected = RegisteredUser.newWithoutValidation(
-                    UserId(1),
-                    Email.newWithoutValidation("dummy@example.com"),
-                    Username.newWithoutValidation("dummy-username"),
-                    Bio.newWithoutValidation("dummy-bio"),
-                    Image.newWithoutValidation("dummy-image"),
-                ).right()
-                assertThat(actual).isEqualTo(expected)
-            }
-
-            @Test
-            fun `該当するユーザーが存在しない場合、その旨のエラーが戻り値となる`() {
-                val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
-
-                val actual = repository.findByUserId(UserId(1))
-                val expected = UserRepository.FindByUserIdError.NotFound(UserId(1)).left()
-                assertThat(actual).isEqualTo(expected)
-            }
-        }
     }
 
     @Nested
     @Tag("WithLocalDb")
-    class `findByUserId(UserIdでユーザー検索)` {
-        @BeforeEach
-        fun reset() {
-            resetDb()
-        }
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @SpringBootTest
+    @DBRider
+    @DisplayName("UserIdから検索")
+    class FindByUserIdTest(@Autowired val userRepository: UserRepository) {
+        @BeforeAll
+        fun reset() = resetSequence()
 
         @Test
-        fun `該当するユーザーが存在する場合、ユーザーが戻り値となる`() {
-            fun localPrepare() { // 事前に User を 1 レコード分追加
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-                val sql1 =
-                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                val sqlParams1 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("email", "dummy@example.com")
-                    .addValue("username", "dummy-username")
-                    .addValue("password", "Passw0rd")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql1, sqlParams1)
-                val sql2 =
-                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                val sqlParams2 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("user_id", 1)
-                    .addValue("bio", "dummy-bio")
-                    .addValue("image", "dummy-image")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql2, sqlParams2)
-            }
-            localPrepare()
-            val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
+        @DataSet("datasets/yml/given/users.yml")
+        fun `成功-対象の登録済みユーザーが存在する場合、登録済みユーザーが戻り値となる`() {
+            // given:
+            val searchingUserId = UserId(1)
 
-            val actual = repository.findByUserId(UserId(1))
+            // when:
+            val actual = userRepository.findByUserId(searchingUserId)
+
+            // then:
             val expected = RegisteredUser.newWithoutValidation(
                 UserId(1),
-                Email.newWithoutValidation("dummy@example.com"),
-                Username.newWithoutValidation("dummy-username"),
-                Bio.newWithoutValidation("dummy-bio"),
-                Image.newWithoutValidation("dummy-image"),
+                Email.newWithoutValidation("paul-graham@example.com"),
+                Username.newWithoutValidation("paul-graham"),
+                Bio.newWithoutValidation("Lisper"),
+                Image.newWithoutValidation(""),
             ).right()
             assertThat(actual).isEqualTo(expected)
         }
 
         @Test
-        fun `該当するユーザーが存在しない場合、その旨のエラーが戻り値となる`() {
-            val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
+        @DataSet("datasets/yml/given/empty-users.yml")
+        fun `失敗-対象の登録済みユーザーが存在しない場合、その旨のエラーが戻り値となる`() {
+            // given:
+            val searchingUserId = UserId(1)
 
-            val actual = repository.findByUserId(UserId(1))
+            // when:
+            val actual = userRepository.findByUserId(searchingUserId)
+
+            // then:
             val expected = UserRepository.FindByUserIdError.NotFound(UserId(1)).left()
             assertThat(actual).isEqualTo(expected)
         }
