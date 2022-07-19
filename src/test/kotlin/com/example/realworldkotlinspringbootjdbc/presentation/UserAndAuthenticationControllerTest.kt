@@ -145,6 +145,96 @@ class UserAndAuthenticationControllerTest {
     }
 
     @Nested
+    @DisplayName("ログイン")
+    class LoginTest {
+        data class TestCase(
+            val title: String,
+            val useCaseExecuteResult: Either<LoginUseCase.Error, RegisteredUser>,
+            val expected: ResponseEntity<String>
+        )
+
+        /**
+         * ログインUseCase の戻り値を固定した Controller を作成
+         *
+         * JWTエンコーディングは必ず '成功' する
+         *
+         * @param[loginUseCaseResult] UseCaseの実行の戻り値となる値
+         * @return 引数を戻り値とする login が実装された Controller
+         */
+        private fun createUserAndAuthenticationController(loginUseCaseResult: Either<LoginUseCase.Error, RegisteredUser>): UserAndAuthenticationController =
+            UserAndAuthenticationController(
+                object : MySessionJwt {
+                    override fun encode(session: MySession) = "dummy-jwt-token".right()
+                },
+                object : MyAuth {}, // 関係ない
+                object : RegisterUserUseCase {}, // 関係ない
+                object : LoginUseCase {
+                    override fun execute(
+                        email: String?,
+                        password: String?
+                    ): Either<LoginUseCase.Error, RegisteredUser> = loginUseCaseResult
+                },
+                object : UpdateUserUseCase {}, // 関係ない
+            )
+
+        @TestFactory
+        fun test(): Stream<DynamicNode> {
+            return Stream.of(
+                TestCase(
+                    title = "成功: UseCase の実行結果が '登録されたユーザー' の場合、 201 レスポンスを返す",
+                    useCaseExecuteResult = RegisteredUser.newWithoutValidation(
+                        UserId(1),
+                        Email.newWithoutValidation("dummy@example.com"),
+                        Username.newWithoutValidation("dummy-username"),
+                        Bio.newWithoutValidation("dummy-bio"),
+                        Image.newWithoutValidation("dummy-image")
+                    ).right(),
+                    expected = ResponseEntity(
+                        """{"user":{"email":"dummy@example.com","username":"dummy-username","bio":"dummy-bio","image":"dummy-image","token":"dummy-jwt-token"}}""",
+                        HttpStatus.valueOf(201)
+                    )
+                ),
+                TestCase(
+                    title = "失敗: UseCase の実行結果が 'Emailかパスワードが不正である' 旨のエラーの場合、 401 レスポンスを返す",
+                    useCaseExecuteResult = LoginUseCase.Error.InvalidEmailOrPassword(
+                        listOf(
+                            object : MyError.ValidationError {
+                                override val message: String get() = "dummy-原因"
+                                override val key: String get() = "dummy-プロパティ名"
+                            }
+                        )
+                    ).left(),
+                    expected = ResponseEntity(
+                        """{"errors":{"body":[{"key":"dummy-プロパティ名","message":"dummy-原因"}]}}""",
+                        HttpStatus.valueOf(401)
+                    )
+                ),
+                TestCase(
+                    title = "失敗: UseCase の実行結果が '認証できなかった' 旨のエラーの場合、 401 レスポンスを返す",
+                    useCaseExecuteResult = LoginUseCase.Error.Unauthorized(
+                        Email.newWithoutValidation("dummy@example.com")
+                    ).left(),
+                    expected = ResponseEntity(
+                        """{"errors":{"body":["認証に失敗しました"]}}""",
+                        HttpStatus.valueOf(401)
+                    )
+                ),
+            ).map { testCase ->
+                dynamicTest(testCase.title) {
+                    // given:
+                    val controller = createUserAndAuthenticationController(testCase.useCaseExecuteResult)
+
+                    // when:
+                    val actual = controller.login("""{"user": {}}""")
+
+                    // then:
+                    assertThat(actual).isEqualTo(testCase.expected)
+                }
+            }
+        }
+    }
+
+    @Nested
     class `Update(ユーザー情報の更新)` {
         private val currentUser =
             RegisteredUser.newWithoutValidation(
