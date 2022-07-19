@@ -17,9 +17,9 @@ interface RegisteredUser {
     val bio: Bio
     val image: Image
 
-    //
-    // 実装
-    //
+    /**
+     * 実装
+     */
     private data class ValidatedRegisteredUser(
         override val userId: UserId,
         override val email: Email,
@@ -35,13 +35,13 @@ interface RegisteredUser {
         override val image: Image,
     ) : RegisteredUser
 
-    //
-    // Factory メソッド
-    //
+    /**
+     * Factory メソッド
+     */
     companion object {
-        //
-        // Validation 無し
-        //
+        /**
+         * Validation 無し
+         */
         fun newWithoutValidation(
             userId: UserId,
             email: Email,

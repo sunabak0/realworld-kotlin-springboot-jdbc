@@ -25,9 +25,9 @@ data class CurrentUser(
             )
     }
 
-    //
-    // JSONへシリアライズ
-    //
+    /**
+     * JSONへシリアライズ
+     */
     fun serializeWithRootName(): String =
         ObjectMapper()
             .enable(SerializationFeature.WRAP_ROOT_VALUE)
