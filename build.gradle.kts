@@ -174,6 +174,29 @@ dependencies {
      * dokka Pluginを適用するのに必要
      */
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.7.10")
+
+    /**
+     * Database Rider
+     *
+     * - Rider Core
+     * - Rider Spring
+     * - Rider JUnit 5
+     *
+     * URL
+     * - https://database-rider.github.io/database-rider/
+     * MavenCentral
+     * - https://mvnrepository.com/artifact/com.github.database-rider/rider-core
+     * - https://mvnrepository.com/artifact/com.github.database-rider/rider-spring
+     * - https://mvnrepository.com/artifact/com.github.database-rider/rider-junit5
+     * Main用途
+     * - JUnitでDB周りのテスト時のヘルパー
+     * 概要
+     * - テーブルの事前条件、事後条件を簡潔に設定できる
+     */
+    val dbRiderVersion = "1.32.3"
+    implementation("com.github.database-rider:rider-core:$dbRiderVersion")
+    implementation("com.github.database-rider:rider-spring:$dbRiderVersion")
+    testImplementation("com.github.database-rider:rider-junit5:$dbRiderVersion")
 }
 
 tasks.withType<KotlinCompile> {
