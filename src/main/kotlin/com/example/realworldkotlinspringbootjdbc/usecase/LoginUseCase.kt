@@ -36,26 +36,26 @@ class LoginUseCaseImpl(
         ) { a, b -> Pair(a, b) }
         return when (validatedInput) {
             is Invalid -> LoginUseCase.Error.InvalidEmailOrPassword(validatedInput.value).left()
-            //
-            // Email, Password両方ともバリデーションはOK -> User 検索
-            //
+            /**
+             * Email, Password両方ともバリデーションはOK -> User 検索
+             */
             is Valid -> when (val registeredUserWithPassword = userRepository.findByEmailWithPassword(validatedInput.value.first)) {
-                //
-                // 何かしらのエラー
-                //
+                /**
+                 * 何かしらのエラー
+                 */
                 is Left -> when (val error = registeredUserWithPassword.value) {
                     is UserRepository.FindByEmailWithPasswordError.NotFound -> LoginUseCase.Error.Unauthorized(error.email).left()
                     is UserRepository.FindByEmailWithPasswordError.Unexpected -> LoginUseCase.Error.Unexpected(error).left()
                 }
-                //
-                // Found user by email
-                //
+                /**
+                 * Found user by email
+                 */
                 is Right -> {
                     val aPassword = validatedInput.value.second
                     val (registeredUser, bPassword) = registeredUserWithPassword.value
-                    //
-                    // 認証 成功/失敗
-                    //
+                    /**
+                     * 認証 成功/失敗
+                     */
                     if (aPassword == bPassword) { registeredUser.right() } else { LoginUseCase.Error.Unauthorized(validatedInput.value.first).left() }
                 }
             }

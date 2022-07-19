@@ -7,22 +7,22 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 
-//
-// NullableUser
-//
-// 用途
-// - ユーザ登録
-// - プロフィール閲覧
-// - ...
-//
-// 概要
-// - nullを許容して、利用しないkeyも許容することでいろいろな箇所で使い回す
-//
-// 利用例
-// ```
-// val user = NullableUser.from("""{"user":{"email":"dummy@example.com"}}""")
-// ```
-//
+/**
+ * NullableUser
+ *
+ * 用途
+ * - ユーザ登録
+ * - プロフィール閲覧
+ * - ...
+ *
+ * 概要
+ * - nullを許容して、利用しないkeyも許容することでいろいろな箇所で使い回す
+ *
+ * 利用例
+ * ```
+ * val user = NullableUser.from("""{"user":{"email":"dummy@example.com"}}""")
+ * ```
+ */
 @JsonIgnoreProperties(ignoreUnknown = true) // デシリアライズ時、利用していないkeyがあった時、それを無視する
 @JsonRootName(value = "user")
 data class NullableUser(

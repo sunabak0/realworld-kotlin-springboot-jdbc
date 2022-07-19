@@ -14,33 +14,33 @@ import org.springframework.stereotype.Component
 interface MyAuth {
     fun authorize(bearerToken: String?): Either<Unauthorized, RegisteredUser> = TODO()
 
-    //
-    // エラーの種類(基本的に全て認証失敗)
-    //
+    /**
+     * エラーの種類(基本的に全て認証失敗)
+     */
     interface Unauthorized : MyError {
-        //
-        // Null は駄目
-        //
+        /**
+         * Null は駄目
+         */
         object RequiredBearerToken : Unauthorized, MyError.Basic
-        //
-        // BearerTokenのパースに失敗
-        //
+        /**
+         * BearerTokenのパースに失敗
+         */
         data class FailedParseBearerToken(override val cause: Throwable, val authorizationHeader: String) : Unauthorized, MyError.MyErrorWithThrowable
-        //
-        // Decodeに失敗
-        //
+        /**
+         * Decodeに失敗
+         */
         data class FailedDecodeToken(override val cause: MyError, val token: String) : Unauthorized, MyError.MyErrorWithMyError
-        //
-        // 検索したUserが存在しなかった
-        //
+        /**
+         * 検索したUserが存在しなかった
+         */
         data class NotFound(override val cause: MyError, val id: UserId) : Unauthorized, MyError.MyErrorWithMyError
-        //
-        // Emailが合わなかった
-        //
+        /**
+         * Emailが合わなかった
+         */
         data class NotMatchEmail(val oldEmail: Email, val newEmail: Email) : Unauthorized, MyError.Basic
-        //
-        // 謎エラー
-        //
+        /**
+         * 謎エラー
+         */
         data class Unexpected(override val cause: MyError, val bearerToken: Option<String>) : Unauthorized, MyError.MyErrorWithMyError
     }
 }
@@ -50,9 +50,9 @@ class MyAuthImpl(
     val userRepository: UserRepository,
     val mySessionJwt: MySessionJwt,
 ) : MyAuth {
-    //
-    // Bearer Tokenから認証
-    //
+    /**
+     * Bearer Tokenから認証
+     */
     override fun authorize(authorizationHeader: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
         return Option.fromNullable(authorizationHeader)
             .toEither { MyAuth.Unauthorized.RequiredBearerToken }
