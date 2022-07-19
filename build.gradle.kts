@@ -21,6 +21,22 @@ plugins {
      * KotlinのLinter/Formatter
      */
     id("org.jlleitschuh.gradle.ktlint") version "10.3.0"
+
+    /**
+     * dokka
+     *
+     * URL
+     * - https://github.com/Kotlin/dokka
+     * GradlePlugins
+     * - https://plugins.gradle.org/plugin/org.jetbrains.dokka
+     * Main用途
+     * - ドキュメント生成
+     * Sub用途
+     * - 特になし
+     * 概要
+     * - JDocの代替(=KDoc)
+     */
+    id("org.jetbrains.dokka") version "1.7.10"
 }
 
 group = "com.example"
@@ -151,6 +167,13 @@ dependencies {
      * - 特になし
      */
     implementation("org.postgresql:postgresql")
+
+    /**
+     * dokkaHtmlPlugin
+     *
+     * dokka Pluginを適用するのに必要
+     */
+    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.7.10")
 }
 
 tasks.withType<KotlinCompile> {

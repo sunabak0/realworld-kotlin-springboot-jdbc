@@ -23,7 +23,10 @@ down.db              dbを落とす
 test                 テスト実行
 test.with-local-db   テスト(with local db)実行
 test.e2e             e2eテスト実行
-fmt                  format and lint
+fmt                  format
+lint                 lint
+docs.generate-db-docs-schemaspy schemaspyでDB用のドキュメントを作成、表示する(gitに含めない)
+docs.generate-kdoc   KDocを生成と表示(gitに含めない)
 help                 Make タスク一覧
 ```
 

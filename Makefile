@@ -38,6 +38,11 @@ docs.generate-db-docs-schemaspy: ## schemaspyでDB用のドキュメントを作
 	docker run --rm -it --net "host" --mount type=bind,source=${PWD}/tmp/schemaspy-output/,target=/output --mount type=bind,source=${PWD}/tmp/db-drivers/,target=/drivers/ schemaspy/schemaspy:6.1.0 -t pgsql11 -host localhost:5432 -db realworld-db -u realworld-user -p realworld-pass
 	open ./tmp/schemaspy-output/index.html
 
+.PHONY: docs.generate-kdoc
+docs.generate-kdoc: ## KDocを生成と表示(gitに含めない)
+	./gradlew dokkaHtml
+	open build/dokka/html/index.html
+
 ################################################################################
 # Utility-Command help
 ################################################################################
