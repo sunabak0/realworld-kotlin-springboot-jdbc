@@ -134,54 +134,46 @@ class UserRepositoryImplTest {
 
     @Nested
     @Tag("WithLocalDb")
-    class `findByEmailWithPassword(Emailでユーザー検索 with Password)` {
-        @BeforeEach
-        fun reset() { resetDb() }
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @SpringBootTest
+    @DBRider
+    @DisplayName("Emailから検索(パスワード付き)")
+    class FindByEmailWithPasswordTest(@Autowired val userRepository: UserRepository) {
+        @BeforeAll
+        fun reset() = resetSequence()
 
         @Test
-        fun `該当するユーザーが存在する場合、パスワード付きでユーザーが戻り値となる`() {
-            fun localPrepare() { // 事前に User を 1 レコード分追加
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-                val sql1 =
-                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                val sqlParams1 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("email", "dummy@example.com")
-                    .addValue("username", "dummy")
-                    .addValue("password", "Passw0rd")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql1, sqlParams1)
-                val sql2 =
-                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                val sqlParams2 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("user_id", 1)
-                    .addValue("bio", "dummy")
-                    .addValue("image", "dummy")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql2, sqlParams2)
-            }
-            localPrepare()
-            val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
+        @DataSet("datasets/yml/given/users.yml")
+        fun `成功-対象の登録済みユーザーが存在する場合、パスワード付きで登録済みユーザーが戻り値となる`() {
+            // given:
+            val searchingEmail = Email.newWithoutValidation("paul-graham@example.com")
 
-            val searchingEmail = Email.newWithoutValidation("dummy@example.com")
-            when (val actual = repository.findByEmailWithPassword(searchingEmail)) {
+            // when:
+            val actual = userRepository.findByEmailWithPassword(searchingEmail)
+
+            // then:
+            when (actual) {
                 is Left -> assert(false)
-                is Right -> assertThat(actual.value.first.email).isEqualTo(searchingEmail)
+                is Right -> {
+                    val (foundUser, password) = actual.value
+                    assertThat(foundUser.email.value).isEqualTo(searchingEmail.value)
+                    assertThat(password.value).isEqualTo("Passw0rd")
+                }
             }
         }
 
         @Test
-        fun `該当するユーザーが存在しない場合、その旨のエラーが戻り値となる`() {
-            val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
-
+        @DataSet("datasets/yml/given/empty-users.yml")
+        fun `失敗-対象の登録済みユーザーが存在しない場合、その旨のエラーが戻り値となる`() {
+            // given:
             val searchingEmail = Email.newWithoutValidation("notfound@example.com")
-            when (val actual = repository.findByEmailWithPassword(searchingEmail)) {
-                is Left -> assertThat(actual.value).isEqualTo(UserRepository.FindByEmailWithPasswordError.NotFound(searchingEmail))
-                is Right -> assert(false)
-            }
+
+            // when:
+            val actual = userRepository.findByEmailWithPassword(searchingEmail)
+
+            // then:
+            val expected = UserRepository.FindByEmailWithPasswordError.NotFound(searchingEmail).left()
+            assertThat(actual).isEqualTo(expected)
         }
 
         @Nested
