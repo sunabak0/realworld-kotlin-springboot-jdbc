@@ -24,7 +24,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -349,28 +348,38 @@ class UserAndAuthenticationControllerTest {
     }
 
     @Nested
-    class `Update(ユーザー情報の更新)` {
-        private val currentUser =
-            RegisteredUser.newWithoutValidation(
-                UserId(1),
-                Email.newWithoutValidation("dummy@example.com"),
-                Username.newWithoutValidation("dummy-username"),
-                Bio.newWithoutValidation("dummy-bio"),
-                Image.newWithoutValidation("dummy-image"),
-            )
-        private val myAuthReturnCurrentUser = object : MyAuth {
-            override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> =
-                currentUser.right()
-        }
-        private val jwtEncodeSessionReturnSuccess = object : MySessionJwt {
-            override fun encode(session: MySession) = "dummy-jwt-token".right()
-        }
-        private fun newUserAndAuthenticationController(returnValue: Either<UpdateUserUseCase.Error, RegisteredUser>): UserAndAuthenticationController =
+    @DisplayName("ユーザー情報の更新")
+    class UpdateTest {
+        private data class TestCase(
+            val title: String,
+            val useCaseExecuteResult: Either<UpdateUserUseCase.Error, RegisteredUser>,
+            val expected: ResponseEntity<String>
+        )
+        /**
+         * ユーザー情報の更新UseCase の戻り値を固定した Controller を作成
+         *
+         * 認証は必ず '成功' する
+         * JWTエンコーディングは必ず '成功' する
+         *
+         * @param[updateUserUseCaseResult] UseCaseの実行の戻り値となる値
+         * @return 引数を戻り値とする login が実装された Controller
+         */
+        private fun createUserAndAuthenticationController(updateUserUseCaseResult: Either<UpdateUserUseCase.Error, RegisteredUser>): UserAndAuthenticationController =
             UserAndAuthenticationController(
-                jwtEncodeSessionReturnSuccess,
-                myAuthReturnCurrentUser,
-                object : RegisterUserUseCase {},
-                object : LoginUseCase {},
+                object : MySessionJwt {
+                    override fun encode(session: MySession) = "dummy-jwt-token".right()
+                },
+                object : MyAuth {
+                    override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> = RegisteredUser.newWithoutValidation(
+                        UserId(1),
+                        Email.newWithoutValidation("dummy@example.com"),
+                        Username.newWithoutValidation("dummy-username"),
+                        Bio.newWithoutValidation("dummy-bio"),
+                        Image.newWithoutValidation("dummy-image")
+                    ).right()
+                },
+                object : RegisterUserUseCase {}, // 関係ない
+                object : LoginUseCase {}, // 関係ない
                 object : UpdateUserUseCase {
                     override fun execute(
                         currentUser: RegisteredUser,
@@ -378,74 +387,80 @@ class UserAndAuthenticationControllerTest {
                         username: String?,
                         bio: String?,
                         image: String?
-                    ): Either<UpdateUserUseCase.Error, RegisteredUser> = returnValue
-                },
+                    ): Either<UpdateUserUseCase.Error, RegisteredUser> = updateUserUseCaseResult
+                }
             )
-        @Test
-        fun `UseCase から "更新後のユーザー" を返し、セッションのエンコードに成功した場合、 200 レスポンスを返す`() {
-            val updatedUser = RegisteredUser.newWithoutValidation(
-                UserId(1),
-                Email.newWithoutValidation("new-dummy@example.com"),
-                Username.newWithoutValidation("dummy-username"),
-                Bio.newWithoutValidation("dummy-bio"),
-                Image.newWithoutValidation("dummy-image"),
-            )
-            val controller = newUserAndAuthenticationController(updatedUser.right())
 
-            val actual = controller.update("dummy", """{"user":{}}""")
-            val expected = ResponseEntity(
-                """{"user":{"email":"new-dummy@example.com","username":"dummy-username","bio":"dummy-bio","image":"dummy-image","token":"dummy-jwt-token"}}""",
-                HttpStatus.valueOf(200)
-            )
-            assertThat(actual).isEqualTo(expected)
-        }
+        @TestFactory
+        fun test(): Stream<DynamicNode> {
+            return Stream.of(
+                TestCase(
+                    title = "成功: UseCase の実行結果が '登録されたユーザー' の場合、 200 レスポンスを返す",
+                    useCaseExecuteResult = RegisteredUser.newWithoutValidation(
+                        UserId(1),
+                        Email.newWithoutValidation("dummy@example.com"),
+                        Username.newWithoutValidation("dummy-username"),
+                        Bio.newWithoutValidation("dummy-bio"),
+                        Image.newWithoutValidation("dummy-image")
+                    ).right(),
+                    expected = ResponseEntity(
+                        """{"user":{"email":"dummy@example.com","username":"dummy-username","bio":"dummy-bio","image":"dummy-image","token":"dummy-jwt-token"}}""",
+                        HttpStatus.valueOf(200)
+                    )
+                ),
+                TestCase(
+                    title = "失敗: UseCase の実行結果が '更新しようとしたプロパティが不正である' 旨のエラーの場合、 422 エラーレスポンスを返す",
+                    useCaseExecuteResult = UpdateUserUseCase.Error.InvalidAttributesForUpdateUser(
+                        RegisteredUser.newWithoutValidation(
+                            UserId(1),
+                            Email.newWithoutValidation("dummy@example.com"),
+                            Username.newWithoutValidation("dummy-username"),
+                            Bio.newWithoutValidation("dummy-bio"),
+                            Image.newWithoutValidation("dummy-image")
+                        ),
+                        nonEmptyListOf(
+                            object : MyError.ValidationError {
+                                override val message: String get() = "dummy-原因"
+                                override val key: String get() = "dummy-プロパティ名"
+                            }
+                        )
+                    ).left(),
+                    expected = ResponseEntity(
+                        """{"errors":{"body":[{"key":"dummy-プロパティ名","message":"dummy-原因"}]}}""",
+                        HttpStatus.valueOf(422)
+                    )
+                ),
+                TestCase(
+                    title = "失敗: UseCase の実行結果が '元々のユーザー情報から更新するべき項目' 旨のエラーの場合、 422 エラーレスポンスを返す",
+                    useCaseExecuteResult = UpdateUserUseCase.Error.NoChange(
+                        RegisteredUser.newWithoutValidation(
+                            UserId(1),
+                            Email.newWithoutValidation("dummy@example.com"),
+                            Username.newWithoutValidation("dummy-username"),
+                            Bio.newWithoutValidation("dummy-bio"),
+                            Image.newWithoutValidation("dummy-image")
+                        )
+                    ).left(),
+                    expected = ResponseEntity(
+                        "更新する項目がありません",
+                        HttpStatus.valueOf(422)
+                    )
+                ),
+            ).map { testCase ->
+                dynamicTest(testCase.title) {
+                    // given:
+                    val controller = createUserAndAuthenticationController(testCase.useCaseExecuteResult)
 
-        @Test
-        fun `UseCase から "ユーザー情報が不正である" 旨のエラーが返ってきた場合、 422 レスポンスを返す`() {
-            val invalidAttributesForUpdateUser = UpdateUserUseCase.Error.InvalidAttributesForUpdateUser(
-                currentUser,
-                nonEmptyListOf(object : MyError.ValidationError {
-                    override val key: String get() = "dummy-key"
-                    override val message: String get() = "dummy-message"
-                })
-            )
-            val controller = newUserAndAuthenticationController(invalidAttributesForUpdateUser.left())
+                    // when:
+                    val actual = controller.update(
+                        rawAuthorizationHeader = "Authorization: Bearer dummy.dummy.dummy",
+                        rawRequestBody = """{"user": {}}"""
+                    )
 
-            val actual = controller.update("dummy", """{"user":{}}""")
-            val expected = ResponseEntity(
-                """{"errors":{"body":[{"key":"dummy-key","message":"dummy-message"}]}}""",
-                HttpStatus.valueOf(422)
-            )
-            assertThat(actual).isEqualTo(expected)
-        }
-
-        @Test
-        fun `UseCase から "更新するべき情報が無い" 旨のエラーが返ってきた場合、 422 レスポンスを返す`() {
-            val noChangeError = UpdateUserUseCase.Error.NoChange(currentUser)
-            val controller = newUserAndAuthenticationController(noChangeError.left())
-
-            val actual = controller.update("dummy", """{"user":{}}""")
-            val expected = ResponseEntity(
-                """更新する項目がありません""",
-                HttpStatus.valueOf(422)
-            )
-            assertThat(actual).isEqualTo(expected)
-        }
-
-        @Test
-        fun `UseCase から "原因不明である" 旨のエラーが返ってきた場合、 500 レスポンスを返す`() {
-            val unexpectedError = UpdateUserUseCase.Error.Unexpected(
-                currentUser,
-                object : MyError {}
-            )
-            val controller = newUserAndAuthenticationController(unexpectedError.left())
-
-            val actual = controller.update("dummy", """{"user":{}}""")
-            val expected = ResponseEntity(
-                """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
-                HttpStatus.valueOf(500)
-            )
-            assertThat(actual).isEqualTo(expected)
+                    // then:
+                    assertThat(actual).isEqualTo(testCase.expected)
+                }
+            }
         }
     }
 }
