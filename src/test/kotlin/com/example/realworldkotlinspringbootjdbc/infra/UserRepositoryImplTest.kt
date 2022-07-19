@@ -30,15 +30,6 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 
 class UserRepositoryImplTest {
     companion object {
-        val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
-        fun resetDb() {
-            val sql = """
-                DELETE FROM users;
-                DELETE FROM profiles;
-            """.trimIndent()
-            namedParameterJdbcTemplate.update(sql, MapSqlParameterSource())
-        }
-
         fun resetSequence() {
             val sql = """
                 SELECT
@@ -46,7 +37,7 @@ class UserRepositoryImplTest {
                     , setval('profiles_id_seq', 10000)
                 ;
             """.trimIndent()
-            namedParameterJdbcTemplate.queryForRowSet(sql, MapSqlParameterSource())
+            DbConnection.namedParameterJdbcTemplate.queryForRowSet(sql, MapSqlParameterSource())
         }
     }
 
