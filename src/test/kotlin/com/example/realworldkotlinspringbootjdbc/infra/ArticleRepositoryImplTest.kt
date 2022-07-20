@@ -2,208 +2,70 @@ package com.example.realworldkotlinspringbootjdbc.infra
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import arrow.core.left
 import arrow.core.right
-import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
-import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
-import com.example.realworldkotlinspringbootjdbc.domain.article.Description
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
-import com.example.realworldkotlinspringbootjdbc.domain.article.Title
-import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
-import java.text.SimpleDateFormat
-import com.example.realworldkotlinspringbootjdbc.domain.article.Body as ArticleBody
 import com.example.realworldkotlinspringbootjdbc.domain.article.Tag as ArticleTag
 
 class ArticleRepositoryImplTest {
-    companion object {
-        val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
-        fun resetDb() {
-            val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
-            val sql = """
-                DELETE FROM articles;
-                DELETE FROM article_tags;
-                DELETE FROM tags;
-            """.trimIndent()
-            namedParameterJdbcTemplate.update(sql, MapSqlParameterSource())
-        }
-    }
-
     @Nested
     @Tag("WithLocalDb")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-    class Find() {
-        @BeforeEach
-        @AfterAll
-        fun reset() {
-            resetDb()
-        }
+    @DBRider
+    @DisplayName("Slugで記事検索")
+    class FindBySlugTest {
+        @BeforeAll
+        fun reset() = UserRepositoryImplTest.resetSequence()
 
         @Test
-        fun `異常系 articles テーブルに slug 該当する記事が存在し、findBySlug を実行したとき、Article を戻す`() {
-            fun localPrepare() {
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-                val insertArticlesSql = """
-                    INSERT INTO
-                        articles (
-                            id
-                            , author_id
-                            , title
-                            , slug
-                            , body
-                            , description
-                            , created_at
-                            , updated_at
-                        )
-                    VALUES (
-                        :id
-                        , :author_id
-                        , :title
-                        , :slug
-                        , :body
-                        , :description
-                        , :created_at
-                        , :updated_at
-                    )
-                """.trimIndent()
-                val insertArticlesSqlParams = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("author_id", 1)
-                    .addValue("title", "dummy-title")
-                    .addValue("slug", "dummy-slug")
-                    .addValue("body", "dummy-body")
-                    .addValue("description", "dummy-description")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertArticlesSql, insertArticlesSqlParams)
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `成功-slug に該当する記事が存在する場合、 作成された記事を取得できる`() {
+            // given:
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val searchingSlug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin")
 
-                val insertArticleTagsSql = """
-                    INSERT INTO
-                        article_tags (
-                            id
-                            , article_id
-                            , tag_id
-                            , created_at
-                        )
-                    VALUES (
-                        :id
-                        , :article_id
-                        , :tag_id
-                        , :created_at
-                    )
-                    ;
-                """.trimIndent()
-                val insertArticleTagsSqlParams1 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("article_id", 1)
-                    .addValue("tag_id", 1)
-                    .addValue("created_at", date)
-                namedParameterJdbcTemplate.update(insertArticleTagsSql, insertArticleTagsSqlParams1)
-                val insertArticleTagsSqlParams2 = MapSqlParameterSource()
-                    .addValue("id", 2)
-                    .addValue("article_id", 1)
-                    .addValue("tag_id", 2)
-                    .addValue("created_at", date)
-                namedParameterJdbcTemplate.update(insertArticleTagsSql, insertArticleTagsSqlParams2)
+            // when:
+            val actual = articleRepository.findBySlug(searchingSlug)
 
-                val insertTagsSql = """
-                    INSERT INTO
-                        tags (
-                            id
-                            , name
-                            , created_at
-                            , updated_at
-                        )
-                    VALUES (
-                        :id
-                        , :name
-                        , :created_at
-                        , :updated_at
-                    )
-                """.trimIndent()
-                val insertTagsSqlMap1 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("name", "dummy-tag-1")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertTagsSql, insertTagsSqlMap1)
-                val insertTagsSqlMap2 = MapSqlParameterSource()
-                    .addValue("id", 2)
-                    .addValue("name", "dummy-tag-2")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertTagsSql, insertTagsSqlMap2)
-            }
-            localPrepare()
-            val repository = ArticleRepositoryImpl(namedParameterJdbcTemplate)
-            val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-            val expected = CreatedArticle.newWithoutValidation(
-                ArticleId(1),
-                Title.newWithoutValidation("dummy-title"),
-                Slug.newWithoutValidation("dummy-slug"),
-                ArticleBody.newWithoutValidation("dummy-body"),
-                createdAt = date,
-                updatedAt = date,
-                Description.newWithoutValidation("dummy-description"),
-                listOf(ArticleTag.newWithoutValidation("dummy-tag-1"), ArticleTag.newWithoutValidation("dummy-tag-2")),
-                UserId(1),
-                favorited = false,
-                favoritesCount = 0
-            )
-
-            when (val actual = repository.findBySlug(Slug.newWithoutValidation("dummy-slug"))) {
+            // then:
+            when (actual) {
                 is Left -> assert(false)
                 is Right -> {
-                    /**
-                     * エンティティの識別子による同一性の確認
-                     */
-                    assertThat(actual.value).isEqualTo(expected)
-                    /**
-                     * プロパティが期待値と全て等しいのか確認
-                     */
-                    assertThat(actual.value.id).isEqualTo(expected.id)
-                    assertThat(actual.value.title).isEqualTo(expected.title)
-                    assertThat(actual.value.slug).isEqualTo(expected.slug)
-                    assertThat(actual.value.body).isEqualTo(expected.body)
-                    assertThat(actual.value.createdAt).isEqualTo(expected.createdAt)
-                    assertThat(actual.value.updatedAt).isEqualTo(expected.updatedAt)
-                    assertThat(actual.value.description).isEqualTo(expected.description)
-                    assertThat(actual.value.tagList).isEqualTo(expected.tagList)
-                    assertThat(actual.value.authorId).isEqualTo(expected.authorId)
-                    assertThat(actual.value.favorited).isEqualTo(expected.favorited)
-                    assertThat(actual.value.favoritesCount).isEqualTo(expected.favoritesCount)
+                    val createdArticle = actual.value
+                    assertThat(createdArticle.slug.value).isEqualTo(searchingSlug.value)
                 }
             }
         }
 
         @Test
-        fun `異常系 articles テーブルに slug に該当する記事が存在せずに、findBySlug を実行したとき、NotFound を戻す`() {
-            val repository = ArticleRepositoryImpl(namedParameterJdbcTemplate)
+        @DataSet("datasets/yml/given/empty-articles.yml")
+        fun `失敗-articles テーブルに slug に該当する記事が存在せずに、findBySlug を実行したとき、NotFound を戻す`() {
+            // given:
+            val repository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val searchingSlug = Slug.newWithoutValidation("not-found-slug")
 
-            val expected = ArticleRepository.FindBySlugError.NotFound(
-                Slug.newWithoutValidation("dummy-slug")
-            )
-            when (val actual = repository.findBySlug(Slug.newWithoutValidation("dummy-slug"))) {
-                is Left -> assertThat(actual.value).isEqualTo(expected)
-                is Right -> assertThat(false)
-            }
-        }
+            // when:
+            val actual = repository.findBySlug(searchingSlug)
 
-        @Test
-        @Disabled
-        fun `異常系 UnexpectedError が戻り値`() {
-            TODO()
+            // then:
+            val expected = ArticleRepository.FindBySlugError.NotFound(searchingSlug).left()
+            assertThat(actual).isEqualTo(expected)
         }
     }
 

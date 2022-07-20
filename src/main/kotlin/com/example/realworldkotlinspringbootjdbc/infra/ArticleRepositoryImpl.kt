@@ -19,90 +19,85 @@ import com.example.realworldkotlinspringbootjdbc.domain.article.Body as ArticleB
 
 @Repository
 class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTemplate) : ArticleRepository {
+    private val selectBySlugSql = """
+        SELECT
+            articles.id
+            , articles.title
+            , articles.slug
+            , articles.body
+            , articles.created_at
+            , articles.updated_at
+            , articles.description
+            , COALESCE((
+                SELECT
+                    STRING_AGG(tags.name, ',')
+                FROM
+                    tags
+                JOIN
+                    article_tags
+                ON
+                    article_tags.tag_id = tags.id
+                    AND article_tags.article_id = articles.id
+                GROUP BY
+                    article_tags.article_id
+            ), '') AS tags
+            , articles.author_id
+            , (
+                SELECT
+                    CASE COUNT(favorites.id)
+                        WHEN 0 THEN false
+                        ELSE true
+                    END
+                FROM
+                    favorites
+                WHERE
+                    favorites.article_id = articles.id
+                    AND favorites.user_id = :current_user_id
+            ) AS favorited
+            , (
+                SELECT
+                    COUNT(favorites.id)
+                FROM
+                    favorites
+                WHERE
+                    favorites.article_id = articles.id
+            ) AS favoritesCount
+        FROM
+            articles
+        WHERE
+            articles.slug = :slug
+        ;       
+    """.trimIndent()
     override fun findBySlug(slug: Slug): Either<ArticleRepository.FindBySlugError, CreatedArticle> {
-        /**
-         * slug に該当する 記事 を取得
-         */
-        val selectArticleSql = """
-            SELECT
-                articles.id
-                , articles.title
-                , articles.slug
-                , articles.body
-                , articles.created_at
-                , articles.updated_at
-                , articles.description
-                , tags.name AS tag
-                , articles.author_id
-                , 0 AS favorited
-                , (
-                    SELECT
-                        COUNT(favorites.user_id)
-                    FROM
-                        favorites
-                    WHERE
-                        favorites.article_id = articles.id
-                    ) AS favoritesCount
-            FROM
-                articles
-            LEFT OUTER JOIN
-                article_tags
-            ON
-                article_tags.article_id = articles.id
-            JOIN
-                tags
-            ON
-                article_tags.tag_id = tags.id
-            WHERE
-                articles.slug = :slug
-            ;
-        """.trimIndent()
         val selectArticleSqlParams = MapSqlParameterSource()
             .addValue("slug", slug.value)
-        val articleMap = try {
-            namedParameterJdbcTemplate.queryForList(selectArticleSql, selectArticleSqlParams)
+            .addValue("current_user_id", null)
+        val articleList = try {
+            namedParameterJdbcTemplate.queryForList(selectBySlugSql, selectArticleSqlParams)
         } catch (e: Throwable) {
             return ArticleRepository.FindBySlugError.Unexpected(e, slug).left()
         }
 
-        /**
-         * tag を取得
-         */
-        val tags = when (articleMap.isEmpty()) {
-            /**
-             * article が存在しなかった場合、NotFoundError
-             */
-            true -> return ArticleRepository.FindBySlugError.NotFound(slug).left()
-            /**
-             * article が存在した場合、id を取得
-             */
-            false -> try {
-                articleMap.map {
-                    Tag.newWithoutValidation(
-                        it["tag"].toString()
-                    )
-                }
+        return when {
+            articleList.isEmpty() -> ArticleRepository.FindBySlugError.NotFound(slug).left()
+            else -> try {
+                val articleMap = articleList.first()
+                CreatedArticle.newWithoutValidation(
+                    id = ArticleId(articleMap["id"].toString().toInt()),
+                    title = Title.newWithoutValidation(articleMap["title"].toString()),
+                    slug = Slug.newWithoutValidation(articleMap["slug"].toString()),
+                    body = ArticleBody.newWithoutValidation(articleMap["body"].toString()),
+                    createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["created_at"].toString()),
+                    updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["updated_at"].toString()),
+                    description = Description.newWithoutValidation(articleMap["description"].toString()),
+                    tagList = articleMap["tags"].toString().split(",").map { Tag.newWithoutValidation(it) },
+                    authorId = UserId(articleMap["author_id"].toString().toInt()),
+                    favorited = articleMap["favorited"].toString() == "true",
+                    favoritesCount = articleMap["favoritesCount"].toString().toInt()
+                ).right()
             } catch (e: Throwable) {
-                return ArticleRepository.FindBySlugError.Unexpected(e, slug).left()
+                ArticleRepository.FindBySlugError.Unexpected(e, slug).left()
             }
-        }
-
-        return try {
-            CreatedArticle.newWithoutValidation(
-                ArticleId(articleMap.first()["id"].toString().toInt()),
-                Title.newWithoutValidation(articleMap.first()["title"].toString()),
-                Slug.newWithoutValidation(articleMap.first()["slug"].toString()),
-                ArticleBody.newWithoutValidation(articleMap.first()["body"].toString()),
-                SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap.first()["created_at"].toString()),
-                SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap.first()["updated_at"].toString()),
-                Description.newWithoutValidation(articleMap.first()["description"].toString()),
-                tags,
-                UserId(articleMap.first()["author_id"].toString().toInt()),
-                favorited = articleMap.first()["favorited"].toString().toInt() == 1,
-                favoritesCount = articleMap.first()["favoritesCount"].toString().toInt()
-            ).right()
-        } catch (e: Throwable) {
-            return ArticleRepository.FindBySlugError.Unexpected(e, slug).left()
         }
     }
 
