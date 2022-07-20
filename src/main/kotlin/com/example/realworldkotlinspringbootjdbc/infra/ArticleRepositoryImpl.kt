@@ -35,6 +35,7 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                 , articles.created_at
                 , articles.updated_at
                 , articles.description
+                , tags.name AS tag
                 , articles.author_id
                 , 0 AS favorited
                 , (
@@ -47,8 +48,16 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                     ) AS favoritesCount
             FROM
                 articles
+            LEFT OUTER JOIN
+                article_tags
+            ON
+                article_tags.article_id = articles.id
+            JOIN
+                tags
+            ON
+                article_tags.tag_id = tags.id
             WHERE
-                slug = :slug
+                articles.slug = :slug
             ;
         """.trimIndent()
         val selectArticleSqlParams = MapSqlParameterSource()
@@ -60,9 +69,9 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         }
 
         /**
-         * tag 取得のため、articleId だけ取得
+         * tag を取得
          */
-        val articleId = when (articleMap.isEmpty()) {
+        val tags = when (articleMap.isEmpty()) {
             /**
              * article が存在しなかった場合、NotFoundError
              */
@@ -71,44 +80,19 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
              * article が存在した場合、id を取得
              */
             false -> try {
-                ArticleId(articleMap.first()["id"].toString().toInt())
+                articleMap.map {
+                    Tag.newWithoutValidation(
+                        it["tag"].toString()
+                    )
+                }
             } catch (e: Throwable) {
                 return ArticleRepository.FindBySlugError.Unexpected(e, slug).left()
             }
         }
 
-        /**
-         * article に該当する tag を取得
-         */
-        val selectTagsSql = """
-            SELECT
-                tags.name AS name
-            FROM
-                article_tags
-            JOIN
-                tags
-            ON
-                article_tags.tag_id = tags.id
-            WHERE
-                article_tags.article_id = :article_id
-            ;
-        """.trimIndent()
-        val selectTagsSqlParams = MapSqlParameterSource()
-            .addValue("article_id", articleId.value)
-        val tagsMap = try {
-            namedParameterJdbcTemplate.queryForList(selectTagsSql, selectTagsSqlParams)
-        } catch (e: Throwable) {
-            return ArticleRepository.FindBySlugError.Unexpected(e, slug).left()
-        }
-        val tags = try {
-            tagsMap.map { Tag.newWithoutValidation(it["name"].toString()) }
-        } catch (e: Throwable) {
-            return ArticleRepository.FindBySlugError.Unexpected(e, slug).left()
-        }
-
         return try {
             CreatedArticle.newWithoutValidation(
-                articleId,
+                ArticleId(articleMap.first()["id"].toString().toInt()),
                 Title.newWithoutValidation(articleMap.first()["title"].toString()),
                 Slug.newWithoutValidation(articleMap.first()["slug"].toString()),
                 ArticleBody.newWithoutValidation(articleMap.first()["body"].toString()),
