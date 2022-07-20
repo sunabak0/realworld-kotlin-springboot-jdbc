@@ -9,11 +9,8 @@ import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.article.Tag
-<<<<<<< HEAD
-=======
 import com.example.realworldkotlinspringbootjdbc.domain.article.Title
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
->>>>>>> 2f51988 (feat: 「slug から単一記事取得」機能追加 のため、ArticleRepository.findBySlug() を追加)
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
