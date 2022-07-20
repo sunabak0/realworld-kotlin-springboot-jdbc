@@ -1,21 +1,20 @@
 package com.example.realworldkotlinspringbootjdbc.infra
 
-<<<<<<< HEAD
 import arrow.core.right
 import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
-=======
-import arrow.core.Either
+import arrow.core.Either.Left
+import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
+import com.example.realworldkotlinspringbootjdbc.domain.article.Tag as ArticleTag
 import com.example.realworldkotlinspringbootjdbc.domain.article.Title
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -23,7 +22,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import com.example.realworldkotlinspringbootjdbc.domain.article.Tag as ArticleTag
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import java.text.SimpleDateFormat
 import com.example.realworldkotlinspringbootjdbc.domain.article.Body as ArticleBody
@@ -35,6 +33,8 @@ class ArticleRepositoryImplTest {
             val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
             val sql = """
                 DELETE FROM articles;
+                DELETE FROM article_tags;
+                DELETE FROM tags;
             """.trimIndent()
             namedParameterJdbcTemplate.update(sql, MapSqlParameterSource())
         }
@@ -87,6 +87,63 @@ class ArticleRepositoryImplTest {
                     .addValue("created_at", date)
                     .addValue("updated_at", date)
                 namedParameterJdbcTemplate.update(insertArticlesSql, insertArticlesSqlParams)
+
+                val insertArticleTagsSql = """
+                    INSERT INTO
+                        article_tags (
+                            id
+                            , article_id
+                            , tag_id
+                            , created_at
+                        )
+                    VALUES (
+                        :id
+                        , :article_id
+                        , :tag_id
+                        , :created_at
+                    )
+                    ;
+                """.trimIndent()
+                val insertArticleTagsSqlParams1 = MapSqlParameterSource()
+                    .addValue("id", 1)
+                    .addValue("article_id", 1)
+                    .addValue("tag_id", 1)
+                    .addValue("created_at", date)
+                namedParameterJdbcTemplate.update(insertArticleTagsSql, insertArticleTagsSqlParams1)
+                val insertArticleTagsSqlParams2 = MapSqlParameterSource()
+                    .addValue("id", 2)
+                    .addValue("article_id", 1)
+                    .addValue("tag_id", 2)
+                    .addValue("created_at", date)
+                namedParameterJdbcTemplate.update(insertArticleTagsSql, insertArticleTagsSqlParams2)
+
+                val insertTagsSql = """
+                    INSERT INTO
+                        tags (
+                            id
+                            , name
+                            , created_at
+                            , updated_at
+                        )
+                    VALUES (
+                        :id
+                        , :name
+                        , :created_at
+                        , :updated_at
+                    )
+                """.trimIndent()
+                val insertTagsSqlMap1 = MapSqlParameterSource()
+                    .addValue("id", 1)
+                    .addValue("name", "dummy-tag-1")
+                    .addValue("created_at", date)
+                    .addValue("updated_at", date)
+                namedParameterJdbcTemplate.update(insertTagsSql, insertTagsSqlMap1)
+                val insertTagsSqlMap2 = MapSqlParameterSource()
+                    .addValue("id", 2)
+                    .addValue("name", "dummy-tag-2")
+                    .addValue("created_at", date)
+                    .addValue("updated_at", date)
+                namedParameterJdbcTemplate.update(insertTagsSql, insertTagsSqlMap2)
             }
             localPrepare()
             val repository = ArticleRepositoryImpl(namedParameterJdbcTemplate)
@@ -99,15 +156,34 @@ class ArticleRepositoryImplTest {
                 createdAt = date,
                 updatedAt = date,
                 Description.newWithoutValidation("dummy-description"),
-                listOf(),
+                listOf(ArticleTag.newWithoutValidation("dummy-tag-1"), ArticleTag.newWithoutValidation("dummy-tag-2")),
                 UserId(1),
                 favorited = false,
                 favoritesCount = 0
             )
 
             when (val actual = repository.findBySlug(Slug.newWithoutValidation("dummy-slug"))) {
-                is Either.Left -> assert(false)
-                is Either.Right -> assertThat(actual.value).isEqualTo(expected)
+                is Left -> assert(false)
+                is Right -> {
+                    /**
+                     * エンティティの識別子による同一性の確認
+                     */
+                    assertThat(actual.value).isEqualTo(expected)
+                    /**
+                     * プロパティが期待値と全て等しいのか確認
+                     */
+                    assertThat(actual.value.id).isEqualTo(expected.id)
+                    assertThat(actual.value.title).isEqualTo(expected.title)
+                    assertThat(actual.value.slug).isEqualTo(expected.slug)
+                    assertThat(actual.value.body).isEqualTo(expected.body)
+                    assertThat(actual.value.createdAt).isEqualTo(expected.createdAt)
+                    assertThat(actual.value.updatedAt).isEqualTo(expected.updatedAt)
+                    assertThat(actual.value.description).isEqualTo(expected.description)
+                    assertThat(actual.value.tagList).isEqualTo(expected.tagList)
+                    assertThat(actual.value.authorId).isEqualTo(expected.authorId)
+                    assertThat(actual.value.favorited).isEqualTo(expected.favorited)
+                    assertThat(actual.value.favoritesCount).isEqualTo(expected.favoritesCount)
+                }
             }
         }
 
@@ -119,8 +195,8 @@ class ArticleRepositoryImplTest {
                 Slug.newWithoutValidation("dummy-slug")
             )
             when (val actual = repository.findBySlug(Slug.newWithoutValidation("dummy-slug"))) {
-                is Either.Left -> assertThat(actual.value).isEqualTo(expected)
-                is Either.Right -> assertThat(false)
+                is Left -> assertThat(actual.value).isEqualTo(expected)
+                is Right -> assertThat(false)
             }
         }
 
