@@ -1,0 +1,26 @@
+#
+# 記事のタグ
+#
+# 個数: 5つ分
+#
+tags:
+  - id: 1
+    name: "rust"
+    created_at: "[DAY,NOW]"
+    updated_at: "[DAY,NOW]"
+  - id: 2
+    name: "scala"
+    created_at: "[DAY,NOW]"
+    updated_at: "[DAY,NOW]"
+  - id: 3
+    name: "kotlin"
+    created_at: "[DAY,NOW]"
+    updated_at: "[DAY,NOW]"
+  - id: 4
+    name: "ocaml"
+    created_at: "[DAY,NOW]"
+    updated_at: "[DAY,NOW]"
+  - id: 5
+    name: "elixir"
+    created_at: "[DAY,NOW]"
+    updated_at: "[DAY,NOW]"
