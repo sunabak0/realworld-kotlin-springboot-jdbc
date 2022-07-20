@@ -3,10 +3,15 @@ package com.example.realworldkotlinspringbootjdbc.domain
 import arrow.core.Either
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.article.Tag
+import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface ArticleRepository {
+    /**
+     * Slug で作成された記事検索
+     */
     fun findBySlug(slug: Slug): Either<FindBySlugError, CreatedArticle> = TODO()
+    fun findBySlug(slug: Slug, currentUserId: UserId): Either<FindBySlugError, CreatedArticle> = TODO()
     sealed interface FindBySlugError : MyError {
         data class NotFound(val slug: Slug) : FindBySlugError, MyError.Basic
         data class Unexpected(override val cause: Throwable, val slug: Slug) : FindBySlugError, MyError.MyErrorWithThrowable

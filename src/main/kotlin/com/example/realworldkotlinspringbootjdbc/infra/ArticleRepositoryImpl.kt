@@ -19,65 +19,62 @@ import com.example.realworldkotlinspringbootjdbc.domain.article.Body as ArticleB
 
 @Repository
 class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTemplate) : ArticleRepository {
-    private val selectBySlugSql = """
-        SELECT
-            articles.id
-            , articles.title
-            , articles.slug
-            , articles.body
-            , articles.created_at
-            , articles.updated_at
-            , articles.description
-            , COALESCE((
-                SELECT
-                    STRING_AGG(tags.name, ',')
-                FROM
-                    tags
-                JOIN
-                    article_tags
-                ON
-                    article_tags.tag_id = tags.id
-                    AND article_tags.article_id = articles.id
-                GROUP BY
-                    article_tags.article_id
-            ), '') AS tags
-            , articles.author_id
-            , (
-                SELECT
-                    CASE COUNT(favorites.id)
-                        WHEN 0 THEN false
-                        ELSE true
-                    END
-                FROM
-                    favorites
-                WHERE
-                    favorites.article_id = articles.id
-                    AND favorites.user_id = :current_user_id
-            ) AS favorited
-            , (
-                SELECT
-                    COUNT(favorites.id)
-                FROM
-                    favorites
-                WHERE
-                    favorites.article_id = articles.id
-            ) AS favoritesCount
-        FROM
-            articles
-        WHERE
-            articles.slug = :slug
-        ;       
-    """.trimIndent()
-    override fun findBySlug(slug: Slug): Either<ArticleRepository.FindBySlugError, CreatedArticle> {
-        val selectArticleSqlParams = MapSqlParameterSource()
-            .addValue("slug", slug.value)
-            .addValue("current_user_id", null)
+
+    private fun findBySlugSharedProcess(slug: Slug, sqlParams: MapSqlParameterSource): Either<ArticleRepository.FindBySlugError, CreatedArticle> {
+        val selectBySlugSql = """
+            SELECT
+                articles.id
+                , articles.title
+                , articles.slug
+                , articles.body
+                , articles.created_at
+                , articles.updated_at
+                , articles.description
+                , COALESCE((
+                    SELECT
+                        STRING_AGG(tags.name, ',')
+                    FROM
+                        tags
+                    JOIN
+                        article_tags
+                    ON
+                        article_tags.tag_id = tags.id
+                        AND article_tags.article_id = articles.id
+                    GROUP BY
+                        article_tags.article_id
+                ), '') AS tags
+                , articles.author_id
+                , (
+                    SELECT
+                        CASE COUNT(favorites.id)
+                            WHEN 0 THEN false
+                            ELSE true
+                        END
+                    FROM
+                        favorites
+                    WHERE
+                        favorites.article_id = articles.id
+                        AND favorites.user_id = :current_user_id
+                ) AS favorited
+                , (
+                    SELECT
+                        COUNT(favorites.id)
+                    FROM
+                        favorites
+                    WHERE
+                        favorites.article_id = articles.id
+                ) AS favoritesCount
+            FROM
+                articles
+            WHERE
+                articles.slug = :slug
+            ;
+        """.trimIndent()
         val articleList = try {
-            namedParameterJdbcTemplate.queryForList(selectBySlugSql, selectArticleSqlParams)
+            namedParameterJdbcTemplate.queryForList(selectBySlugSql, sqlParams)
         } catch (e: Throwable) {
             return ArticleRepository.FindBySlugError.Unexpected(e, slug).left()
         }
-
         return when {
             articleList.isEmpty() -> ArticleRepository.FindBySlugError.NotFound(slug).left()
             else -> try {
@@ -99,6 +96,21 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                 ArticleRepository.FindBySlugError.Unexpected(e, slug).left()
             }
         }
+    }
+    override fun findBySlug(
+        slug: Slug,
+        currentUserId: UserId
+    ): Either<ArticleRepository.FindBySlugError, CreatedArticle> {
+        val sqlParams = MapSqlParameterSource()
+            .addValue("slug", slug.value)
+            .addValue("current_user_id", currentUserId.value)
+        return findBySlugSharedProcess(slug, sqlParams)
+    }
+    override fun findBySlug(slug: Slug): Either<ArticleRepository.FindBySlugError, CreatedArticle> {
+        val sqlParams = MapSqlParameterSource()
+            .addValue("slug", slug.value)
+            .addValue("current_user_id", null)
+        return findBySlugSharedProcess(slug, sqlParams)
     }
 
     override fun tags(): Either<ArticleRepository.TagsError, List<Tag>> {

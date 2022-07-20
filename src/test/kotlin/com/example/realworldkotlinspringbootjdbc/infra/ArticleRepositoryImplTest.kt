@@ -6,6 +6,7 @@ import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
+import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
@@ -49,6 +50,44 @@ class ArticleRepositoryImplTest {
                 is Right -> {
                     val createdArticle = actual.value
                     assertThat(createdArticle.slug.value).isEqualTo(searchingSlug.value)
+                }
+            }
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `成功-Slug に該当する記事が存在し、SlugとUserIdで検索すると、お気に入り済みかどうかが反映された作成された記事を取得できる`() {
+            // given:
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val searchingSlug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin")
+            val favoritedArticleUserId = UserId(2)
+            val unfavoritedArticleUserId = UserId(1)
+
+            // when: お気に入りしている登録済みユーザーとお気に入りしていない登録済みユーザーを用意
+            val favoritedArticle = articleRepository.findBySlug(searchingSlug, favoritedArticleUserId)
+            val unfavoritedArticle = articleRepository.findBySlug(searchingSlug, unfavoritedArticleUserId)
+
+            // then:
+            when (favoritedArticle) {
+                is Left -> assert(false)
+                is Right -> {
+                    val createdArticle = favoritedArticle.value
+                    assertThat(createdArticle.slug.value).isEqualTo(searchingSlug.value)
+                    assertThat(createdArticle.favorited).isTrue
+                }
+            }
+            when (unfavoritedArticle) {
+                is Left -> assert(false)
+                is Right -> {
+                    val createdArticle = unfavoritedArticle.value
+                    assertThat(createdArticle.slug.value).isEqualTo(searchingSlug.value)
+                    assertThat(createdArticle.favorited).isFalse
                 }
             }
         }
