@@ -14,316 +14,197 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.Password
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
+import com.github.database.rider.core.api.dataset.DataSet
+import com.github.database.rider.core.api.dataset.ExpectedDataSet
+import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import org.springframework.dao.DataAccessException
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
-import org.springframework.jdbc.core.namedparam.SqlParameterSource
-import java.text.SimpleDateFormat
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Tag("WithLocalDb")
 class UserRepositoryImplTest {
     companion object {
-        val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
-        fun resetDb() {
-            val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
+        fun resetSequence() {
             val sql = """
-                DELETE FROM users;
-                DELETE FROM profiles;
+                SELECT
+                    setval('users_id_seq', 10000)
+                    , setval('profiles_id_seq', 10000)
+                ;
             """.trimIndent()
-            namedParameterJdbcTemplate.update(sql, MapSqlParameterSource())
+            DbConnection.namedParameterJdbcTemplate.queryForRowSet(sql, MapSqlParameterSource())
         }
     }
 
     @Nested
     @Tag("WithLocalDb")
-    class `Register(ユーザー登録)` {
-        @BeforeEach
-        @AfterEach
-        fun reset() { resetDb() }
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @SpringBootTest
+    @DBRider
+    @DisplayName("ユーザー登録")
+    class RegisterTest(@Autowired val userRepository: UserRepository) {
+        @BeforeAll
+        fun reset() = resetSequence()
 
         @Test
-        fun `EmailやUsernameが利用されておらず(登録できる場合)、登録されたユーザーが戻り値となる`() {
+        @DataSet("datasets/yml/given/users.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/user_repository/register-success.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        // NOTE: @ExportDataSetはgivenの@DataSetが変更用に残しておく
+        // @ExportDataSet(format = DataSetFormat.YML, outputName = "src/test/resources/datasets/yml/then/user_repository/register-success.yml", includeTables = ["users", "profiles", "followings"])
+        fun `成功-EmailとUsernameがまだ登録されていない未登録ユーザーは、登録できる`() {
+            // given:
             val user = object : UnregisteredUser {
-                override val email: Email get() = Email.newWithoutValidation("dummy@example.com")
+                override val email: Email get() = Email.newWithoutValidation("unregistered@example.com")
                 override val password: Password get() = Password.newWithoutValidation("Passw0rd")
-                override val username: Username get() = Username.newWithoutValidation("dummy-username")
+                override val username: Username get() = Username.newWithoutValidation("unregistered-username")
             }
-            val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
-            val confirmSql = """SELECT count(email) FROM users WHERE users.email = :email;"""
-            val sqlParams = MapSqlParameterSource().addValue("email", user.email.value)
 
-            // 確認: Before/Afterでレコードの数は1増える
-            val beforeEmailCount = namedParameterJdbcTemplate.queryForMap(confirmSql, sqlParams)["count"] as Long
-            assertThat(beforeEmailCount).isEqualTo(0)
+            // when:
+            val actual = userRepository.register(user)
 
-            // 確認: 成功である(UserIdは不定なので、isRightで比較をする。パターンマッチで確認できるならそれでやりたいが、不明なためやっていない)
-            val actual = repository.register(user)
+            // then:
             assertThat(actual.isRight()).isTrue
-
-            val afterEmailCount = namedParameterJdbcTemplate.queryForMap(confirmSql, sqlParams)["count"] as Long
-            assertThat(afterEmailCount).isEqualTo(1)
-        }
-
-        /**
-         * 上手く行かない
-         * 理由: @Transactional を効かせるには自分で注入するのではなく、SpringBootに注入させる必要がある
-         */
-        @Disabled
-        @Test
-        fun `Profileを登録する場合に DataAccessException が投げられた場合、Rollbackされる`() {
-            val user = object : UnregisteredUser {
-                override val email: Email get() = Email.newWithoutValidation("dummy@example.com")
-                override val password: Password get() = Password.newWithoutValidation("Passw0rd")
-                override val username: Username get() = Username.newWithoutValidation("dummy-username")
-            }
-            val updateThrowDataAccessExceptionNamedParameterJdbcTemplate = object : NamedParameterJdbcTemplate(DbConnection.dataSource()) {
-                override fun update(sql: String, paramSource: SqlParameterSource): Int = throw object : DataAccessException("Hello") {}
-            }
-            val repository = UserRepositoryImpl(updateThrowDataAccessExceptionNamedParameterJdbcTemplate)
-
-            val confirmSql1 = """SELECT count(id) FROM users;"""
-            val confirmSql2 = """SELECT count(id) FROM profiles;"""
-            val sqlParams = MapSqlParameterSource()
-            val beforeEmailCount1 = namedParameterJdbcTemplate.queryForMap(confirmSql1, sqlParams)["count"] as Long
-            val beforeEmailCount2 = namedParameterJdbcTemplate.queryForMap(confirmSql2, sqlParams)["count"] as Long
-            assertThat(beforeEmailCount1).isEqualTo(0)
-            assertThat(beforeEmailCount2).isEqualTo(0)
-
-            val actual = repository.register(user)
-            assertThat(actual.isRight()).isFalse
-
-            val afterEmailCount1 = namedParameterJdbcTemplate.queryForMap(confirmSql1, sqlParams)["count"] as Long
-            val afterEmailCount2 = namedParameterJdbcTemplate.queryForMap(confirmSql2, sqlParams)["count"] as Long
-            assertThat(afterEmailCount1).isEqualTo(0)
-            assertThat(afterEmailCount2).isEqualTo(0)
         }
 
         @Test
-        fun `Emailが既に登録されていた場合、その旨のエラーが戻り値となる`() {
-            fun localPrepare(email: Email) { // 事前に User を 1 レコード分追加
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-                val sql1 =
-                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                val sqlParams1 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("email", email.value)
-                    .addValue("username", "dummy")
-                    .addValue("password", "Passw0rd")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql1, sqlParams1)
-                val sql2 =
-                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                val sqlParams2 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("user_id", 1)
-                    .addValue("bio", "dummy")
-                    .addValue("image", "dummy")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql2, sqlParams2)
-            }
-            val duplicatedEmail = Email.newWithoutValidation("dummy@example.com")
-            localPrepare(duplicatedEmail)
-            val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
+        @DataSet("datasets/yml/given/users.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/users.yml"],
+            ignoreCols = ["created_at", "updated_at"]
+        )
+        fun `失敗-Emailが既に利用されていた場合、その旨のエラーが返り、登録できない`() {
+            // given:
             val user = object : UnregisteredUser {
-                override val email: Email get() = Email.newWithoutValidation("dummy@example.com")
+                override val email: Email get() = Email.newWithoutValidation("paul-graham@example.com")
                 override val password: Password get() = Password.newWithoutValidation("Passw0rd")
-                override val username: Username get() = Username.newWithoutValidation("dummy-username")
+                override val username: Username get() = Username.newWithoutValidation("non-used-username")
             }
-            val confirmRecordCountSql = """SELECT count(*) FROM users WHERE email = '${duplicatedEmail.value}';"""
 
-            // 確認: Before/After で レコードの数が変わってないこと
-            val beforeRecordCount = namedParameterJdbcTemplate.queryForMap(confirmRecordCountSql, MapSqlParameterSource())["count"] as Long
-            assertThat(beforeRecordCount).isEqualTo(1L)
+            // when:
+            val actual = userRepository.register(user)
 
-            // 確認: エラーであること
-            val actual = repository.register(user)
-            val expected = UserRepository.RegisterError.AlreadyRegisteredEmail(duplicatedEmail).left()
+            // then:
+            val expected = UserRepository.RegisterError.AlreadyRegisteredEmail(user.email).left()
             assertThat(actual).isEqualTo(expected)
-
-            val afterRecordCount = namedParameterJdbcTemplate.queryForMap(confirmRecordCountSql, MapSqlParameterSource())["count"] as Long
-            assertThat(afterRecordCount).isEqualTo(1L)
         }
 
-        @Disabled
         @Test
-        fun `Usernameが既に登録されていた場合、その旨のエラーが戻り値となる`() {
-            TODO()
+        @DataSet("datasets/yml/given/users.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/users.yml"],
+            ignoreCols = ["created_at", "updated_at"]
+        )
+        fun `失敗-Usernameが既に利用されていた場合、その旨のエラーが返り、登録できない`() {
+            // given:
+            val user = object : UnregisteredUser {
+                override val email: Email get() = Email.newWithoutValidation("non-used-email@example.com")
+                override val password: Password get() = Password.newWithoutValidation("Passw0rd")
+                override val username: Username get() = Username.newWithoutValidation("paul-graham")
+            }
+
+            // when:
+            val actual = userRepository.register(user)
+
+            // then:
+            val expected = UserRepository.RegisterError.AlreadyRegisteredUsername(user.username).left()
+            assertThat(actual).isEqualTo(expected)
         }
     }
 
     @Nested
     @Tag("WithLocalDb")
-    class `findByEmailWithPassword(Emailでユーザー検索 with Password)` {
-        @BeforeEach
-        fun reset() { resetDb() }
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @SpringBootTest
+    @DBRider
+    @DisplayName("Emailから検索(パスワード付き)")
+    class FindByEmailWithPasswordTest(@Autowired val userRepository: UserRepository) {
+        @BeforeAll
+        fun reset() = resetSequence()
 
         @Test
-        fun `該当するユーザーが存在する場合、パスワード付きでユーザーが戻り値となる`() {
-            fun localPrepare() { // 事前に User を 1 レコード分追加
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-                val sql1 =
-                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                val sqlParams1 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("email", "dummy@example.com")
-                    .addValue("username", "dummy")
-                    .addValue("password", "Passw0rd")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql1, sqlParams1)
-                val sql2 =
-                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                val sqlParams2 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("user_id", 1)
-                    .addValue("bio", "dummy")
-                    .addValue("image", "dummy")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql2, sqlParams2)
-            }
-            localPrepare()
-            val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
+        @DataSet("datasets/yml/given/users.yml")
+        fun `成功-対象の登録済みユーザーが存在する場合、パスワード付きで登録済みユーザーが戻り値となる`() {
+            // given:
+            val searchingEmail = Email.newWithoutValidation("paul-graham@example.com")
 
-            val searchingEmail = Email.newWithoutValidation("dummy@example.com")
-            when (val actual = repository.findByEmailWithPassword(searchingEmail)) {
+            // when:
+            val actual = userRepository.findByEmailWithPassword(searchingEmail)
+
+            // then:
+            when (actual) {
                 is Left -> assert(false)
-                is Right -> assertThat(actual.value.first.email).isEqualTo(searchingEmail)
+                is Right -> {
+                    val (foundUser, password) = actual.value
+                    assertThat(foundUser.email.value).isEqualTo(searchingEmail.value)
+                    assertThat(password.value).isEqualTo("Passw0rd")
+                }
             }
         }
 
         @Test
-        fun `該当するユーザーが存在しない場合、その旨のエラーが戻り値となる`() {
-            val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
-
+        @DataSet("datasets/yml/given/empty-users.yml")
+        fun `失敗-対象の登録済みユーザーが存在しない場合、その旨のエラーが戻り値となる`() {
+            // given:
             val searchingEmail = Email.newWithoutValidation("notfound@example.com")
-            when (val actual = repository.findByEmailWithPassword(searchingEmail)) {
-                is Left -> assertThat(actual.value).isEqualTo(UserRepository.FindByEmailWithPasswordError.NotFound(searchingEmail))
-                is Right -> assert(false)
-            }
-        }
 
-        @Nested
-        @Tag("WithLocalDb")
-        class `findByUserId(UserIdでユーザー検索)` {
-            @BeforeEach
-            fun reset() {
-                resetDb()
-            }
+            // when:
+            val actual = userRepository.findByEmailWithPassword(searchingEmail)
 
-            @Test
-            fun `該当するユーザーが存在する場合、ユーザーが戻り値となる`() {
-                fun localPrepare() { // 事前に User を 1 レコード分追加
-                    val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-                    val sql1 =
-                        "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                    val sqlParams1 = MapSqlParameterSource()
-                        .addValue("id", 1)
-                        .addValue("email", "dummy@example.com")
-                        .addValue("username", "dummy-username")
-                        .addValue("password", "Passw0rd")
-                        .addValue("created_at", date)
-                        .addValue("updated_at", date)
-                    namedParameterJdbcTemplate.update(sql1, sqlParams1)
-                    val sql2 =
-                        "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                    val sqlParams2 = MapSqlParameterSource()
-                        .addValue("id", 1)
-                        .addValue("user_id", 1)
-                        .addValue("bio", "dummy-bio")
-                        .addValue("image", "dummy-image")
-                        .addValue("created_at", date)
-                        .addValue("updated_at", date)
-                    namedParameterJdbcTemplate.update(sql2, sqlParams2)
-                }
-                localPrepare()
-                val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
-
-                val actual = repository.findByUserId(UserId(1))
-                val expected = RegisteredUser.newWithoutValidation(
-                    UserId(1),
-                    Email.newWithoutValidation("dummy@example.com"),
-                    Username.newWithoutValidation("dummy-username"),
-                    Bio.newWithoutValidation("dummy-bio"),
-                    Image.newWithoutValidation("dummy-image"),
-                ).right()
-                assertThat(actual).isEqualTo(expected)
-            }
-
-            @Test
-            fun `該当するユーザーが存在しない場合、その旨のエラーが戻り値となる`() {
-                val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
-
-                val actual = repository.findByUserId(UserId(1))
-                val expected = UserRepository.FindByUserIdError.NotFound(UserId(1)).left()
-                assertThat(actual).isEqualTo(expected)
-            }
+            // then:
+            val expected = UserRepository.FindByEmailWithPasswordError.NotFound(searchingEmail).left()
+            assertThat(actual).isEqualTo(expected)
         }
     }
 
     @Nested
     @Tag("WithLocalDb")
-    class `findByUserId(UserIdでユーザー検索)` {
-        @BeforeEach
-        fun reset() {
-            resetDb()
-        }
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @SpringBootTest
+    @DBRider
+    @DisplayName("UserIdから検索")
+    class FindByUserIdTest(@Autowired val userRepository: UserRepository) {
+        @BeforeAll
+        fun reset() = resetSequence()
 
         @Test
-        fun `該当するユーザーが存在する場合、ユーザーが戻り値となる`() {
-            fun localPrepare() { // 事前に User を 1 レコード分追加
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-                val sql1 =
-                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                val sqlParams1 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("email", "dummy@example.com")
-                    .addValue("username", "dummy-username")
-                    .addValue("password", "Passw0rd")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql1, sqlParams1)
-                val sql2 =
-                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                val sqlParams2 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("user_id", 1)
-                    .addValue("bio", "dummy-bio")
-                    .addValue("image", "dummy-image")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql2, sqlParams2)
-            }
-            localPrepare()
-            val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
+        @DataSet("datasets/yml/given/users.yml")
+        fun `成功-対象の登録済みユーザーが存在する場合、登録済みユーザーが戻り値となる`() {
+            // given:
+            val searchingUserId = UserId(1)
 
-            val actual = repository.findByUserId(UserId(1))
+            // when:
+            val actual = userRepository.findByUserId(searchingUserId)
+
+            // then:
             val expected = RegisteredUser.newWithoutValidation(
                 UserId(1),
-                Email.newWithoutValidation("dummy@example.com"),
-                Username.newWithoutValidation("dummy-username"),
-                Bio.newWithoutValidation("dummy-bio"),
-                Image.newWithoutValidation("dummy-image"),
+                Email.newWithoutValidation("paul-graham@example.com"),
+                Username.newWithoutValidation("paul-graham"),
+                Bio.newWithoutValidation("Lisper"),
+                Image.newWithoutValidation(""),
             ).right()
             assertThat(actual).isEqualTo(expected)
         }
 
         @Test
-        fun `該当するユーザーが存在しない場合、その旨のエラーが戻り値となる`() {
-            val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
+        @DataSet("datasets/yml/given/empty-users.yml")
+        fun `失敗-対象の登録済みユーザーが存在しない場合、その旨のエラーが戻り値となる`() {
+            // given:
+            val searchingUserId = UserId(1)
 
-            val actual = repository.findByUserId(UserId(1))
+            // when:
+            val actual = userRepository.findByUserId(searchingUserId)
+
+            // then:
             val expected = UserRepository.FindByUserIdError.NotFound(UserId(1)).left()
             assertThat(actual).isEqualTo(expected)
         }
@@ -331,245 +212,113 @@ class UserRepositoryImplTest {
 
     @Nested
     @Tag("WithLocalDb")
-    class `update(ユーザーの更新)` {
-        @BeforeEach
-        @AfterEach
-        fun reset() {
-            resetDb()
-        }
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @SpringBootTest
+    @DBRider
+    @DisplayName("ユーザー情報更新")
+    class UpdateTest(@Autowired val userRepository: UserRepository) {
+        @BeforeAll
+        fun reset() = resetSequence()
 
         @Test
-        fun `該当するユーザーが存在し、更新したい項目が全ての場合、全て更新されたユーザーが戻り値となる`() {
-            fun localPrepare() { // 事前に User を 1 レコード分追加
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-                val sql1 =
-                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                val sqlParams1 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("email", "dummy@example.com")
-                    .addValue("username", "dummy-username")
-                    .addValue("password", "Passw0rd")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql1, sqlParams1)
-                val sql2 =
-                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                val sqlParams2 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("user_id", 1)
-                    .addValue("bio", "dummy-bio")
-                    .addValue("image", "dummy-image")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql2, sqlParams2)
-            }
-            localPrepare()
-            val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
-
-            val newUser = object : UpdatableRegisteredUser {
+        @DataSet("datasets/yml/given/users.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/user_repository/update-success.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        // NOTE: @ExportDataSetはgivenの@DataSetが変更用に残しておく
+        // @ExportDataSet(format = DataSetFormat.YML, outputName = "src/test/resources/datasets/yml/then/user_repository/update-success.yml", includeTables = ["users", "profiles", "followings"])
+        fun `成功-更新可能な登録済みユーザーの場合、更新が反映された登録済みユーザーが戻り値となり、更新される`() {
+            // given: Usernameだけ変更なしの更新可能な登録済みユーザー
+            val updatableRegisteredUser = object : UpdatableRegisteredUser {
                 override val userId: UserId get() = UserId(1)
-                override val email: Email get() = Email.newWithoutValidation("new@example.com")
-                override val username: Username get() = Username.newWithoutValidation("new-dummy-username")
-                override val bio: Bio get() = Bio.newWithoutValidation("new-dummy-bio")
-                override val image: Image get() = Image.newWithoutValidation("new-dummy-image")
+                override val email: Email get() = Email.newWithoutValidation("paul-graham-2022@example.com")
+                override val username: Username get() = Username.newWithoutValidation("paul-graham")
+                override val bio: Bio get() = Bio.newWithoutValidation("Lisper, ハッカーと画家")
+                override val image: Image get() = Image.newWithoutValidation("https://sep.yimg.com/ca/I/paulgraham_2239_13556")
             }
 
-            val actual = repository.update(newUser)
+            // when:
+            val actual = userRepository.update(updatableRegisteredUser)
+
+            // then:
             val expected = RegisteredUser.newWithoutValidation(
-                newUser.userId,
-                newUser.email,
-                newUser.username,
-                newUser.bio,
-                newUser.image,
+                updatableRegisteredUser.userId,
+                updatableRegisteredUser.email,
+                updatableRegisteredUser.username,
+                updatableRegisteredUser.bio,
+                updatableRegisteredUser.image,
             ).right()
             assertThat(actual).isEqualTo(expected)
         }
 
         @Test
-        fun `該当するユーザーが存在し、更新したい項目が Bio と Image だけの場合、それだけ更新されたユーザーが戻り値となる`() {
-            fun localPrepare() { // 事前に User を 1 レコード分追加
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-                val sql1 =
-                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                val sqlParams1 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("email", "dummy@example.com")
-                    .addValue("username", "dummy-username")
-                    .addValue("password", "Passw0rd")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql1, sqlParams1)
-                val sql2 =
-                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                val sqlParams2 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("user_id", 1)
-                    .addValue("bio", "dummy-bio")
-                    .addValue("image", "dummy-image")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql2, sqlParams2)
-            }
-            localPrepare()
-            val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
-
-            val newUser = object : UpdatableRegisteredUser {
+        @DataSet("datasets/yml/given/users.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/users.yml"],
+            ignoreCols = ["created_at", "updated_at"]
+        )
+        fun `失敗-Email が既に利用されていた場合、その旨のエラーが戻り値となり、更新されない`() {
+            // given:
+            val alreadyUsedEmailUpdatableRegisteredUser = object : UpdatableRegisteredUser {
                 override val userId: UserId get() = UserId(1)
-                override val email: Email get() = Email.newWithoutValidation("dummy@example.com")
-                override val username: Username get() = Username.newWithoutValidation("dummy-username")
-                override val bio: Bio get() = Bio.newWithoutValidation("new-dummy-bio")
-                override val image: Image get() = Image.newWithoutValidation("new-dummy-image")
+                override val email: Email get() = Email.newWithoutValidation("matz@example.com")
+                override val username: Username get() = Username.newWithoutValidation("paul-graham")
+                override val bio: Bio get() = Bio.newWithoutValidation("Lisper, ハッカーと画家")
+                override val image: Image get() = Image.newWithoutValidation("https://sep.yimg.com/ca/I/paulgraham_2239_13556")
             }
 
-            val actual = repository.update(newUser)
-            val expected = RegisteredUser.newWithoutValidation(
-                newUser.userId,
-                newUser.email,
-                newUser.username,
-                newUser.bio,
-                newUser.image,
-            ).right()
+            // when:
+            val actual = userRepository.update(alreadyUsedEmailUpdatableRegisteredUser)
+
+            // then:
+            val expected = UserRepository.UpdateError.AlreadyRegisteredEmail(alreadyUsedEmailUpdatableRegisteredUser.email).left()
             assertThat(actual).isEqualTo(expected)
         }
 
         @Test
-        fun `更新しようとした Email が既に登録済みだった場合、その旨のエラーが戻り値となる`() {
-            fun localPrepare() { // 事前に User を 2 人分追加
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-                val sql1 =
-                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                val sqlParams1 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("email", "dummy@example.com")
-                    .addValue("username", "dummy-username")
-                    .addValue("password", "Passw0rd")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql1, sqlParams1)
-                val sql2 =
-                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                val sqlParams2 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("user_id", 1)
-                    .addValue("bio", "dummy-bio")
-                    .addValue("image", "dummy-image")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql2, sqlParams2)
-
-                val sql3 =
-                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                val sqlParams3 = MapSqlParameterSource()
-                    .addValue("id", 2)
-                    .addValue("email", "dummy2@example.com")
-                    .addValue("username", "dummy-username2")
-                    .addValue("password", "Passw0rd")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql3, sqlParams3)
-                val sql4 =
-                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                val sqlParams4 = MapSqlParameterSource()
-                    .addValue("id", 2)
-                    .addValue("user_id", 2)
-                    .addValue("bio", "dummy-bio")
-                    .addValue("image", "dummy-image")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql4, sqlParams4)
-            }
-            localPrepare()
-            val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
-
-            val newUser = object : UpdatableRegisteredUser {
+        @DataSet("datasets/yml/given/users.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/users.yml"],
+            ignoreCols = ["created_at", "updated_at"]
+        )
+        fun `失敗-Username が既に利用されていた場合、その旨のエラーが戻り値となり、更新されない`() {
+            // given:
+            val alreadyUsedUsernameUpdatableRegisteredUser = object : UpdatableRegisteredUser {
                 override val userId: UserId get() = UserId(1)
-                override val email: Email get() = Email.newWithoutValidation("dummy2@example.com")
-                override val username: Username get() = Username.newWithoutValidation("dummy-username")
-                override val bio: Bio get() = Bio.newWithoutValidation("new-dummy-bio")
-                override val image: Image get() = Image.newWithoutValidation("new-dummy-image")
+                override val email: Email get() = Email.newWithoutValidation("paul-graham@example.com")
+                override val username: Username get() = Username.newWithoutValidation("graydon-hoare")
+                override val bio: Bio get() = Bio.newWithoutValidation("Lisper, ハッカーと画家")
+                override val image: Image get() = Image.newWithoutValidation("https://sep.yimg.com/ca/I/paulgraham_2239_13556")
             }
 
-            val actual = repository.update(newUser)
-            val expected = UserRepository.UpdateError.AlreadyRegisteredEmail(newUser.email).left()
+            // when:
+            val actual = userRepository.update(alreadyUsedUsernameUpdatableRegisteredUser)
+
+            // then:
+            val expected = UserRepository.UpdateError.AlreadyRegisteredUsername(alreadyUsedUsernameUpdatableRegisteredUser.username).left()
             assertThat(actual).isEqualTo(expected)
         }
 
         @Test
-        fun `更新しようとした Username が既に登録済みだった場合、その旨のエラーが戻り値となる`() {
-            fun localPrepare() { // 事前に User を 2 人分追加
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-                val sql1 =
-                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                val sqlParams1 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("email", "dummy@example.com")
-                    .addValue("username", "dummy-username")
-                    .addValue("password", "Passw0rd")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql1, sqlParams1)
-                val sql2 =
-                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                val sqlParams2 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("user_id", 1)
-                    .addValue("bio", "dummy-bio")
-                    .addValue("image", "dummy-image")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql2, sqlParams2)
-
-                val sql3 =
-                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                val sqlParams3 = MapSqlParameterSource()
-                    .addValue("id", 2)
-                    .addValue("email", "dummy2@example.com")
-                    .addValue("username", "dummy-username2")
-                    .addValue("password", "Passw0rd")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql3, sqlParams3)
-                val sql4 =
-                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                val sqlParams4 = MapSqlParameterSource()
-                    .addValue("id", 2)
-                    .addValue("user_id", 2)
-                    .addValue("bio", "dummy-bio")
-                    .addValue("image", "dummy-image")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(sql4, sqlParams4)
-            }
-            localPrepare()
-            val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
-
-            val newUser = object : UpdatableRegisteredUser {
+        @DataSet("datasets/yml/given/empty-users.yml")
+        @ExpectedDataSet(value = ["datasets/yml/given/empty-users.yml"])
+        fun `失敗-対象の登録済みユーザーが存在しない場合、その旨のエラーが戻り値となり、更新されない`() {
+            // given: Usernameだけ変更なしの更新可能な登録済みユーザー
+            val notFoundUpdatableRegisteredUser = object : UpdatableRegisteredUser {
                 override val userId: UserId get() = UserId(1)
-                override val email: Email get() = Email.newWithoutValidation("dummy@example.com")
-                override val username: Username get() = Username.newWithoutValidation("dummy-username2")
-                override val bio: Bio get() = Bio.newWithoutValidation("new-dummy-bio")
-                override val image: Image get() = Image.newWithoutValidation("new-dummy-image")
+                override val email: Email get() = Email.newWithoutValidation("paul-graham-2022@example.com")
+                override val username: Username get() = Username.newWithoutValidation("paul-graham")
+                override val bio: Bio get() = Bio.newWithoutValidation("Lisper, ハッカーと画家")
+                override val image: Image get() = Image.newWithoutValidation("https://sep.yimg.com/ca/I/paulgraham_2239_13556")
             }
 
-            val actual = repository.update(newUser)
-            val expected = UserRepository.UpdateError.AlreadyRegisteredUsername(newUser.username).left()
-            assertThat(actual).isEqualTo(expected)
-        }
+            // when:
+            val actual = userRepository.update(notFoundUpdatableRegisteredUser)
 
-        @Test
-        fun `該当するユーザーが存在しない場合、その旨のエラーが戻り値となる`() {
-            val repository = UserRepositoryImpl(namedParameterJdbcTemplate)
-
-            val newUser = object : UpdatableRegisteredUser {
-                override val userId: UserId get() = UserId(1)
-                override val email: Email get() = Email.newWithoutValidation("new@example.com")
-                override val username: Username get() = Username.newWithoutValidation("new-dummy-username")
-                override val bio: Bio get() = Bio.newWithoutValidation("new-dummy-bio")
-                override val image: Image get() = Image.newWithoutValidation("new-dummy-image")
-            }
-
-            val actual = repository.update(newUser)
-            val expected = UserRepository.UpdateError.NotFound(newUser.userId).left()
+            // then:
+            val expected = UserRepository.UpdateError.NotFound(notFoundUpdatableRegisteredUser.userId).left()
             assertThat(actual).isEqualTo(expected)
         }
     }
