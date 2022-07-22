@@ -18,7 +18,8 @@ data class Article(
     val updatedAt: Date,
     @JsonProperty("description") val description: String,
     @JsonProperty("tagList") val tagList: List<String>,
-    @JsonProperty("author") val author: String,
+    // TODO: authorId を author に変更
+    @JsonProperty("authorId") val authorId: Int,
     @JsonProperty("favorited") val favorited: Boolean,
     @JsonProperty("favoritesCount") val favoritesCount: Int,
 )

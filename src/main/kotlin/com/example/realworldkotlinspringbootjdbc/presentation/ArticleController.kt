@@ -2,9 +2,11 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Articles
 import com.example.realworldkotlinspringbootjdbc.usecase.article.ShowArticleUseCase
+import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -12,15 +14,18 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
 import java.text.SimpleDateFormat
 
 @RestController
 @Tag(name = "Articles")
 class ArticleController(
+    val myAuth: MyAuth,
     val showArticle: ShowArticleUseCase,
 ) {
     @GetMapping("/articles")
@@ -36,7 +41,7 @@ class ArticleController(
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
                     "hoge-description",
                     listOf("dragons", "training"),
-                    "hoge-author",
+                    1,
                     true,
                     1,
                 )
@@ -59,10 +64,10 @@ class ArticleController(
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
             "hoge-description",
             listOf("dragons", "training"),
-            "hoge-author",
+            1,
             true,
             1,
-        )
+        ).right()
         return ResponseEntity(
             ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
             HttpStatus.valueOf(200),
@@ -82,7 +87,7 @@ class ArticleController(
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
                     "hoge-description",
                     listOf("dragons", "training"),
-                    "hoge-author",
+                    1,
                     true,
                     1,
                 )
@@ -95,30 +100,42 @@ class ArticleController(
     }
 
     @GetMapping("/articles/{slug}")
-    fun show(): ResponseEntity<String> {
-        val result = showArticle.execute("hoge-slug")
-        when (result) {
-            is Right -> {
-                println(result.value)
+    fun show(
+        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
+        @PathVariable("slug") slug: String?
+    ): ResponseEntity<String> {
+        return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
+            /**
+             * JWT 認証 失敗
+             */
+            is Left -> when (val showArticleResult = showArticle.execute(slug)) {
+                is Left -> TODO()
+                is Right -> {
+                    val article = Article(
+                        showArticleResult.value.title.value,
+                        showArticleResult.value.slug.value,
+                        showArticleResult.value.body.value,
+                        showArticleResult.value.createdAt,
+                        showArticleResult.value.updatedAt,
+                        showArticleResult.value.description.value,
+                        showArticleResult.value.tagList.map { tag -> tag.value },
+                        // TODO: authorId を author に変更
+                        showArticleResult.value.authorId.value,
+                        showArticleResult.value.favorited,
+                        showArticleResult.value.favoritesCount
+                    )
+                    ResponseEntity(
+                        ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
+                        HttpStatus.valueOf(200),
+                    )
+                }
             }
-            is Left -> {}
+
+            /**
+             * JWT 認証 成功
+             */
+            is Right -> TODO()
         }
-        val article = Article(
-            "hoge-title",
-            "hoge-slug",
-            "hoge-body",
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-            "hoge-description",
-            listOf("dragons", "training"),
-            "hoge-author",
-            true,
-            1,
-        )
-        return ResponseEntity(
-            ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
-            HttpStatus.valueOf(200),
-        )
     }
 
     @PutMapping("/articles/{slug}")
@@ -131,7 +148,7 @@ class ArticleController(
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
             "hoge-description",
             listOf("dragons", "training"),
-            "hoge-author",
+            1,
             true,
             1,
         )

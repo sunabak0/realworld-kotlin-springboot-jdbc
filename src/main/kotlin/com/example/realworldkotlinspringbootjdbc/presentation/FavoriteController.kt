@@ -81,7 +81,7 @@ class FavoriteController(
                             favoritedArticle.value.description.value,
                             favoritedArticle.value.tagList.map { tag -> tag.value },
                             // TODO: authorId を author に変更
-                            favoritedArticle.value.authorId.value.toString(),
+                            favoritedArticle.value.authorId.value,
                             favoritedArticle.value.favorited,
                             favoritedArticle.value.favoritesCount
                         )
@@ -108,7 +108,7 @@ class FavoriteController(
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
             "hoge-description",
             listOf("dragons", "training"),
-            "hoge-author",
+            1,
             false,
             0,
         )
@@ -161,7 +161,7 @@ class FavoriteController(
                             unfavoritedArticle.value.description.value,
                             unfavoritedArticle.value.tagList.map { tag -> tag.value },
                             // TODO: authorId を author に変更
-                            unfavoritedArticle.value.authorId.value.toString(),
+                            unfavoritedArticle.value.authorId.value,
                             unfavoritedArticle.value.favorited,
                             unfavoritedArticle.value.favoritesCount
                         )
