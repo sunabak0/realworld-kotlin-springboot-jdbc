@@ -8,9 +8,9 @@ import com.example.realworldkotlinspringbootjdbc.presentation.response.Comment
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
-import com.example.realworldkotlinspringbootjdbc.usecase.CreateCommentUseCase
-import com.example.realworldkotlinspringbootjdbc.usecase.DeleteCommentUseCase
-import com.example.realworldkotlinspringbootjdbc.usecase.ListCommentUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.comment.CreateCommentUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.comment.DeleteCommentUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.comment.ListCommentUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.tags.Tag

@@ -14,9 +14,9 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.Password
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
-import com.example.realworldkotlinspringbootjdbc.usecase.LoginUseCase
-import com.example.realworldkotlinspringbootjdbc.usecase.RegisterUserUseCase
-import com.example.realworldkotlinspringbootjdbc.usecase.UpdateUserUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.user_and_authentication.LoginUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.user_and_authentication.RegisterUserUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.user_and_authentication.UpdateUserUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import com.example.realworldkotlinspringbootjdbc.util.MySession
@@ -52,7 +52,8 @@ class UserAndAuthenticationControllerTest {
             val actual = UserAndAuthenticationController(
                 mySessionJwt,
                 object : MyAuth {}, // 関係ない
-                object : RegisterUserUseCase { override fun execute(email: String?, password: String?, username: String?): Either<RegisterUserUseCase.Error, RegisteredUser> = useCaseResult },
+                object :
+                    RegisterUserUseCase { override fun execute(email: String?, password: String?, username: String?): Either<RegisterUserUseCase.Error, RegisteredUser> = useCaseResult },
                 object : LoginUseCase {}, // 関係ない
                 object : UpdateUserUseCase {}, // 関係ない
             ).register("""{"user": {}}""")
@@ -120,7 +121,8 @@ class UserAndAuthenticationControllerTest {
                     val actual = UserAndAuthenticationController(
                         object : MySessionJwt { override fun encode(session: MySession): Either<MySessionJwt.EncodeError, String> = testCase.mySessionEncodeResult },
                         object : MyAuth {}, // 関係ない
-                        object : RegisterUserUseCase { override fun execute(email: String?, password: String?, username: String?): Either<RegisterUserUseCase.Error, RegisteredUser> = testCase.useCaseExecuteResult },
+                        object :
+                            RegisterUserUseCase { override fun execute(email: String?, password: String?, username: String?): Either<RegisterUserUseCase.Error, RegisteredUser> = testCase.useCaseExecuteResult },
                         object : LoginUseCase {}, // 関係ない
                         object : UpdateUserUseCase {}, // 関係ない
                     ).register("""{"user": {}}""")

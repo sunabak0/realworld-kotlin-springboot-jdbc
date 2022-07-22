@@ -1,4 +1,4 @@
-package com.example.realworldkotlinspringbootjdbc.usecase
+package com.example.realworldkotlinspringbootjdbc.usecase.comment
 
 import arrow.core.Either
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug

@@ -13,9 +13,9 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
-import com.example.realworldkotlinspringbootjdbc.usecase.CreateCommentUseCase
-import com.example.realworldkotlinspringbootjdbc.usecase.DeleteCommentUseCase
-import com.example.realworldkotlinspringbootjdbc.usecase.ListCommentUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.comment.CreateCommentUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.comment.DeleteCommentUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.comment.ListCommentUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.assertj.core.api.Assertions.assertThat

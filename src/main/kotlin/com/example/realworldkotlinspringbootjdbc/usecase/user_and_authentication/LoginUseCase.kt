@@ -1,4 +1,4 @@
-package com.example.realworldkotlinspringbootjdbc.usecase
+package com.example.realworldkotlinspringbootjdbc.usecase.user_and_authentication
 
 import arrow.core.Either
 import arrow.core.Either.Left
@@ -44,7 +44,8 @@ class LoginUseCaseImpl(
                  * 何かしらのエラー
                  */
                 is Left -> when (val error = registeredUserWithPassword.value) {
-                    is UserRepository.FindByEmailWithPasswordError.NotFound -> LoginUseCase.Error.Unauthorized(error.email).left()
+                    is UserRepository.FindByEmailWithPasswordError.NotFound -> LoginUseCase.Error.Unauthorized(error.email)
+                        .left()
                     is UserRepository.FindByEmailWithPasswordError.Unexpected -> LoginUseCase.Error.Unexpected(error).left()
                 }
                 /**
@@ -56,7 +57,11 @@ class LoginUseCaseImpl(
                     /**
                      * 認証 成功/失敗
                      */
-                    if (aPassword == bPassword) { registeredUser.right() } else { LoginUseCase.Error.Unauthorized(validatedInput.value.first).left() }
+                    if (aPassword == bPassword) { registeredUser.right() } else {
+                        LoginUseCase.Error.Unauthorized(
+                            validatedInput.value.first
+                        ).left()
+                    }
                 }
             }
         }

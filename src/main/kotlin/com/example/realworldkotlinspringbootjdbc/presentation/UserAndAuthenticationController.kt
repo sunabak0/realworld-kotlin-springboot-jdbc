@@ -7,9 +7,9 @@ import com.example.realworldkotlinspringbootjdbc.presentation.response.CurrentUs
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
-import com.example.realworldkotlinspringbootjdbc.usecase.LoginUseCase
-import com.example.realworldkotlinspringbootjdbc.usecase.RegisterUserUseCase
-import com.example.realworldkotlinspringbootjdbc.usecase.UpdateUserUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.user_and_authentication.LoginUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.user_and_authentication.RegisterUserUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.user_and_authentication.UpdateUserUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
@@ -71,12 +71,12 @@ class UserAndAuthenticationController(
             /**
              * ユーザー登録に失敗
              */
-            is Left -> when (val usecaseError = result.value) {
+            is Left -> when (val useCaseError = result.value) {
                 /**
                  * 原因: バリデーションエラー
                  */
                 is RegisterUserUseCase.Error.InvalidUser -> ResponseEntity(
-                    serializeMyErrorListForResponseBody(usecaseError.errors),
+                    serializeMyErrorListForResponseBody(useCaseError.errors),
                     HttpStatus.valueOf(422)
                 )
                 /**
