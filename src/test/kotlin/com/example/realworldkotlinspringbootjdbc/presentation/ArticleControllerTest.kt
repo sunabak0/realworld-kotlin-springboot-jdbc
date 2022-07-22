@@ -14,6 +14,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.article.Title
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.usecase.article.ShowArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
+import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
@@ -63,6 +64,19 @@ class ArticleControllerTest {
                     expected = ResponseEntity(
                         """{"article":{"title":"dummy-title","slug":"dummy-slug","body":"dummy-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","description":"dummy-description","tagList":["dummy-tag1","dummy-tag2"],"authorId":1,"favorited":false,"favoritesCount":1}}""",
                         HttpStatus.valueOf(200)
+                    )
+                ),
+                TestCase(
+                    title = "UseCase 失敗:ユースケース（ShowArticleUseCase）がバリデーションエラー（ValidationErrors）を返すとき、レスポンスのステータスコードが 404 になる",
+                    useCaseExecuteResult = ShowArticleUseCase.Error.ValidationErrors(
+                        listOf(object : MyError.ValidationError {
+                            override val message: String get() = "DummyValidationError"
+                            override val key: String get() = "DummyKey"
+                        })
+                    ).left(),
+                    expected = ResponseEntity(
+                        """{"errors":{"body":["記事が見つかりませんでした"]}}""",
+                        HttpStatus.valueOf(404)
                     )
                 )
             ).map { testCase ->

@@ -5,6 +5,7 @@ import arrow.core.Either.Right
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Articles
+import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.usecase.article.ShowArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -109,7 +110,24 @@ class ArticleController(
              * JWT 認証 失敗
              */
             is Left -> when (val showArticleResult = showArticle.execute(slug)) {
-                is Left -> TODO()
+                /**
+                 * 記事取得 失敗
+                 */
+                is Left -> when (val showArticleError = showArticleResult.value) {
+                    is ShowArticleUseCase.Error.FailedShow -> TODO()
+                    is ShowArticleUseCase.Error.NotFound -> TODO()
+                    is ShowArticleUseCase.Error.NotImplemented -> TODO()
+                    /**
+                     * 原因: バリデーションエラー
+                     */
+                    is ShowArticleUseCase.Error.ValidationErrors -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                }
+                /**
+                 * 記事取得 成功
+                 */
                 is Right -> {
                     val article = Article(
                         showArticleResult.value.title.value,
