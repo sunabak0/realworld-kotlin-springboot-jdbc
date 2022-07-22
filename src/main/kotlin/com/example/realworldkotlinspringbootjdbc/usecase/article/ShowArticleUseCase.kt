@@ -1,4 +1,4 @@
-package com.example.realworldkotlinspringbootjdbc.usecase
+package com.example.realworldkotlinspringbootjdbc.usecase.article
 
 import arrow.core.Either
 import arrow.core.Validated.Invalid
