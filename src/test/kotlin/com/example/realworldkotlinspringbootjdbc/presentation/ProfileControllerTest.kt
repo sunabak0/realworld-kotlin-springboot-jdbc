@@ -11,9 +11,9 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
-import com.example.realworldkotlinspringbootjdbc.usecase.FollowProfileUseCase
-import com.example.realworldkotlinspringbootjdbc.usecase.ShowProfileUseCase
-import com.example.realworldkotlinspringbootjdbc.usecase.UnfollowProfileUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.profile.FollowProfileUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.profile.ShowProfileUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.profile.UnfollowProfileUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.assertj.core.api.AssertionsForClassTypes.assertThat

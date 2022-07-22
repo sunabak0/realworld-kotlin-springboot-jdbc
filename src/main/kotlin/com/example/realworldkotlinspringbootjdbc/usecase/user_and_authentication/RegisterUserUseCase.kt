@@ -1,4 +1,4 @@
-package com.example.realworldkotlinspringbootjdbc.usecase
+package com.example.realworldkotlinspringbootjdbc.usecase.user_and_authentication
 
 import arrow.core.Either
 import arrow.core.Either.Left
@@ -45,11 +45,17 @@ class RegisterUserUseCaseImpl(
                     /**
                      * 原因: Emailが既に登録されている
                      */
-                    is UserRepository.RegisterError.AlreadyRegisteredEmail -> RegisterUserUseCase.Error.AlreadyRegisteredEmail(registerError, user.value).left()
+                    is UserRepository.RegisterError.AlreadyRegisteredEmail -> RegisterUserUseCase.Error.AlreadyRegisteredEmail(
+                        registerError,
+                        user.value
+                    ).left()
                     /**
                      * 原因: Usernameが既に登録されている
                      */
-                    is UserRepository.RegisterError.AlreadyRegisteredUsername -> RegisterUserUseCase.Error.AlreadyRegisteredUsername(registerError, user.value).left()
+                    is UserRepository.RegisterError.AlreadyRegisteredUsername -> RegisterUserUseCase.Error.AlreadyRegisteredUsername(
+                        registerError,
+                        user.value
+                    ).left()
                     /**
                      * 原因: 不明
                      */

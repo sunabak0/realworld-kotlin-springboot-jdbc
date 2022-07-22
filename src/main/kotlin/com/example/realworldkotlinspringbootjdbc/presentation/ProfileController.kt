@@ -7,9 +7,9 @@ import arrow.core.Some
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Profile
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
-import com.example.realworldkotlinspringbootjdbc.usecase.FollowProfileUseCase
-import com.example.realworldkotlinspringbootjdbc.usecase.ShowProfileUseCase
-import com.example.realworldkotlinspringbootjdbc.usecase.UnfollowProfileUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.profile.FollowProfileUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.profile.ShowProfileUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.profile.UnfollowProfileUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature

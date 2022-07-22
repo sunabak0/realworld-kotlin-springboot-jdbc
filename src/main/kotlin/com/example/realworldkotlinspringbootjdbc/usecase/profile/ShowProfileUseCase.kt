@@ -1,4 +1,4 @@
-package com.example.realworldkotlinspringbootjdbc.usecase
+package com.example.realworldkotlinspringbootjdbc.usecase.profile
 
 import arrow.core.Either
 import arrow.core.Either.Left

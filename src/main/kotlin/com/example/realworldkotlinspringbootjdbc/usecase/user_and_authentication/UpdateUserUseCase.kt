@@ -1,4 +1,4 @@
-package com.example.realworldkotlinspringbootjdbc.usecase
+package com.example.realworldkotlinspringbootjdbc.usecase.user_and_authentication
 
 import arrow.core.Either
 import arrow.core.NonEmptyList
