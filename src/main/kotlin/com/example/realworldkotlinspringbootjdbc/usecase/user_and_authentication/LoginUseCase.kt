@@ -57,9 +57,11 @@ class LoginUseCaseImpl(
                     /**
                      * 認証 成功/失敗
                      */
-                    if (aPassword == bPassword) { registeredUser.right() } else { LoginUseCase.Error.Unauthorized(
-                        validatedInput.value.first
-                    ).left() }
+                    if (aPassword == bPassword) { registeredUser.right() } else {
+                        LoginUseCase.Error.Unauthorized(
+                            validatedInput.value.first
+                        ).left()
+                    }
                 }
             }
         }
