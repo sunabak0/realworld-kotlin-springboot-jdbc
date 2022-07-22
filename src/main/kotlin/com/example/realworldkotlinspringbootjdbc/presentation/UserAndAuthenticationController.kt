@@ -71,12 +71,12 @@ class UserAndAuthenticationController(
             /**
              * ユーザー登録に失敗
              */
-            is Left -> when (val usecaseError = result.value) {
+            is Left -> when (val useCaseError = result.value) {
                 /**
                  * 原因: バリデーションエラー
                  */
                 is RegisterUserUseCase.Error.InvalidUser -> ResponseEntity(
-                    serializeMyErrorListForResponseBody(usecaseError.errors),
+                    serializeMyErrorListForResponseBody(useCaseError.errors),
                     HttpStatus.valueOf(422)
                 )
                 /**
