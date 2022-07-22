@@ -115,7 +115,13 @@ class ArticleController(
                  */
                 is Left -> when (val showArticleError = showArticleResult.value) {
                     is ShowArticleUseCase.Error.FailedShow -> TODO()
-                    is ShowArticleUseCase.Error.NotFound -> TODO()
+                    /**
+                     * 原因: slug に該当する記事が見つからなかった
+                     */
+                    is ShowArticleUseCase.Error.NotFound -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
                     is ShowArticleUseCase.Error.NotImplemented -> TODO()
                     /**
                      * 原因: バリデーションエラー

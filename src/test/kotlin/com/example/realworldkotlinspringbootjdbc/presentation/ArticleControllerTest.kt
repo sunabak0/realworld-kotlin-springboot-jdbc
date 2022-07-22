@@ -67,6 +67,14 @@ class ArticleControllerTest {
                     )
                 ),
                 TestCase(
+                    title = "UseCase 失敗:ユースケース（ShowArticleUseCase）が NotFound エラー（NotFound）を返すとき、レスポンスのステータスコードが 404 になる",
+                    useCaseExecuteResult = ShowArticleUseCase.Error.NotFound(object : MyError {}).left(),
+                    expected = ResponseEntity(
+                        """{"errors":{"body":["記事が見つかりませんでした"]}}""",
+                        HttpStatus.valueOf(404)
+                    )
+                ),
+                TestCase(
                     title = "UseCase 失敗:ユースケース（ShowArticleUseCase）がバリデーションエラー（ValidationErrors）を返すとき、レスポンスのステータスコードが 404 になる",
                     useCaseExecuteResult = ShowArticleUseCase.Error.ValidationErrors(
                         listOf(object : MyError.ValidationError {
