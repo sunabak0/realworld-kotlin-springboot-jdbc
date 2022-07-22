@@ -18,15 +18,13 @@ import java.text.SimpleDateFormat
 import com.example.realworldkotlinspringbootjdbc.domain.article.Body as ArticleBody
 
 interface ShowArticleUseCase {
-    fun execute(slug: String?): Either<Error, CreatedArticle> = Error.NotImplemented.left()
+    fun execute(slug: String?): Either<Error, CreatedArticle> = TODO()
     sealed interface Error : MyError {
         data class ValidationErrors(override val errors: List<MyError.ValidationError>) :
             Error,
             MyError.ValidationErrors
 
-        data class FailedShow(override val cause: MyError) : Error, MyError.MyErrorWithMyError
         data class NotFound(override val cause: MyError) : Error, MyError.MyErrorWithMyError
-        object NotImplemented : Error
     }
 }
 
