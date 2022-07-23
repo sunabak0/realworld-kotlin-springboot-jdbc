@@ -245,3 +245,12 @@ task<Test>("withLocalDb") {
         this.showStandardStreams = true
     }
 }
+
+/**
+ * detektの設定
+ *
+ * 基本的に全てdetekt.ymlで設定する
+ */
+detekt {
+    config = files("$projectDir/config/detekt/detekt.yml")
+}
