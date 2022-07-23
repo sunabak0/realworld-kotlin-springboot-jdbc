@@ -621,9 +621,15 @@ style:
   MaxChainedCallsOnSameLine:
     active: false
     maxChainedCalls: 5
+  #
+  # MaxLineLength
+  #
+  # 概要
+  # - 1行あたりの文字数
+  #
   MaxLineLength:
     active: true
-    maxLineLength: 120
+    maxLineLength: 311 # (default: 120)
     excludePackageStatements: true
     excludeImportStatements: true
     excludeCommentStatements: false
@@ -805,9 +811,15 @@ formatting:
     active: false
     autoCorrect: true
     indentSize: 4
+  #
+  # MaximumLineLength
+  #
+  # 概要
+  # - 1行当たりの文字数
+  #
   MaximumLineLength:
     active: true
-    maxLineLength: 120
+    maxLineLength: 311 # (default: 120)
     ignoreBackTickedIdentifier: false
   ModifierListSpacing:
     active: false
