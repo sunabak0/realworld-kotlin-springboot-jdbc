@@ -130,10 +130,17 @@ complexity:
   LongMethod:
     active: true
     threshold: 86 # (default: 60)
+  #
+  # LongParameterList
+  #
+  # 概要
+  # - コンストラクタの引数の数
+  # - 関数の引数の数
+  #
   LongParameterList:
     active: true
     functionThreshold: 6
-    constructorThreshold: 7
+    constructorThreshold: 12 # (default: 7)
     ignoreDefaultParameters: false
     ignoreDataClasses: true
     ignoreAnnotatedParameter: []
