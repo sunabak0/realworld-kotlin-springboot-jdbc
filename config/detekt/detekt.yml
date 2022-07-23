@@ -334,8 +334,14 @@ naming:
     active: false
     allowedPattern: '^(is|has|are)'
     ignoreOverridden: true
+  #
+  # ClassNaming
+  #
+  # 概要
+  # - クラスの命名
+  #
   ClassNaming:
-    active: true
+    active: false # (default: true)
     classPattern: '[A-Z][a-zA-Z0-9]*'
   ConstructorParameterNaming:
     active: true
