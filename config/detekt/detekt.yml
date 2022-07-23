@@ -394,9 +394,15 @@ naming:
     constantPattern: '[A-Za-z][_A-Za-z0-9]*'
     propertyPattern: '[A-Za-z][_A-Za-z0-9]*'
     privatePropertyPattern: '(_)?[A-Za-z][_A-Za-z0-9]*'
+  #
+  # packageNaming
+  #
+  # 概要
+  # - packageの命名
+  #
   PackageNaming:
     active: true
-    packagePattern: '[a-z]+(\.[a-z][A-Za-z0-9]*)*'
+    packagePattern: '[a-z]+(\.[a-z][_A-Za-z0-9]*)*' # (default: '[a-z]+(\.[a-z][A-Za-z0-9]*)*'、_の有無)
   TopLevelPropertyNaming:
     active: true
     constantPattern: '[A-Z][_A-Z0-9]*'
