@@ -109,7 +109,7 @@ class ArticleControllerTest {
                                 testCase.useCaseExecuteResult
                         }
                     ).show(
-                        rawAuthorizationHeader = requestHeader,
+                        rawAuthorizationHeader = null,
                         slug = pathParam
                     )
                     // then
