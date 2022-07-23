@@ -156,7 +156,7 @@ class ProfileController(
                 /**
                  * プロフィールのフォローに失敗
                  */
-                is Left -> when (val useCaseError = followedProfile.value) {
+                is Left -> when (@Suppress("UnusedPrivateMember") val useCaseError = followedProfile.value) {
                     /**
                      * 原因: Username が不正
                      */

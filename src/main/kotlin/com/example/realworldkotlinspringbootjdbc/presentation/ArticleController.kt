@@ -24,7 +24,7 @@ class ArticleController(
     val showArticle: ShowArticleUseCase,
 ) {
     @GetMapping("/articles")
-    fun filter(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
+    fun filter(@Suppress("UnusedPrivateMember") @RequestBody rawRequestBody: String?): ResponseEntity<String> {
         val articles = Articles(
             1,
             listOf(
@@ -48,6 +48,7 @@ class ArticleController(
         )
     }
 
+    @Suppress("UnusedPrivateMember")
     @PostMapping("/articles")
     fun create(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
         val article = Article(
@@ -69,7 +70,7 @@ class ArticleController(
     }
 
     @GetMapping("/articles/feed")
-    fun feed(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
+    fun feed(@Suppress("UnusedPrivateMember") @RequestBody rawRequestBody: String?): ResponseEntity<String> {
         val articles = Articles(
             1,
             listOf(
@@ -121,7 +122,7 @@ class ArticleController(
     }
 
     @PutMapping("/articles/{slug}")
-    fun update(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
+    fun update(@Suppress("UnusedPrivateMember") @RequestBody rawRequestBody: String?): ResponseEntity<String> {
         val article = Article(
             "hoge-title",
             "hoge-slug",

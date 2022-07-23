@@ -42,7 +42,7 @@ class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) :
                 /**
                  * フォロー 失敗
                  */
-                is Left -> when (val error = followResult.value) {
+                is Left -> when (@Suppress("UnusedPrivateMember") val error = followResult.value) {
                     /**
                      * 原因: プロフィールが見つからなかった
                      */

@@ -47,7 +47,7 @@ class CreateCommentUseCaseImpl(
                 /**
                  * CommentBody が適切
                  */
-                is Valid -> when (val createResult = commentRepository.create(commentBody.value)) {
+                is Valid -> when (@Suppress("UnusedPrivateMember") val createResult = commentRepository.create(commentBody.value)) {
                     /**
                      * コメント登録成功
                      */

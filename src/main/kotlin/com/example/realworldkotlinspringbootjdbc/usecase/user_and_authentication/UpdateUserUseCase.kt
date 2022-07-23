@@ -37,7 +37,7 @@ class UpdateUserUseCaseImpl : UpdateUserUseCase {
         bio: String?,
         image: String?
     ): Either<UpdateUserUseCase.Error, RegisteredUser> {
-        when (val updatableRegisteredUser = UpdatableRegisteredUser.new(currentUser, email, username, bio, image)) {
+        when (@Suppress("UnusedPrivateMember") val updatableRegisteredUser = UpdatableRegisteredUser.new(currentUser, email, username, bio, image)) {
             /**
              * 更新可能かも
              */

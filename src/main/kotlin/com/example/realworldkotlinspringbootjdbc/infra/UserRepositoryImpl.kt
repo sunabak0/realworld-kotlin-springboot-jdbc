@@ -350,31 +350,4 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
 
         namedParameterJdbcTemplate.update(sql, sqlParams)
     }
-
-    private fun findByEmail(email: Email): Either<Error, RegisteredUser> {
-        val sql = """
-            SELECT *
-            FROM users
-                JOIN profiles ON profiles.user_id = users.id
-            WHERE users.email = :email;
-        """.trimIndent()
-        val sqlParams = MapSqlParameterSource()
-            .addValue("email", email.value)
-        val userList = try {
-            namedParameterJdbcTemplate.queryForList(sql, sqlParams)
-        } catch (e: Throwable) {
-            return Error.Unexpected(e).left()
-        }
-        if (userList.isEmpty()) {
-            return Error.NotFoundByEmail(email).left()
-        }
-        val userMap = userList[0]
-        try {
-            val userId = UserId(userMap["id"] as Int)
-            val email = Email.newWithoutValidation(userMap["email"] as String)
-        } catch (e: Throwable) {
-            return Error.Unexpected(e).left()
-        }
-        TODO()
-    }
 }
