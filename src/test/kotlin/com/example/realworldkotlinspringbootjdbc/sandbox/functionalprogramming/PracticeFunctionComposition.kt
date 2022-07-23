@@ -29,11 +29,11 @@ class PracticeFunctionComposition {
     @Test
     fun `関数合成をするcompose関数`() {
         val x: ((Int, Int) -> Int, (Int) -> Int) -> (Int, Int) -> Int = {
-            aFunc, bFunc ->
+                aFunc, bFunc ->
             { x, y -> bFunc(aFunc(x, y)) }
         }
         val y: ((Int, Int) -> Int, (Int) -> String) -> (Int, Int) -> String = {
-            aFunc, bFunc ->
+                aFunc, bFunc ->
             { x, y -> bFunc(aFunc(x, y)) }
         }
         val sumAndThenTwiceAndStrong = y(x(sum, twice), strong)
