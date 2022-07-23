@@ -113,7 +113,7 @@ class ArticleController(
                 /**
                  * 記事取得 失敗
                  */
-                is Left -> when (val showArticleError = showArticleResult.value) {
+                is Left -> when (showArticleResult.value) {
                     /**
                      * 原因: slug に該当する記事が見つからなかった
                      */
@@ -127,6 +127,13 @@ class ArticleController(
                     is ShowArticleUseCase.Error.ValidationErrors -> ResponseEntity(
                         serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                         HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: 不明
+                     */
+                    is ShowArticleUseCase.Error.Unexpected -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(500)
                     )
                 }
                 /**

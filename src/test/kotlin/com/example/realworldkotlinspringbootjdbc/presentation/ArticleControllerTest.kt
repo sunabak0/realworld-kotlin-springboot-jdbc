@@ -86,6 +86,14 @@ class ArticleControllerTest {
                         """{"errors":{"body":["記事が見つかりませんでした"]}}""",
                         HttpStatus.valueOf(404)
                     )
+                ),
+                TestCase(
+                    title = "UseCase 失敗:ユースケース（ShowArticleUseCase）が原因不明のエラー（Unexpected）を返すとき、レスポンスのステータスコードが 500 になる",
+                    useCaseExecuteResult = ShowArticleUseCase.Error.Unexpected(object : MyError {}).left(),
+                    expected = ResponseEntity(
+                        """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
+                        HttpStatus.valueOf(500)
+                    )
                 )
             ).map { testCase ->
                 dynamicTest(testCase.title) {

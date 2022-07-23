@@ -25,6 +25,7 @@ interface ShowArticleUseCase {
             MyError.ValidationErrors
 
         data class NotFound(override val cause: MyError) : Error, MyError.MyErrorWithMyError
+        data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
 }
 
