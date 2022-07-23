@@ -117,13 +117,30 @@ complexity:
   LargeClass:
     active: true
     threshold: 600
+  #
+  # LongMethod
+  #
+  # 概要
+  # - 1メソッド当たりの長さ
+  #
+  # 補足
+  # - コメントはカウントされない
+  # - 空行はカウントされない
+  #
   LongMethod:
     active: true
-    threshold: 60
+    threshold: 86 # (default: 60)
+  #
+  # LongParameterList
+  #
+  # 概要
+  # - コンストラクタの引数の数
+  # - 関数の引数の数
+  #
   LongParameterList:
     active: true
-    functionThreshold: 6
-    constructorThreshold: 7
+    functionThreshold: 12 # (default: 6)
+    constructorThreshold: 12 # (default: 7)
     ignoreDefaultParameters: false
     ignoreDataClasses: true
     ignoreAnnotatedParameter: []
@@ -134,9 +151,15 @@ complexity:
     active: false
     threshold: 3
     ignoreArgumentsMatchingNames: false
+  #
+  # NestedBlockDepth
+  #
+  # 概要
+  # - ネストの深さ
+  #
   NestedBlockDepth:
     active: true
-    threshold: 4
+    threshold: 5 # (default: 4)
   NestedScopeFunctions:
     active: false
     threshold: 1
@@ -244,8 +267,15 @@ exceptions:
   ReturnFromFinally:
     active: true
     ignoreLabeled: false
+  #
+  # SwallowedException
+  #
+  # 概要
+  # - 例外をキャッチしておいてthrowしてなかったらOUT
+  #   - 握りつぶすな
+  #
   SwallowedException:
-    active: true
+    active: false # (default: true)
     ignoredExceptionTypes:
       - 'InterruptedException'
       - 'MalformedURLException'
@@ -271,6 +301,12 @@ exceptions:
       - 'Throwable'
   ThrowingNewInstanceOfSameException:
     active: true
+  #
+  # TooGenericExceptionCaught
+  #
+  # 概要
+  # - 適用範囲が広すぎる例外のcatchは想定外の例外までcatchしてしまうのでOUT
+  #
   TooGenericExceptionCaught:
     active: true
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/iosTest/**']
@@ -279,10 +315,10 @@ exceptions:
       - 'Error'
       - 'Exception'
       - 'IllegalMonitorStateException'
-      - 'IndexOutOfBoundsException'
-      - 'NullPointerException'
+      #- 'IndexOutOfBoundsException' # (default: コメントイン)
+      #- 'NullPointerException' # (default: コメントイン)
       - 'RuntimeException'
-      - 'Throwable'
+      #- 'Throwable' # (default: コメントイン)
     allowedExceptionNameRegex: '_|(ignore|expected).*'
   TooGenericExceptionThrown:
     active: true
@@ -298,8 +334,14 @@ naming:
     active: false
     allowedPattern: '^(is|has|are)'
     ignoreOverridden: true
+  #
+  # ClassNaming
+  #
+  # 概要
+  # - クラスの命名
+  #
   ClassNaming:
-    active: true
+    active: false # (default: true)
     classPattern: '[A-Z][a-zA-Z0-9]*'
   ConstructorParameterNaming:
     active: true
@@ -352,9 +394,15 @@ naming:
     constantPattern: '[A-Za-z][_A-Za-z0-9]*'
     propertyPattern: '[A-Za-z][_A-Za-z0-9]*'
     privatePropertyPattern: '(_)?[A-Za-z][_A-Za-z0-9]*'
+  #
+  # packageNaming
+  #
+  # 概要
+  # - packageの命名
+  #
   PackageNaming:
     active: true
-    packagePattern: '[a-z]+(\.[a-z][A-Za-z0-9]*)*'
+    packagePattern: '[a-z]+(\.[a-z][_A-Za-z0-9]*)*' # (default: '[a-z]+(\.[a-z][A-Za-z0-9]*)*'、_の有無)
   TopLevelPropertyNaming:
     active: true
     constantPattern: '[A-Z][_A-Z0-9]*'
@@ -516,12 +564,18 @@ style:
   ExpressionBodySyntax:
     active: false
     includeLineWrapping: false
+  #
+  # ForbiddenComment
+  #
+  # 概要
+  # - コメントにあってはいけないコメント
+  #
   ForbiddenComment:
     active: true
     values:
       - 'FIXME:'
       - 'STOPSHIP:'
-      - 'TODO:'
+      #- 'TODO:' # (default: コメントイン)
     allowedPatterns: ''
     customMessage: ''
   ForbiddenImport:
@@ -560,14 +614,26 @@ style:
   LoopWithTooManyJumpStatements:
     active: true
     maxJumpCount: 1
+  #
+  # MagicNumber
+  #
+  # 概要
+  # - マジックナンバーはOUT
+  #
   MagicNumber:
     active: true
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/iosTest/**', '**/*.kts']
-    ignoreNumbers:
+    ignoreNumbers: # (default: ['-1', '0', '1', 2])
       - '-1'
       - '0'
       - '1'
       - '2'
+      - '200'
+      - '201'
+      - '401'
+      - '404'
+      - '422'
+      - '500'
     ignoreHashCodeFunction: true
     ignorePropertyDeclaration: false
     ignoreLocalVariableDeclaration: false
@@ -585,9 +651,15 @@ style:
   MaxChainedCallsOnSameLine:
     active: false
     maxChainedCalls: 5
+  #
+  # MaxLineLength
+  #
+  # 概要
+  # - 1行あたりの文字数
+  #
   MaxLineLength:
     active: true
-    maxLineLength: 120
+    maxLineLength: 311 # (default: 120)
     excludePackageStatements: true
     excludeImportStatements: true
     excludeCommentStatements: false
@@ -769,9 +841,15 @@ formatting:
     active: false
     autoCorrect: true
     indentSize: 4
+  #
+  # MaximumLineLength
+  #
+  # 概要
+  # - 1行当たりの文字数
+  #
   MaximumLineLength:
     active: true
-    maxLineLength: 120
+    maxLineLength: 311 # (default: 120)
     ignoreBackTickedIdentifier: false
   ModifierListSpacing:
     active: false

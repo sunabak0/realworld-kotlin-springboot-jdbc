@@ -249,8 +249,14 @@ task<Test>("withLocalDb") {
 /**
  * detektの設定
  *
- * 基本的に全てdetekt.ymlで設定する
+ * 基本的に全て `detekt-override.yml` で設定する
  */
 detekt {
-    config = files("$projectDir/config/detekt/detekt.yml")
+    /**
+     * ./gradlew detektGenerateConfig でdetekt.ymlが生成される(バージョンが上がる度に再生成する)
+     */
+    config = files(
+        "$projectDir/config/detekt/detekt.yml",
+        "$projectDir/config/detekt/detekt-override.yml",
+    )
 }
