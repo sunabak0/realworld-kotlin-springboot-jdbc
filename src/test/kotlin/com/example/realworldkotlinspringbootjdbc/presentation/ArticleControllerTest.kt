@@ -54,7 +54,7 @@ class ArticleControllerTest {
         )
 
         @TestFactory
-        fun test(): Stream<DynamicNode> {
+        fun testWithoutAuthorize(): Stream<DynamicNode> {
             return Stream.of(
                 TestCase(
                     title = "UseCase 成功:ユースケース（ShowArticleUseCase）が作成済記事（CreatedArticle）を返すとき、レスポンスのステータスコードが 200 になる",
