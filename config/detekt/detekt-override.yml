@@ -153,6 +153,19 @@ style:
     excludePackageStatements: true
     excludeImportStatements: true
     excludeCommentStatements: false
+  #
+  # ReturnCount
+  #
+  # 概要
+  # - Returnの数
+  #
+  ReturnCount:
+    active: true
+    max: 4 # (default: 2)
+    excludedFunctions: 'equals'
+    excludeLabeled: false
+    excludeReturnFromLambda: true
+    excludeGuardClauses: false
 
 formatting:
   active: true
