@@ -48,7 +48,9 @@ class UserAndAuthenticationControllerTest {
          * @param[registerUserUseCaseResult] UseCaseの実行の戻り値となる値
          * @return 引数を戻り値とする register が実装された Controller
          */
-        private fun createUserAndAuthenticationController(registerUserUseCaseResult: Either<RegisterUserUseCase.Error, RegisteredUser>): UserAndAuthenticationController =
+        private fun createUserAndAuthenticationController(
+            registerUserUseCaseResult: Either<RegisterUserUseCase.Error, RegisteredUser>
+        ): UserAndAuthenticationController =
             UserAndAuthenticationController(
                 object : MySessionJwt {
                     override fun encode(session: MySession) = "dummy-jwt-token".right()

@@ -2,9 +2,6 @@ package com.example.realworldkotlinspringbootjdbc.sandbox.jwt
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.auth0.jwt.exceptions.JWTCreationException
-import com.auth0.jwt.exceptions.JWTDecodeException
-import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.interfaces.DecodedJWT
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -18,14 +15,9 @@ import org.junit.jupiter.api.assertThrows
 class Javajwt {
     @Test
     fun `【GitHubのQuickstart】 Create and Sign a Token`() {
-        val encodedToken = try {
-            JWT.create()
-                .withIssuer("auth0")
-                .sign(Algorithm.HMAC256("secret"))
-        } catch (e: JWTCreationException) {
-            // Invalid Signing configuration / Couldn't convert Claims.
-            throw e
-        }
+        val encodedToken = JWT.create()
+            .withIssuer("auth0")
+            .sign(Algorithm.HMAC256("secret"))
         val expected = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJhdXRoMCJ9.izVguZPRsBQ5Rqw6dhMvcIwy8_9lQnrO3vpxGwPCuzs"
         assertThat(encodedToken).isEqualTo(expected)
     }
@@ -37,24 +29,14 @@ class Javajwt {
         val verifier = JWT.require(algorithm)
             .withIssuer("auth0")
             .build(); // Reusable verifier instance
-        val jwt = try {
-            verifier.verify(token)
-        } catch (e: JWTVerificationException) {
-            // Invalid signature/claims
-            throw e
-        }
+        val jwt = verifier.verify(token)
         assertThat(jwt.issuer).isEqualTo("auth0")
     }
 
     @Test
     fun `【GitHubのQuickstart】 Decode a Token`() {
         val token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXUyJ9.eyJpc3MiOiJhdXRoMCJ9.AbIJTDMFc7yUa5MhvcP03nJPyCPzZtQcGEp-zWfOkEE"
-        val decodedToken: DecodedJWT = try {
-            JWT.decode(token)
-        } catch (e: JWTDecodeException) {
-            // Invalid token
-            throw e
-        }
+        val decodedToken: DecodedJWT = JWT.decode(token)
         assertThat(decodedToken.issuer).isEqualTo("auth0")
     }
 
@@ -63,22 +45,12 @@ class Javajwt {
         val id = 123
         val email = "dummy@example.com"
         val secret = "secret"
-        val encodedToken = try {
-            JWT.create()
-                .withIssuer("sandbox")
-                .withClaim("id", id)
-                .withClaim("email", email)
-                .sign(Algorithm.HMAC256(secret))
-        } catch (e: JWTCreationException) {
-            // Invalid Signing configuration / Couldn't convert Claims.
-            throw e
-        }
-        val decodedToken = try {
-            JWT.decode(encodedToken)
-        } catch (e: JWTDecodeException) {
-            // Invalid token
-            throw e
-        }
+        val encodedToken = JWT.create()
+            .withIssuer("sandbox")
+            .withClaim("id", id)
+            .withClaim("email", email)
+            .sign(Algorithm.HMAC256(secret))
+        val decodedToken = JWT.decode(encodedToken)
         assertThat(decodedToken.getClaim("id").asInt()).isEqualTo(id)
         assertThat(decodedToken.getClaim("email").asString()).isEqualTo(email)
     }
@@ -86,20 +58,10 @@ class Javajwt {
     @Test
     fun `存在しないClaimを取得しようとした時の挙動`() {
         val secret = "secret"
-        val encodedToken = try {
-            JWT.create()
-                .withIssuer("sandbox")
-                .sign(Algorithm.HMAC256(secret))
-        } catch (e: JWTCreationException) {
-            // Invalid Signing configuration / Couldn't convert Claims.
-            throw e
-        }
-        val decodedToken = try {
-            JWT.decode(encodedToken)
-        } catch (e: JWTDecodeException) {
-            // Invalid token
-            throw e
-        }
+        val encodedToken = JWT.create()
+            .withIssuer("sandbox")
+            .sign(Algorithm.HMAC256(secret))
+        val decodedToken = JWT.decode(encodedToken)
         assertThat(decodedToken.getClaim("foobar").isNull).isTrue
     }
 
@@ -107,21 +69,11 @@ class Javajwt {
     fun `存在するがCastに失敗した時はNullPointerException`() {
         val secret = "secret"
         val email = "dummy@example.com"
-        val encodedToken = try {
-            JWT.create()
-                .withIssuer("sandbox")
-                .withClaim("email", email)
-                .sign(Algorithm.HMAC256(secret))
-        } catch (e: JWTCreationException) {
-            // Invalid Signing configuration / Couldn't convert Claims.
-            throw e
-        }
-        val decodedToken = try {
-            JWT.decode(encodedToken)
-        } catch (e: JWTDecodeException) {
-            // Invalid token
-            throw e
-        }
+        val encodedToken = JWT.create()
+            .withIssuer("sandbox")
+            .withClaim("email", email)
+            .sign(Algorithm.HMAC256(secret))
+        val decodedToken = JWT.decode(encodedToken)
         assertThrows<NullPointerException> {
             println(decodedToken.getClaim("email").asInt())
         }

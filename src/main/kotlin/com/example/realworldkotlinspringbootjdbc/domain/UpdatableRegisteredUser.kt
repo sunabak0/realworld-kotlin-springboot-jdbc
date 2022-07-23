@@ -80,6 +80,7 @@ interface UpdatableRegisteredUser {
                 )
             }
 
+            @Suppress("DestructuringDeclarationWithTooManyEntries")
             return newEmailAllowedNull().zip(
                 Semigroup.nonEmptyList(),
                 newUsernameAllowedNull(),
@@ -109,7 +110,12 @@ interface UpdatableRegisteredUser {
         object NothingAttributeToUpdatable : ValidationError {
             override val key: String get() = UpdatableRegisteredUser::class.simpleName.toString()
             override val message: String get() = "更新するプロパティが有りません"
-            fun check(a: Option<Email>, b: Option<Username>, c: Option<Bio>, d: Option<Image>): Validated<NothingAttributeToUpdatable, Unit> =
+            fun check(
+                a: Option<Email>,
+                b: Option<Username>,
+                c: Option<Bio>,
+                d: Option<Image>
+            ): Validated<NothingAttributeToUpdatable, Unit> =
                 when (Tuple4(a, b, c, d)) {
                     Tuple4(None, None, None, None) -> { NothingAttributeToUpdatable.invalid() }
                     else -> { Unit.valid() }

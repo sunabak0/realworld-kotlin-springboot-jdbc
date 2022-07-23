@@ -61,13 +61,13 @@ class MyAuthImpl(
                     MyAuth.Unauthorized.FailedParseBearerToken(e, it).left()
                 }
             }.flatMap { // Decode token to MySession
-                token ->
+                    token ->
                 mySessionJwt.decode(token).fold(
                     { MyAuth.Unauthorized.FailedDecodeToken(it, token).left() },
                     { it.right() }
                 )
             }.flatMap { // Find RegisteredUser by MySession.UserId
-                session ->
+                    session ->
                 userRepository.findByUserId(session.userId).fold(
                     {
                         when (it) {

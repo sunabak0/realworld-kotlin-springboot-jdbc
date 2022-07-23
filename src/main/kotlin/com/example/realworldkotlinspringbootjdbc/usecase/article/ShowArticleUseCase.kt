@@ -31,7 +31,7 @@ interface ShowArticleUseCase {
 }
 
 @Service
-class ShowArticleUseCaseImpl() : ShowArticleUseCase {
+class ShowArticleUseCaseImpl : ShowArticleUseCase {
     override fun execute(slug: String?): Either<ShowArticleUseCase.Error, CreatedArticle> {
         return when (val it = Slug.new(slug)) {
             is Invalid -> ShowArticleUseCase.Error.ValidationErrors(it.value).left()

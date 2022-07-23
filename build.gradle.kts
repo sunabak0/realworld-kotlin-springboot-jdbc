@@ -7,12 +7,12 @@ plugins {
     kotlin("plugin.spring") version "1.6.21"
 
     /**
-     * ktlint
+     * detekt
      *
      * URL
-     * - https://github.com/JLLeitschuh/ktlint-gradle
+     * - https://github.com/detekt/detekt
      * GralePlugins
-     * - https://plugins.gradle.org/plugin/org.jlleitschuh.gradle.ktlint
+     * - https://plugins.gradle.org/plugin/io.gitlab.arturbosch.detekt
      * Main用途
      * - Linter/Formatter
      * Sub用途
@@ -20,7 +20,7 @@ plugins {
      * 概要
      * KotlinのLinter/Formatter
      */
-    id("org.jlleitschuh.gradle.ktlint") version "10.3.0"
+    id("io.gitlab.arturbosch.detekt") version "1.21.0"
 
     /**
      * dokka
@@ -197,6 +197,16 @@ dependencies {
     implementation("com.github.database-rider:rider-core:$dbRiderVersion")
     implementation("com.github.database-rider:rider-spring:$dbRiderVersion")
     testImplementation("com.github.database-rider:rider-junit5:$dbRiderVersion")
+
+    /**
+     * detektの拡張: detekt-formatting
+     *
+     * 概要
+     * - formattingのルール
+     * - 基本はktlintと同じ
+     * - format自動適用オプションの autoCorrect が使えるようになる
+     */
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.21.0")
 }
 
 tasks.withType<KotlinCompile> {
@@ -234,4 +244,19 @@ task<Test>("withLocalDb") {
          */
         this.showStandardStreams = true
     }
+}
+
+/**
+ * detektの設定
+ *
+ * 基本的に全て `detekt-override.yml` で設定する
+ */
+detekt {
+    /**
+     * ./gradlew detektGenerateConfig でdetekt.ymlが生成される(バージョンが上がる度に再生成する)
+     */
+    config = files(
+        "$projectDir/config/detekt/detekt.yml",
+        "$projectDir/config/detekt/detekt-override.yml",
+    )
 }

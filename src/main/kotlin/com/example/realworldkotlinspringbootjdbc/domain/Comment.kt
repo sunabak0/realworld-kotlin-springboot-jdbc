@@ -29,7 +29,12 @@ interface Comment {
         /**
          * Validation 無し
          */
-        fun newWithoutValidation(id: CommentId, body: CommentBody, createdAt: Date, updatedAt: Date, author: OtherUser): Comment =
-            CommentWithoutValidation(id, body, createdAt, updatedAt, author)
+        fun newWithoutValidation(
+            id: CommentId,
+            body: CommentBody,
+            createdAt: Date,
+            updatedAt: Date,
+            author: OtherUser
+        ): Comment = CommentWithoutValidation(id, body, createdAt, updatedAt, author)
     }
 }

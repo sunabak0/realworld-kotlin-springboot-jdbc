@@ -19,7 +19,10 @@ interface UpdateUserUseCase {
     ): Either<Error, RegisteredUser> = TODO()
 
     sealed interface Error : MyError {
-        data class InvalidAttributesForUpdateUser(val currentUser: RegisteredUser, val errors: NonEmptyList<MyError.ValidationError>) : Error, MyError.Basic
+        data class InvalidAttributesForUpdateUser(
+            val currentUser: RegisteredUser,
+            val errors: NonEmptyList<MyError.ValidationError>
+        ) : Error, MyError.Basic
         data class NoChange(val currentUser: RegisteredUser) : Error, MyError.Basic
         data class Unexpected(val currentUser: RegisteredUser, override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
@@ -34,7 +37,7 @@ class UpdateUserUseCaseImpl : UpdateUserUseCase {
         bio: String?,
         image: String?
     ): Either<UpdateUserUseCase.Error, RegisteredUser> {
-        when (val updatableRegisteredUser = UpdatableRegisteredUser.new(currentUser, email, username, bio, image)) {
+        when (@Suppress("UnusedPrivateMember") val updatableRegisteredUser = UpdatableRegisteredUser.new(currentUser, email, username, bio, image)) {
             /**
              * 更新可能かも
              */
