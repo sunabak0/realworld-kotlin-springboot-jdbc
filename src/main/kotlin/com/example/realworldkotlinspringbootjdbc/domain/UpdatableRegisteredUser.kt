@@ -80,6 +80,7 @@ interface UpdatableRegisteredUser {
                 )
             }
 
+            @Suppress("DestructuringDeclarationWithTooManyEntries")
             return newEmailAllowedNull().zip(
                 Semigroup.nonEmptyList(),
                 newUsernameAllowedNull(),
