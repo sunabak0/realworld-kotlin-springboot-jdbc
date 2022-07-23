@@ -122,7 +122,7 @@ class ProfileControllerTest {
     }
 
     @Nested
-    class Follow() {
+    class Follow {
         val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
             UserId(1),
             Email.newWithoutValidation("dummy@example.com"),
@@ -217,7 +217,7 @@ class ProfileControllerTest {
     }
 
     @Nested
-    class Unfollow() {
+    class Unfollow {
         val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
             UserId(1),
             Email.newWithoutValidation("dummy@example.com"),
