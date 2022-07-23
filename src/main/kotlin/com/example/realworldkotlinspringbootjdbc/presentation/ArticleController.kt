@@ -2,6 +2,7 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import arrow.core.Some
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Articles
@@ -163,7 +164,36 @@ class ArticleController(
             /**
              * JWT 認証 成功
              */
-            is Right -> TODO()
+            is Right -> when (val showArticleResult = showArticle.execute(slug, Some(authorizeResult.value))) {
+                /**
+                 * 記事取得 成功
+                 */
+                is Left -> {
+                    TODO()
+                }
+                /**
+                 * 記事取得 失敗
+                 */
+                is Right -> {
+                    val article = Article(
+                        showArticleResult.value.title.value,
+                        showArticleResult.value.slug.value,
+                        showArticleResult.value.body.value,
+                        showArticleResult.value.createdAt,
+                        showArticleResult.value.updatedAt,
+                        showArticleResult.value.description.value,
+                        showArticleResult.value.tagList.map { tag -> tag.value },
+                        // TODO: authorId を author に変更
+                        showArticleResult.value.authorId.value,
+                        showArticleResult.value.favorited,
+                        showArticleResult.value.favoritesCount
+                    )
+                    ResponseEntity(
+                        ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
+                        HttpStatus.valueOf(200),
+                    )
+                }
+            }
         }
     }
 
