@@ -564,12 +564,18 @@ style:
   ExpressionBodySyntax:
     active: false
     includeLineWrapping: false
+  #
+  # ForbiddenComment
+  #
+  # 概要
+  # - コメントにあってはいけないコメント
+  #
   ForbiddenComment:
     active: true
     values:
       - 'FIXME:'
       - 'STOPSHIP:'
-      - 'TODO:'
+      #- 'TODO:' # (default: コメントイン)
     allowedPatterns: ''
     customMessage: ''
   ForbiddenImport:
