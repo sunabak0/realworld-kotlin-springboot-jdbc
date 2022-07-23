@@ -301,6 +301,12 @@ exceptions:
       - 'Throwable'
   ThrowingNewInstanceOfSameException:
     active: true
+  #
+  # TooGenericExceptionCaught
+  #
+  # 概要
+  # - 適用範囲が広すぎる例外のcatchは想定外の例外までcatchしてしまうのでOUT
+  #
   TooGenericExceptionCaught:
     active: true
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/iosTest/**']
@@ -309,10 +315,10 @@ exceptions:
       - 'Error'
       - 'Exception'
       - 'IllegalMonitorStateException'
-      - 'IndexOutOfBoundsException'
-      - 'NullPointerException'
+      #- 'IndexOutOfBoundsException' # (default: コメントイン)
+      #- 'NullPointerException' # (default: コメントイン)
       - 'RuntimeException'
-      - 'Throwable'
+      #- 'Throwable' # (default: コメントイン)
     allowedExceptionNameRegex: '_|(ignore|expected).*'
   TooGenericExceptionThrown:
     active: true
