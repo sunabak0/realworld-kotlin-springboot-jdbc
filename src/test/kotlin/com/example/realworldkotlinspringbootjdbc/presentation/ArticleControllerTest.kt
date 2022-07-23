@@ -34,11 +34,6 @@ class ArticleControllerTest {
         private val requestHeader = "dummy-authorize"
         private val pathParam = "dummy-slug"
 
-        private fun articleController(
-            myAuth: MyAuth,
-            showArticleUseCase: ShowArticleUseCase,
-        ): ArticleController = ArticleController(myAuth, showArticleUseCase)
-
         data class TestCase(
             val title: String,
             val useCaseExecuteResult: Either<ShowArticleUseCase.Error, CreatedArticle>,
@@ -110,22 +105,24 @@ class ArticleControllerTest {
                 )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
-                    // when
-                    val actual = articleController(
-                        object : MyAuth {
+                    // given: JWT 認証が失敗する ArticleController
+                    val articleController = ArticleController(
+                        object : MyAuth { // JWT 認証が失敗する
                             override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
                                 return MyAuth.Unauthorized.RequiredBearerToken.left()
                             }
                         },
                         object : ShowArticleUseCase {
-                            override fun execute(slug: String?, currentUser: Option<RegisteredUser>): Either<ShowArticleUseCase.Error, CreatedArticle> =
+                            override fun execute(
+                                slug: String?,
+                                currentUser: Option<RegisteredUser>
+                            ): Either<ShowArticleUseCase.Error, CreatedArticle> =
                                 testCase.useCaseExecuteResult
                         }
-                    ).show(
-                        rawAuthorizationHeader = null,
-                        slug = pathParam
                     )
-                    // then
+                    // when:
+                    val actual = articleController.show(rawAuthorizationHeader = null, slug = pathParam)
+                    // then:
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
@@ -188,18 +185,23 @@ class ArticleControllerTest {
                 )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
-                    // when
-                    val actual = articleController(
+                    // given: JWT 認証が成功する ArticleController
+                    val articleController = ArticleController(
                         object : MyAuth {
                             override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
                                 return dummyRegisteredUser.right()
                             }
                         },
                         object : ShowArticleUseCase {
-                            override fun execute(slug: String?, currentUser: Option<RegisteredUser>): Either<ShowArticleUseCase.Error, CreatedArticle> =
+                            override fun execute(
+                                slug: String?,
+                                currentUser: Option<RegisteredUser>
+                            ): Either<ShowArticleUseCase.Error, CreatedArticle> =
                                 testCase.useCaseExecuteResult
                         }
-                    ).show(
+                    )
+                    // when
+                    val actual = articleController.show(
                         rawAuthorizationHeader = requestHeader,
                         slug = pathParam
                     )
