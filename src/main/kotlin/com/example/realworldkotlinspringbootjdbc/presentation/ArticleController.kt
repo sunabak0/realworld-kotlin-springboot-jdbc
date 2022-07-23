@@ -168,8 +168,28 @@ class ArticleController(
                 /**
                  * 記事取得 成功
                  */
-                is Left -> {
-                    TODO()
+                is Left -> when (showArticleResult.value) {
+                    /**
+                     * 原因: slug に該当する記事が見つからなかった
+                     */
+                    is ShowArticleUseCase.Error.NotFound -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: バリデーションエラー
+                     */
+                    is ShowArticleUseCase.Error.ValidationErrors -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: 不明
+                     */
+                    is ShowArticleUseCase.Error.Unexpected -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(500)
+                    )
                 }
                 /**
                  * 記事取得 失敗

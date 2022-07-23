@@ -156,6 +156,35 @@ class ArticleControllerTest {
                         """{"article":{"title":"dummy-title","slug":"dummy-slug","body":"dummy-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","description":"dummy-description","tagList":["dummy-tag1","dummy-tag2"],"authorId":1,"favorited":true,"favoritesCount":1}}""",
                         HttpStatus.valueOf(200)
                     )
+                ),
+                TestCase(
+                    title = "UseCase 失敗:ユースケース（ShowArticleUseCase）が NotFound エラー（NotFound）を返すとき、レスポンスのステータスコードが 404 になる",
+                    useCaseExecuteResult = ShowArticleUseCase.Error.NotFound(object : MyError {}).left(),
+                    expected = ResponseEntity(
+                        """{"errors":{"body":["記事が見つかりませんでした"]}}""",
+                        HttpStatus.valueOf(404)
+                    )
+                ),
+                TestCase(
+                    title = "UseCase 失敗:ユースケース（ShowArticleUseCase）がバリデーションエラー（ValidationErrors）を返すとき、レスポンスのステータスコードが 404 になる",
+                    useCaseExecuteResult = ShowArticleUseCase.Error.ValidationErrors(
+                        listOf(object : MyError.ValidationError {
+                            override val message: String get() = "DummyValidationError"
+                            override val key: String get() = "DummyKey"
+                        })
+                    ).left(),
+                    expected = ResponseEntity(
+                        """{"errors":{"body":["記事が見つかりませんでした"]}}""",
+                        HttpStatus.valueOf(404)
+                    )
+                ),
+                TestCase(
+                    title = "UseCase 失敗:ユースケース（ShowArticleUseCase）が原因不明のエラー（Unexpected）を返すとき、レスポンスのステータスコードが 500 になる",
+                    useCaseExecuteResult = ShowArticleUseCase.Error.Unexpected(object : MyError {}).left(),
+                    expected = ResponseEntity(
+                        """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
+                        HttpStatus.valueOf(500)
+                    )
                 )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
