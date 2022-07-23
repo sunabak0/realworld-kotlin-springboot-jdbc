@@ -51,19 +51,19 @@ class UserAndAuthenticationControllerTest {
             registerUserUseCaseResult: Either<RegisterUserUseCase.Error, RegisteredUser>
         ): UserAndAuthenticationController =
             UserAndAuthenticationController(
-                object : MySessionJwt {
+                mySessionJwt = object : MySessionJwt {
                     override fun encode(session: MySession) = "dummy-jwt-token".right()
                 },
-                object : MyAuth {}, // 関係ない
-                object : RegisterUserUseCase {
+                myAuth = object : MyAuth {}, // 関係ない
+                registerUserUseCase = object : RegisterUserUseCase {
                     override fun execute(
                         email: String?,
                         password: String?,
                         username: String?,
                     ): Either<RegisterUserUseCase.Error, RegisteredUser> = registerUserUseCaseResult
                 },
-                object : LoginUseCase {}, // 関係ない
-                object : UpdateUserUseCase {}, // 関係ない
+                loginUseCase = object : LoginUseCase {}, // 関係ない
+                updateUserUseCase = object : UpdateUserUseCase {}, // 関係ない
             )
 
         @TestFactory
@@ -72,11 +72,11 @@ class UserAndAuthenticationControllerTest {
                 TestCase(
                     title = "成功: UseCase の実行結果が '登録されたユーザー' の場合、 201 レスポンスを返す",
                     useCaseExecuteResult = RegisteredUser.newWithoutValidation(
-                        UserId(1),
-                        Email.newWithoutValidation("dummy@example.com"),
-                        Username.newWithoutValidation("dummy-username"),
-                        Bio.newWithoutValidation("dummy-bio"),
-                        Image.newWithoutValidation("dummy-image")
+                        userId = UserId(1),
+                        email = Email.newWithoutValidation("dummy@example.com"),
+                        username = Username.newWithoutValidation("dummy-username"),
+                        bio = Bio.newWithoutValidation("dummy-bio"),
+                        image = Image.newWithoutValidation("dummy-image")
                     ).right(),
                     expected = ResponseEntity(
                         """{"user":{"email":"dummy@example.com","username":"dummy-username","bio":"dummy-bio","image":"dummy-image","token":"dummy-jwt-token"}}""",
@@ -101,8 +101,8 @@ class UserAndAuthenticationControllerTest {
                 TestCase(
                     title = "失敗: UseCase の実行結果が 'Emailが既に登録されている' 旨のエラーの場合、 422 エラーレスポンスを返す",
                     useCaseExecuteResult = RegisterUserUseCase.Error.AlreadyRegisteredEmail(
-                        object : MyError {},
-                        object : UnregisteredUser {
+                        cause = object : MyError {},
+                        user = object : UnregisteredUser {
                             override val email: Email get() = Email.newWithoutValidation("dummy@example.com")
                             override val password: Password get() = Password.newWithoutValidation("dummy-password")
                             override val username: Username get() = Username.newWithoutValidation("dummy-username")
@@ -116,8 +116,8 @@ class UserAndAuthenticationControllerTest {
                 TestCase(
                     title = "失敗: UseCase の実行結果が 'ユーザー名が既に登録されている' 旨のエラーの場合、 422 エラーレスポンスを返す",
                     useCaseExecuteResult = RegisterUserUseCase.Error.AlreadyRegisteredUsername(
-                        object : MyError {},
-                        object : UnregisteredUser {
+                        cause = object : MyError {},
+                        user = object : UnregisteredUser {
                             override val email: Email get() = Email.newWithoutValidation("dummy@example.com")
                             override val password: Password get() = Password.newWithoutValidation("dummy-password")
                             override val username: Username get() = Username.newWithoutValidation("dummy-username")
@@ -162,18 +162,18 @@ class UserAndAuthenticationControllerTest {
          */
         private fun createUserAndAuthenticationController(loginUseCaseResult: Either<LoginUseCase.Error, RegisteredUser>): UserAndAuthenticationController =
             UserAndAuthenticationController(
-                object : MySessionJwt {
+                mySessionJwt = object : MySessionJwt {
                     override fun encode(session: MySession) = "dummy-jwt-token".right()
                 },
-                object : MyAuth {}, // 関係ない
-                object : RegisterUserUseCase {}, // 関係ない
-                object : LoginUseCase {
+                myAuth = object : MyAuth {}, // 関係ない
+                registerUserUseCase = object : RegisterUserUseCase {}, // 関係ない
+                loginUseCase = object : LoginUseCase {
                     override fun execute(
                         email: String?,
                         password: String?
                     ): Either<LoginUseCase.Error, RegisteredUser> = loginUseCaseResult
                 },
-                object : UpdateUserUseCase {}, // 関係ない
+                updateUserUseCase = object : UpdateUserUseCase {}, // 関係ない
             )
 
         @TestFactory
@@ -182,11 +182,11 @@ class UserAndAuthenticationControllerTest {
                 TestCase(
                     title = "成功: UseCase の実行結果が '登録されたユーザー' の場合、 201 レスポンスを返す",
                     useCaseExecuteResult = RegisteredUser.newWithoutValidation(
-                        UserId(1),
-                        Email.newWithoutValidation("dummy@example.com"),
-                        Username.newWithoutValidation("dummy-username"),
-                        Bio.newWithoutValidation("dummy-bio"),
-                        Image.newWithoutValidation("dummy-image")
+                        userId = UserId(1),
+                        email = Email.newWithoutValidation("dummy@example.com"),
+                        username = Username.newWithoutValidation("dummy-username"),
+                        bio = Bio.newWithoutValidation("dummy-bio"),
+                        image = Image.newWithoutValidation("dummy-image")
                     ).right(),
                     expected = ResponseEntity(
                         """{"user":{"email":"dummy@example.com","username":"dummy-username","bio":"dummy-bio","image":"dummy-image","token":"dummy-jwt-token"}}""",
@@ -252,15 +252,15 @@ class UserAndAuthenticationControllerTest {
          */
         private fun createUserAndAuthenticationController(authorizeResult: Either<MyAuth.Unauthorized, RegisteredUser>): UserAndAuthenticationController =
             UserAndAuthenticationController(
-                object : MySessionJwt {
+                mySessionJwt = object : MySessionJwt {
                     override fun encode(session: MySession) = "dummy-jwt-token".right()
                 },
-                object : MyAuth {
+                myAuth = object : MyAuth {
                     override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> = authorizeResult
                 },
-                object : RegisterUserUseCase {}, // 関係ない
-                object : LoginUseCase {}, // 関係ない
-                object : UpdateUserUseCase {}, // 関係ない
+                registerUserUseCase = object : RegisterUserUseCase {}, // 関係ない
+                loginUseCase = object : LoginUseCase {}, // 関係ない
+                updateUserUseCase = object : UpdateUserUseCase {}, // 関係ない
             )
 
         @TestFactory
@@ -269,11 +269,11 @@ class UserAndAuthenticationControllerTest {
                 TestCase(
                     title = "成功: authorize の実行結果が '登録されたユーザー' の場合、 201 レスポンスを返す",
                     authorizeResult = RegisteredUser.newWithoutValidation(
-                        UserId(1),
-                        Email.newWithoutValidation("dummy@example.com"),
-                        Username.newWithoutValidation("dummy-username"),
-                        Bio.newWithoutValidation("dummy-bio"),
-                        Image.newWithoutValidation("dummy-image")
+                        userId = UserId(1),
+                        email = Email.newWithoutValidation("dummy@example.com"),
+                        username = Username.newWithoutValidation("dummy-username"),
+                        bio = Bio.newWithoutValidation("dummy-bio"),
+                        image = Image.newWithoutValidation("dummy-image")
                     ).right(),
                     expected = ResponseEntity(
                         """{"user":{"email":"dummy@example.com","username":"dummy-username","bio":"dummy-bio","image":"dummy-image","token":"dummy-jwt-token"}}""",
@@ -366,21 +366,21 @@ class UserAndAuthenticationControllerTest {
          */
         private fun createUserAndAuthenticationController(updateUserUseCaseResult: Either<UpdateUserUseCase.Error, RegisteredUser>): UserAndAuthenticationController =
             UserAndAuthenticationController(
-                object : MySessionJwt {
+                mySessionJwt = object : MySessionJwt {
                     override fun encode(session: MySession) = "dummy-jwt-token".right()
                 },
-                object : MyAuth {
+                myAuth = object : MyAuth {
                     override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> = RegisteredUser.newWithoutValidation(
-                        UserId(1),
-                        Email.newWithoutValidation("dummy@example.com"),
-                        Username.newWithoutValidation("dummy-username"),
-                        Bio.newWithoutValidation("dummy-bio"),
-                        Image.newWithoutValidation("dummy-image")
+                        userId = UserId(1),
+                        email = Email.newWithoutValidation("dummy@example.com"),
+                        username = Username.newWithoutValidation("dummy-username"),
+                        bio = Bio.newWithoutValidation("dummy-bio"),
+                        image = Image.newWithoutValidation("dummy-image")
                     ).right()
                 },
-                object : RegisterUserUseCase {}, // 関係ない
-                object : LoginUseCase {}, // 関係ない
-                object : UpdateUserUseCase {
+                registerUserUseCase = object : RegisterUserUseCase {}, // 関係ない
+                loginUseCase = object : LoginUseCase {}, // 関係ない
+                updateUserUseCase = object : UpdateUserUseCase {
                     override fun execute(
                         currentUser: RegisteredUser,
                         email: String?,
@@ -397,11 +397,11 @@ class UserAndAuthenticationControllerTest {
                 TestCase(
                     title = "成功: UseCase の実行結果が '登録されたユーザー' の場合、 200 レスポンスを返す",
                     useCaseExecuteResult = RegisteredUser.newWithoutValidation(
-                        UserId(1),
-                        Email.newWithoutValidation("dummy@example.com"),
-                        Username.newWithoutValidation("dummy-username"),
-                        Bio.newWithoutValidation("dummy-bio"),
-                        Image.newWithoutValidation("dummy-image")
+                        userId = UserId(1),
+                        email = Email.newWithoutValidation("dummy@example.com"),
+                        username = Username.newWithoutValidation("dummy-username"),
+                        bio = Bio.newWithoutValidation("dummy-bio"),
+                        image = Image.newWithoutValidation("dummy-image")
                     ).right(),
                     expected = ResponseEntity(
                         """{"user":{"email":"dummy@example.com","username":"dummy-username","bio":"dummy-bio","image":"dummy-image","token":"dummy-jwt-token"}}""",
@@ -411,14 +411,14 @@ class UserAndAuthenticationControllerTest {
                 TestCase(
                     title = "失敗: UseCase の実行結果が '更新しようとしたプロパティが不正である' 旨のエラーの場合、 422 エラーレスポンスを返す",
                     useCaseExecuteResult = UpdateUserUseCase.Error.InvalidAttributesForUpdateUser(
-                        RegisteredUser.newWithoutValidation(
-                            UserId(1),
-                            Email.newWithoutValidation("dummy@example.com"),
-                            Username.newWithoutValidation("dummy-username"),
-                            Bio.newWithoutValidation("dummy-bio"),
-                            Image.newWithoutValidation("dummy-image")
+                        currentUser = RegisteredUser.newWithoutValidation(
+                            userId = UserId(1),
+                            email = Email.newWithoutValidation("dummy@example.com"),
+                            username = Username.newWithoutValidation("dummy-username"),
+                            bio = Bio.newWithoutValidation("dummy-bio"),
+                            image = Image.newWithoutValidation("dummy-image")
                         ),
-                        nonEmptyListOf(
+                        errors = nonEmptyListOf(
                             object : MyError.ValidationError {
                                 override val message: String get() = "dummy-原因"
                                 override val key: String get() = "dummy-プロパティ名"
@@ -433,12 +433,12 @@ class UserAndAuthenticationControllerTest {
                 TestCase(
                     title = "失敗: UseCase の実行結果が '元々のユーザー情報から更新するべき項目' 旨のエラーの場合、 422 エラーレスポンスを返す",
                     useCaseExecuteResult = UpdateUserUseCase.Error.NoChange(
-                        RegisteredUser.newWithoutValidation(
-                            UserId(1),
-                            Email.newWithoutValidation("dummy@example.com"),
-                            Username.newWithoutValidation("dummy-username"),
-                            Bio.newWithoutValidation("dummy-bio"),
-                            Image.newWithoutValidation("dummy-image")
+                        currentUser = RegisteredUser.newWithoutValidation(
+                            userId = UserId(1),
+                            email = Email.newWithoutValidation("dummy@example.com"),
+                            username = Username.newWithoutValidation("dummy-username"),
+                            bio = Bio.newWithoutValidation("dummy-bio"),
+                            image = Image.newWithoutValidation("dummy-image")
                         )
                     ).left(),
                     expected = ResponseEntity(
