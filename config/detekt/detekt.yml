@@ -614,14 +614,26 @@ style:
   LoopWithTooManyJumpStatements:
     active: true
     maxJumpCount: 1
+  #
+  # MagicNumber
+  #
+  # 概要
+  # - マジックナンバーはOUT
+  #
   MagicNumber:
     active: true
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/iosTest/**', '**/*.kts']
-    ignoreNumbers:
+    ignoreNumbers: # (default: ['-1', '0', '1', 2])
       - '-1'
       - '0'
       - '1'
       - '2'
+      - '200'
+      - '201'
+      - '401'
+      - '404'
+      - '422'
+      - '500'
     ignoreHashCodeFunction: true
     ignorePropertyDeclaration: false
     ignoreLocalVariableDeclaration: false
