@@ -16,5 +16,6 @@ import org.springframework.boot.runApplication
 class RealworldKotlinSpringbootJdbcApplication
 
 fun main(args: Array<String>) {
+    @Suppress("SpreadOperator")
     runApplication<RealworldKotlinSpringbootJdbcApplication>(*args)
 }
