@@ -267,8 +267,15 @@ exceptions:
   ReturnFromFinally:
     active: true
     ignoreLabeled: false
+  #
+  # SwallowedException
+  #
+  # 概要
+  # - 例外をキャッチしておいてthrowしてなかったらOUT
+  #   - 握りつぶすな
+  #
   SwallowedException:
-    active: true
+    active: false # (default: true)
     ignoredExceptionTypes:
       - 'InterruptedException'
       - 'MalformedURLException'
