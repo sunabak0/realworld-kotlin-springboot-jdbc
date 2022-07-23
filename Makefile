@@ -24,11 +24,11 @@ test.e2e: ## e2eテスト実行
 
 .PHONY: fmt
 fmt: ## format
-	./gradlew ktlintFormat
+	./gradlew detekt --auto-correct
 
 .PHONY: lint
 lint: ## lint
-	./gradlew ktlintCheck
+	./gradlew detekt
 
 .PHONY: docs.generate-db-docs-schemaspy
 docs.generate-db-docs-schemaspy: ## schemaspyでDB用のドキュメントを作成、表示する(gitに含めない)
