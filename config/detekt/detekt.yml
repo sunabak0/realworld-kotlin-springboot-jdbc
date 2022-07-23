@@ -144,9 +144,15 @@ complexity:
     active: false
     threshold: 3
     ignoreArgumentsMatchingNames: false
+  #
+  # NestedBlockDepth
+  #
+  # 概要
+  # - ネストの深さ
+  #
   NestedBlockDepth:
     active: true
-    threshold: 4
+    threshold: 5 # (default: 4)
   NestedScopeFunctions:
     active: false
     threshold: 1
