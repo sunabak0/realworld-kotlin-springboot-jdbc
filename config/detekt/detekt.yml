@@ -117,9 +117,19 @@ complexity:
   LargeClass:
     active: true
     threshold: 600
+  #
+  # LongMethod
+  #
+  # 概要
+  # - 1メソッド当たりの長さ
+  #
+  # 補足
+  # - コメントはカウントされない
+  # - 空行はカウントされない
+  #
   LongMethod:
     active: true
-    threshold: 60
+    threshold: 86 # (default: 60)
   LongParameterList:
     active: true
     functionThreshold: 6
