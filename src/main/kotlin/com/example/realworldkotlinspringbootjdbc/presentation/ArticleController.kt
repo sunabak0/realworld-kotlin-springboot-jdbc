@@ -166,7 +166,7 @@ class ArticleController(
              */
             is Right -> when (val showArticleResult = showArticle.execute(slug, Some(authorizeResult.value))) {
                 /**
-                 * 記事取得 成功
+                 * 記事取得 失敗
                  */
                 is Left -> when (showArticleResult.value) {
                     /**
@@ -192,7 +192,7 @@ class ArticleController(
                     )
                 }
                 /**
-                 * 記事取得 失敗
+                 * 記事取得 成功
                  */
                 is Right -> {
                     val article = Article(
