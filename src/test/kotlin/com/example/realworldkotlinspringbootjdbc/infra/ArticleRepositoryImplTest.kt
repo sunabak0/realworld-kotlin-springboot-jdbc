@@ -10,6 +10,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -36,7 +37,7 @@ class ArticleRepositoryImplTest {
                 "datasets/yml/given/articles.yml",
             ]
         )
-        fun `成功-slug に該当する記事が存在する場合、 作成された記事を取得できる`() {
+        fun `成功-slugに該当する作成済み記事がある場合、作成済み記事を返す`() {
             // given:
             val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val searchingSlug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin")
@@ -55,6 +56,31 @@ class ArticleRepositoryImplTest {
         }
 
         @Test
+        @DataSet("datasets/yml/given/empty-articles.yml")
+        fun `失敗-slugに該当する作成済み記事がない場合、NotFoundを返す`() {
+            // given:
+            val repository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val searchingSlug = Slug.newWithoutValidation("not-found-slug")
+
+            // when:
+            val actual = repository.findBySlug(searchingSlug)
+
+            // then:
+            val expected = ArticleRepository.FindBySlugError.NotFound(searchingSlug).left()
+            assertThat(actual).isEqualTo(expected)
+        }
+    }
+
+    @Nested
+    @Tag("WithLocalDb")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    @DisplayName("Slugで(特定の登録済みユーザー観点の)作成済み記事の検索")
+    class FindBySlugFromRegisteredUserViewpointTest {
+        @BeforeAll
+        fun reset() = UserRepositoryImplTest.resetSequence()
+
+        @Test
         @DataSet(
             value = [
                 "datasets/yml/given/users.yml",
@@ -62,16 +88,18 @@ class ArticleRepositoryImplTest {
                 "datasets/yml/given/articles.yml",
             ]
         )
-        fun `成功-Slug に該当する記事が存在し、SlugとUserIdで検索すると、お気に入り済みかどうかが反映された作成された記事を取得できる`() {
+        fun `正常系-Slug に該当する記事が存在し、SlugとUserIdで検索すると、お気に入り済みかどうかが反映された作成された記事を取得できる`() {
             // given:
             val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val searchingSlug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin")
             val favoritedArticleUserId = UserId(2)
             val unfavoritedArticleUserId = UserId(1)
 
-            // when: お気に入りしている登録済みユーザーとお気に入りしていない登録済みユーザーを用意
-            val favoritedArticle = articleRepository.findBySlug(searchingSlug, favoritedArticleUserId)
-            val unfavoritedArticle = articleRepository.findBySlug(searchingSlug, unfavoritedArticleUserId)
+            // when: お気に入りしている登録済みユーザー/お気に入りしていない登録済みユーザーでそれぞれ検索
+            val favoritedArticle =
+                articleRepository.findBySlugFromRegisteredUserViewpoint(searchingSlug, favoritedArticleUserId)
+            val unfavoritedArticle =
+                articleRepository.findBySlugFromRegisteredUserViewpoint(searchingSlug, unfavoritedArticleUserId)
 
             // then:
             when (favoritedArticle) {
@@ -93,18 +121,45 @@ class ArticleRepositoryImplTest {
         }
 
         @Test
-        @DataSet("datasets/yml/given/empty-articles.yml")
-        fun `失敗-articles テーブルに slug に該当する記事が存在せずに、findBySlug を実行したとき、NotFound を戻す`() {
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/empty-articles.yml"
+            ]
+        )
+        fun `準正常系-slugに該当する作成済み記事がない場合、NotFoundを返す`() {
             // given:
             val repository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val searchingSlug = Slug.newWithoutValidation("not-found-slug")
+            val currentUserId = UserId(1)
 
             // when:
-            val actual = repository.findBySlug(searchingSlug)
+            val actual = repository.findBySlugFromRegisteredUserViewpoint(searchingSlug, currentUserId)
 
             // then:
             val expected = ArticleRepository.FindBySlugError.NotFound(searchingSlug).left()
             assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `異常系-登録済みユーザーが存在しない場合、IllegalArgumentExceptionがthrowされる`() {
+            // given: 存在しない登録済みユーザーのid
+            val repository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val searchingSlug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin")
+            val notExistedUserId = UserId(Int.MAX_VALUE)
+
+            // when:
+            val executeFunction = { repository.findBySlugFromRegisteredUserViewpoint(searchingSlug, notExistedUserId) }
+
+            // then:
+            Assertions.assertThrows(IllegalArgumentException::class.java) { executeFunction() }
         }
     }
 
