@@ -137,7 +137,7 @@ class ArticleRepositoryImplTest {
             val actual = repository.findBySlugFromRegisteredUserViewpoint(searchingSlug, currentUserId)
 
             // then:
-            val expected = ArticleRepository.FindBySlugError.NotFound(searchingSlug).left()
+            val expected = ArticleRepository.FindBySlugFromRegisteredUserViewpointError.NotFound(searchingSlug).left()
             assertThat(actual).isEqualTo(expected)
         }
 
