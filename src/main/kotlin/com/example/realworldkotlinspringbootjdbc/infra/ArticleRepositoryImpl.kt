@@ -164,7 +164,7 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             articleList.isEmpty() -> ArticleRepository.FindBySlugFromRegisteredUserViewpointError.NotFound(slug).left()
             else -> {
                 val articleMap = articleList.first()
-                require(articleMap["userExisted"].toString() == "true") {
+                check(articleMap["userExisted"].toString() == "true") {
                     "登録済みユーザーが存在しません(userId: ${userId.value})"
                 }
                 try {

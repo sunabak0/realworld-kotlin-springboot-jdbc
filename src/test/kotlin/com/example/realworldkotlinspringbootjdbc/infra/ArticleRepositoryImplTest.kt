@@ -149,7 +149,7 @@ class ArticleRepositoryImplTest {
                 "datasets/yml/given/articles.yml",
             ]
         )
-        fun `異常系-登録済みユーザーが存在しない場合、IllegalArgumentExceptionがthrowされる`() {
+        fun `異常系-登録済みユーザーが存在しない場合、IllegalStateExceptionがthrowされる`() {
             // given: 存在しない登録済みユーザーのid
             val repository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val searchingSlug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin")
@@ -159,7 +159,7 @@ class ArticleRepositoryImplTest {
             val executeFunction = { repository.findBySlugFromRegisteredUserViewpoint(searchingSlug, notExistedUserId) }
 
             // then:
-            Assertions.assertThrows(IllegalArgumentException::class.java) { executeFunction() }
+            Assertions.assertThrows(IllegalStateException::class.java) { executeFunction() }
         }
     }
 
