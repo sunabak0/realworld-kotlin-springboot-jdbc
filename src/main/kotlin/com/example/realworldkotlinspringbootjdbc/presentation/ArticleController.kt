@@ -141,21 +141,8 @@ class ArticleController(
                  * 記事取得 成功
                  */
                 is Right -> {
-                    val article = Article(
-                        showArticleResult.value.title.value,
-                        showArticleResult.value.slug.value,
-                        showArticleResult.value.body.value,
-                        showArticleResult.value.createdAt,
-                        showArticleResult.value.updatedAt,
-                        showArticleResult.value.description.value,
-                        showArticleResult.value.tagList.map { tag -> tag.value },
-                        // TODO: authorId を author に変更
-                        showArticleResult.value.authorId.value,
-                        showArticleResult.value.favorited,
-                        showArticleResult.value.favoritesCount
-                    )
                     ResponseEntity(
-                        ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
+                        Article.from(showArticleResult.value).serializeWithRootName(),
                         HttpStatus.valueOf(200),
                     )
                 }
@@ -195,21 +182,8 @@ class ArticleController(
                  * 記事取得 成功
                  */
                 is Right -> {
-                    val article = Article(
-                        showArticleResult.value.title.value,
-                        showArticleResult.value.slug.value,
-                        showArticleResult.value.body.value,
-                        showArticleResult.value.createdAt,
-                        showArticleResult.value.updatedAt,
-                        showArticleResult.value.description.value,
-                        showArticleResult.value.tagList.map { tag -> tag.value },
-                        // TODO: authorId を author に変更
-                        showArticleResult.value.authorId.value,
-                        showArticleResult.value.favorited,
-                        showArticleResult.value.favoritesCount
-                    )
                     ResponseEntity(
-                        ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
+                        Article.from(showArticleResult.value).serializeWithRootName(),
                         HttpStatus.valueOf(200),
                     )
                 }
