@@ -28,7 +28,8 @@ interface ArticleRepository {
      */
     fun findBySlugFromRegisteredUserViewpoint(slug: Slug, userId: UserId): Either<FindBySlugFromRegisteredUserViewpointError, CreatedArticle> = TODO()
     sealed interface FindBySlugFromRegisteredUserViewpointError : MyError {
-        data class NotFound(val slug: Slug) : FindBySlugFromRegisteredUserViewpointError, MyError.Basic
+        data class NotFoundArticle(val slug: Slug) : FindBySlugFromRegisteredUserViewpointError, MyError.Basic
+        data class NotFoundUser(val userId: UserId) : FindBySlugFromRegisteredUserViewpointError, MyError.Basic
         data class Unexpected(override val cause: Throwable, val slug: Slug) : FindBySlugFromRegisteredUserViewpointError, MyError.MyErrorWithThrowable
     }
 

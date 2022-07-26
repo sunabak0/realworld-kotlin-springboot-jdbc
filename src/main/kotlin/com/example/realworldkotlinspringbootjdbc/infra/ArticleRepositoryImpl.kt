@@ -92,6 +92,25 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         slug: Slug,
         userId: UserId
     ): Either<ArticleRepository.FindBySlugFromRegisteredUserViewpointError, CreatedArticle> {
+        val selectUserExistedSql = """
+            SELECT
+                id
+            FROM
+                users
+            WHERE
+                id = :user_id
+            ;
+        """.trimIndent()
+        val selectUserExistedSqlParams = MapSqlParameterSource()
+            .addValue("user_id", userId.value)
+        val userList = try {
+            namedParameterJdbcTemplate.queryForList(selectUserExistedSql, selectUserExistedSqlParams)
+        } catch (e: Throwable) {
+            return ArticleRepository.FindBySlugFromRegisteredUserViewpointError.Unexpected(e, slug).left()
+        }
+        if (userList.isEmpty()) {
+            return ArticleRepository.FindBySlugFromRegisteredUserViewpointError.NotFoundUser(userId).left()
+        }
         val selectBySlugSql = """
             SELECT
                 articles.id
@@ -118,8 +137,8 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                 , (
                     SELECT
                         CASE COUNT(favorites.id)
-                            WHEN 0 THEN false
-                            ELSE true
+                            WHEN 0 THEN 0
+                            ELSE 1
                         END
                     FROM
                         favorites
@@ -135,17 +154,6 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                     WHERE
                         favorites.article_id = articles.id
                 ) AS favoritesCount
-                , (
-                    SELECT
-                        CASE COUNT(users.id)
-                            WHEN 0 THEN false
-                            ELSE true
-                        END
-                    FROM
-                        users
-                    WHERE
-                        users.id = :user_id
-                ) AS userExisted
             FROM
                 articles
             WHERE
@@ -161,12 +169,10 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             return ArticleRepository.FindBySlugFromRegisteredUserViewpointError.Unexpected(e, slug).left()
         }
         return when {
-            articleList.isEmpty() -> ArticleRepository.FindBySlugFromRegisteredUserViewpointError.NotFound(slug).left()
+            articleList.isEmpty() -> ArticleRepository.FindBySlugFromRegisteredUserViewpointError.NotFoundArticle(slug).left()
             else -> {
                 val articleMap = articleList.first()
-                check(articleMap["userExisted"].toString() == "true") {
-                    "登録済みユーザーが存在しません(userId: ${userId.value})"
-                }
+
                 try {
                     CreatedArticle.newWithoutValidation(
                         id = ArticleId(articleMap["id"].toString().toInt()),
@@ -178,7 +184,7 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                         description = Description.newWithoutValidation(articleMap["description"].toString()),
                         tagList = articleMap["tags"].toString().split(",").map { Tag.newWithoutValidation(it) },
                         authorId = UserId(articleMap["author_id"].toString().toInt()),
-                        favorited = articleMap["favorited"].toString() == "true",
+                        favorited = articleMap["favorited"].toString() == "1",
                         favoritesCount = articleMap["favoritesCount"].toString().toInt()
                     ).right()
                 } catch (e: Throwable) {

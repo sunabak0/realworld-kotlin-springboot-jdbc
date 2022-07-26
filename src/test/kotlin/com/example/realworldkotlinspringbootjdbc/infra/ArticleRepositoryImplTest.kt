@@ -10,7 +10,6 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -127,7 +126,7 @@ class ArticleRepositoryImplTest {
                 "datasets/yml/given/empty-articles.yml"
             ]
         )
-        fun `準正常系-slugに該当する作成済み記事がない場合、NotFoundを返す`() {
+        fun `準正常系-slugに該当する作成済み記事がない場合、NotFoundArticleを返す`() {
             // given:
             val repository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val searchingSlug = Slug.newWithoutValidation("not-found-slug")
@@ -137,7 +136,7 @@ class ArticleRepositoryImplTest {
             val actual = repository.findBySlugFromRegisteredUserViewpoint(searchingSlug, currentUserId)
 
             // then:
-            val expected = ArticleRepository.FindBySlugFromRegisteredUserViewpointError.NotFound(searchingSlug).left()
+            val expected = ArticleRepository.FindBySlugFromRegisteredUserViewpointError.NotFoundArticle(searchingSlug).left()
             assertThat(actual).isEqualTo(expected)
         }
 
@@ -149,17 +148,18 @@ class ArticleRepositoryImplTest {
                 "datasets/yml/given/articles.yml",
             ]
         )
-        fun `異常系-登録済みユーザーが存在しない場合、IllegalStateExceptionがthrowされる`() {
+        fun `準正常系-登録済みユーザーが存在しない場合、NotFoundUserを返す`() {
             // given: 存在しない登録済みユーザーのid
             val repository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val searchingSlug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin")
             val notExistedUserId = UserId(Int.MAX_VALUE)
 
             // when:
-            val executeFunction = { repository.findBySlugFromRegisteredUserViewpoint(searchingSlug, notExistedUserId) }
+            val actual = repository.findBySlugFromRegisteredUserViewpoint(searchingSlug, notExistedUserId)
 
             // then:
-            Assertions.assertThrows(IllegalStateException::class.java) { executeFunction() }
+            val expected = ArticleRepository.FindBySlugFromRegisteredUserViewpointError.NotFoundUser(notExistedUserId).left()
+            assertThat(actual).isEqualTo(expected)
         }
     }
 

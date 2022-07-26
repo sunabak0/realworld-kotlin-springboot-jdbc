@@ -12,7 +12,7 @@ complexity:
   #
   LongMethod:
     active: true
-    threshold: 97 # (default: 60)
+    threshold: 99 # (default: 60)
   #
   # LongParameterList
   #
