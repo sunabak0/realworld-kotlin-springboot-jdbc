@@ -118,7 +118,7 @@ class ArticleController(
                     /**
                      * 原因: slug に該当する記事が見つからなかった
                      */
-                    is ShowArticleUseCase.Error.NotFound -> ResponseEntity(
+                    is ShowArticleUseCase.Error.NotFoundArticleBySlug -> ResponseEntity(
                         serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                         HttpStatus.valueOf(404)
                     )
@@ -127,6 +127,14 @@ class ArticleController(
                      */
                     is ShowArticleUseCase.Error.ValidationErrors -> ResponseEntity(
                         serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: ユーザーがいなかった
+                     * TODO: UseCase 的にありえないので、ここのエラーハンドリングは要検討
+                     */
+                    is ShowArticleUseCase.Error.NotFoundUser -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("ユーザー登録されていませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                         HttpStatus.valueOf(404)
                     )
                     /**
@@ -159,7 +167,7 @@ class ArticleController(
                     /**
                      * 原因: slug に該当する記事が見つからなかった
                      */
-                    is ShowArticleUseCase.Error.NotFound -> ResponseEntity(
+                    is ShowArticleUseCase.Error.NotFoundArticleBySlug -> ResponseEntity(
                         serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                         HttpStatus.valueOf(404)
                     )
@@ -168,6 +176,13 @@ class ArticleController(
                      */
                     is ShowArticleUseCase.Error.ValidationErrors -> ResponseEntity(
                         serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: ユーザーがいなかった
+                     */
+                    is ShowArticleUseCase.Error.NotFoundUser -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("ユーザー登録されていませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                         HttpStatus.valueOf(404)
                     )
                     /**

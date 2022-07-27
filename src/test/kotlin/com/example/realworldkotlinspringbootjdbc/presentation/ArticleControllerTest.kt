@@ -76,7 +76,10 @@ class ArticleControllerTest {
                 ),
                 TestCase(
                     title = "UseCase 失敗:ユースケース（ShowArticleUseCase）が NotFound エラー（NotFound）を返すとき、レスポンスのステータスコードが 404 になる",
-                    useCaseExecuteResult = ShowArticleUseCase.Error.NotFound(object : MyError {}).left(),
+                    useCaseExecuteResult = ShowArticleUseCase.Error.NotFoundArticleBySlug(
+                        object : MyError {},
+                        slug = Slug.newWithoutValidation("dummy-slug")
+                    ).left(),
                     expected = ResponseEntity(
                         """{"errors":{"body":["記事が見つかりませんでした"]}}""",
                         HttpStatus.valueOf(404)
@@ -156,7 +159,7 @@ class ArticleControllerTest {
                 ),
                 TestCase(
                     title = "UseCase 失敗:ユースケース（ShowArticleUseCase）が NotFound エラー（NotFound）を返すとき、レスポンスのステータスコードが 404 になる",
-                    useCaseExecuteResult = ShowArticleUseCase.Error.NotFound(object : MyError {}).left(),
+                    useCaseExecuteResult = ShowArticleUseCase.Error.NotFoundArticleBySlug(object : MyError {}, Slug.newWithoutValidation("dummy-slug")).left(),
                     expected = ResponseEntity(
                         """{"errors":{"body":["記事が見つかりませんでした"]}}""",
                         HttpStatus.valueOf(404)
@@ -172,6 +175,14 @@ class ArticleControllerTest {
                     ).left(),
                     expected = ResponseEntity(
                         """{"errors":{"body":["記事が見つかりませんでした"]}}""",
+                        HttpStatus.valueOf(404)
+                    )
+                ),
+                TestCase(
+                    title = "UseCase 失敗:ユースケース（ShowArticleUseCase）が NotFoundUser エラー（NotFoundUser）を返すとき、レスポンスのステータスコードが 404 になる",
+                    useCaseExecuteResult = ShowArticleUseCase.Error.NotFoundUser(object : MyError {}, dummyRegisteredUser).left(),
+                    expected = ResponseEntity(
+                        """{"errors":{"body":["ユーザー登録されていませんでした"]}}""",
                         HttpStatus.valueOf(404)
                     )
                 ),
