@@ -43,7 +43,7 @@ class ShowCommentUseCaseImpl(
              */
             is Valid -> when (val listResult = commentRepository.list(it.value)) {
                 /**
-                 * コメントの取得失敗
+                 * コメントの取得 失敗
                  */
                 is Left -> when (val listError = listResult.value) {
                     /**
@@ -61,7 +61,6 @@ class ShowCommentUseCaseImpl(
                 }
                 /**
                  * コメントの取得 成功
-                 * TODO: listResult が空（List<Comment> = []）のとき、早期 return を実装するか検討
                  */
                 is Right -> when (currentUser) {
                     /**
