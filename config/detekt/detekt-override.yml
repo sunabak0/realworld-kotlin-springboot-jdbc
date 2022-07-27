@@ -4,7 +4,7 @@ complexity:
   # LongMethod
   #
   # 概要
-  # - 1メソッド当たりの長さ
+  # - 1メソッド当たりの行数
   #
   # 補足
   # - コメントはカウントされない
@@ -12,7 +12,7 @@ complexity:
   #
   LongMethod:
     active: true
-    threshold: 86 # (default: 60)
+    threshold: 102 # (default: 60)
   #
   # LongParameterList
   #

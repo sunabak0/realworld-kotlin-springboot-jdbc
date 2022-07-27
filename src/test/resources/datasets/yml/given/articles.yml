@@ -1,0 +1,130 @@
+#
+# 作成済み記事
+#
+# 本数: 3本分
+#
+# 記事1 ----- 著者1 ----- Tag1,2,3 ----- コメント1(user3),3(user2),5(user3) ----- お気に入り1(user2)
+# 記事2 ----- 著者1 ----- Tag3     ----- コメント無し                        ----- お気に入り2(user3)
+# 記事3 ----- 著者2 -----          ----- コメント2(user1),4(user3)          ----- お気に入り3(user1),4(user2)
+#
+# 必須: 登録済みユーザー 2人分〜
+# 必須: 記事のタグ 3つ分〜
+#
+
+#
+# 著者1 --- 記事1
+# 著者1 --- 記事2
+# 著者2 --- 記事3
+#
+articles:
+  - id: 1
+    author_id: 1
+    title: "Rust vs Scala vs Kotlin"
+    slug: "rust-vs-scala-vs-kotlin"
+    body: "dummy-body"
+    description: "dummy-description"
+    created_at: "[DAY,NOW]"
+    updated_at: "[DAY,NOW]"
+  - id: 2
+    author_id: 1
+    title: "Functional programming kotlin"
+    slug: "functional-programming-kotlin"
+    body: "dummy-body"
+    description: "dummy-description"
+    created_at: "[DAY,NOW]"
+    updated_at: "[DAY,NOW]"
+  - id: 3
+    author_id: 2
+    title: "TDD(Type Driven Development)"
+    slug: "tdd-type-driven-development"
+    body: "dummy-body"
+    description: "dummy-description"
+    created_at: "[DAY,NOW]"
+    updated_at: "[DAY,NOW]"
+
+#
+# 記事1 --- article_tags1 --- Tag1
+# 記事1 --- article_tags2 --- Tag2
+# 記事1 --- article_tags3 --- Tag3
+# 記事2 --- article_tags4 --- Tag3
+#
+article_tags:
+  - id: 1
+    article_id: 1
+    tag_id: 1
+    created_at: "[DAY,NOW]"
+  - id: 2
+    article_id: 1
+    tag_id: 2
+    created_at: "[DAY,NOW]"
+  - id: 3
+    article_id: 1
+    tag_id: 3
+    created_at: "[DAY,NOW]"
+  - id: 4
+    article_id: 2
+    tag_id: 3
+    created_at: "[DAY,NOW]"
+
+#
+# 記事1 --- コメント1(by user3)
+# 記事3 --- コメント2(by user1)
+# 記事1 --- コメント3(by user2)
+# 記事3 --- コメント4(by user3)
+# 記事1 --- コメント5(by user3)
+#
+article_comments:
+  - id: 1
+    author_id: 3
+    article_id: 1
+    body: "dummy-comment-body-01"
+    created_at: "[DAY,NOW]"
+    updated_at: "[DAY,NOW]"
+  - id: 2
+    author_id: 1
+    article_id: 3
+    body: "dummy-comment-body-02"
+    created_at: "[DAY,NOW]"
+    updated_at: "[DAY,NOW]"
+  - id: 3
+    author_id: 2
+    article_id: 1
+    body: "dummy-comment-body-03"
+    created_at: "[DAY,NOW]"
+    updated_at: "[DAY,NOW]"
+  - id: 4
+    author_id: 3
+    article_id: 3
+    body: "dummy-comment-body-04"
+    created_at: "[DAY,NOW]"
+    updated_at: "[DAY,NOW]"
+  - id: 5
+    author_id: 3
+    article_id: 1
+    body: "dummy-comment-body-02"
+    created_at: "[DAY,NOW]"
+    updated_at: "[DAY,NOW]"
+
+#
+# 記事1 --- お気に入り1(user2)
+# 記事2 --- お気に入り2(user3)
+# 記事3 --- お気に入り3(user1)
+# 記事3 --- お気に入り4(user2)
+#
+favorites:
+  - id: 1
+    user_id: 2
+    article_id: 1
+    created_at: "[DAY,NOW]"
+  - id: 2
+    user_id: 3
+    article_id: 2
+    created_at: "[DAY,NOW]"
+  - id: 3
+    user_id: 1
+    article_id: 3
+    created_at: "[DAY,NOW]"
+  - id: 4
+    user_id: 2
+    article_id: 3
+    created_at: "[DAY,NOW]"
