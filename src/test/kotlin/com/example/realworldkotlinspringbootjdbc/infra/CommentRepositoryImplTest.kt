@@ -64,7 +64,7 @@ class CommentRepositoryImplTest {
             val expected = listOf(
                 Comment.newWithoutValidation(
                     CommentId.newWithoutValidation(1),
-                    Body.newWithoutValidation("dummy=body-1"),
+                    Body.newWithoutValidation("dummy-body-1"),
                     date,
                     date,
                     UserId(1),
@@ -79,7 +79,16 @@ class CommentRepositoryImplTest {
             )
             when (actual) {
                 is Left -> assert(false)
-                is Right -> assertThat(actual.value).isEqualTo(expected)
+                is Right -> {
+                    // List<Comment> 1 つめの比較（createdAt, updateAtはメタデータなので比較しない）
+                    assertThat(actual.value[0].id).isEqualTo(expected[0].id)
+                    assertThat(actual.value[0].body).isEqualTo(expected[0].body)
+                    assertThat(actual.value[0].authorId).isEqualTo(expected[0].authorId)
+                    // List<Comment> 2 つめの比較（createdAt, updateAtはメタデータなので比較しない）
+                    assertThat(actual.value[1].id).isEqualTo(expected[1].id)
+                    assertThat(actual.value[1].body).isEqualTo(expected[1].body)
+                    assertThat(actual.value[1].authorId).isEqualTo(expected[1].authorId)
+                }
             }
         }
 
