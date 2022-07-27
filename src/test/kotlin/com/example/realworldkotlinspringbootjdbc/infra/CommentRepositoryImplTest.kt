@@ -8,10 +8,12 @@ import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.Body
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
+import com.github.database.rider.core.api.dataset.DataSet
+import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -35,98 +37,40 @@ class CommentRepositoryImplTest {
             """.trimIndent()
             namedParameterJdbcTemplate.update(sql, MapSqlParameterSource())
         }
+        fun resetSequence() {
+            val sql = """
+                SELECT
+                    setval('articles_id_seq', 10000)
+                    , setval('tags_id_seq', 10000)
+                ;
+            """.trimIndent()
+        }
     }
 
     @Nested
     @Tag("WithLocalDb")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-    class `List(コメント一覧を表示)` {
-        @BeforeEach
-        @AfterAll
-        fun reset() {
-            resetDb()
-        }
+    @DBRider
+    @DisplayName("List(コメント一覧を表示)")
+    class List {
+        @BeforeAll
+        fun reset() = resetSequence()
 
         @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+                "datasets/yml/given/article-comments.yml"
+            ],
+        )
         fun `正常系-articles テーブルに slug に該当する記事が存在した場合、Comment の List が戻り値`() {
-            fun localPrepare() {
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-
-                val insertArticleSql = """
-                    INSERT INTO
-                        articles (
-                            id
-                            , author_id
-                            , title
-                            , slug
-                            , body
-                            , description
-                            , created_at
-                            , updated_at
-                        )
-                    VALUES (
-                        :id
-                        , :author_id
-                        , :title
-                        , :slug
-                        , :body
-                        , :description
-                        , :created_at
-                        , :updated_at
-                    );
-                """.trimIndent()
-                val insertArticleSqlParams = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("author_id", 1)
-                    .addValue("title", "dummy-title")
-                    .addValue("slug", "dummy-slug")
-                    .addValue("body", "dummy-body")
-                    .addValue("description", "dummy-description")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertArticleSql, insertArticleSqlParams)
-
-                val insertArticleCommentSql = """
-                    INSERT INTO
-                        article_comments (
-                            id
-                            , author_id
-                            , article_id
-                            , body
-                            , created_at
-                            , updated_at
-                        )
-                    VALUES (
-                        :id
-                        , :author_id
-                        , :article_id
-                        , :body
-                        , :created_at
-                        , :updated_at
-                    )
-                    ;
-                """.trimIndent()
-                val insertArticleCommentSqlParams1 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("author_id", 1)
-                    .addValue("article_id", 1)
-                    .addValue("body", "dummy-body-1")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertArticleCommentSql, insertArticleCommentSqlParams1)
-                val insertArticleCommentSqlParams2 = MapSqlParameterSource()
-                    .addValue("id", 2)
-                    .addValue("author_id", 2)
-                    .addValue("article_id", 1)
-                    .addValue("body", "dummy-body-2")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertArticleCommentSql, insertArticleCommentSqlParams2)
-            }
-            localPrepare()
-
+            // given:
             val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
 
+            // when:
+            val actual = commentRepository.list(Slug.newWithoutValidation("dummy-slug"))
+
+            // then:
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
             val expected = listOf(
                 Comment.newWithoutValidation(
@@ -144,7 +88,7 @@ class CommentRepositoryImplTest {
                     UserId(2),
                 ),
             )
-            when (val actual = commentRepository.list(Slug.newWithoutValidation("dummy-slug"))) {
+            when (actual) {
                 is Left -> assert(false)
                 is Right -> assertThat(actual.value).isEqualTo(expected)
             }

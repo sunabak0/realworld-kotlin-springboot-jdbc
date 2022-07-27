@@ -1,0 +1,18 @@
+#
+# コメント
+#
+# 個数: 2
+#
+article_comments:
+  - id: 1
+    author_id: 1
+    article_id: 1
+    body: "dummy-body-1"
+    created_at: "[DAY,NOW]"
+    updated_at: "[DAY,NOW]"
+  - id: 2
+    author_id: 2
+    article_id: 1
+    body: "dummy-body-2"
+    created_at: "[DAY,NOW]"
+    updated_at: "[DAY,NOW]"
