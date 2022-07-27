@@ -23,10 +23,12 @@ interface ShowArticleUseCase {
             Error,
             MyError.ValidationErrors
 
-        data class NotFoundArticleBySlug(override val cause: MyError, val slug: Slug) : Error,
+        data class NotFoundArticleBySlug(override val cause: MyError, val slug: Slug) :
+            Error,
             MyError.MyErrorWithMyError
 
-        data class NotFoundUser(override val cause: MyError, val user: RegisteredUser) : Error,
+        data class NotFoundUser(override val cause: MyError, val user: RegisteredUser) :
+            Error,
             MyError.MyErrorWithMyError
 
         data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
@@ -72,8 +74,10 @@ class ShowArticleUseCaseImpl(val articleRepository: ArticleRepository) : ShowArt
                 /**
                  * JWT 認証成功
                  */
-                is Some -> when (val createdArticle =
-                    articleRepository.findBySlugFromRegisteredUserViewpoint(it.value, currentUser.value.userId)) {
+                is Some -> when (
+                    val createdArticle =
+                        articleRepository.findBySlugFromRegisteredUserViewpoint(it.value, currentUser.value.userId)
+                ) {
                     /**
                      * 作成済記事取得 失敗
                      */

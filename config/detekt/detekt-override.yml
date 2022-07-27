@@ -1,6 +1,37 @@
 complexity:
   active: true
   #
+  # ComplexMethod
+  #
+  # 概要
+  # - メソッドの複雑度具合
+  #
+  # 補足
+  # - 1 つのメソッドに以下が含まれるごとに複雑度が 1 追加される
+  #  - Conditional statements - if, else if, when
+  #  - Jump statements - continue, break
+  #  - Loops - for, while, do-while, forEach
+  #  - Operators &&, ||, ?:
+  #  - Exceptions - catch, use
+  #  - Scope Functions - let, run, with, apply, and also ->Reference
+  #
+  ComplexMethod:
+    active: true
+    threshold: 16 # (default: 16)
+    ignoreSingleWhenExpression: false
+    ignoreSimpleWhenEntries: false
+    ignoreNestingFunctions: false
+    nestingFunctions:
+      - 'also'
+      - 'apply'
+      - 'forEach'
+      - 'isNotNull'
+      - 'ifNull'
+      - 'let'
+      - 'run'
+      - 'use'
+      - 'with'
+  #
   # LongMethod
   #
   # 概要
