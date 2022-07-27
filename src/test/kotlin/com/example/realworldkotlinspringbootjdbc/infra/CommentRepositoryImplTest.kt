@@ -14,11 +14,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import java.text.SimpleDateFormat
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -26,17 +24,6 @@ import java.text.SimpleDateFormat
 class CommentRepositoryImplTest {
     companion object {
         val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
-        fun resetDb() {
-            val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
-            val sql = """
-                DELETE FROM users;
-                DELETE FROM profiles;
-                DELETE FROM followings;
-                DELETE FROM articles;
-                DELETE FROM article_comments;
-            """.trimIndent()
-            namedParameterJdbcTemplate.update(sql, MapSqlParameterSource())
-        }
 
         fun resetSequence() {
             val sql = """
@@ -48,7 +35,6 @@ class CommentRepositoryImplTest {
         }
     }
 
-    @Nested
     @Tag("WithLocalDb")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     @DBRider
