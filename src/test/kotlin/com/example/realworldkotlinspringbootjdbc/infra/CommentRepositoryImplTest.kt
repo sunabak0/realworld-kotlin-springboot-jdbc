@@ -37,6 +37,7 @@ class CommentRepositoryImplTest {
             """.trimIndent()
             namedParameterJdbcTemplate.update(sql, MapSqlParameterSource())
         }
+
         fun resetSequence() {
             val sql = """
                 SELECT
@@ -95,50 +96,22 @@ class CommentRepositoryImplTest {
         }
 
         @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+                "datasets/yml/given/empty-article-comments.yml"
+            ],
+        )
         fun `正常系-articles テーブルに slug に該当するが Comment 存在しなかった場合、空の Comment の List が戻り値`() {
-            fun localPrepare() {
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-
-                val insertArticleSql = """
-                    INSERT INTO
-                        articles (
-                            id
-                            , author_id
-                            , title
-                            , slug
-                            , body
-                            , description
-                            , created_at
-                            , updated_at
-                        )
-                    VALUES (
-                        :id
-                        , :author_id
-                        , :title
-                        , :slug
-                        , :body
-                        , :description
-                        , :created_at
-                        , :updated_at
-                    );
-                """.trimIndent()
-                val insertArticleSqlParams = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("author_id", 1)
-                    .addValue("title", "dummy-title")
-                    .addValue("slug", "dummy-slug")
-                    .addValue("body", "dummy-body")
-                    .addValue("description", "dummy-description")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertArticleSql, insertArticleSqlParams)
-            }
-            localPrepare()
-
+            // given:
             val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
 
+            // when:
+            val actual = commentRepository.list(Slug.newWithoutValidation("dummy-slug"))
+
+            // then:
             val expected = listOf<Comment>()
-            when (val actual = commentRepository.list(Slug.newWithoutValidation("dummy-slug"))) {
+            when (actual) {
                 is Left -> assert(false)
                 is Right -> assertThat(actual.value).isEqualTo(expected)
             }
