@@ -118,10 +118,21 @@ class CommentRepositoryImplTest {
         }
 
         @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/empty-articles.yml",
+            ],
+        )
         fun `異常系-articles テーブルに slug に該当する記事がなかった場合、NotFoundError が戻り値`() {
+            // given:
             val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
+
+            // when:
+            val actual = commentRepository.list(Slug.newWithoutValidation("dummy-slug"))
+
+            // then:
             val expected = CommentRepository.ListError.NotFoundArticleBySlug(Slug.newWithoutValidation("dummy-slug"))
-            when (val actual = commentRepository.list(Slug.newWithoutValidation("dummy-slug"))) {
+            when (actual) {
                 is Left -> assertThat(actual.value).isEqualTo(expected)
                 is Right -> assert(false)
             }
