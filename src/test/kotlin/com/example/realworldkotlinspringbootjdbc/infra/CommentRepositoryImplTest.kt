@@ -17,6 +17,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import java.text.SimpleDateFormat
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -32,6 +33,7 @@ class CommentRepositoryImplTest {
                     , setval('tags_id_seq', 10000)
                 ;
             """.trimIndent()
+            DbConnection.namedParameterJdbcTemplate.queryForRowSet(sql, MapSqlParameterSource())
         }
     }
 
