@@ -1,10 +1,10 @@
 package com.example.realworldkotlinspringbootjdbc.presentation
 
 import arrow.core.Either
+import arrow.core.Option
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
-import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
@@ -32,13 +32,23 @@ import com.example.realworldkotlinspringbootjdbc.domain.comment.Body as CommentB
 class CommentControllerTest {
     @Nested
     class ListComment {
+        private val requestHeader = "hoge-authorize"
+        private val pathParam = "hoge-slug"
+        val dummyRegisteredUser = RegisteredUser.newWithoutValidation(
+            UserId(1),
+            Email.newWithoutValidation("dummy@example.com"),
+            Username.newWithoutValidation("dummy-name"),
+            Bio.newWithoutValidation("dummy-bio"),
+            Image.newWithoutValidation("dummy-image"),
+        )
+
         private fun commentController(
             myAuth: MyAuth,
             commentsUseCase: ListCommentUseCase,
             createCommentUseCase: CreateCommentUseCase,
             deleteCommentUseCase: DeleteCommentUseCase
         ): CommentController =
-            CommentController(commentsUseCase, createCommentUseCase, deleteCommentUseCase, myAuth)
+            CommentController(myAuth, commentsUseCase, createCommentUseCase, deleteCommentUseCase)
 
         data class TestCase(
             val title: String,
@@ -57,30 +67,18 @@ class CommentControllerTest {
                             CommentBody.newWithoutValidation("hoge-body-1"),
                             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
                             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                            OtherUser.newWithoutValidation(
-                                UserId(1),
-                                Username.newWithoutValidation("hoge-author-1"),
-                                Bio.newWithoutValidation("hoge-bio-1"),
-                                Image.newWithoutValidation("hoge-image-1"),
-                                false,
-                            )
+                            UserId(1),
                         ),
                         Comment.newWithoutValidation(
                             CommentId.newWithoutValidation(2),
                             CommentBody.newWithoutValidation("hoge-body-2"),
                             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
                             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
-                            OtherUser.newWithoutValidation(
-                                UserId(1),
-                                Username.newWithoutValidation("hoge-author-2"),
-                                Bio.newWithoutValidation("hoge-bio-2"),
-                                Image.newWithoutValidation("hoge-image-2"),
-                                false,
-                            )
+                            UserId(1),
                         ),
                     ).right(),
                     ResponseEntity(
-                        """{"comments":[{"id":1,"body":"hoge-body-1","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-author-1"},{"id":2,"body":"hoge-body-2","createdAt":"2022-02-01T15:00:00.000Z","updatedAt":"2022-02-01T15:00:00.000Z","author":"hoge-author-2"}]}""",
+                        """{"comments":[{"id":1,"body":"hoge-body-1","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","authorId":1},{"id":2,"body":"hoge-body-2","createdAt":"2022-02-01T15:00:00.000Z","updatedAt":"2022-02-01T15:00:00.000Z","authorId":1}]}""",
                         HttpStatus.valueOf(200)
                     )
                 ),
@@ -90,17 +88,14 @@ class CommentControllerTest {
                     ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
                 ),
                 TestCase(
-                    "UseCase:失敗（ValidationError）を返す場合、422 エラーレスポンスを返す",
+                    "UseCase:失敗（ValidationError）を返す場合、404 エラーレスポンスを返す",
                     ListCommentUseCase.Error.InvalidSlug(
                         listOf(object : MyError.ValidationError {
                             override val message: String get() = "DummyValidationError"
                             override val key: String get() = "DummyKey"
                         })
                     ).left(),
-                    ResponseEntity(
-                        """{"errors":{"body":[{"key":"DummyKey","message":"DummyValidationError"}]}}""",
-                        HttpStatus.valueOf(422)
-                    ),
+                    ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
                 ),
                 TestCase(
                     "UseCase:失敗（Unexpected）を返す場合、500 エラーレスポンスを返す",
@@ -111,15 +106,118 @@ class CommentControllerTest {
                 dynamicTest(testCase.title) {
                     val actual =
                         commentController(
-                            object : MyAuth {},
+                            object : MyAuth {
+                                override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
+                                    return dummyRegisteredUser.right()
+                                }
+                            },
                             object : ListCommentUseCase {
-                                override fun execute(slug: String?): Either<ListCommentUseCase.Error, List<Comment>> =
-                                    testCase.useCaseExecuteResult
+                                override fun execute(
+                                    slug: String?,
+                                    currentUser: Option<RegisteredUser>
+                                ): Either<ListCommentUseCase.Error, List<Comment>> {
+                                    return testCase.useCaseExecuteResult
+                                }
                             },
                             object : CreateCommentUseCase {},
                             object : DeleteCommentUseCase {}
                         ).list(
-                            slug = "hoge-slug"
+                            slug = pathParam,
+                            rawAuthorizationHeader = requestHeader
+                        )
+                    assertThat(actual).isEqualTo(testCase.expected)
+                }
+            }
+        }
+    }
+
+    @Nested
+    class ListCommentUnauthorized {
+        private val requestHeader = "hoge-authorize"
+        private val pathParam = "hoge-slug"
+        private fun commentController(
+            myAuth: MyAuth,
+            commentsUseCase: ListCommentUseCase,
+            createCommentUseCase: CreateCommentUseCase,
+            deleteCommentUseCase: DeleteCommentUseCase
+        ): CommentController =
+            CommentController(myAuth, commentsUseCase, createCommentUseCase, deleteCommentUseCase)
+
+        data class TestCase(
+            val title: String,
+            val useCaseExecuteResult: Either<ListCommentUseCase.Error, List<Comment>>,
+            val expected: ResponseEntity<String>
+        )
+
+        @TestFactory
+        fun unauthorizedListTest(): Stream<DynamicNode> {
+            return Stream.of(
+                TestCase(
+                    "UseCase:成功（LIst<Comment>）を返す場合、200 レスポンスを返す",
+                    listOf(
+                        Comment.newWithoutValidation(
+                            CommentId.newWithoutValidation(1),
+                            CommentBody.newWithoutValidation("hoge-body-1"),
+                            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                            UserId(1),
+                        ),
+                        Comment.newWithoutValidation(
+                            CommentId.newWithoutValidation(2),
+                            CommentBody.newWithoutValidation("hoge-body-2"),
+                            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
+                            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-02-02T00:00:00+09:00"),
+                            UserId(1),
+                        ),
+                    ).right(),
+                    ResponseEntity(
+                        """{"comments":[{"id":1,"body":"hoge-body-1","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","authorId":1},{"id":2,"body":"hoge-body-2","createdAt":"2022-02-01T15:00:00.000Z","updatedAt":"2022-02-01T15:00:00.000Z","authorId":1}]}""",
+                        HttpStatus.valueOf(200)
+                    )
+                ),
+                TestCase(
+                    "UseCase:失敗（NotFound）を返す場合、404 レスポンスを返す",
+                    ListCommentUseCase.Error.NotFound(object : MyError {}).left(),
+                    ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
+                ),
+                TestCase(
+                    "UseCase:失敗（ValidationError）を返す場合、404 レスポンスを返す",
+                    ListCommentUseCase.Error.InvalidSlug(
+                        listOf(object : MyError.ValidationError {
+                            override val message: String get() = "DummyValidationError"
+                            override val key: String get() = "DummyKey"
+                        })
+                    ).left(),
+                    ResponseEntity(
+                        """{"errors":{"body":["記事が見つかりませんでした"]}}""",
+                        HttpStatus.valueOf(404)
+                    )
+                ),
+                TestCase(
+                    "UseCase:失敗（Unexpectedを返す場合、404 レスポンスを返す",
+                    ListCommentUseCase.Error.Unexpected(object : MyError {}).left(),
+                    ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500))
+                )
+            ).map { testCase ->
+                dynamicTest(testCase.title) {
+                    val actual =
+                        commentController(
+                            object : MyAuth {
+                                override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
+                                    return MyAuth.Unauthorized.RequiredBearerToken.left()
+                                }
+                            },
+                            object : ListCommentUseCase {
+                                override fun execute(
+                                    slug: String?,
+                                    currentUser: Option<RegisteredUser>
+                                ): Either<ListCommentUseCase.Error, List<Comment>> = testCase.useCaseExecuteResult
+                            },
+                            object : CreateCommentUseCase {},
+                            object : DeleteCommentUseCase {}
+                        ).list(
+                            slug = pathParam,
+                            rawAuthorizationHeader = requestHeader
                         )
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
@@ -152,7 +250,7 @@ class CommentControllerTest {
             createCommentUseCase: CreateCommentUseCase,
             deleteCommentUseCase: DeleteCommentUseCase
         ): CommentController =
-            CommentController(listCommentUseCase, createCommentUseCase, deleteCommentUseCase, myAuth)
+            CommentController(myAuth, listCommentUseCase, createCommentUseCase, deleteCommentUseCase)
 
         data class TestCase(
             val title: String,
@@ -170,16 +268,10 @@ class CommentControllerTest {
                         CommentBody.newWithoutValidation("hoge-body"),
                         SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
                         SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                        OtherUser.newWithoutValidation(
-                            UserId(1),
-                            Username.newWithoutValidation("hoge-username"),
-                            Bio.newWithoutValidation(""),
-                            Image.newWithoutValidation(""),
-                            following = true,
-                        )
+                        UserId(1),
                     ).right(),
                     ResponseEntity(
-                        """{"Comment":{"id":1,"body":"hoge-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","author":"hoge-username"}}""",
+                        """{"Comment":{"id":1,"body":"hoge-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","authorId":1}}""",
                         HttpStatus.valueOf(200)
                     )
                 ),
@@ -254,13 +346,14 @@ class CommentControllerTest {
             Bio.newWithoutValidation("dummy-bio"),
             Image.newWithoutValidation("dummy-image"),
         )
+
         private fun commentController(
             myAuth: MyAuth,
             listCommentUseCase: ListCommentUseCase,
             createCommentUseCase: CreateCommentUseCase,
             deleteCommentUseCase: DeleteCommentUseCase
         ): CommentController =
-            CommentController(listCommentUseCase, createCommentUseCase, deleteCommentUseCase, myAuth)
+            CommentController(myAuth, listCommentUseCase, createCommentUseCase, deleteCommentUseCase)
 
         data class TestCase(
             val title: String,
