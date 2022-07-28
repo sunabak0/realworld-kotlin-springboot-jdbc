@@ -26,7 +26,7 @@ interface ListCommentUseCase {
 }
 
 @Service
-class ShowCommentUseCaseImpl(
+class ListCommentUseCaseImpl(
     val commentRepository: CommentRepository
 ) : ListCommentUseCase {
     override fun execute(
@@ -41,57 +41,38 @@ class ShowCommentUseCaseImpl(
             /**
              * Slug が適切
              */
-            is Valid -> when (currentUser) {
+            is Valid -> when (val listResult = commentRepository.list(it.value)) {
                 /**
-                 * JWT 認証 失敗 or 未ログイン
+                 * コメントの取得 失敗
                  */
-                is None -> when (val listResult = commentRepository.list(it.value)) {
+                is Left -> when (val listError = listResult.value) {
                     /**
-                     * コメントの取得失敗
+                     * 原因: Slug に該当する記事が見つからなかった
                      */
-                    is Left -> when (val listError = listResult.value) {
-                        /**
-                         * 原因: Slug に該当する記事が見つからなかった
-                         */
-                        is CommentRepository.ListUnauthorizedError.NotFoundArticleBySlug -> ListCommentUseCase.Error.NotFound(
-                            listError
-                        ).left()
-                        /**
-                         * 原因: 不明
-                         */
-                        is CommentRepository.ListUnauthorizedError.Unexpected -> ListCommentUseCase.Error.Unexpected(
-                            listError
-                        ).left()
-                    }
+                    is CommentRepository.ListError.NotFoundArticleBySlug -> ListCommentUseCase.Error.NotFound(
+                        listError
+                    ).left()
                     /**
-                     * コメントの取得 成功
+                     * 原因: 不明
                      */
-                    is Right -> listResult
+                    is CommentRepository.ListError.Unexpected -> ListCommentUseCase.Error.Unexpected(
+                        listError
+                    ).left()
                 }
                 /**
-                 * JWT 認証成功
+                 * コメントの取得 成功
                  */
-                is Some -> when (val listResult = commentRepository.list(it.value, currentUser.value.userId)) {
+                is Right -> when (currentUser) {
                     /**
-                     * コメントの取得失敗
+                     * JWT 認証 失敗 or 未ログイン
+                     * TODO: QueryService で AuthorId に該当する User を取得する実装を追加。現状は listResult（List<Comment>）を返している
                      */
-                    is Left -> when (val listError = listResult.value) {
-                        /**
-                         * 原因: Slug に該当する記事が見つからなかった
-                         */
-                        is CommentRepository.ListError.NotFoundArticleBySlug -> ListCommentUseCase.Error.NotFound(
-                            listError
-                        ).left()
-                        /**
-                         * 原因: 不明
-                         */
-                        is CommentRepository.ListError.Unexpected -> ListCommentUseCase.Error.Unexpected(listError)
-                            .left()
-                    }
+                    is None -> listResult
                     /**
-                     * コメントの取得 成功
+                     * JWT 認証成功
+                     * TODO: QueryService で AuthorId に該当する User を取得する実装と AuthorId と CurrentUser の followings を取得する実装を追加。現状は listResult（List<Comment>）を返している
                      */
-                    is Right -> listResult
+                    is Some -> listResult
                 }
             }
         }
