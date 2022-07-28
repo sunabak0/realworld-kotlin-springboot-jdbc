@@ -98,5 +98,26 @@ class CommentRepositoryImplTest {
                 }
             }
         }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+            ],
+        )
+        fun `正常系-articles テーブルに slug に該当するが Comment 存在しなかった場合、空の Comment の List が戻り値`() {
+            // given:
+            val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
+
+            // when:
+            val actual = commentRepository.list(Slug.newWithoutValidation("functional-programming-kotlin"))
+
+            // then:
+            val expected = listOf<Comment>()
+            when (actual) {
+                is Left -> assert(false)
+                is Right -> assertThat(actual.value).isEqualTo(expected)
+            }
+        }
     }
 }
