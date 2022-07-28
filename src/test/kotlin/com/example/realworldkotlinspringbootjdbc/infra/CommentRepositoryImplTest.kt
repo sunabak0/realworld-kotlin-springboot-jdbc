@@ -3,6 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.infra
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
+import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.Body
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
@@ -117,6 +118,28 @@ class CommentRepositoryImplTest {
             when (actual) {
                 is Left -> assert(false)
                 is Right -> assertThat(actual.value).isEqualTo(expected)
+            }
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/empty-articles.yml",
+            ],
+        )
+        fun `異常系-articles テーブルに slug に該当する記事がなかった場合、NotFoundError が戻り値`() {
+            // given:
+            val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
+
+            // when:
+            val actual = commentRepository.list(Slug.newWithoutValidation("not-found-article-slug"))
+
+            // then:
+            val expected =
+                CommentRepository.ListError.NotFoundArticleBySlug(Slug.newWithoutValidation("not-found-article-slug"))
+            when (actual) {
+                is Left -> assertThat(actual.value).isEqualTo(expected)
+                is Right -> assert(false)
             }
         }
     }
