@@ -11,6 +11,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.comment.Body
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.github.database.rider.core.api.dataset.DataSet
+import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -159,57 +160,24 @@ class CommentRepositoryImplTest {
         }
     }
 
-    @Nested
     @Tag("WithLocalDb")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-    class `Create（コメントを作成）` {
-        @BeforeEach
-        @AfterAll
-        fun reset() {
-            resetDb()
-        }
+    @DBRider
+    @DisplayName("Create（コメントを作成）")
+    class Create {
+        @BeforeAll
+        fun reset() = resetSequence()
 
         @Test
-        fun `正常系-articles テーブルに slug に該当する記事が存在し、comments テーブルに挿入できた場合、戻り値が Comments`() {
-            fun localPrepare() {
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-                val insertArticleSql = """
-                    INSERT INTO
-                        articles (
-                            id
-                            , author_id
-                            , title
-                            , slug
-                            , body
-                            , description
-                            , created_at
-                            , updated_at
-                        )
-                    VALUES (
-                        :id
-                        , :author_id
-                        , :title
-                        , :slug
-                        , :body
-                        , :description
-                        , :created_at
-                        , :updated_at
-                    );
-                """.trimIndent()
-                val insertArticleSqlParams = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("author_id", 1)
-                    .addValue("title", "dummy-title")
-                    .addValue("slug", "dummy-slug")
-                    .addValue("body", "dummy-body")
-                    .addValue("description", "dummy-description")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertArticleSql, insertArticleSqlParams)
-            }
-            localPrepare()
+        @DataSet("datasets/yml/given/articles.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/comment_repository/create-success.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `正常系-articles テーブルに slug に該当する作成済記事が存在し、comments テーブルに挿入できた場合、戻り値がコメント（Comment）`() {
             /**
-             * 実行前に挿入されていないことを確認
+             * given:
              */
             val confirmCommentsSql = "SELECT COUNT(*) AS CNT FROM article_comments;"
             val confirmCommentsSqlParam = MapSqlParameterSource()
@@ -219,18 +187,33 @@ class CommentRepositoryImplTest {
             val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
 
             /**
-             * TODO: 戻り値（Comment）を期待値（expected）と比較するのか要検討。CommentId を DB のオートインクリメントにしているので期待値を予測できない。他のプロパティで比較するか、CommentId を他の方法で生成するか検討する
+             * when:
              */
-            when (commentRepository.create(Slug.newWithoutValidation("dummy-slug"), Body.newWithoutValidation("dummy-body-1"), UserId(1))) {
-                is Left -> assert(false)
-                is Right -> assert(true)
-            }
+            val actual = commentRepository.create(
+                Slug.newWithoutValidation("functional-programming-kotlin"),
+                Body.newWithoutValidation("created-dummy-body-1"),
+                UserId(1)
+            )
 
             /**
-             * 実行後に1行だけ挿入されていることを確認
+             * then: CommentRepository.create の戻り値との比較
              */
-            val afterCommentsCount = namedParameterJdbcTemplate.queryForMap(confirmCommentsSql, confirmCommentsSqlParam)["CNT"]
-            assertThat(afterCommentsCount).isEqualTo(1L)
+            val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
+            val expected = Comment.newWithoutValidation(
+                id = CommentId.newWithoutValidation(10001), // 比較しない
+                body = Body.newWithoutValidation("created-dummy-body-1"),
+                createdAt = date, // 比較しない
+                updatedAt = date, // 比較しない
+                authorId = UserId(1)
+            )
+
+            when (actual) {
+                is Left -> assert(false)
+                is Right -> {
+                    assertThat(actual.value.body).isEqualTo(expected.body)
+                    assertThat(actual.value.authorId).isEqualTo(expected.authorId)
+                }
+            }
         }
 
         @Test
