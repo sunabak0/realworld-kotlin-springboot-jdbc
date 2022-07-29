@@ -52,16 +52,25 @@ class CreateCommentUseCaseImpl(
                 /**
                  * CommentBody が適切
                  */
-                is Valid -> when (@Suppress("UnusedPrivateMember") val createResult =
-                    commentRepository.create(it.value, commentBody.value, currentUser.userId)) {
+                is Valid -> when (
+                    val createResult =
+                        commentRepository.create(it.value, commentBody.value, currentUser.userId)
+                ) {
                     /**
-                     * コメント登録成功
+                     * コメント登録 失敗
                      */
-                    is Left -> TODO()
+                    is Left -> when (val createError = createResult.value) {
+                        is CommentRepository.CreateError.NotFoundArticleBySlug -> CreateCommentUseCase.Error.NotFound(
+                            createError
+                        ).left()
+                        is CommentRepository.CreateError.Unexpected -> CreateCommentUseCase.Error.Unexpected(
+                            createError
+                        ).left()
+                    }
                     /**
-                     * コメント登録失敗
+                     * コメント登録 成功
                      */
-                    is Right -> TODO()
+                    is Right -> createResult
                 }
             }
         }
