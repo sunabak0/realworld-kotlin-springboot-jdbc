@@ -217,19 +217,31 @@ class CommentRepositoryImplTest {
         }
 
         @Test
+        @DataSet("datasets/yml/given/articles.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/articles.yml"],
+            orderBy = ["id"]
+        )
         fun `異常系-articles テーブルに slug に該当する記事が存在しない場合、戻り値が NotFoundError`() {
             /**
-             * 実行前に挿入されていないことを確認
+             * given:
              */
-            val confirmCommentsSql = "SELECT COUNT(*) AS CNT FROM article_comments;"
-            val confirmCommentsSqlParam = MapSqlParameterSource()
-            val beforeCommentsCount = namedParameterJdbcTemplate.queryForMap(confirmCommentsSql, confirmCommentsSqlParam)["CNT"]
-            assertThat(beforeCommentsCount).isEqualTo(0L)
-
             val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
-            val expected = CommentRepository.CreateError.NotFoundArticleBySlug(Slug.newWithoutValidation("dummy-slug"))
 
-            when (val actual = commentRepository.create(Slug.newWithoutValidation("dummy-slug"), Body.newWithoutValidation("dummy-body-1"), UserId(1))) {
+            /**
+             * when:
+             */
+            val actual = commentRepository.create(
+                Slug.newWithoutValidation("dummy-slug"),
+                Body.newWithoutValidation("dummy-body-1"),
+                UserId(1)
+            )
+
+            /**
+             * then:
+             */
+            val expected = CommentRepository.CreateError.NotFoundArticleBySlug(Slug.newWithoutValidation("dummy-slug"))
+            when (actual) {
                 is Left -> assertThat(actual.value).isEqualTo(expected)
                 is Right -> assert(false)
             }
