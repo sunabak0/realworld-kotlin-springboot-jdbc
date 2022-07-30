@@ -122,7 +122,23 @@ class FavoriteController(
              */
             is Right -> {
                 when (val unfavoriteResult = unfavoriteUseCase.execute(slug, authorizeResult.value)) {
-                    is Left -> TODO()
+                    /**
+                     * お気に入り解除 失敗
+                     */
+                    is Left -> when (unfavoriteResult.value) {
+                        /**
+                         * 原因: Slug が不正
+                         */
+                        is UnfavoriteUseCase.Error.InvalidSlug -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                            HttpStatus.valueOf(404)
+                        )
+                        /**
+                         * 原因: 記事が見つからなかった
+                         */
+                        is UnfavoriteUseCase.Error.ArticleNotFoundBySlug -> TODO()
+                        is UnfavoriteUseCase.Error.Unexpected -> TODO()
+                    }
                     /**
                      * お気に入り解除 成功
                      */

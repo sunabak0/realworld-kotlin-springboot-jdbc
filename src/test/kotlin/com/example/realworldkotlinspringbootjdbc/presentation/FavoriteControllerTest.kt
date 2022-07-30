@@ -152,7 +152,19 @@ class FavoriteControllerTest {
                     title = "成功: UnfavoriteUseCase が Unit を返す場合、200 レスポンスを返す",
                     useCaseExecuteResult = Unit.right(),
                     expected = ResponseEntity("", HttpStatus.valueOf(200))
-                )
+                ),
+                TestCase(
+                    title = "失敗: UnfavoriteUseCase が「不正なSlug（InvalidSlug）」エラーを返す場合、404 レスポンスを返す",
+                    useCaseExecuteResult = UnfavoriteUseCase.Error.InvalidSlug(
+                        listOf(
+                            object : MyError.ValidationError {
+                                override val message: String get() = "DummyValidationError because Invalid Slug"
+                                override val key: String get() = "DummyKey"
+                            }
+                        )
+                    ).left(),
+                    expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
+                ),
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     /**
