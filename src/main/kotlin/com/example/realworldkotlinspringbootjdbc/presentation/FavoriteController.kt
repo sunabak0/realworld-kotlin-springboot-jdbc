@@ -51,7 +51,13 @@ class FavoriteController(
                             serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(404)
                         )
-                        is FavoriteUseCase.Error.ArticleNotFoundBySlug -> TODO()
+                        /**
+                         * 原因: 記事が見つからなかった
+                         */
+                        is FavoriteUseCase.Error.ArticleNotFoundBySlug -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                            HttpStatus.valueOf(404)
+                        )
                         is FavoriteUseCase.Error.Unexpected -> TODO()
                     }
                     /**

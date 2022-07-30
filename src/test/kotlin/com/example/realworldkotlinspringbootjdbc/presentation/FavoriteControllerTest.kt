@@ -84,6 +84,14 @@ class FavoriteControllerTest {
                     ).left(),
                     expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
                 ),
+                TestCase(
+                    title = "失敗: FavoriteUseCase が「slug に該当する記事が見つからなかった（ArticleNotFound）」エラーを返す場合、404レスポンスを返す",
+                    useCaseExecuteResult = FavoriteUseCase.Error.ArticleNotFoundBySlug(
+                        object : MyError {},
+                        Slug.newWithoutValidation(pathParamSlug)
+                    ).left(),
+                    expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
+                )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     // given
