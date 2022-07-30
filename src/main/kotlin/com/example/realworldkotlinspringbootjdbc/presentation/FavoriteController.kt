@@ -58,7 +58,13 @@ class FavoriteController(
                             serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(404)
                         )
-                        is FavoriteUseCase.Error.Unexpected -> TODO()
+                        /**
+                         * 原因: 不明
+                         */
+                        is FavoriteUseCase.Error.Unexpected -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                            HttpStatus.valueOf(500)
+                        )
                     }
                     /**
                      * お気に入り登録 成功
