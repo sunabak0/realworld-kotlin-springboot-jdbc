@@ -359,5 +359,44 @@ class CommentRepositoryImplTest {
                 is Right -> assert(false)
             }
         }
+
+        @Test
+        @DataSet("datasets/yml/given/articles.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/articles.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `異常系-「articles テーブルに slug に該当する記事が存在」「comments テーブルに commentId に該当するコメントが存在」「コメントの authorId が currentUserId と異なる」場合、削除失敗し戻り値が  になる`() {
+            /**
+             * given:
+             */
+            val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
+
+            /**
+             * when:
+             * - slug: articles テーブルに存在する
+             * - commentId: article_comments テーブルに存在する
+             * - currentUserId: commentId に該当する article_comments テーブルのレコードの authorId と一致しない
+             */
+            val actual = commentRepository.delete(
+                slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
+                commentId = CommentId.newWithoutValidation(1),
+                currentUserId = UserId(100) // コメントの authorId と 一致しない
+            )
+
+            /**
+             * then:
+             */
+            val expected = CommentRepository.DeleteError.DeleteCommentNotAuthorized(
+                Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
+                CommentId.newWithoutValidation(1),
+                UserId(100)
+            )
+            when (actual) {
+                is Left -> assertThat(actual.value).isEqualTo(expected)
+                is Right -> assert(false)
+            }
+        }
     }
 }
