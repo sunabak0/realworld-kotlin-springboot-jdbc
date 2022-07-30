@@ -34,6 +34,9 @@ interface CommentRepository {
         data class CommentNotFoundByCommentId(val slug: Slug, val commentId: CommentId, val currentId: UserId) :
             DeleteError, MyError.Basic
 
+        data class DeleteCommentNotAuthorized(val slug: Slug, val commentId: CommentId, val currentId: UserId) :
+            DeleteError, MyError.Basic
+
         data class Unexpected(
             override val cause: Throwable,
             val slug: Slug,

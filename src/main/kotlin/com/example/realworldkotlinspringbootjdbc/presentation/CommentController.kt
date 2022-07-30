@@ -266,6 +266,10 @@ class CommentController(
                             serializeUnexpectedErrorForResponseBody("コメントが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(404)
                         )
+                        is DeleteCommentUseCase.Error.DeleteCommentNotAuthorized -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("コメントの削除が許可されていません"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                            HttpStatus.valueOf(401)
+                        )
                         /**
                          * 原因: 未知のエラー
                          */

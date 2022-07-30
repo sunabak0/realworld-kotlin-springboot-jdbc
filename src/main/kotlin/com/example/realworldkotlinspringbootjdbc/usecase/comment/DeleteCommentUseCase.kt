@@ -10,6 +10,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
+import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
@@ -27,6 +28,10 @@ interface DeleteCommentUseCase {
             MyError.MyErrorWithMyError
 
         data class CommentsNotFoundByCommentId(override val cause: MyError, val commentId: CommentId) :
+            Error,
+            MyError.MyErrorWithMyError
+
+        data class DeleteCommentNotAuthorized(override val cause: MyError, val currentUserId: UserId) :
             Error,
             MyError.MyErrorWithMyError
 
@@ -80,6 +85,13 @@ class DeleteCommentUseCaseImpl(
                         is CommentRepository.DeleteError.CommentNotFoundByCommentId -> DeleteCommentUseCase.Error.CommentsNotFoundByCommentId(
                             error,
                             commentIdResult.value
+                        ).left()
+                        /**
+                         * 原因: 認可されていない（削除しようとしたが実行ユーザー（CurrentUserId）のものじゃなかった）
+                         */
+                        is CommentRepository.DeleteError.DeleteCommentNotAuthorized -> DeleteCommentUseCase.Error.DeleteCommentNotAuthorized(
+                            error,
+                            currentUser.userId
                         ).left()
                         /**
                          * 原因: 不明
