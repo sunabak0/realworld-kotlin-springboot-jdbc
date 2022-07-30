@@ -245,121 +245,43 @@ class CommentRepositoryImplTest {
         }
     }
 
-    @Nested
     @Tag("WithLocalDb")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-    class `Delete（コメントを削除）` {
-        @BeforeEach
-        @AfterAll
-        fun reset() {
-            resetDb()
-        }
+    @DBRider
+    @DisplayName("Delete（コメントを削除）")
+    class Delete {
+        @BeforeAll
+        fun reset() = resetSequence()
 
         @Test
-        fun `正常系-articles テーブルに slug に該当する記事が存在し、comments テーブルにも commentId に該当する記事が存在する場合、削除成功し戻り値が Unit になる`() {
-            fun localPrepare() {
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-
-                val insertArticleSql = """
-                    INSERT INTO
-                        articles (
-                            id
-                            , author_id
-                            , title
-                            , slug
-                            , body
-                            , description
-                            , created_at
-                            , updated_at
-                        )
-                    VALUES (
-                        :id
-                        , :author_id
-                        , :title
-                        , :slug
-                        , :body
-                        , :description
-                        , :created_at
-                        , :updated_at
-                    );
-                """.trimIndent()
-                val insertArticleSqlParams = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("author_id", 1)
-                    .addValue("title", "dummy-title")
-                    .addValue("slug", "dummy-slug")
-                    .addValue("body", "dummy-body")
-                    .addValue("description", "dummy-description")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertArticleSql, insertArticleSqlParams)
-
-                val insertArticleCommentSql = """
-                    INSERT INTO
-                        article_comments (
-                            id
-                            , author_id
-                            , article_id
-                            , body
-                            , created_at
-                            , updated_at
-                        )
-                    VALUES (
-                        :id
-                        , :author_id
-                        , :article_id
-                        , :body
-                        , :created_at
-                        , :updated_at
-                    )
-                    ;
-                """.trimIndent()
-                val insertArticleCommentSqlParams1 = MapSqlParameterSource()
-                    .addValue("id", 1)
-                    .addValue("author_id", 1)
-                    .addValue("article_id", 1)
-                    .addValue("body", "dummy-body-1")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertArticleCommentSql, insertArticleCommentSqlParams1)
-                val insertArticleCommentSqlParams2 = MapSqlParameterSource()
-                    .addValue("id", 2)
-                    .addValue("author_id", 2)
-                    .addValue("article_id", 1)
-                    .addValue("body", "dummy-body-2")
-                    .addValue("created_at", date)
-                    .addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertArticleCommentSql, insertArticleCommentSqlParams2)
-            }
-            localPrepare()
+        @DataSet("datasets/yml/given/articles.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/comment_repository/delete-success.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `正常系-「articles テーブルに slug に該当する記事が存在」「comments テーブルに commentId に該当するコメントが存在」「コメントの authorId が currentUserId と同じ」場合、削除成功し戻り値が Unit になる`() {
             /**
-             * 実行前に 2 レコード挿入されていることをを確認
+             * given:
              */
-            val confirmCommentsSql = "SELECT COUNT(*) AS CNT FROM article_comments;"
-            val confirmCommentsSqlParam = MapSqlParameterSource()
-            val beforeCommentsCount =
-                namedParameterJdbcTemplate.queryForMap(confirmCommentsSql, confirmCommentsSqlParam)["CNT"]
-            assertThat(beforeCommentsCount).isEqualTo(2L)
-
             val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
 
-            when (
-                commentRepository.delete(
-                    Slug.newWithoutValidation("dummy-slug"),
-                    CommentId.newWithoutValidation(1),
-                    UserId(1)
-                )
-            ) {
-                is Left -> assert(false)
-                is Right -> assert(true)
-            }
+            /**
+             * when:
+             * - slug: articles テーブルに存在する
+             * - commentId: article_comments テーブルに存在する
+             * - currentUserId: article_comments テーブルの authorId と同じ
+             */
+            val actual = commentRepository.delete(
+                slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
+                commentId = CommentId.newWithoutValidation(1),
+                currentUserId = UserId(3)
+            )
 
             /**
-             * 実行後に1行だけ削除されていることを確認（余分な行が削除されてないことを確認するため）
+             * then:
              */
-            val afterCommentsCount =
-                namedParameterJdbcTemplate.queryForMap(confirmCommentsSql, confirmCommentsSqlParam)["CNT"]
-            assertThat(afterCommentsCount).isEqualTo(1L)
+            assertThat(actual.isRight()).isTrue
         }
     }
 }
