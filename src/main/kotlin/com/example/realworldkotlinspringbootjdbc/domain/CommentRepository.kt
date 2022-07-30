@@ -25,16 +25,16 @@ interface CommentRepository {
         ) : CreateError, MyError.MyErrorWithThrowable
     }
 
-    fun delete(slug: Slug, commentId: CommentId, currentId: UserId): Either<DeleteError, Unit> = TODO()
+    fun delete(slug: Slug, commentId: CommentId, currentUserId: UserId): Either<DeleteError, Unit> = TODO()
     sealed interface DeleteError : MyError {
-        data class ArticleNotFoundBySlug(val slug: Slug, val commentId: CommentId, val currentId: UserId) :
+        data class ArticleNotFoundBySlug(val slug: Slug, val commentId: CommentId, val currentUserId: UserId) :
             DeleteError,
             MyError.Basic
 
-        data class CommentNotFoundByCommentId(val slug: Slug, val commentId: CommentId, val currentId: UserId) :
+        data class CommentNotFoundByCommentId(val slug: Slug, val commentId: CommentId, val currentUserId: UserId) :
             DeleteError, MyError.Basic
 
-        data class DeleteCommentNotAuthorized(val slug: Slug, val commentId: CommentId, val currentId: UserId) :
+        data class DeleteCommentNotAuthorized(val slug: Slug, val commentId: CommentId, val currentUserId: UserId) :
             DeleteError, MyError.Basic
 
         data class Unexpected(
