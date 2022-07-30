@@ -283,5 +283,43 @@ class CommentRepositoryImplTest {
              */
             assertThat(actual.isRight()).isTrue
         }
+
+        @Test
+        @DataSet("datasets/yml/given/articles.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/articles.yml"],
+            orderBy = ["id"]
+        )
+        fun `異常系-「articles テーブルに slug に該当する作成済記事が存在しない」場合、削除失敗し戻り値が ArticleNotFoundBySlug になる`() {
+            /**
+             * given:
+             */
+            val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
+
+            /**
+             * when:
+             * - slug: articles テーブルに存在しない
+             * - commentId: このテストで値に意味はない
+             * - currentUserId: このテストで値に意味はない
+             */
+            val actual = commentRepository.delete(
+                slug = Slug.newWithoutValidation("dummy-not-exist-slug"), // 存在しない作成済記事
+                commentId = CommentId.newWithoutValidation(1),
+                currentUserId = UserId(3)
+            )
+
+            /**
+             * then:
+             */
+            val expected = CommentRepository.DeleteError.ArticleNotFoundBySlug(
+                Slug.newWithoutValidation("dummy-not-exist-slug"),
+                CommentId.newWithoutValidation(1),
+                UserId(3)
+            )
+            when (actual) {
+                is Left -> assertThat(actual.value).isEqualTo(expected)
+                is Right -> assert(false)
+            }
+        }
     }
 }
