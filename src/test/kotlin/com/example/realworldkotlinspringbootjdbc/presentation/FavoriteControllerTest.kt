@@ -1,6 +1,7 @@
 package com.example.realworldkotlinspringbootjdbc.presentation
 
 import arrow.core.Either
+import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
@@ -16,6 +17,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.usecase.favorite.FavoriteUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
+import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
@@ -69,7 +71,19 @@ class FavoriteControllerTest {
                         """{"article":{"title":"dummy-title","slug":"dummy-slug","body":"dummy-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","description":"dummy-description","tagList":["dummy-tag1","dummy-tag2"],"author":"1","favorited":false,"favoritesCount":1}}""",
                         HttpStatus.valueOf(200)
                     ),
-                )
+                ),
+                TestCase(
+                    title = "失敗: FavoriteUseCase が「不正なSlug（InvalidSlug）」エラーを返す場合、404 レスポンスを返す",
+                    useCaseExecuteResult = FavoriteUseCase.Error.InvalidSlug(
+                        listOf(
+                            object : MyError.ValidationError {
+                                override val message: String get() = "DummyValidationError because Invalid Slug"
+                                override val key: String get() = "DummyKey"
+                            }
+                        )
+                    ).left(),
+                    expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
+                ),
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     // given

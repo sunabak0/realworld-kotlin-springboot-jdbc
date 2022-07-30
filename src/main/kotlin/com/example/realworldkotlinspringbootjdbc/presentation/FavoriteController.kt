@@ -3,6 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
+import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
 import com.example.realworldkotlinspringbootjdbc.usecase.favorite.FavoriteUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
@@ -39,7 +40,20 @@ class FavoriteController(
              */
             is Right -> {
                 when (val favoritedArticle = favoriteUseCase.execute(slug, authorizeResult.value)) {
-                    is Left -> TODO()
+                    /**
+                     * お気に入り登録 失敗
+                     */
+                    is Left -> when (favoritedArticle.value) {
+                        /**
+                         * 原因: Slug がバリデーションエラー
+                         */
+                        is FavoriteUseCase.Error.InvalidSlug -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                            HttpStatus.valueOf(404)
+                        )
+                        is FavoriteUseCase.Error.ArticleNotFoundBySlug -> TODO()
+                        is FavoriteUseCase.Error.Unexpected -> TODO()
+                    }
                     /**
                      * お気に入り登録 成功
                      */
