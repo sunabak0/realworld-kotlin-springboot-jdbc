@@ -49,14 +49,19 @@ class CommentRepositoryImplTest {
                 "datasets/yml/given/articles.yml"
             ],
         )
-        fun `正常系-articles テーブルに slug に該当する作成済記事（CreatedArtile）が存在した場合、コメント（Comment） の List が戻り値`() {
-            // given:
+            /**
+             * given
+             */
             val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
 
-            // when:
+            /**
+             * when
+             */
             val actual = commentRepository.list(Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"))
 
-            // then:
+            /**
+             * then
+             */
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
             val expected = listOf(
                 Comment.newWithoutValidation(
@@ -107,13 +112,19 @@ class CommentRepositoryImplTest {
             ],
         )
         fun `正常系-articles テーブルに slug に該当するが Comment 存在しなかった場合、空の Comment の List が戻り値`() {
-            // given:
+            /**
+             * given:
+             */
             val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
 
-            // when:
+            /**
+             * when:
+             */
             val actual = commentRepository.list(Slug.newWithoutValidation("functional-programming-kotlin"))
 
-            // then:
+            /**
+             * then:
+             */
             val expected = listOf<Comment>()
             when (actual) {
                 is Left -> assert(false)
@@ -127,14 +138,19 @@ class CommentRepositoryImplTest {
                 "datasets/yml/given/empty-articles.yml",
             ],
         )
-        fun `異常系-articles テーブルに slug に該当する記事がなかった場合、NotFoundError が戻り値`() {
-            // given:
+            /**
+             * given:
+             */
             val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
 
-            // when:
+            /**
+             * when:
+             */
             val actual = commentRepository.list(Slug.newWithoutValidation("not-found-article-slug"))
 
-            // then:
+            /**
+             * then:
+             */
             val expected =
                 CommentRepository.ListError.NotFoundArticleBySlug(Slug.newWithoutValidation("not-found-article-slug"))
             when (actual) {
