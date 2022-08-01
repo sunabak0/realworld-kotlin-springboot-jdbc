@@ -205,6 +205,7 @@ class CommentRepositoryImplTest {
             when (actual) {
                 is Left -> assert(false)
                 is Right -> {
+                    // id は DB に採番されるため比較しない。 createdAt、updatedAt は メタデータのため比較しない
                     assertThat(actual.value.body).isEqualTo(expected.body)
                     assertThat(actual.value.authorId).isEqualTo(expected.authorId)
                 }
