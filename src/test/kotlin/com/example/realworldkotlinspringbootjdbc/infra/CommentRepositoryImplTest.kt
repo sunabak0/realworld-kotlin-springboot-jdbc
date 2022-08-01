@@ -139,6 +139,7 @@ class CommentRepositoryImplTest {
                 "datasets/yml/given/empty-articles.yml",
             ],
         )
+        fun `準正常系-articles テーブルに slug に該当する記事がなかった場合、NotFoundError が戻り値`() {
             /**
              * given:
              */
