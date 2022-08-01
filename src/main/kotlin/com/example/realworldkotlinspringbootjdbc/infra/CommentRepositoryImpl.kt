@@ -59,7 +59,7 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                 , body AS body
                 , created_at AS created_at
                 , updated_at AS updated_at
-                , author_id
+                , author_id AS author_id
             FROM
                 article_comments
             WHERE
