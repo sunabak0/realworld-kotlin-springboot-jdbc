@@ -175,7 +175,7 @@ class CommentRepositoryImplTest {
             ignoreCols = ["id", "created_at", "updated_at"],
             orderBy = ["id"]
         )
-        fun `正常系-articles テーブルに slug に該当する作成済記事が存在し、comments テーブルに挿入できた場合、戻り値がコメント（Comment）`() {
+        fun `正常系-articles テーブルに slug に該当する作成済記事が存在し、comments テーブルに挿入できた場合、コメント（Comment）が戻り値`() {
             /**
              * given:
              */
@@ -217,7 +217,7 @@ class CommentRepositoryImplTest {
             value = ["datasets/yml/given/articles.yml"],
             orderBy = ["id"]
         )
-        fun `異常系-articles テーブルに slug に該当する記事が存在しない場合、戻り値が NotFoundError`() {
+        fun `準正常系-articles テーブルに slug に該当する記事が存在しない場合、NotFoundError が戻り値`() {
             /**
              * given:
              */
