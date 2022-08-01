@@ -49,6 +49,7 @@ class CommentRepositoryImplTest {
                 "datasets/yml/given/articles.yml"
             ],
         )
+        fun `正常系-articles テーブルに slug に該当する作成済記事（CreatedArticle）が存在した場合、コメント（Comment） の List が戻り値`() {
             /**
              * given
              */
