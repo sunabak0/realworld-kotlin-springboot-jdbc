@@ -79,8 +79,8 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                 Comment.newWithoutValidation(
                     CommentId.newWithoutValidation(it["id"].toString().toInt()),
                     Body.newWithoutValidation(it["body"].toString()),
-                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
-                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
+                    createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
+                    updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
                     UserId(it["author_id"].toString().toInt()),
                 )
             }.right()
