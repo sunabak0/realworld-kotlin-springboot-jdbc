@@ -66,25 +66,25 @@ class CommentRepositoryImplTest {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
             val expected = listOf(
                 Comment.newWithoutValidation(
-                    CommentId.newWithoutValidation(1),
-                    Body.newWithoutValidation("dummy-comment-body-01"),
-                    date,
-                    date,
-                    UserId(3),
+                    id = CommentId.newWithoutValidation(1),
+                    body = Body.newWithoutValidation("dummy-comment-body-01"),
+                    createdAt = date,
+                    updatedAt = date,
+                    authorId = UserId(3),
                 ),
                 Comment.newWithoutValidation(
-                    CommentId.newWithoutValidation(3),
-                    Body.newWithoutValidation("dummy-comment-body-03"),
-                    date,
-                    date,
-                    UserId(2),
+                    id = CommentId.newWithoutValidation(3),
+                    body = Body.newWithoutValidation("dummy-comment-body-03"),
+                    createdAt = date,
+                    updatedAt = date,
+                    authorId = UserId(2),
                 ),
                 Comment.newWithoutValidation(
-                    CommentId.newWithoutValidation(5),
-                    Body.newWithoutValidation("dummy-comment-body-02"),
-                    date,
-                    date,
-                    UserId(3),
+                    id = CommentId.newWithoutValidation(5),
+                    body = Body.newWithoutValidation("dummy-comment-body-02"),
+                    createdAt = date,
+                    updatedAt = date,
+                    authorId = UserId(3),
                 ),
             )
             when (actual) {
