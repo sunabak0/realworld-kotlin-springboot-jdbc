@@ -40,4 +40,19 @@ interface ArticleRepository {
     sealed interface TagsError : MyError {
         data class Unexpected(override val cause: Throwable) : TagsError, MyError.MyErrorWithThrowable
     }
+
+    /**
+     * 記事をお気に入りに追加
+     *
+     * @param slug お気に入りにしたい記事の slug
+     * @param currentUserId ログインユーザー
+     * @return 準正常系:エラー or 正常系:お気に入り
+     */
+    fun favorite(slug: Slug, currentUserId: UserId): Either<FavoriteError, CreatedArticle> = TODO()
+    sealed interface FavoriteError : MyError {
+        data class ArticleNotFoundBySlug(val slug: Slug) : FavoriteError, MyError.Basic
+        data class Unexpected(override val cause: Throwable, val slug: Slug, val currentUserId: UserId) :
+            FavoriteError,
+            MyError.MyErrorWithThrowable
+    }
 }
