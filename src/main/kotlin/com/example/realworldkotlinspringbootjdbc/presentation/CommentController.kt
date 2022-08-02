@@ -260,12 +260,15 @@ class CommentController(
                             HttpStatus.valueOf(404)
                         )
                         /**
-                         * 原因: コメントが見つからなかった
+                         * 原因: 認可されていない（削除しようとしたが実行ユーザー（CurrentUserId）のものじゃなかった）
                          */
                         is DeleteCommentUseCase.Error.NotFoundCommentByCommentId -> ResponseEntity(
                             serializeUnexpectedErrorForResponseBody("コメントが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(404)
                         )
+                        /**
+                         * 原因: 削除しようとしたコメントが自分のコメントではなかった
+                         */
                         is DeleteCommentUseCase.Error.NotAuthorizedDeleteComment -> ResponseEntity(
                             serializeUnexpectedErrorForResponseBody("コメントの削除が許可されていません"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(401)
