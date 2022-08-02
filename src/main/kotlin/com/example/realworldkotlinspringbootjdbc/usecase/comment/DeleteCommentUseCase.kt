@@ -23,15 +23,15 @@ interface DeleteCommentUseCase {
             Error,
             MyError.ValidationErrors
 
-        data class ArticleNotFoundBySlug(override val cause: MyError, val slug: Slug) :
+        data class NotFoundArticleBySlug(override val cause: MyError, val slug: Slug) :
             Error,
             MyError.MyErrorWithMyError
 
-        data class CommentsNotFoundByCommentId(override val cause: MyError, val commentId: CommentId) :
+        data class NotFoundCommentByCommentId(override val cause: MyError, val commentId: CommentId) :
             Error,
             MyError.MyErrorWithMyError
 
-        data class DeleteCommentNotAuthorized(override val cause: MyError, val currentUserId: UserId) :
+        data class NotAuthorizedDeleteComment(override val cause: MyError, val currentUserId: UserId) :
             Error,
             MyError.MyErrorWithMyError
 
@@ -75,21 +75,21 @@ class DeleteCommentUseCaseImpl(
                         /**
                          * 原因: Slug に該当する記事が見つからなかった
                          */
-                        is CommentRepository.DeleteError.ArticleNotFoundBySlug -> DeleteCommentUseCase.Error.ArticleNotFoundBySlug(
+                        is CommentRepository.DeleteError.NotFoundArticleBySlug -> DeleteCommentUseCase.Error.NotFoundArticleBySlug(
                             error,
                             slugResult.value,
                         ).left()
                         /**
                          * 原因: CommentId に該当するコメントが見つからなかった
                          */
-                        is CommentRepository.DeleteError.CommentNotFoundByCommentId -> DeleteCommentUseCase.Error.CommentsNotFoundByCommentId(
+                        is CommentRepository.DeleteError.NotFoundCommentByCommentId -> DeleteCommentUseCase.Error.NotFoundCommentByCommentId(
                             error,
                             commentIdResult.value
                         ).left()
                         /**
                          * 原因: 認可されていない（削除しようとしたが実行ユーザー（CurrentUserId）のものじゃなかった）
                          */
-                        is CommentRepository.DeleteError.DeleteCommentNotAuthorized -> DeleteCommentUseCase.Error.DeleteCommentNotAuthorized(
+                        is CommentRepository.DeleteError.NotAuthorizedDeleteComment -> DeleteCommentUseCase.Error.NotAuthorizedDeleteComment(
                             error,
                             currentUser.userId
                         ).left()

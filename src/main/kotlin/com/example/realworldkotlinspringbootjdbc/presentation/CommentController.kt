@@ -255,18 +255,18 @@ class CommentController(
                         /**
                          * 原因: 記事が見つからなかった
                          */
-                        is DeleteCommentUseCase.Error.ArticleNotFoundBySlug -> ResponseEntity(
+                        is DeleteCommentUseCase.Error.NotFoundArticleBySlug -> ResponseEntity(
                             serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(404)
                         )
                         /**
                          * 原因: コメントが見つからなかった
                          */
-                        is DeleteCommentUseCase.Error.CommentsNotFoundByCommentId -> ResponseEntity(
+                        is DeleteCommentUseCase.Error.NotFoundCommentByCommentId -> ResponseEntity(
                             serializeUnexpectedErrorForResponseBody("コメントが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(404)
                         )
-                        is DeleteCommentUseCase.Error.DeleteCommentNotAuthorized -> ResponseEntity(
+                        is DeleteCommentUseCase.Error.NotAuthorizedDeleteComment -> ResponseEntity(
                             serializeUnexpectedErrorForResponseBody("コメントの削除が許可されていません"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(401)
                         )

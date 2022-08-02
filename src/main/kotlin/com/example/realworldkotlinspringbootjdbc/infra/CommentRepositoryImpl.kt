@@ -205,14 +205,14 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         val articleIdMap = try {
             namedParameterJdbcTemplate.queryForList(selectArticleSql, selectArticleSqlParams)
         } catch (e: Throwable) {
-            return CommentRepository.DeleteError.ArticleNotFoundBySlug(slug, commentId, currentUserId).left()
+            return CommentRepository.DeleteError.NotFoundArticleBySlug(slug, commentId, currentUserId).left()
         }
 
         /**
          * article が存在しなかった時 NotFoundError
          */
         val articleId = when (articleIdMap.isEmpty()) {
-            true -> return CommentRepository.DeleteError.ArticleNotFoundBySlug(slug, commentId, currentUserId).left()
+            true -> return CommentRepository.DeleteError.NotFoundArticleBySlug(slug, commentId, currentUserId).left()
             false -> try {
                 articleIdMap.first()["id"].toString().toInt()
             } catch (e: Throwable) {
@@ -266,13 +266,13 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
          * 該当するコメントが存在するとき、CommentNotFoundByCommentId エラー
          */
         if (commentIdCount == 0) {
-            return CommentRepository.DeleteError.CommentNotFoundByCommentId(slug, commentId, currentUserId).left()
+            return CommentRepository.DeleteError.NotFoundCommentByCommentId(slug, commentId, currentUserId).left()
         }
         /**
          * 該当するコメントが存在しなかったとき、DeleteCommentNotAuthorized エラー
          */
         if (commentAuthorIdCount == 0) {
-            return CommentRepository.DeleteError.DeleteCommentNotAuthorized(slug, commentId, currentUserId).left()
+            return CommentRepository.DeleteError.NotAuthorizedDeleteComment(slug, commentId, currentUserId).left()
         }
 
         /**

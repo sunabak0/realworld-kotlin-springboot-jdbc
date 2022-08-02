@@ -398,7 +398,7 @@ class CommentControllerTest {
                 ),
                 TestCase(
                     "UseCase:失敗（slugに該当する記事が見つからなかったため NotFound）を返す場合、404 エラーレスポンスを返す",
-                    DeleteCommentUseCase.Error.ArticleNotFoundBySlug(
+                    DeleteCommentUseCase.Error.NotFoundArticleBySlug(
                         object : MyError {},
                         Slug.newWithoutValidation(pathParamSlug)
                     ).left(),
@@ -406,7 +406,7 @@ class CommentControllerTest {
                 ),
                 TestCase(
                     "UseCase:失敗（commentId に該当する記事が見つからなかったため NotFound）を返す場合、404 エラーレスポンスを返す",
-                    DeleteCommentUseCase.Error.CommentsNotFoundByCommentId(
+                    DeleteCommentUseCase.Error.NotFoundCommentByCommentId(
                         object : MyError {},
                         CommentId.newWithoutValidation(pathParamCommentId.toInt())
                     ).left(),

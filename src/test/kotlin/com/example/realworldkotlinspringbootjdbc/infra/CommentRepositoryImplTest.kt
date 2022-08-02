@@ -311,7 +311,7 @@ class CommentRepositoryImplTest {
             /**
              * then:
              */
-            val expected = CommentRepository.DeleteError.ArticleNotFoundBySlug(
+            val expected = CommentRepository.DeleteError.NotFoundArticleBySlug(
                 Slug.newWithoutValidation("dummy-not-exist-slug"),
                 CommentId.newWithoutValidation(1),
                 UserId(3)
@@ -349,7 +349,7 @@ class CommentRepositoryImplTest {
             /**
              * then:
              */
-            val expected = CommentRepository.DeleteError.CommentNotFoundByCommentId(
+            val expected = CommentRepository.DeleteError.NotFoundCommentByCommentId(
                 Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
                 CommentId.newWithoutValidation(100),
                 UserId(3)
@@ -388,7 +388,7 @@ class CommentRepositoryImplTest {
             /**
              * then:
              */
-            val expected = CommentRepository.DeleteError.DeleteCommentNotAuthorized(
+            val expected = CommentRepository.DeleteError.NotAuthorizedDeleteComment(
                 Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
                 CommentId.newWithoutValidation(1),
                 UserId(100)
