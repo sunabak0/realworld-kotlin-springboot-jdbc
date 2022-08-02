@@ -55,4 +55,19 @@ interface ArticleRepository {
             FavoriteError,
             MyError.MyErrorWithThrowable
     }
+
+    /**
+     * 記事をお気に入りから削除
+     *
+     * @param slug お気に入りにしたい記事の slug
+     * @param currentUserId ログインユーザー
+     * @return 準正常系:エラー or 正常系:Unit
+     */
+    fun unfavorite(slug: Slug, currentUserId: UserId): Either<UnfavoriteError, Unit> = TODO()
+    sealed interface UnfavoriteError : MyError {
+        data class NotFoundArticleBySlug(val slug: Slug) : UnfavoriteError, MyError.Basic
+        data class Unexpected(override val cause: Throwable, val slug: Slug, val currentUserId: UserId) :
+            UnfavoriteError,
+            MyError.MyErrorWithThrowable
+    }
 }
