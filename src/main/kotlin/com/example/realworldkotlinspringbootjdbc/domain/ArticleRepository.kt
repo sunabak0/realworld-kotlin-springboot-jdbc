@@ -65,7 +65,7 @@ interface ArticleRepository {
      */
     fun unfavorite(slug: Slug, currentUserId: UserId): Either<UnfavoriteError, Unit> = TODO()
     sealed interface UnfavoriteError : MyError {
-        data class NotFoundArticleBySlug(val slug: Slug) : UnfavoriteError, MyError.Basic
+        data class NotFoundCreatedArticleBySlug(val slug: Slug) : UnfavoriteError, MyError.Basic
         data class Unexpected(override val cause: Throwable, val slug: Slug, val currentUserId: UserId) :
             UnfavoriteError,
             MyError.MyErrorWithThrowable

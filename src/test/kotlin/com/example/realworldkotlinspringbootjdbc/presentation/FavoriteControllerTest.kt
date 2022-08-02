@@ -167,7 +167,7 @@ class FavoriteControllerTest {
                 ),
                 TestCase(
                     title = "失敗: UnfavoriteUseCase が「slug に該当する記事が見つからなかった（ArticleNotFound）」エラーを返す場合、404レスポンスを返す",
-                    useCaseExecuteResult = UnfavoriteUseCase.Error.ArticleNotFoundBySlug(
+                    useCaseExecuteResult = UnfavoriteUseCase.Error.NotFoundArticleBySlug(
                         object : MyError {},
                         Slug.newWithoutValidation(pathParamSlug)
                     ).left(),

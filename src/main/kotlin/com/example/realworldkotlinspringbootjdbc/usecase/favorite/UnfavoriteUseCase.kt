@@ -16,7 +16,7 @@ interface UnfavoriteUseCase {
     fun execute(slug: String?, currentUser: RegisteredUser): Either<Error, Unit> = TODO()
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
-        data class ArticleNotFoundBySlug(override val cause: MyError, val slug: Slug) :
+        data class NotFoundArticleBySlug(override val cause: MyError, val slug: Slug) :
             Error,
             MyError.MyErrorWithMyError
 
@@ -45,7 +45,7 @@ class UnfavoriteUseCaseImpl(
                     /**
                      * 原因: 作成済記事が見つからなかった
                      */
-                    is ArticleRepository.UnfavoriteError.NotFoundArticleBySlug -> TODO()
+                    is ArticleRepository.UnfavoriteError.NotFoundCreatedArticleBySlug -> TODO()
                     /**
                      * 原因: 不明
                      */

@@ -136,7 +136,7 @@ class FavoriteController(
                         /**
                          * 原因: 記事が見つからなかった
                          */
-                        is UnfavoriteUseCase.Error.ArticleNotFoundBySlug -> ResponseEntity(
+                        is UnfavoriteUseCase.Error.NotFoundArticleBySlug -> ResponseEntity(
                             serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(404)
                         )
