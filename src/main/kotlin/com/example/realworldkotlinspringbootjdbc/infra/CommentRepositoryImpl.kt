@@ -211,13 +211,13 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         /**
          * article が存在しなかった時 NotFoundError
          */
-        val articleId = when (articleIdMap.isEmpty()) {
-            true -> return CommentRepository.DeleteError.NotFoundArticleBySlug(slug, commentId, currentUserId).left()
-            false -> try {
-                articleIdMap.first()["id"].toString().toInt()
-            } catch (e: Throwable) {
-                return CommentRepository.DeleteError.Unexpected(e, slug, commentId, currentUserId).left()
-            }
+        if (articleIdMap.isEmpty()) {
+            return CommentRepository.DeleteError.NotFoundArticleBySlug(slug, commentId, currentUserId).left()
+        }
+        val articleId = try {
+            articleIdMap.first()["id"].toString().toInt()
+        } catch (e: Throwable) {
+            return CommentRepository.DeleteError.Unexpected(e, slug, commentId, currentUserId).left()
         }
 
         /**
