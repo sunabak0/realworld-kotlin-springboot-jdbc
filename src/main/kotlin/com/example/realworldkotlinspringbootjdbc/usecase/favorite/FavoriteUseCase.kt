@@ -46,7 +46,7 @@ class FavoriteUseCaseImpl(
                     /**
                      * 原因: 作成済記事が見つからなかった
                      */
-                    is ArticleRepository.FavoriteError.ArticleNotFoundBySlug -> TODO()
+                    is ArticleRepository.FavoriteError.NotFoundCreatedArticleBySlug -> TODO()
                     /**
                      * 原因: 不明
                      */
