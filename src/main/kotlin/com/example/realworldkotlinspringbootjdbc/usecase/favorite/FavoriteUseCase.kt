@@ -17,7 +17,7 @@ interface FavoriteUseCase {
     fun execute(slug: String?, currentUser: RegisteredUser): Either<Error, CreatedArticle> = TODO()
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
-        data class ArticleNotFoundBySlug(override val cause: MyError, val slug: Slug) :
+        data class NotFoundArticleBySlug(override val cause: MyError, val slug: Slug) :
             Error,
             MyError.MyErrorWithMyError
 
