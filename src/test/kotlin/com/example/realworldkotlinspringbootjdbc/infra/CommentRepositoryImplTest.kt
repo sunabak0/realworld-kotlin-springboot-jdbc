@@ -260,7 +260,7 @@ class CommentRepositoryImplTest {
             ignoreCols = ["id", "created_at", "updated_at"],
             orderBy = ["id"]
         )
-        fun `正常系-「articles テーブルに slug に該当する記事が存在」「comments テーブルに commentId に該当するコメントが存在」「コメントの authorId が currentUserId と同じ」場合、削除成功し戻り値が Unit になる`() {
+        fun `正常系-「articles テーブルに slug に該当する記事が存在」「comments テーブルに commentId に該当するコメントが存在」「コメントの authorId が currentUserId と同じ」場合、削除成功し、戻り値が Unit`() {
             /**
              * given:
              */
@@ -290,7 +290,7 @@ class CommentRepositoryImplTest {
             value = ["datasets/yml/given/articles.yml"],
             orderBy = ["id"]
         )
-        fun `異常系-「articles テーブルに slug に該当する作成済記事が存在しない」場合、削除失敗し戻り値が ArticleNotFoundBySlug になる`() {
+        fun `準正常系-「articles テーブルに slug に該当する作成済記事が存在しない」場合、削除失敗し、戻り値が ArticleNotFoundBySlug`() {
             /**
              * given:
              */
@@ -328,7 +328,7 @@ class CommentRepositoryImplTest {
             value = ["datasets/yml/given/articles.yml"],
             orderBy = ["id"]
         )
-        fun `異常系-「articles テーブルに slug に該当する記事が存在」「comments テーブルに commentId に該当するコメントが存在しない」場合、削除失敗し戻り値が CommentNotFoundByCommentId になる`() {
+        fun `準正常系-「articles テーブルに slug に該当する記事が存在」「comments テーブルに commentId に該当するコメントが存在しない」場合、削除失敗し、戻り値が CommentNotFoundByCommentId`() {
             /**
              * given:
              */
@@ -367,7 +367,7 @@ class CommentRepositoryImplTest {
             ignoreCols = ["id", "created_at", "updated_at"],
             orderBy = ["id"]
         )
-        fun `異常系-「articles テーブルに slug に該当する記事が存在」「comments テーブルに commentId に該当するコメントが存在」「コメントの authorId が currentUserId と異なる」場合、削除失敗し戻り値が  になる`() {
+        fun `準正常系-「articles テーブルに slug に該当する記事が存在」「comments テーブルに commentId に該当するコメントが存在」「コメントの authorId が currentUserId と異なる」場合、削除失敗し、戻り値が NotAuthorizedDeleteComment`() {
             /**
              * given:
              */
