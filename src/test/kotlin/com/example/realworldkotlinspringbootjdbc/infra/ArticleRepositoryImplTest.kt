@@ -344,5 +344,41 @@ class ArticleRepositoryImplTest {
                 }
             }
         }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+                "datasets/yml/given/tags.yml",
+            ],
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/articles.yml", "datasets/yml/given/tags.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-「articles テーブルに slug に該当する作成済記事が存在しない」場合は、お気に入り登録されず（テーブルに変更なし）、NotFoundCreatedArticleBySlug が戻り値`() {
+            /**
+             * given:
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+
+            /**
+             * when:
+             * - slug に該当する作成済記事が存在しない
+             */
+            val actual = articleRepository.favorite(
+                slug = Slug.newWithoutValidation("not-existed-dummy-slug"), // slug に該当する作成済記事が存在しない
+                currentUserId = UserId(3)
+            )
+
+            /**
+             * then:
+             */
+            val expected =
+                ArticleRepository.FavoriteError.NotFoundCreatedArticleBySlug(slug = Slug.newWithoutValidation("not-existed-dummy-slug"))
+                    .left()
+            assertThat(actual).isEqualTo(expected)
+        }
     }
 }
