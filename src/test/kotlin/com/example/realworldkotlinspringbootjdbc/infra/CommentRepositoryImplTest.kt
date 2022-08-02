@@ -312,9 +312,9 @@ class CommentRepositoryImplTest {
              * then:
              */
             val expected = CommentRepository.DeleteError.NotFoundArticleBySlug(
-                Slug.newWithoutValidation("dummy-not-exist-slug"),
-                CommentId.newWithoutValidation(1),
-                UserId(3)
+                slug = Slug.newWithoutValidation("dummy-not-exist-slug"),
+                commentId = CommentId.newWithoutValidation(1),
+                currentUserId = UserId(3)
             )
             when (actual) {
                 is Left -> assertThat(actual.value).isEqualTo(expected)
@@ -350,9 +350,9 @@ class CommentRepositoryImplTest {
              * then:
              */
             val expected = CommentRepository.DeleteError.NotFoundCommentByCommentId(
-                Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
-                CommentId.newWithoutValidation(100),
-                UserId(3)
+                slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
+                commentId = CommentId.newWithoutValidation(100),
+                currentUserId = UserId(3)
             )
             when (actual) {
                 is Left -> assertThat(actual.value).isEqualTo(expected)
@@ -389,9 +389,9 @@ class CommentRepositoryImplTest {
              * then:
              */
             val expected = CommentRepository.DeleteError.NotAuthorizedDeleteComment(
-                Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
-                CommentId.newWithoutValidation(1),
-                UserId(100)
+                slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
+                commentId = CommentId.newWithoutValidation(1),
+                currentUserId = UserId(100)
             )
             when (actual) {
                 is Left -> assertThat(actual.value).isEqualTo(expected)
