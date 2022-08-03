@@ -2,6 +2,8 @@ package com.example.realworldkotlinspringbootjdbc.infra
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import arrow.core.left
+import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
 import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
@@ -126,11 +128,8 @@ class CommentRepositoryImplTest {
             /**
              * then:
              */
-            val expected = listOf<Comment>()
-            when (actual) {
-                is Left -> assert(false)
-                is Right -> assertThat(actual.value).isEqualTo(expected)
-            }
+            val expected = listOf<Comment>().right()
+            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
@@ -155,10 +154,8 @@ class CommentRepositoryImplTest {
              */
             val expected =
                 CommentRepository.ListError.NotFoundArticleBySlug(Slug.newWithoutValidation("not-found-article-slug"))
-            when (actual) {
-                is Left -> assertThat(actual.value).isEqualTo(expected)
-                is Right -> assert(false)
-            }
+                    .left()
+            assertThat(actual).isEqualTo(expected)
         }
     }
 }
