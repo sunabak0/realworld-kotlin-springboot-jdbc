@@ -32,7 +32,7 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         """.trimIndent()
         val selectArticleSqlParams = MapSqlParameterSource()
             .addValue("slug", slug.value)
-        val articleFromDb = try {
+        val articleList = try {
             namedParameterJdbcTemplate.queryForList(selectArticleSql, selectArticleSqlParams)
         } catch (e: Throwable) {
             return CommentRepository.ListError.Unexpected(e, slug).left()
@@ -41,11 +41,11 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         /**
          * article が存在しなかった時 NotFoundError
          */
-        if (articleFromDb.isEmpty()) {
+        if (articleList.isEmpty()) {
             return CommentRepository.ListError.NotFoundArticleBySlug(slug).left()
         }
         val articleId = try {
-            val it = articleFromDb.first()
+            val it = articleList.first()
             ArticleId(it["id"].toString().toInt())
         } catch (e: Throwable) {
             return CommentRepository.ListError.Unexpected(e, slug).left()
