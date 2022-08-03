@@ -23,11 +23,12 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
          */
         val selectArticleSql = """
             SELECT
-                id
+                id AS id
             FROM
                 articles
             WHERE
-                slug = :slug
+                articles.slug = :slug
+            ;
         """.trimIndent()
         val selectArticleSqlParams = MapSqlParameterSource()
             .addValue("slug", slug.value)
