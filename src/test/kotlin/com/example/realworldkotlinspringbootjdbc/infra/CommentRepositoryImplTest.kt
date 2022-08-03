@@ -216,7 +216,8 @@ class CommentRepositoryImplTest {
         @DataSet("datasets/yml/given/articles.yml")
         @ExpectedDataSet(
             value = ["datasets/yml/given/articles.yml"],
-            orderBy = ["id"]
+            orderBy = ["id"],
+            ignoreCols = ["id", "created_at", "updated_at"]
         )
         fun `準正常系-articles テーブルに slug に該当する記事が存在しない場合、NotFoundError が戻り値`() {
             /**
