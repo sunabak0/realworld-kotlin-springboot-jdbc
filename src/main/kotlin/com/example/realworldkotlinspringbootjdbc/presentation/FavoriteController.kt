@@ -121,11 +121,11 @@ class FavoriteController(
              * JWT 認証 成功
              */
             is Right -> {
-                when (val unfavoriteResult = unfavoriteUseCase.execute(slug, authorizeResult.value)) {
+                when (val unfavoritedArticle = unfavoriteUseCase.execute(slug, authorizeResult.value)) {
                     /**
                      * お気に入り解除 失敗
                      */
-                    is Left -> when (unfavoriteResult.value) {
+                    is Left -> when (unfavoritedArticle.value) {
                         /**
                          * 原因: Slug が不正
                          */
@@ -152,7 +152,23 @@ class FavoriteController(
                      * お気に入り解除 成功
                      */
                     is Right -> {
-                        return ResponseEntity("", HttpStatus.valueOf(200))
+                        val article = Article(
+                            unfavoritedArticle.value.title.value,
+                            unfavoritedArticle.value.slug.value,
+                            unfavoritedArticle.value.body.value,
+                            unfavoritedArticle.value.createdAt,
+                            unfavoritedArticle.value.updatedAt,
+                            unfavoritedArticle.value.description.value,
+                            unfavoritedArticle.value.tagList.map { tag -> tag.value },
+                            // TODO: authorId を author に変更
+                            unfavoritedArticle.value.authorId.value.toString(),
+                            unfavoritedArticle.value.favorited,
+                            unfavoritedArticle.value.favoritesCount
+                        )
+                        return ResponseEntity(
+                            ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
+                            HttpStatus.valueOf(200),
+                        )
                     }
                 }
             }

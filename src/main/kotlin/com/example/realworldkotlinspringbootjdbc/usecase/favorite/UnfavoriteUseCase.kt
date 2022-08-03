@@ -7,13 +7,14 @@ import arrow.core.Invalid
 import arrow.core.Valid
 import arrow.core.left
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
+import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface UnfavoriteUseCase {
-    fun execute(slug: String?, currentUser: RegisteredUser): Either<Error, Unit> = TODO()
+    fun execute(slug: String?, currentUser: RegisteredUser): Either<Error, CreatedArticle> = TODO()
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
         data class NotFoundArticleBySlug(override val cause: MyError, val slug: Slug) :
@@ -28,7 +29,7 @@ interface UnfavoriteUseCase {
 class UnfavoriteUseCaseImpl(
     val articleRepository: ArticleRepository
 ) : UnfavoriteUseCase {
-    override fun execute(slug: String?, currentUser: RegisteredUser): Either<UnfavoriteUseCase.Error, Unit> {
+    override fun execute(slug: String?, currentUser: RegisteredUser): Either<UnfavoriteUseCase.Error, CreatedArticle> {
         return when (val it = Slug.new(slug)) {
             /**
              * Slug が不正

@@ -141,7 +141,7 @@ class FavoriteControllerTest {
 
         data class TestCase(
             val title: String,
-            val useCaseExecuteResult: Either<UnfavoriteUseCase.Error, Unit>,
+            val useCaseExecuteResult: Either<UnfavoriteUseCase.Error, CreatedArticle>,
             val expected: ResponseEntity<String>,
         )
 
@@ -150,8 +150,26 @@ class FavoriteControllerTest {
             return Stream.of(
                 TestCase(
                     title = "成功: UnfavoriteUseCase が Unit を返す場合、200 レスポンスを返す",
-                    useCaseExecuteResult = Unit.right(),
-                    expected = ResponseEntity("", HttpStatus.valueOf(200))
+                    useCaseExecuteResult = CreatedArticle.newWithoutValidation(
+                        id = ArticleId(1),
+                        title = Title.newWithoutValidation("dummy-title"),
+                        slug = Slug.newWithoutValidation("dummy-slug"),
+                        body = ArticleBody.newWithoutValidation("dummy-body"),
+                        createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                        updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                        description = Description.newWithoutValidation("dummy-description"),
+                        tagList = listOf(
+                            Tag.newWithoutValidation("dummy-tag1"),
+                            Tag.newWithoutValidation("dummy-tag2")
+                        ),
+                        authorId = UserId(1),
+                        favorited = false,
+                        favoritesCount = 0
+                    ).right(),
+                    expected = ResponseEntity(
+                        """{"article":{"title":"dummy-title","slug":"dummy-slug","body":"dummy-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","description":"dummy-description","tagList":["dummy-tag1","dummy-tag2"],"author":"1","favorited":false,"favoritesCount":0}}""",
+                        HttpStatus.valueOf(200)
+                    )
                 ),
                 TestCase(
                     title = "失敗: UnfavoriteUseCase が「不正なSlug（InvalidSlug）」エラーを返す場合、404 レスポンスを返す",
@@ -194,7 +212,7 @@ class FavoriteControllerTest {
                             override fun execute(
                                 slug: String?,
                                 currentUser: RegisteredUser
-                            ): Either<UnfavoriteUseCase.Error, Unit> {
+                            ): Either<UnfavoriteUseCase.Error, CreatedArticle> {
                                 return testCase.useCaseExecuteResult
                             }
                         },
