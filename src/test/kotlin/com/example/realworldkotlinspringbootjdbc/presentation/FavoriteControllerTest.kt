@@ -51,7 +51,7 @@ class FavoriteControllerTest {
         fun test(): Stream<DynamicNode> {
             return Stream.of(
                 TestCase(
-                    title = "成功: FavoriteUseCase が作成済記事（FavoriteArticle）を返す場合、200 レスポンスを返す",
+                    title = "正常系: FavoriteUseCase が作成済記事（FavoriteArticle）を返す場合、200 レスポンスを返す",
                     useCaseExecuteResult = CreatedArticle.newWithoutValidation(
                         id = ArticleId(1),
                         title = Title.newWithoutValidation("dummy-title"),
@@ -149,7 +149,7 @@ class FavoriteControllerTest {
         fun test(): Stream<DynamicNode> {
             return Stream.of(
                 TestCase(
-                    title = "成功: UnfavoriteUseCase が Unit を返す場合、200 レスポンスを返す",
+                    title = "正常系: UnfavoriteUseCase が Unit を返す場合、200 レスポンスを返す",
                     useCaseExecuteResult = CreatedArticle.newWithoutValidation(
                         id = ArticleId(1),
                         title = Title.newWithoutValidation("dummy-title"),
