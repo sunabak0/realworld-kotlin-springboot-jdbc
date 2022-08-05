@@ -86,7 +86,7 @@ class FavoriteControllerTest {
                     expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
                 ),
                 TestCase(
-                    title = "準正常系: FavoriteUseCase が「slug に該当する記事が見つからなかった（ArticleNotFound）」エラーを返す場合、404レスポンスを返す",
+                    title = "準正常系: FavoriteUseCase が「slug に該当する記事が見つからなかった（NotFoundArticle）」エラーを返す場合、404レスポンスを返す",
                     useCaseExecuteResult = FavoriteUseCase.Error.NotFoundArticleBySlug(
                         object : MyError {},
                         Slug.newWithoutValidation(pathParamSlug)
@@ -184,7 +184,7 @@ class FavoriteControllerTest {
                     expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
                 ),
                 TestCase(
-                    title = "準正常系: UnfavoriteUseCase が「slug に該当する記事が見つからなかった（ArticleNotFound）」エラーを返す場合、404レスポンスを返す",
+                    title = "準正常系: UnfavoriteUseCase が「slug に該当する記事が見つからなかった（NotFoundArticle）」エラーを返す場合、404レスポンスを返す",
                     useCaseExecuteResult = UnfavoriteUseCase.Error.NotFoundArticleBySlug(
                         object : MyError {},
                         Slug.newWithoutValidation(pathParamSlug)
