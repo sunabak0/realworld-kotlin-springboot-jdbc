@@ -74,7 +74,7 @@ class FavoriteControllerTest {
                     ),
                 ),
                 TestCase(
-                    title = "失敗: FavoriteUseCase が「不正なSlug（InvalidSlug）」エラーを返す場合、404 レスポンスを返す",
+                    title = "準正常系: FavoriteUseCase が「不正なSlug（InvalidSlug）」エラーを返す場合、404 レスポンスを返す",
                     useCaseExecuteResult = FavoriteUseCase.Error.InvalidSlug(
                         listOf(
                             object : MyError.ValidationError {
@@ -86,7 +86,7 @@ class FavoriteControllerTest {
                     expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
                 ),
                 TestCase(
-                    title = "失敗: FavoriteUseCase が「slug に該当する記事が見つからなかった（ArticleNotFound）」エラーを返す場合、404レスポンスを返す",
+                    title = "準正常系: FavoriteUseCase が「slug に該当する記事が見つからなかった（ArticleNotFound）」エラーを返す場合、404レスポンスを返す",
                     useCaseExecuteResult = FavoriteUseCase.Error.NotFoundArticleBySlug(
                         object : MyError {},
                         Slug.newWithoutValidation(pathParamSlug)
@@ -94,7 +94,7 @@ class FavoriteControllerTest {
                     expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
                 ),
                 TestCase(
-                    title = "失敗: FavoriteUseCase が「原因不明（Unexpected）」エラーを返す場合、500 レスポンスを返す",
+                    title = "準正常系: FavoriteUseCase が「原因不明（Unexpected）」エラーを返す場合、500 レスポンスを返す",
                     useCaseExecuteResult = FavoriteUseCase.Error.Unexpected(object : MyError {}).left(),
                     expected = ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500)),
                 )
@@ -172,7 +172,7 @@ class FavoriteControllerTest {
                     )
                 ),
                 TestCase(
-                    title = "失敗: UnfavoriteUseCase が「不正なSlug（InvalidSlug）」エラーを返す場合、404 レスポンスを返す",
+                    title = "準正常系: UnfavoriteUseCase が「不正なSlug（InvalidSlug）」エラーを返す場合、404 レスポンスを返す",
                     useCaseExecuteResult = UnfavoriteUseCase.Error.InvalidSlug(
                         listOf(
                             object : MyError.ValidationError {
@@ -184,7 +184,7 @@ class FavoriteControllerTest {
                     expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
                 ),
                 TestCase(
-                    title = "失敗: UnfavoriteUseCase が「slug に該当する記事が見つからなかった（ArticleNotFound）」エラーを返す場合、404レスポンスを返す",
+                    title = "準正常系: UnfavoriteUseCase が「slug に該当する記事が見つからなかった（ArticleNotFound）」エラーを返す場合、404レスポンスを返す",
                     useCaseExecuteResult = UnfavoriteUseCase.Error.NotFoundArticleBySlug(
                         object : MyError {},
                         Slug.newWithoutValidation(pathParamSlug)
@@ -192,7 +192,7 @@ class FavoriteControllerTest {
                     expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
                 ),
                 TestCase(
-                    title = "失敗: FavoriteUseCase が「原因不明（Unexpected）」エラーを返す場合、500 レスポンスを返す",
+                    title = "準正常系: FavoriteUseCase が「原因不明（Unexpected）」エラーを返す場合、500 レスポンスを返す",
                     useCaseExecuteResult = UnfavoriteUseCase.Error.Unexpected(object : MyError {}).left(),
                     expected = ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500)),
                 )
