@@ -33,7 +33,7 @@ class ArticleRepositoryImplTest {
     @DisplayName("Slugで記事検索")
     class FindBySlugTest {
         @BeforeAll
-        fun reset() = UserRepositoryImplTest.resetSequence()
+        fun reset() = DbConnection.resetSequence()
 
         @Test
         @DataSet(
@@ -84,7 +84,7 @@ class ArticleRepositoryImplTest {
     @DisplayName("Slugで(特定の登録済みユーザー観点の)作成済み記事の検索")
     class FindBySlugFromRegisteredUserViewpointTest {
         @BeforeAll
-        fun reset() = UserRepositoryImplTest.resetSequence()
+        fun reset() = DbConnection.resetSequence()
 
         @Test
         @DataSet(
@@ -219,7 +219,7 @@ class ArticleRepositoryImplTest {
     @DisplayName("お気に入り登録")
     class Favorite {
         @BeforeAll
-        fun reset() = UserRepositoryImplTest.resetSequence()
+        fun reset() = DbConnection.resetSequence()
 
         @Test
         @DataSet(
@@ -388,7 +388,7 @@ class ArticleRepositoryImplTest {
     @DisplayName("お気に入り登録解除")
     class Unfavorite {
         @BeforeAll
-        fun reset() = UserRepositoryImplTest.resetSequence()
+        fun reset() = DbConnection.resetSequence()
 
         @Test
         @DataSet(
