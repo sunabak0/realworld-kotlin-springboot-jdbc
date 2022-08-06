@@ -17,7 +17,7 @@ complexity:
   #
   ComplexMethod:
     active: true
-    threshold: 16 # (default: 16)
+    threshold: 16 # (default: 15)
     ignoreSingleWhenExpression: false
     ignoreSimpleWhenEntries: false
     ignoreNestingFunctions: false
