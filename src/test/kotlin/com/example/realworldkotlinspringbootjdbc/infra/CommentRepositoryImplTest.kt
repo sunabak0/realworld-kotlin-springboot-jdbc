@@ -19,11 +19,23 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import java.text.SimpleDateFormat
 
 class CommentRepositoryImplTest {
     companion object {
         val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
+
+        fun resetSequence() {
+            val sql = """
+                SELECT
+                    setval('articles_id_seq', 10000)
+                    , setval('tags_id_seq', 10000)
+                    , setval('article_comments_id_seq', 10000)
+                ;
+            """.trimIndent()
+            DbConnection.namedParameterJdbcTemplate.queryForRowSet(sql, MapSqlParameterSource())
+        }
     }
 
     @Tag("WithLocalDb")
@@ -32,7 +44,7 @@ class CommentRepositoryImplTest {
     @DisplayName("List(コメント一覧を表示)")
     class List {
         @BeforeAll
-        fun reset() = DbConnection.resetSequence()
+        fun reset() = resetSequence()
 
         @Test
         @DataSet(
@@ -154,7 +166,7 @@ class CommentRepositoryImplTest {
     @DisplayName("Create（コメントを作成）")
     class Create {
         @BeforeAll
-        fun reset() = DbConnection.resetSequence()
+        fun reset() = resetSequence()
 
         @Test
         @DataSet("datasets/yml/given/articles.yml")
