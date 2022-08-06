@@ -52,7 +52,7 @@ class ArticleControllerTest {
         fun testWithoutAuthorize(): Stream<DynamicNode> {
             return Stream.of(
                 TestCase(
-                    title = "UseCase 成功:ユースケース（ShowArticleUseCase）が作成済記事（CreatedArticle）を返すとき、レスポンスのステータスコードが 200 になる",
+                    title = "UseCase 正常系:ユースケース（ShowArticleUseCase）が作成済記事（CreatedArticle）を返すとき、レスポンスのステータスコードが 200 になる",
                     useCaseExecuteResult = CreatedArticle.newWithoutValidation(
                         id = ArticleId(1),
                         title = Title.newWithoutValidation("dummy-title"),
@@ -75,7 +75,7 @@ class ArticleControllerTest {
                     )
                 ),
                 TestCase(
-                    title = "UseCase 失敗:ユースケース（ShowArticleUseCase）が NotFound エラー（NotFound）を返すとき、レスポンスのステータスコードが 404 になる",
+                    title = "UseCase 準正常系:ユースケース（ShowArticleUseCase）が NotFound エラー（NotFound）を返すとき、レスポンスのステータスコードが 404 になる",
                     useCaseExecuteResult = ShowArticleUseCase.Error.NotFoundArticleBySlug(
                         object : MyError {},
                         slug = Slug.newWithoutValidation("dummy-slug")
@@ -86,7 +86,7 @@ class ArticleControllerTest {
                     )
                 ),
                 TestCase(
-                    title = "UseCase 失敗:ユースケース（ShowArticleUseCase）がバリデーションエラー（ValidationErrors）を返すとき、レスポンスのステータスコードが 404 になる",
+                    title = "UseCase 準正常系:ユースケース（ShowArticleUseCase）がバリデーションエラー（ValidationErrors）を返すとき、レスポンスのステータスコードが 404 になる",
                     useCaseExecuteResult = ShowArticleUseCase.Error.ValidationErrors(
                         listOf(object : MyError.ValidationError {
                             override val message: String get() = "DummyValidationError"
@@ -99,7 +99,7 @@ class ArticleControllerTest {
                     )
                 ),
                 TestCase(
-                    title = "UseCase 失敗:ユースケース（ShowArticleUseCase）が原因不明のエラー（Unexpected）を返すとき、レスポンスのステータスコードが 500 になる",
+                    title = "UseCase 準正常系:ユースケース（ShowArticleUseCase）が原因不明のエラー（Unexpected）を返すとき、レスポンスのステータスコードが 500 になる",
                     useCaseExecuteResult = ShowArticleUseCase.Error.Unexpected(object : MyError {}).left(),
                     expected = ResponseEntity(
                         """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
@@ -135,7 +135,7 @@ class ArticleControllerTest {
         fun testShowWithAuthorize(): Stream<DynamicNode> {
             return Stream.of(
                 TestCase(
-                    title = "UseCase 成功:ユースケース（ShowArticleUseCase）が作成済記事（CreatedArticle）を返すとき、レスポンスのステータスコードが 200 になる",
+                    title = "UseCase 正常系:ユースケース（ShowArticleUseCase）が作成済記事（CreatedArticle）を返すとき、レスポンスのステータスコードが 200 になる",
                     useCaseExecuteResult = CreatedArticle.newWithoutValidation(
                         id = ArticleId(1),
                         title = Title.newWithoutValidation("dummy-title"),
@@ -158,7 +158,7 @@ class ArticleControllerTest {
                     )
                 ),
                 TestCase(
-                    title = "UseCase 失敗:ユースケース（ShowArticleUseCase）が NotFound エラー（NotFound）を返すとき、レスポンスのステータスコードが 404 になる",
+                    title = "UseCase 準正常系:ユースケース（ShowArticleUseCase）が NotFound エラー（NotFound）を返すとき、レスポンスのステータスコードが 404 になる",
                     useCaseExecuteResult = ShowArticleUseCase.Error.NotFoundArticleBySlug(object : MyError {}, Slug.newWithoutValidation("dummy-slug")).left(),
                     expected = ResponseEntity(
                         """{"errors":{"body":["記事が見つかりませんでした"]}}""",
@@ -166,7 +166,7 @@ class ArticleControllerTest {
                     )
                 ),
                 TestCase(
-                    title = "UseCase 失敗:ユースケース（ShowArticleUseCase）がバリデーションエラー（ValidationErrors）を返すとき、レスポンスのステータスコードが 404 になる",
+                    title = "UseCase 準正常系:ユースケース（ShowArticleUseCase）がバリデーションエラー（ValidationErrors）を返すとき、レスポンスのステータスコードが 404 になる",
                     useCaseExecuteResult = ShowArticleUseCase.Error.ValidationErrors(
                         listOf(object : MyError.ValidationError {
                             override val message: String get() = "DummyValidationError"
@@ -179,7 +179,7 @@ class ArticleControllerTest {
                     )
                 ),
                 TestCase(
-                    title = "UseCase 失敗:ユースケース（ShowArticleUseCase）が NotFoundUser エラー（NotFoundUser）を返すとき、レスポンスのステータスコードが 404 になる",
+                    title = "UseCase 準正常系:ユースケース（ShowArticleUseCase）が NotFoundUser エラー（NotFoundUser）を返すとき、レスポンスのステータスコードが 404 になる",
                     useCaseExecuteResult = ShowArticleUseCase.Error.NotFoundUser(object : MyError {}, dummyRegisteredUser).left(),
                     expected = ResponseEntity(
                         """{"errors":{"body":["ユーザー登録されていませんでした"]}}""",
@@ -187,7 +187,7 @@ class ArticleControllerTest {
                     )
                 ),
                 TestCase(
-                    title = "UseCase 失敗:ユースケース（ShowArticleUseCase）が原因不明のエラー（Unexpected）を返すとき、レスポンスのステータスコードが 500 になる",
+                    title = "UseCase 準正常系:ユースケース（ShowArticleUseCase）が原因不明のエラー（Unexpected）を返すとき、レスポンスのステータスコードが 500 になる",
                     useCaseExecuteResult = ShowArticleUseCase.Error.Unexpected(object : MyError {}).left(),
                     expected = ResponseEntity(
                         """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
