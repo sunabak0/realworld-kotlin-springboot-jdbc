@@ -6,6 +6,7 @@ import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
 import com.example.realworldkotlinspringbootjdbc.usecase.favorite.FavoriteUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.favorite.UnfavoriteUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -24,6 +25,7 @@ import java.text.SimpleDateFormat
 class FavoriteController(
     val myAuth: MyAuth,
     val favoriteUseCase: FavoriteUseCase,
+    val unfavoriteUseCase: UnfavoriteUseCase,
 ) {
     @PostMapping("/articles/{slug}/favorite")
     fun favorite(
@@ -94,7 +96,10 @@ class FavoriteController(
     }
 
     @DeleteMapping("/articles/{slug}/favorite")
-    fun unfavorite(): ResponseEntity<String> {
+    fun unfavorite(
+        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
+        @PathVariable("slug") slug: String?
+    ): ResponseEntity<String> {
         val article = Article(
             "hoge-title",
             "hoge-slug",
@@ -107,9 +112,66 @@ class FavoriteController(
             false,
             0,
         )
-        return ResponseEntity(
-            ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
-            HttpStatus.valueOf(200),
-        )
+        return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
+            /**
+             * JWT 認証 失敗
+             */
+            is Left -> AuthorizationError.handle(authorizeResult.value)
+            /**
+             * JWT 認証 成功
+             */
+            is Right -> {
+                when (val unfavoritedArticle = unfavoriteUseCase.execute(slug, authorizeResult.value)) {
+                    /**
+                     * お気に入り解除 失敗
+                     */
+                    is Left -> when (unfavoritedArticle.value) {
+                        /**
+                         * 原因: Slug が不正
+                         */
+                        is UnfavoriteUseCase.Error.InvalidSlug -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                            HttpStatus.valueOf(404)
+                        )
+                        /**
+                         * 原因: 記事が見つからなかった
+                         */
+                        is UnfavoriteUseCase.Error.NotFoundArticleBySlug -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                            HttpStatus.valueOf(404)
+                        )
+                        /**
+                         * 原因: 不明
+                         */
+                        is UnfavoriteUseCase.Error.Unexpected -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                            HttpStatus.valueOf(500)
+                        )
+                    }
+                    /**
+                     * お気に入り解除 成功
+                     */
+                    is Right -> {
+                        val article = Article(
+                            unfavoritedArticle.value.title.value,
+                            unfavoritedArticle.value.slug.value,
+                            unfavoritedArticle.value.body.value,
+                            unfavoritedArticle.value.createdAt,
+                            unfavoritedArticle.value.updatedAt,
+                            unfavoritedArticle.value.description.value,
+                            unfavoritedArticle.value.tagList.map { tag -> tag.value },
+                            // TODO: authorId を author に変更
+                            unfavoritedArticle.value.authorId.value.toString(),
+                            unfavoritedArticle.value.favorited,
+                            unfavoritedArticle.value.favoritesCount
+                        )
+                        return ResponseEntity(
+                            ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
+                            HttpStatus.valueOf(200),
+                        )
+                    }
+                }
+            }
+        }
     }
 }
