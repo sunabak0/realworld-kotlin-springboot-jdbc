@@ -381,4 +381,183 @@ class ArticleRepositoryImplTest {
             assertThat(actual).isEqualTo(expected)
         }
     }
+
+    @Tag("WithLocalDb")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    @DisplayName("お気に入り登録解除")
+    class Unfavorite {
+        @BeforeAll
+        fun reset() = UserRepositoryImplTest.resetSequence()
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+                "datasets/yml/given/tags.yml",
+            ],
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/article_repository/unfavorite-success.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `正常系-「slug に該当する articles テーブルに作成済記事が存在する」「favorites テーブルに「作成済記事に該当する article_id」かつ「user_id が実行ユーザー」」の場合は、お気に入り解除（favorites テーブルから削除）され 作成済記事（CreatedArticle）が戻り値`() {
+            /**
+             * given:
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+
+            /**
+             * when:
+             * - slug に該当する作成済記事が articles テーブルに存在する
+             * - favorites テーブルに作成済記事に該当する article_id かつ user_id が 実行ユーザーと同じ
+             */
+            val actual = articleRepository.unfavorite(
+                slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"), // slug に該当する作成済記事が articles テーブルに存在する
+                currentUserId = UserId(2) // favorites テーブルに作成済記事に該当する article_id かつ user_id が 実行ユーザーと同じ
+            )
+
+            /**
+             * then:
+             * - お気に入り解除（favorites テーブルから対象レコードが削除）
+             * - 作成済記事（CreatedArticle）が戻り値
+             */
+            val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
+            val expected = CreatedArticle.newWithoutValidation(
+                id = ArticleId(1),
+                title = Title.newWithoutValidation("Rust vs Scala vs Kotlin"),
+                slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
+                body = Body.newWithoutValidation("dummy-body"),
+                createdAt = date, // 比較しない
+                updatedAt = date, // 比較しない
+                description = Description.newWithoutValidation("dummy-description"),
+                tagList = listOf(ArticleTag.newWithoutValidation("rust"), ArticleTag.newWithoutValidation("scala")),
+                authorId = UserId(1),
+                favorited = false,
+                favoritesCount = 0
+            )
+            when (actual) {
+                is Left -> assert(false)
+                is Right -> {
+                    // createdAt と updatedAt はメタデータなので比較しない
+                    assertThat(actual.value.id).isEqualTo(expected.id)
+                    assertThat(actual.value.title).isEqualTo(expected.title)
+                    assertThat(actual.value.slug).isEqualTo(expected.slug)
+                    assertThat(actual.value.body).isEqualTo(expected.body)
+                    assertThat(actual.value.description).isEqualTo(expected.description)
+                    assertThat(actual.value.authorId).isEqualTo(expected.authorId)
+                    assertThat(actual.value.favorited).isEqualTo(expected.favorited)
+                    assertThat(actual.value.favoritesCount).isEqualTo(expected.favoritesCount)
+                }
+            }
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+                "datasets/yml/given/tags.yml",
+            ],
+        )
+        @ExpectedDataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+                "datasets/yml/given/tags.yml",
+            ],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `正常系-「slug に該当する articles テーブルに作成済記事が存在する」「favorites テーブルに「作成済記事に該当する article_id」かつ「user_id が実行ユーザーでない」」の場合は、お気に入り解除されず（favorites テーブル変更なし）、 作成済記事（CreatedArticle）が戻り値`() {
+            /**
+             * given:
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+
+            /**
+             * when:
+             * - slug に該当する作成済記事が articles テーブルに存在する
+             * - favorites テーブルに作成済記事に該当する article_id かつ user_id が 実行ユーザーと同じでない
+             */
+            val actual = articleRepository.unfavorite(
+                slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
+                currentUserId = UserId(1)
+            )
+
+            /**
+             * then:
+             * - お気に入り解除されない（favorites テーブルに変更なし）
+             * - 作成済記事が戻り値
+             */
+            val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
+            val expected = CreatedArticle.newWithoutValidation(
+                id = ArticleId(1),
+                title = Title.newWithoutValidation("Rust vs Scala vs Kotlin"),
+                slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
+                body = Body.newWithoutValidation("dummy-body"),
+                createdAt = date, // 比較しない
+                updatedAt = date, // 比較しない
+                description = Description.newWithoutValidation("dummy-description"),
+                tagList = listOf(ArticleTag.newWithoutValidation("rust"), ArticleTag.newWithoutValidation("scala")),
+                authorId = UserId(1),
+                favorited = false,
+                favoritesCount = 1
+            )
+            when (actual) {
+                is Left -> assert(false)
+                is Right -> {
+                    // createdAt と updatedAt はメタデータなので比較しない
+                    assertThat(actual.value.id).isEqualTo(expected.id)
+                    assertThat(actual.value.title).isEqualTo(expected.title)
+                    assertThat(actual.value.slug).isEqualTo(expected.slug)
+                    assertThat(actual.value.body).isEqualTo(expected.body)
+                    assertThat(actual.value.description).isEqualTo(expected.description)
+                    assertThat(actual.value.authorId).isEqualTo(expected.authorId)
+                    assertThat(actual.value.favorited).isEqualTo(expected.favorited)
+                    assertThat(actual.value.favoritesCount).isEqualTo(expected.favoritesCount)
+                }
+            }
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+                "datasets/yml/given/tags.yml",
+            ],
+        )
+        @ExpectedDataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+                "datasets/yml/given/tags.yml",
+            ],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-「slug に該当する articles テーブルに作成済記事が存在しない」の場合は、お気に入り解除されず（favorites テーブル変更なし）、 NotFoundCreatedArticleBySlug が戻り値`() {
+            /**
+             * given:
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+
+            /**
+             * when:
+             * - slug に該当する作成済記事が articles テーブルに存在しない
+             */
+            val actual = articleRepository.unfavorite(
+                slug = Slug.newWithoutValidation("not-existed-dummy-slug"), // slug に該当する作成済記事が存在しない
+                currentUserId = UserId(1) // 実行ユーザーの UserId に意味はない
+            )
+
+            /**
+             * then:
+             * - お気に入り解除されない（favorites テーブルに変更なし）
+             * - NotFoundCreatedArticleBySlug が戻り値
+             */
+            val expected =
+                ArticleRepository.UnfavoriteError.NotFoundCreatedArticleBySlug(Slug.newWithoutValidation("not-existed-dummy-slug"))
+                    .left()
+            assertThat(actual).isEqualTo(expected)
+        }
+    }
 }
