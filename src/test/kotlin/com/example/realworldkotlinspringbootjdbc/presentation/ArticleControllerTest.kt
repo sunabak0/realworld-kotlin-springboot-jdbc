@@ -125,6 +125,7 @@ class ArticleControllerTest {
                                 testCase.useCaseExecuteResult
                         }
                     )
+
                     /**
                      * when:
                      */
@@ -165,7 +166,10 @@ class ArticleControllerTest {
                 ),
                 TestCase(
                     title = "UseCase 準正常系:ユースケース（ShowArticleUseCase）が NotFound エラー（NotFound）を返すとき、レスポンスのステータスコードが 404 になる",
-                    useCaseExecuteResult = ShowArticleUseCase.Error.NotFoundArticleBySlug(object : MyError {}, Slug.newWithoutValidation("dummy-slug")).left(),
+                    useCaseExecuteResult = ShowArticleUseCase.Error.NotFoundArticleBySlug(
+                        cause = object : MyError {},
+                        slug = Slug.newWithoutValidation("dummy-slug")
+                    ).left(),
                     expected = ResponseEntity(
                         """{"errors":{"body":["記事が見つかりませんでした"]}}""",
                         HttpStatus.valueOf(404)
@@ -186,7 +190,10 @@ class ArticleControllerTest {
                 ),
                 TestCase(
                     title = "UseCase 準正常系:ユースケース（ShowArticleUseCase）が NotFoundUser エラー（NotFoundUser）を返すとき、レスポンスのステータスコードが 404 になる",
-                    useCaseExecuteResult = ShowArticleUseCase.Error.NotFoundUser(object : MyError {}, dummyRegisteredUser).left(),
+                    useCaseExecuteResult = ShowArticleUseCase.Error.NotFoundUser(
+                        cause = object : MyError {},
+                        user = dummyRegisteredUser
+                    ).left(),
                     expected = ResponseEntity(
                         """{"errors":{"body":["ユーザー登録されていませんでした"]}}""",
                         HttpStatus.valueOf(404)
@@ -194,7 +201,7 @@ class ArticleControllerTest {
                 ),
                 TestCase(
                     title = "UseCase 準正常系:ユースケース（ShowArticleUseCase）が原因不明のエラー（Unexpected）を返すとき、レスポンスのステータスコードが 500 になる",
-                    useCaseExecuteResult = ShowArticleUseCase.Error.Unexpected(object : MyError {}).left(),
+                    useCaseExecuteResult = ShowArticleUseCase.Error.Unexpected(cause = object : MyError {}).left(),
                     expected = ResponseEntity(
                         """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
                         HttpStatus.valueOf(500)
@@ -219,6 +226,7 @@ class ArticleControllerTest {
                                 testCase.useCaseExecuteResult
                         }
                     )
+
                     /**
                      * when
                      */
