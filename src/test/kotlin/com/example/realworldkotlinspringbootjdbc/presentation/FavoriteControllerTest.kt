@@ -69,7 +69,7 @@ class FavoriteControllerTest {
                         favoritesCount = 1
                     ).right(),
                     expected = ResponseEntity(
-                        """{"article":{"title":"dummy-title","slug":"dummy-slug","body":"dummy-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","description":"dummy-description","tagList":["dummy-tag1","dummy-tag2"],"author":"1","favorited":false,"favoritesCount":1}}""",
+                        """{"article":{"title":"dummy-title","slug":"dummy-slug","body":"dummy-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","description":"dummy-description","tagList":["dummy-tag1","dummy-tag2"],"authorId":1,"favorited":false,"favoritesCount":1}}""",
                         HttpStatus.valueOf(200)
                     ),
                 ),
@@ -167,7 +167,7 @@ class FavoriteControllerTest {
                         favoritesCount = 0
                     ).right(),
                     expected = ResponseEntity(
-                        """{"article":{"title":"dummy-title","slug":"dummy-slug","body":"dummy-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","description":"dummy-description","tagList":["dummy-tag1","dummy-tag2"],"author":"1","favorited":false,"favoritesCount":0}}""",
+                        """{"article":{"title":"dummy-title","slug":"dummy-slug","body":"dummy-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","description":"dummy-description","tagList":["dummy-tag1","dummy-tag2"],"authorId":1,"favorited":false,"favoritesCount":0}}""",
                         HttpStatus.valueOf(200)
                     )
                 ),

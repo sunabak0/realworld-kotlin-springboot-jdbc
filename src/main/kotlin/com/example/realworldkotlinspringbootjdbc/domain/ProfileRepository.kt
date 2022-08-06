@@ -39,6 +39,7 @@ interface ProfileRepository {
         data class NotFoundProfileByUsername(val username: Username, val currentUserId: UserId) :
             UnfollowError,
             MyError.Basic
+
         data class Unexpected(override val cause: Throwable, val username: Username, val currentUserId: UserId) :
             UnfollowError, MyError.MyErrorWithThrowable
     }

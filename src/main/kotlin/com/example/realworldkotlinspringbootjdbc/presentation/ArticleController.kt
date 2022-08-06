@@ -2,9 +2,13 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import arrow.core.Some
+import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Articles
+import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.usecase.article.ShowArticleUseCase
+import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -12,15 +16,18 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
 import java.text.SimpleDateFormat
 
 @RestController
 @Tag(name = "Articles")
 class ArticleController(
+    val myAuth: MyAuth,
     val showArticle: ShowArticleUseCase,
 ) {
     @GetMapping("/articles")
@@ -36,7 +43,7 @@ class ArticleController(
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
                     "hoge-description",
                     listOf("dragons", "training"),
-                    "hoge-author",
+                    1,
                     true,
                     1,
                 )
@@ -59,10 +66,10 @@ class ArticleController(
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
             "hoge-description",
             listOf("dragons", "training"),
-            "hoge-author",
+            1,
             true,
             1,
-        )
+        ).right()
         return ResponseEntity(
             ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
             HttpStatus.valueOf(200),
@@ -82,7 +89,7 @@ class ArticleController(
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
                     "hoge-description",
                     listOf("dragons", "training"),
-                    "hoge-author",
+                    1,
                     true,
                     1,
                 )
@@ -95,30 +102,108 @@ class ArticleController(
     }
 
     @GetMapping("/articles/{slug}")
-    fun show(): ResponseEntity<String> {
-        val result = showArticle.execute("hoge-slug")
-        when (result) {
-            is Right -> {
-                println(result.value)
+    fun show(
+        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
+        @PathVariable("slug") slug: String?
+    ): ResponseEntity<String> {
+        return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
+            /**
+             * JWT 認証 失敗
+             */
+            is Left -> when (val showArticleResult = showArticle.execute(slug)) {
+                /**
+                 * 記事取得 失敗
+                 */
+                is Left -> when (showArticleResult.value) {
+                    /**
+                     * 原因: slug に該当する記事が見つからなかった
+                     */
+                    is ShowArticleUseCase.Error.NotFoundArticleBySlug -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: バリデーションエラー
+                     */
+                    is ShowArticleUseCase.Error.ValidationErrors -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: ユーザーがいなかった
+                     * TODO: UseCase 的にありえないので、ここのエラーハンドリングは要検討
+                     */
+                    is ShowArticleUseCase.Error.NotFoundUser -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("ユーザー登録されていませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: 不明
+                     */
+                    is ShowArticleUseCase.Error.Unexpected -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(500)
+                    )
+                }
+                /**
+                 * 記事取得 成功
+                 */
+                is Right -> {
+                    ResponseEntity(
+                        Article.from(showArticleResult.value).serializeWithRootName(),
+                        HttpStatus.valueOf(200),
+                    )
+                }
             }
-            is Left -> {}
+
+            /**
+             * JWT 認証 成功
+             */
+            is Right -> when (val showArticleResult = showArticle.execute(slug, Some(authorizeResult.value))) {
+                /**
+                 * 記事取得 失敗
+                 */
+                is Left -> when (showArticleResult.value) {
+                    /**
+                     * 原因: slug に該当する記事が見つからなかった
+                     */
+                    is ShowArticleUseCase.Error.NotFoundArticleBySlug -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: バリデーションエラー
+                     */
+                    is ShowArticleUseCase.Error.ValidationErrors -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: ユーザーがいなかった
+                     */
+                    is ShowArticleUseCase.Error.NotFoundUser -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("ユーザー登録されていませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(404)
+                    )
+                    /**
+                     * 原因: 不明
+                     */
+                    is ShowArticleUseCase.Error.Unexpected -> ResponseEntity(
+                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                        HttpStatus.valueOf(500)
+                    )
+                }
+                /**
+                 * 記事取得 成功
+                 */
+                is Right -> {
+                    ResponseEntity(
+                        Article.from(showArticleResult.value).serializeWithRootName(),
+                        HttpStatus.valueOf(200),
+                    )
+                }
+            }
         }
-        val article = Article(
-            "hoge-title",
-            "hoge-slug",
-            "hoge-body",
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-            "hoge-description",
-            listOf("dragons", "training"),
-            "hoge-author",
-            true,
-            1,
-        )
-        return ResponseEntity(
-            ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
-            HttpStatus.valueOf(200),
-        )
     }
 
     @PutMapping("/articles/{slug}")
@@ -131,7 +216,7 @@ class ArticleController(
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
             "hoge-description",
             listOf("dragons", "training"),
-            "hoge-author",
+            1,
             true,
             1,
         )
