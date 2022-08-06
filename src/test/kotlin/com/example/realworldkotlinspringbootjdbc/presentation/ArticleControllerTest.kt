@@ -108,7 +108,9 @@ class ArticleControllerTest {
                 )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
-                    // given: JWT 認証が失敗する ArticleController
+                    /**
+                     * given: JWT 認証が失敗する ArticleController
+                     */
                     val articleController = ArticleController(
                         object : MyAuth { // JWT 認証が失敗する
                             override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
@@ -123,9 +125,13 @@ class ArticleControllerTest {
                                 testCase.useCaseExecuteResult
                         }
                     )
-                    // when:
+                    /**
+                     * when:
+                     */
                     val actual = articleController.show(rawAuthorizationHeader = null, slug = pathParam)
-                    // then:
+                    /**
+                     * then:
+                     */
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
@@ -196,7 +202,9 @@ class ArticleControllerTest {
                 )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
-                    // given: JWT 認証が成功する ArticleController
+                    /**
+                     * given: JWT 認証が成功する ArticleController
+                     */
                     val articleController = ArticleController(
                         object : MyAuth {
                             override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
@@ -211,12 +219,16 @@ class ArticleControllerTest {
                                 testCase.useCaseExecuteResult
                         }
                     )
-                    // when
+                    /**
+                     * when
+                     */
                     val actual = articleController.show(
                         rawAuthorizationHeader = requestHeader,
                         slug = pathParam
                     )
-                    // then
+                    /**
+                     * then
+                     */
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
