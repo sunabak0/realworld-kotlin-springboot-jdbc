@@ -182,4 +182,120 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             CommentRepository.CreateError.Unexpected(e, slug, body, currentUserId).left()
         }
     }
+
+    override fun delete(
+        slug: Slug,
+        commentId: CommentId,
+        currentUserId: UserId
+    ): Either<CommentRepository.DeleteError, Unit> {
+        /**
+         * article を取得
+         */
+        val selectArticleSql = """
+            SELECT
+                id
+            FROM
+                articles
+            WHERE
+                slug = :slug
+        """.trimIndent()
+
+        val selectArticleSqlParams = MapSqlParameterSource()
+            .addValue("slug", slug.value)
+        val articleIdMap = try {
+            namedParameterJdbcTemplate.queryForList(selectArticleSql, selectArticleSqlParams)
+        } catch (e: Throwable) {
+            return CommentRepository.DeleteError.NotFoundArticleBySlug(slug, commentId, currentUserId).left()
+        }
+
+        /**
+         * article が存在しなかった時 NotFoundError
+         */
+        if (articleIdMap.isEmpty()) {
+            return CommentRepository.DeleteError.NotFoundArticleBySlug(slug, commentId, currentUserId).left()
+        }
+        val articleId = try {
+            articleIdMap.first()["id"].toString().toInt()
+        } catch (e: Throwable) {
+            return CommentRepository.DeleteError.Unexpected(e, slug, commentId, currentUserId).left()
+        }
+
+        /**
+         * article_comments テーブルで以下を確認
+         * - commentId に該当する article_comments.id が存在する
+         * - commentId に該当するレコードの author_id カラムが currentUserId と同一である
+         */
+        val checkValidCommentIdOrAuthorIdSql = """
+            SELECT
+                COUNT(
+                    CASE
+                        WHEN article_comments.id = :comment_id THEN 1
+                        ELSE NULL
+                    END
+                ) AS comment_id_count
+                , COUNT(
+                    CASE
+                        WHEN article_comments.id = :comment_id AND article_comments.author_id = :current_user_id THEN 1
+                        ELSE NULL
+                    END
+                ) AS author_id_count
+            FROM
+                article_comments
+            ;
+        """.trimIndent()
+        val checkValidCommentIdOrAuthorIdSqlParams = MapSqlParameterSource()
+            .addValue("current_user_id", currentUserId.value)
+            .addValue("comment_id", commentId.value)
+        val checkValidCommentIdOrAuthorIdMap = try {
+            namedParameterJdbcTemplate.queryForMap(
+                checkValidCommentIdOrAuthorIdSql,
+                checkValidCommentIdOrAuthorIdSqlParams
+            )
+        } catch (e: Throwable) {
+            return CommentRepository.DeleteError.Unexpected(e, slug, commentId, currentUserId).left()
+        }
+        val (commentIdCount, commentAuthorIdCount) = try {
+            Pair(
+                checkValidCommentIdOrAuthorIdMap["comment_id_count"].toString().toInt(),
+                checkValidCommentIdOrAuthorIdMap["author_id_count"].toString().toInt()
+            )
+        } catch (e: Throwable) {
+            return CommentRepository.DeleteError.Unexpected(e, slug, commentId, currentUserId).left()
+        }
+        /**
+         * 該当するコメントが存在するとき、CommentNotFoundByCommentId エラー
+         */
+        if (commentIdCount == 0) {
+            return CommentRepository.DeleteError.NotFoundCommentByCommentId(slug, commentId, currentUserId).left()
+        }
+        /**
+         * 該当するコメントが存在しなかったとき、DeleteCommentNotAuthorized エラー
+         */
+        if (commentAuthorIdCount == 0) {
+            return CommentRepository.DeleteError.NotAuthorizedDeleteComment(slug, commentId, currentUserId).left()
+        }
+
+        /**
+         * comment を削除
+         */
+        val deleteCommentsSql = """
+            DELETE FROM
+                article_comments
+            WHERE
+                article_comments.author_id = :current_user_id
+                AND article_comments.article_id = :article_id
+                AND article_comments.id = :comment_id
+            ;
+        """.trimIndent()
+        val deleteCommentSqlParams = MapSqlParameterSource()
+            .addValue("current_user_id", currentUserId.value)
+            .addValue("article_id", articleId)
+            .addValue("comment_id", commentId.value)
+        return try {
+            namedParameterJdbcTemplate.update(deleteCommentsSql, deleteCommentSqlParams)
+            Unit.right()
+        } catch (e: Throwable) {
+            CommentRepository.DeleteError.Unexpected(e, slug, commentId, currentUserId).left()
+        }
+    }
 }

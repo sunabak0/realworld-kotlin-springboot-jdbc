@@ -230,7 +230,10 @@ class CommentController(
              * JWT 認証 成功
              */
             is Right -> {
-                when (val result = deleteCommentUseCase.execute(slug, NullableCommentId.from(commentId))) {
+                when (
+                    val result =
+                        deleteCommentUseCase.execute(slug, NullableCommentId.from(commentId), authorizeResult.value)
+                ) {
                     /**
                      * コメントの削除に失敗
                      */
@@ -252,16 +255,23 @@ class CommentController(
                         /**
                          * 原因: 記事が見つからなかった
                          */
-                        is DeleteCommentUseCase.Error.ArticleNotFoundBySlug -> ResponseEntity(
+                        is DeleteCommentUseCase.Error.NotFoundArticleBySlug -> ResponseEntity(
                             serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(404)
                         )
                         /**
-                         * 原因: コメントが見つからなかった
+                         * 原因: 認可されていない（削除しようとしたが実行ユーザー（CurrentUserId）のものじゃなかった）
                          */
-                        is DeleteCommentUseCase.Error.CommentsNotFoundByCommentId -> ResponseEntity(
+                        is DeleteCommentUseCase.Error.NotFoundCommentByCommentId -> ResponseEntity(
                             serializeUnexpectedErrorForResponseBody("コメントが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(404)
+                        )
+                        /**
+                         * 原因: 削除しようとしたコメントが自分のコメントではなかった
+                         */
+                        is DeleteCommentUseCase.Error.NotAuthorizedDeleteComment -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("コメントの削除が許可されていません"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                            HttpStatus.valueOf(401)
                         )
                         /**
                          * 原因: 未知のエラー

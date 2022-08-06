@@ -244,4 +244,152 @@ class CommentRepositoryImplTest {
             }
         }
     }
+
+    @Tag("WithLocalDb")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    @DisplayName("Delete（コメントを削除）")
+    class Delete {
+        @BeforeAll
+        fun reset() = resetSequence()
+
+        @Test
+        @DataSet("datasets/yml/given/articles.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/comment_repository/delete-success.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `正常系-「articles テーブルに slug に該当する記事が存在」「comments テーブルに commentId に該当するコメントが存在」「コメントの authorId が currentUserId と同じ」場合、削除成功し、戻り値が Unit`() {
+            /**
+             * given:
+             */
+            val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
+
+            /**
+             * when:
+             * - slug: articles テーブルに存在する
+             * - commentId: article_comments テーブルに存在する
+             * - currentUserId: article_comments テーブルの authorId と同じ
+             */
+            val actual = commentRepository.delete(
+                slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
+                commentId = CommentId.newWithoutValidation(1),
+                currentUserId = UserId(3)
+            )
+
+            /**
+             * then:
+             */
+            assertThat(actual.isRight()).isTrue
+        }
+
+        @Test
+        @DataSet("datasets/yml/given/articles.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/articles.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-「articles テーブルに slug に該当する作成済記事が存在しない」場合、削除失敗し、戻り値が ArticleNotFoundBySlug`() {
+            /**
+             * given:
+             */
+            val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
+
+            /**
+             * when:
+             * - slug: articles テーブルに存在しない
+             * - commentId: このテストで値に意味はない
+             * - currentUserId: このテストで値に意味はない
+             */
+            val actual = commentRepository.delete(
+                slug = Slug.newWithoutValidation("dummy-not-exist-slug"), // 存在しない作成済記事
+                commentId = CommentId.newWithoutValidation(1),
+                currentUserId = UserId(3)
+            )
+
+            /**
+             * then:
+             */
+            val expected = CommentRepository.DeleteError.NotFoundArticleBySlug(
+                slug = Slug.newWithoutValidation("dummy-not-exist-slug"),
+                commentId = CommentId.newWithoutValidation(1),
+                currentUserId = UserId(3)
+            ).left()
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        @DataSet("datasets/yml/given/articles.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/articles.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-「articles テーブルに slug に該当する記事が存在」「comments テーブルに commentId に該当するコメントが存在しない」場合、削除失敗し、戻り値が CommentNotFoundByCommentId`() {
+            /**
+             * given:
+             */
+            val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
+
+            /**
+             * when:
+             * - slug: articles テーブルに存在する
+             * - commentId: article_comments テーブルに存在しない
+             * - currentUserId: このテストで値に意味がない
+             */
+            val actual = commentRepository.delete(
+                slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
+                commentId = CommentId.newWithoutValidation(100), // 存在しない CommentId
+                currentUserId = UserId(3)
+            )
+
+            /**
+             * then:
+             */
+            val expected = CommentRepository.DeleteError.NotFoundCommentByCommentId(
+                slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
+                commentId = CommentId.newWithoutValidation(100),
+                currentUserId = UserId(3)
+            ).left()
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        @DataSet("datasets/yml/given/articles.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/articles.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-「articles テーブルに slug に該当する記事が存在」「comments テーブルに commentId に該当するコメントが存在」「コメントの authorId が currentUserId と異なる」場合、削除失敗し、戻り値が NotAuthorizedDeleteComment`() {
+            /**
+             * given:
+             */
+            val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
+
+            /**
+             * when:
+             * - slug: articles テーブルに存在する
+             * - commentId: article_comments テーブルに存在する
+             * - currentUserId: commentId に該当する article_comments テーブルのレコードの authorId と一致しない
+             */
+            val actual = commentRepository.delete(
+                slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
+                commentId = CommentId.newWithoutValidation(1),
+                currentUserId = UserId(100) // コメントの authorId と 一致しない
+            )
+
+            /**
+             * then:
+             */
+            val expected = CommentRepository.DeleteError.NotAuthorizedDeleteComment(
+                slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
+                commentId = CommentId.newWithoutValidation(1),
+                currentUserId = UserId(100)
+            ).left()
+            assertThat(actual).isEqualTo(expected)
+        }
+    }
 }
