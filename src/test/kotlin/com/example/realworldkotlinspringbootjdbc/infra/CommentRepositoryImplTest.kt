@@ -316,11 +316,8 @@ class CommentRepositoryImplTest {
                 slug = Slug.newWithoutValidation("dummy-not-exist-slug"),
                 commentId = CommentId.newWithoutValidation(1),
                 currentUserId = UserId(3)
-            )
-            when (actual) {
-                is Left -> assertThat(actual.value).isEqualTo(expected)
-                is Right -> assert(false)
-            }
+            ).left()
+            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
@@ -355,11 +352,8 @@ class CommentRepositoryImplTest {
                 slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
                 commentId = CommentId.newWithoutValidation(100),
                 currentUserId = UserId(3)
-            )
-            when (actual) {
-                is Left -> assertThat(actual.value).isEqualTo(expected)
-                is Right -> assert(false)
-            }
+            ).left()
+            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
@@ -394,11 +388,8 @@ class CommentRepositoryImplTest {
                 slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
                 commentId = CommentId.newWithoutValidation(1),
                 currentUserId = UserId(100)
-            )
-            when (actual) {
-                is Left -> assertThat(actual.value).isEqualTo(expected)
-                is Right -> assert(false)
-            }
+            ).left()
+            assertThat(actual).isEqualTo(expected)
         }
     }
 }
