@@ -26,21 +26,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 
 class UserRepositoryImplTest {
-    companion object {
-        fun resetSequence() {
-            val sql = """
-                SELECT
-                    setval('users_id_seq', 10000)
-                    , setval('profiles_id_seq', 10000)
-                ;
-            """.trimIndent()
-            DbConnection.namedParameterJdbcTemplate.queryForRowSet(sql, MapSqlParameterSource())
-        }
-    }
-
     @Nested
     @Tag("WithLocalDb")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -49,7 +36,7 @@ class UserRepositoryImplTest {
     @DisplayName("ユーザー登録")
     class RegisterTest(@Autowired val userRepository: UserRepository) {
         @BeforeAll
-        fun reset() = resetSequence()
+        fun reset() = DbConnection.resetSequence()
 
         @Test
         @DataSet("datasets/yml/given/users.yml")
@@ -128,7 +115,7 @@ class UserRepositoryImplTest {
     @DisplayName("Emailから検索(パスワード付き)")
     class FindByEmailWithPasswordTest(@Autowired val userRepository: UserRepository) {
         @BeforeAll
-        fun reset() = resetSequence()
+        fun reset() = DbConnection.resetSequence()
 
         @Test
         @DataSet("datasets/yml/given/users.yml")
@@ -173,7 +160,7 @@ class UserRepositoryImplTest {
     @DisplayName("UserIdから検索")
     class FindByUserIdTest(@Autowired val userRepository: UserRepository) {
         @BeforeAll
-        fun reset() = resetSequence()
+        fun reset() = DbConnection.resetSequence()
 
         @Test
         @DataSet("datasets/yml/given/users.yml")
@@ -218,7 +205,7 @@ class UserRepositoryImplTest {
     @DisplayName("ユーザー情報更新")
     class UpdateTest(@Autowired val userRepository: UserRepository) {
         @BeforeAll
-        fun reset() = resetSequence()
+        fun reset() = DbConnection.resetSequence()
 
         @Test
         @DataSet("datasets/yml/given/users.yml")
