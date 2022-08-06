@@ -11,6 +11,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.comment.Body
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.github.database.rider.core.api.dataset.DataSet
+import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -156,6 +157,91 @@ class CommentRepositoryImplTest {
                 CommentRepository.ListError.NotFoundArticleBySlug(Slug.newWithoutValidation("not-found-article-slug"))
                     .left()
             assertThat(actual).isEqualTo(expected)
+        }
+    }
+
+    @Tag("WithLocalDb")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    @DisplayName("Create（コメントを作成）")
+    class Create {
+        @BeforeAll
+        fun reset() = resetSequence()
+
+        @Test
+        @DataSet("datasets/yml/given/articles.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/comment_repository/create-success.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `正常系-articles テーブルに slug に該当する作成済記事が存在し、comments テーブルに挿入できた場合、コメント（Comment）が戻り値`() {
+            /**
+             * given:
+             */
+            val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
+
+            /**
+             * when:
+             */
+            val actual = commentRepository.create(
+                Slug.newWithoutValidation("functional-programming-kotlin"),
+                Body.newWithoutValidation("created-dummy-body-1"),
+                UserId(1)
+            )
+
+            /**
+             * then: CommentRepository.create の戻り値との比較
+             */
+            val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
+            val expected = Comment.newWithoutValidation(
+                id = CommentId.newWithoutValidation(10001), // 比較しない
+                body = Body.newWithoutValidation("created-dummy-body-1"),
+                createdAt = date, // 比較しない
+                updatedAt = date, // 比較しない
+                authorId = UserId(1)
+            )
+
+            when (actual) {
+                is Left -> assert(false)
+                is Right -> {
+                    // id は DB に採番されるため比較しない。 createdAt、updatedAt は メタデータのため比較しない
+                    assertThat(actual.value.body).isEqualTo(expected.body)
+                    assertThat(actual.value.authorId).isEqualTo(expected.authorId)
+                }
+            }
+        }
+
+        @Test
+        @DataSet("datasets/yml/given/articles.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/articles.yml"],
+            orderBy = ["id"],
+            ignoreCols = ["id", "created_at", "updated_at"]
+        )
+        fun `準正常系-articles テーブルに slug に該当する記事が存在しない場合、NotFoundError が戻り値`() {
+            /**
+             * given:
+             */
+            val commentRepository = CommentRepositoryImpl(namedParameterJdbcTemplate)
+
+            /**
+             * when:
+             */
+            val actual = commentRepository.create(
+                Slug.newWithoutValidation("dummy-slug"),
+                Body.newWithoutValidation("dummy-body-1"),
+                UserId(1)
+            )
+
+            /**
+             * then:
+             */
+            val expected = CommentRepository.CreateError.NotFoundArticleBySlug(Slug.newWithoutValidation("dummy-slug"))
+            when (actual) {
+                is Left -> assertThat(actual.value).isEqualTo(expected)
+                is Right -> assert(false)
+            }
         }
     }
 }

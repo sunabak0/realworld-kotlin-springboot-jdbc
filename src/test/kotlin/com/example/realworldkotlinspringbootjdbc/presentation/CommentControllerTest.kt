@@ -321,7 +321,8 @@ class CommentControllerTest {
                             object : CreateCommentUseCase {
                                 override fun execute(
                                     slug: String?,
-                                    body: String?
+                                    body: String?,
+                                    currentUser: RegisteredUser
                                 ): Either<CreateCommentUseCase.Error, Comment> {
                                     return testCase.useCaseExecuteResult
                                 }

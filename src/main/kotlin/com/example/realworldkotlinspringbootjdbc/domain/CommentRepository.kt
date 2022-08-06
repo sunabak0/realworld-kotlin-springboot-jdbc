@@ -3,6 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.domain
 import arrow.core.Either
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.Body
+import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface CommentRepository {
@@ -12,8 +13,9 @@ interface CommentRepository {
         data class Unexpected(override val cause: Throwable, val slug: Slug) : ListError, MyError.MyErrorWithThrowable
     }
 
-    fun create(body: Body): Either<CreateError, Comment> = TODO()
+    fun create(slug: Slug, body: Body, currentUserId: UserId): Either<CreateError, Comment> = TODO()
     sealed interface CreateError : MyError {
-        data class Unexpected(override val cause: Throwable, val body: Body) : CreateError, MyError.MyErrorWithThrowable
+        data class NotFoundArticleBySlug(val slug: Slug) : CreateError, MyError.Basic
+        data class Unexpected(override val cause: Throwable, val slug: Slug, val body: Body, val currentUserId: UserId) : CreateError, MyError.MyErrorWithThrowable
     }
 }
