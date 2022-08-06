@@ -288,6 +288,7 @@ class CommentRepositoryImplTest {
         @DataSet("datasets/yml/given/articles.yml")
         @ExpectedDataSet(
             value = ["datasets/yml/given/articles.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
             orderBy = ["id"]
         )
         fun `準正常系-「articles テーブルに slug に該当する作成済記事が存在しない」場合、削除失敗し、戻り値が ArticleNotFoundBySlug`() {
@@ -326,6 +327,7 @@ class CommentRepositoryImplTest {
         @DataSet("datasets/yml/given/articles.yml")
         @ExpectedDataSet(
             value = ["datasets/yml/given/articles.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
             orderBy = ["id"]
         )
         fun `準正常系-「articles テーブルに slug に該当する記事が存在」「comments テーブルに commentId に該当するコメントが存在しない」場合、削除失敗し、戻り値が CommentNotFoundByCommentId`() {
