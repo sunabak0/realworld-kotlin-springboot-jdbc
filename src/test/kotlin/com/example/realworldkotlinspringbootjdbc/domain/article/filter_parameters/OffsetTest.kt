@@ -17,7 +17,7 @@ class OffsetTest {
     @DisplayName("FactoryMethod-new")
     class NewTest {
         @Test
-        fun `正常系-引数がnullだとデフォルト値として生成される`() {
+        fun `正常系-引数がnullだとデフォルト値としたリミット(Offset)が戻り値になる`() {
             /**
              * given:
              */
@@ -39,7 +39,7 @@ class OffsetTest {
         }
 
         @Property(tries = 100)
-        fun `準正常系-引数はIntegerに変換できる必要がある`(
+        fun `準正常系-引数がIntegerに変換できない場合、その旨を表現するエラーが戻り値となる`(
             @ForAll @LongRange(min = Int.MAX_VALUE.toLong() + 1L) intMaxOver: Long,
             @ForAll @LongRange(min = Long.MIN_VALUE, max = Int.MIN_VALUE.toLong() - 1L) intMinUnder: Long,
         ) {
@@ -68,7 +68,7 @@ class OffsetTest {
         }
 
         @Property(tries = 100)
-        fun `正常系&準正常系-引数は0〜Intの最大値である必要がある`(
+        fun `正常系&準正常系-引数の正常の範囲は0〜Intの最大値の数字である`(
             @ForAll @IntRange(min = 0, max = Int.MAX_VALUE) valid: Int,
             @ForAll @IntRange(min = Int.MIN_VALUE, max = -1) minimumUnder: Int
         ) {

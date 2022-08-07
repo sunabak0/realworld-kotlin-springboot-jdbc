@@ -17,7 +17,7 @@ class LimitTest {
     @DisplayName("FactoryMethod-new")
     class NewTest {
         @Test
-        fun `正常系-引数がnullだとデフォルト値として生成される`() {
+        fun `正常系-引数がnullだとデフォルト値としたリミット(Limit)が戻り値になる`() {
             /**
              * given:
              */
@@ -39,7 +39,7 @@ class LimitTest {
         }
 
         @Property(tries = 100)
-        fun `準正常系-引数はIntegerに変換できる必要がある`(
+        fun `準正常系-引数がIntegerに変換できない場合、その旨を表現するエラーが戻り値となる`(
             @ForAll @LongRange(min = Int.MAX_VALUE.toLong() + 1L) intMaxOver: Long,
             @ForAll @LongRange(min = Long.MIN_VALUE, max = Int.MIN_VALUE.toLong() - 1L) intMinUnder: Long,
         ) {
@@ -68,7 +68,7 @@ class LimitTest {
         }
 
         @Property(tries = 100)
-        fun `正常系&準正常系-引数は1〜100である必要がある`(
+        fun `正常系&準正常系-引数の正常の範囲は1〜100の数字である`(
             @ForAll @IntRange(min = 1, max = 100) valid: Int,
             @ForAll @IntRange(min = 101) maximumOver: Int,
             @ForAll @IntRange(max = 0) minimumUnder: Int

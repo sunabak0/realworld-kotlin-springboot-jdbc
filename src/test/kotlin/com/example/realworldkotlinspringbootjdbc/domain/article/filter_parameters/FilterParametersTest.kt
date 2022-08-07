@@ -23,7 +23,7 @@ class FilterParametersTest {
     @DisplayName("FactoryMethod-new")
     class NewTest {
         @Test
-        fun `正常系-引数が全てnullの場合、フィルタ無しのフィルタ用パラメータが生成される`() {
+        fun `正常系-引数が全てnullの場合、フィルタ無しのフィルタ用パラメータが戻り値になる`() {
             /**
              * given:
              */
@@ -56,7 +56,7 @@ class FilterParametersTest {
         }
 
         @Property
-        fun `正常系-引数が全てnullではなく正しい場合、それぞれのフィルタ有りのフィルタ用パラメータが生成される`(
+        fun `正常系-引数が全てnullではなく正しい場合、それぞれのフィルタ有りのフィルタ用パラメータが戻り値になる`(
             @ForAll tag: String,
             @ForAll author: String,
             @ForAll favoritedByUsername: String,
@@ -102,7 +102,7 @@ class FilterParametersTest {
         }
 
         @Property
-        fun `準正常系-引数limit,offsetがバリデーションエラーを起こす場合、バリデーションエラーが返る`(
+        fun `準正常系-引数limit,offsetがバリデーションエラーを起こす場合、その旨を表現するエラーのリストが戻り値になる`(
             @ForAll @AlphaChars limit: String,
             @ForAll @AlphaChars offset: String,
         ) {
