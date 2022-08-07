@@ -34,7 +34,7 @@ interface Limit {
          * @param limit リミットを数字で表現した値(null: 可)
          * @return バリデーションエラー or リミット(引数limitがnullの場合はデフォルト値)
          */
-        fun new(limit: String?): ValidatedNel<ValidationError, Limit> {
+        fun new(limit: String?): ValidatedNel<MyError.ValidationError, Limit> {
             val limitOrDefaultString = limit ?: DEFAULT_VALUE.toString()
             val convertedLimit = try {
                 limitOrDefaultString.toInt()

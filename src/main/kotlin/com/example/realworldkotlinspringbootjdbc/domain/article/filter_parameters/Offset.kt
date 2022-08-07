@@ -33,7 +33,7 @@ interface Offset {
          * @param offset オフセットを数字で表現した値(null: 可)
          * @return バリデーションエラー or オフセット(引数offsetがnullの場合はデフォルト値)
          */
-        fun new(offset: String?): ValidatedNel<ValidationError, Offset> {
+        fun new(offset: String?): ValidatedNel<MyError.ValidationError, Offset> {
             val offsetOrDefaultString = offset ?: DEFAULT_VALUE.toString()
             val convertedOffset = try {
                 offsetOrDefaultString.toInt()
