@@ -4,11 +4,13 @@ import arrow.core.Either.Left
 import arrow.core.Either.Right
 import arrow.core.Some
 import arrow.core.none
-import arrow.core.right
+import com.example.realworldkotlinspringbootjdbc.presentation.request.NullableArticle
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Articles
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
+import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
+import com.example.realworldkotlinspringbootjdbc.usecase.article.CreateArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.FilterCreatedArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.ShowArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
@@ -34,6 +36,7 @@ class ArticleController(
     val myAuth: MyAuth,
     val showArticle: ShowArticleUseCase,
     val filterCreatedArticle: FilterCreatedArticleUseCase,
+    val createArticle: CreateArticleUseCase,
 ) {
 
     /**
@@ -132,23 +135,46 @@ class ArticleController(
 
     @Suppress("UnusedPrivateMember")
     @PostMapping("/articles")
-    fun create(@RequestBody rawRequestBody: String?): ResponseEntity<String> {
-        val article = Article(
-            "hoge-title",
-            "hoge-slug",
-            "hoge-body",
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-            "hoge-description",
-            listOf("dragons", "training"),
-            1,
-            true,
-            1,
-        ).right()
-        return ResponseEntity(
-            ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
-            HttpStatus.valueOf(200),
-        )
+    fun create(
+        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
+        @RequestBody rawRequestBody: String?,
+    ): ResponseEntity<String> {
+        return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
+            /**
+             * JWT 認証 失敗
+             */
+            is Left -> AuthorizationError.handle(authorizeResult.value)
+
+            /**
+             * JWT 認証 成功
+             */
+            is Right -> {
+                val article = NullableArticle.from(rawRequestBody)
+                when (
+                    val createdArticle = createArticle.execute(
+                        authorizeResult.value,
+                        article.title,
+                        article.description,
+                        article.body,
+                        article.tagList
+                    )
+                ) {
+                    /**
+                     * 記事作成 失敗
+                     */
+                    is Left -> TODO()
+                    /**
+                     * 記事作成 成功
+                     */
+                    is Right -> {
+                        ResponseEntity(
+                            Article.from(createdArticle.value).serializeWithRootName(),
+                            HttpStatus.valueOf(200),
+                        )
+                    }
+                }
+            }
+        }
     }
 
     @GetMapping("/articles/feed")
