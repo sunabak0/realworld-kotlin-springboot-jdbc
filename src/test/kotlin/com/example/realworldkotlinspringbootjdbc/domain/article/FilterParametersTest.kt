@@ -1,4 +1,4 @@
-package com.example.realworldkotlinspringbootjdbc.domain.article.filter_parameters
+package com.example.realworldkotlinspringbootjdbc.domain.article
 
 import arrow.core.None
 import arrow.core.Some
@@ -6,7 +6,6 @@ import arrow.core.Validated.Invalid
 import arrow.core.Validated.Valid
 import arrow.core.invalid
 import arrow.core.nonEmptyListOf
-import com.example.realworldkotlinspringbootjdbc.domain.article.FilterParameters
 import net.jqwik.api.ForAll
 import net.jqwik.api.Property
 import net.jqwik.api.PropertyDefaults
@@ -49,8 +48,8 @@ class FilterParametersTest {
                     assertThat(filterParameters.tag).isEqualTo(None)
                     assertThat(filterParameters.author).isEqualTo(None)
                     assertThat(filterParameters.favoritedByUsername).isEqualTo(None)
-                    assertThat(filterParameters.limit.value).isEqualTo(20) // default: 20
-                    assertThat(filterParameters.offset.value).isEqualTo(0) // default: 0
+                    assertThat(filterParameters.limit).isEqualTo(20) // default: 20
+                    assertThat(filterParameters.offset).isEqualTo(0) // default: 0
                 }
             }
         }
@@ -95,8 +94,8 @@ class FilterParametersTest {
                     assertThat(filterParameters.tag).isEqualTo(Some(tag))
                     assertThat(filterParameters.author).isEqualTo(Some(author))
                     assertThat(filterParameters.favoritedByUsername).isEqualTo(Some(favoritedByUsername))
-                    assertThat(filterParameters.limit.value).isEqualTo(limit)
-                    assertThat(filterParameters.offset.value).isEqualTo(offset)
+                    assertThat(filterParameters.limit).isEqualTo(limit)
+                    assertThat(filterParameters.offset).isEqualTo(offset)
                 }
             }
         }
@@ -127,8 +126,8 @@ class FilterParametersTest {
              * then:
              */
             val expected = nonEmptyListOf(
-                Limit.ValidationError.FailedConvertToInteger(limit),
-                Offset.ValidationError.FailedConvertToInteger(offset)
+                FilterParameters.ValidationError.LimitError.FailedConvertToInteger(limit),
+                FilterParameters.ValidationError.OffsetError.FailedConvertToInteger(offset)
             ).invalid()
             assertThat(actual).isEqualTo(expected)
         }
