@@ -31,6 +31,8 @@ on:
 jobs:
   ci-test:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
     steps:
       - name: リポジトリのチェックアウト
         uses: actions/checkout@v3
@@ -40,16 +42,21 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           cache: 'gradle'
-
       - name: make test
         run: make test
-
+      - name: '[debug] github.actor'
+        run: echo "${{github.actor}}"
+      - name: dependabot用のメタデータを取得(dependabotからのPRのみ有効)
+        uses: 'dependabot/fetch-metadata@v1.3.3'
+        if: ${{ github.actor == 'dependabot[bot]' }}
       - name: テスト結果レポートをGitHub Actionsの上部に公開
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
         with:
           check_name: "JUnit5のテスト結果レポート"
           files: "build/test-results/**/*.xml"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   ci-lint:
     runs-on: ubuntu-latest
@@ -62,6 +69,5 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           cache: 'gradle'
-
       - name: make lint
         run: make lint
