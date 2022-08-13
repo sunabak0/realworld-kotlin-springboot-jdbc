@@ -11,7 +11,7 @@ plugins {
      *
      * URL
      * - https://github.com/detekt/detekt
-     * GralePlugins
+     * GradlePlugins
      * - https://plugins.gradle.org/plugin/io.gitlab.arturbosch.detekt
      * Main用途
      * - Linter/Formatter
