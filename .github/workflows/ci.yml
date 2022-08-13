@@ -33,6 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       checks: write
+      pull-requests: write
     steps:
       - name: リポジトリのチェックアウト
         uses: actions/checkout@v3
