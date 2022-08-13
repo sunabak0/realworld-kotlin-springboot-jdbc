@@ -88,7 +88,8 @@ interface ArticleRepository {
     fun filter(filterParameters: FilterParameters): Either<FilterError, CreatedArticlesWithMetadata> = TODO()
     sealed interface FilterError : MyError {
         data class OffsetOverTheNumberOfFilteredCreatedArticlesError(
-            val filterParameters: FilterParameters
+            val filterParameters: FilterParameters,
+            val createdArticleCount: Int,
         ) : FilterError, MyError.Basic
     }
 
@@ -106,7 +107,8 @@ interface ArticleRepository {
     fun filterFromRegisteredUserViewpoint(filterParameters: FilterParameters, userId: UserId): Either<FilterFromRegisteredUserViewpointError, CreatedArticlesWithMetadata> = TODO()
     sealed interface FilterFromRegisteredUserViewpointError : MyError {
         data class OffsetOverTheNumberOfFilteredCreatedArticlesError(
-            val filterParameters: FilterParameters
+            val filterParameters: FilterParameters,
+            val createdArticleCount: Int,
         ) : FilterFromRegisteredUserViewpointError, MyError.Basic
         data class NotFoundUser(val userId: UserId) : FilterFromRegisteredUserViewpointError, MyError.Basic
     }
