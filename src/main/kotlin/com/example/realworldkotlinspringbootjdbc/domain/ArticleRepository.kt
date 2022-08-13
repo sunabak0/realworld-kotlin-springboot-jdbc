@@ -103,7 +103,7 @@ interface ArticleRepository {
      * @param userId ユーザーID
      * @return エラー or フィルタされた作成済み記事の一覧とフィルタにかかった記事の総数
      */
-    fun filterFromRegisteredUserViewpoint(filterParameters: FilterParameters, userId: UserId): Either<FilterError, CreatedArticlesWithMetadata> = TODO()
+    fun filterFromRegisteredUserViewpoint(filterParameters: FilterParameters, userId: UserId): Either<FilterFromRegisteredUserViewpointError, CreatedArticlesWithMetadata> = TODO()
     sealed interface FilterFromRegisteredUserViewpointError : MyError {
         data class OffsetOverTheNumberOfFilteredCreatedArticlesError(
             val filterParameters: FilterParameters
