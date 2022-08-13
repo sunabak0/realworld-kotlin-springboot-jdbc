@@ -37,6 +37,23 @@ plugins {
      * - JDocの代替(=KDoc)
      */
     id("org.jetbrains.dokka") version "1.7.10"
+
+    /**
+     * jacoco
+     *
+     * URL
+     * - https://docs.gradle.org/current/userguide/jacoco_plugin.html
+     * GitHub
+     * - https://github.com/gradle/gradle/blob/master/subprojects/jacoco/src/main/java/org/gradle/testing/jacoco/plugins/JacocoPlugin.java
+     * Main用途
+     * - コードカバレッジを出すためのツール
+     * Sub用途
+     * - 特になし
+     * 概要
+     * - Gradle公式?が管理しているっぽい
+     * - versionは jacoco {} の中で指定する
+     */
+    jacoco
 }
 
 group = "com.example"
@@ -229,6 +246,19 @@ tasks.withType<Test> {
          */
         this.showStandardStreams = true
     }
+    /**
+     * testが終わった後にカバレッジレポートを出す
+     */
+    finalizedBy(tasks.jacocoTestReport)
+}
+tasks.jacocoTestReport {
+    /**
+     * jacocoTestReportは必ずテスト終了後に作成するようにする(依存させる)
+     */
+    dependsOn(tasks.test)
+}
+jacoco {
+    toolVersion = "0.8.8"
 }
 
 /**
