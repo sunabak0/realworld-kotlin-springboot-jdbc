@@ -1,7 +1,14 @@
 package com.example.realworldkotlinspringbootjdbc.usecase.article
 
 import arrow.core.Either
+import arrow.core.Either.Left
+import arrow.core.Either.Right
+import arrow.core.Invalid
+import arrow.core.None
 import arrow.core.Option
+import arrow.core.Some
+import arrow.core.Valid
+import arrow.core.left
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticlesWithMetadata
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
@@ -49,4 +56,81 @@ interface FilterCreatedArticleUseCase {
 }
 
 @Service
-class FilterCreatedArticleUseCaseImpl(val articleRepository: ArticleRepository) : FilterCreatedArticleUseCase
+class FilterCreatedArticleUseCaseImpl(val articleRepository: ArticleRepository) : FilterCreatedArticleUseCase {
+    override fun execute(
+        tag: String?,
+        author: String?,
+        favoritedByUsername: String?,
+        limit: String?,
+        offset: String?,
+        currentUser: Option<RegisteredUser>
+    ): Either<FilterCreatedArticleUseCase.Error, CreatedArticlesWithMetadata> =
+        when (val filterParameters = FilterParameters.new(tag, author, favoritedByUsername, limit, offset)) {
+            /**
+             * フィルタ用パラメータ: バリデーションエラー
+             */
+            is Invalid -> FilterCreatedArticleUseCase.Error.FilterParametersValidationErrors(
+                filterParameters.value
+            ).left()
+            /**
+             * フィルタ用パラメータ: 作成成功
+             */
+            is Valid -> when (currentUser) {
+                /**
+                 * 作成済み記事一覧取得
+                 */
+                None -> when (val filterResult = articleRepository.filter(filterParameters.value)) {
+                    /**
+                     * 取得失敗
+                     */
+                    is Left -> when (val error = filterResult.value) {
+                        /**
+                         * 原因: フィルタ用パラメータの offset が 作成済み記事一覧の数 を超えている
+                         * 何をどう表示するかはPresentation層に任せる
+                         */
+                        is ArticleRepository.FilterError.OffsetOverTheNumberOfFilteredCreatedArticlesError ->
+                            FilterCreatedArticleUseCase.Error.OffsetOverCreatedArticlesCountError(
+                                filterParameters = filterParameters.value,
+                                articlesCount = error.createdArticleCount,
+                                cause = error
+                            ).left()
+                    }
+                    /**
+                     * 取得成功
+                     */
+                    is Right -> filterResult
+                }
+                /**
+                 * 特定の登録済みユーザー から見た 作成済み記事一覧取得
+                 */
+                is Some -> when (val filterResult = articleRepository.filterFromRegisteredUserViewpoint(filterParameters.value, currentUser.value.userId)) {
+                    /**
+                     * 取得失敗
+                     */
+                    is Left -> when (val error = filterResult.value) {
+                        /**
+                         * 原因: ユーザーが見つからなかった
+                         */
+                        is ArticleRepository.FilterFromRegisteredUserViewpointError.NotFoundUser -> FilterCreatedArticleUseCase.Error.NotFoundUser(
+                            user = currentUser.value,
+                            cause = error
+                        ).left()
+                        /**
+                         * 原因: フィルタ用パラメータの offset が 作成済み記事一覧の数 を超えている
+                         * 何をどう表示するかはPresentation層に任せる
+                         */
+                        is ArticleRepository.FilterFromRegisteredUserViewpointError.OffsetOverTheNumberOfFilteredCreatedArticlesError ->
+                            FilterCreatedArticleUseCase.Error.OffsetOverCreatedArticlesCountError(
+                                filterParameters = filterParameters.value,
+                                articlesCount = error.createdArticleCount,
+                                cause = error
+                            ).left()
+                    }
+                    /**
+                     * 取得成功
+                     */
+                    is Right -> filterResult
+                }
+            }
+        }
+}
