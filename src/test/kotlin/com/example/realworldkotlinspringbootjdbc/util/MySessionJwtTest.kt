@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test
 class MySessionJwtTest {
     class EncodeTest {
         @Test
-        fun `基本的に成功する`() {
+        fun `正常系-基本的に成功する`() {
             /**
              * given:
              */
@@ -36,7 +36,7 @@ class MySessionJwtTest {
 
     class DecodeTest {
         @Test
-        fun `成功するとした場合、MySessionが戻り値となる`() {
+        fun `正常系-成功した場合、MySessionが戻り値となる`() {
             /**
              * given:
              */
@@ -57,8 +57,11 @@ class MySessionJwtTest {
             assertThat(actual).isEqualTo(expected)
         }
 
+        /**
+         * 基本的に起きない想定
+         */
         @Test
-        fun `別のIssuerでencodeしたjwtをdecodeした場合、その旨がわかるエラーが戻り値となる`() {
+        fun `準正常系-別のIssuerでencodeしたjwtをdecodeした場合、その旨がわかるエラーが戻り値となる`() {
             /**
              * given:
              * - Issuerが異なる
@@ -90,7 +93,7 @@ class MySessionJwtTest {
          * 基本的に起きない想定
          */
         @Test
-        fun `Claimがなかった場合、その旨がわかるエラーが戻り値となる`() {
+        fun `準正常系-Claimがなかった場合、その旨がわかるエラーが戻り値となる`() {
             /**
              * given:
              * - ClaimにuserIdが無い
@@ -119,7 +122,7 @@ class MySessionJwtTest {
          * 基本的に起きない想定
          */
         @Test
-        fun `Claimの型変換に失敗する場合、「Claimが無い」旨のエラーが戻り値となる`() {
+        fun `準正常系-Claimの型変換に失敗する場合、「Claimが無い」旨のエラーが戻り値となる`() {
             /**
              * given:
              * - userIdがIntではなく、String
