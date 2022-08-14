@@ -148,7 +148,7 @@ interface FilterParameters {
             companion object {
                 const val DEFAULT = 0
                 const val MINIMUM = 0
-                // private const val MAXIMUM = Int.MAX_VALUE
+                // const val MAXIMUM = Int.MAX_VALUE
             }
             override val key: String get() = LimitError::class.simpleName.toString()
             data class FailedConvertToInteger(val value: String) : LimitError {
