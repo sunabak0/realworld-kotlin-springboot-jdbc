@@ -153,7 +153,7 @@ dependencies {
      * 概要
      * - 特になし
      */
-    implementation("com.auth0:java-jwt:3.19.0")
+    implementation("com.auth0:java-jwt:4.0.0")
 
     /**
      * Spring JDBC
