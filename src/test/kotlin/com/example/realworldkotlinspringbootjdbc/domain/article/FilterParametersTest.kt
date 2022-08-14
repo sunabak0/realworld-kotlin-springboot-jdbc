@@ -1,25 +1,23 @@
 package com.example.realworldkotlinspringbootjdbc.domain.article
 
 import arrow.core.None
-import arrow.core.Some
+import arrow.core.Option
 import arrow.core.Validated.Invalid
 import arrow.core.Validated.Valid
 import arrow.core.invalid
 import arrow.core.nonEmptyListOf
+import net.jqwik.api.Arbitraries
+import net.jqwik.api.Arbitrary
+import net.jqwik.api.ArbitrarySupplier
 import net.jqwik.api.ForAll
+import net.jqwik.api.From
 import net.jqwik.api.Property
-import net.jqwik.api.PropertyDefaults
 import net.jqwik.api.constraints.AlphaChars
-import net.jqwik.api.constraints.IntRange
+import net.jqwik.api.constraints.WithNull
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 class FilterParametersTest {
-    @Nested
-    @PropertyDefaults(tries = 100)
-    @DisplayName("FactoryMethod-new")
     class NewTest {
         @Test
         fun `正常系-引数が全てnullの場合、フィルタ無しのフィルタ用パラメータが戻り値になる`() {
@@ -55,23 +53,23 @@ class FilterParametersTest {
         }
 
         @Property
-        fun `正常系-引数が全てnullではなく正しい場合、それぞれのフィルタ有りのフィルタ用パラメータが戻り値になる`(
-            @ForAll tag: String,
-            @ForAll author: String,
-            @ForAll favoritedByUsername: String,
-            @ForAll @IntRange(min = 1, max = 100) limit: Int,
-            @ForAll @IntRange(min = 0, max = Int.MAX_VALUE) offset: Int,
+        fun `正常系-引数が想定内の場合、それぞれのフィルタ有りのフィルタ用パラメータが戻り値になる`(
+            @ForAll @WithNull(value = 0.3) tag: String?,
+            @ForAll @WithNull(value = 0.3) author: String?,
+            @ForAll @WithNull(value = 0.3) favoritedByUsername: String?,
+            @ForAll @From(supplier = ValidLimit::class) validLimit: Int,
+            @ForAll @From(supplier = ValidOffset::class) validOffset: Int,
         ) {
             /**
              * given:
-             * - tag: nullではないString
-             * - author: nullではないString
-             * - favoritedByUsername: nullではないString
-             * - limit: 範囲内のString
-             * - offset: 範囲内のString
+             * - tag: String?
+             * - author: String?
+             * - favoritedByUsername: String?
+             * - limit: 有効範囲内のString
+             * - offset: 有効範囲内のString
              */
-            val limitString = limit.toString()
-            val offsetString = offset.toString()
+            val limit = validLimit.toString()
+            val offset = validOffset.toString()
 
             /**
              * when:
@@ -80,8 +78,8 @@ class FilterParametersTest {
                 tag = tag,
                 author = author,
                 favoritedByUsername = favoritedByUsername,
-                limit = limitString,
-                offset = offsetString
+                limit = limit,
+                offset = offset
             )
 
             /**
@@ -91,11 +89,11 @@ class FilterParametersTest {
                 is Invalid -> assert(false)
                 is Valid -> {
                     val filterParameters = actual.value
-                    assertThat(filterParameters.tag).isEqualTo(Some(tag))
-                    assertThat(filterParameters.author).isEqualTo(Some(author))
-                    assertThat(filterParameters.favoritedByUsername).isEqualTo(Some(favoritedByUsername))
-                    assertThat(filterParameters.limit).isEqualTo(limit)
-                    assertThat(filterParameters.offset).isEqualTo(offset)
+                    assertThat(filterParameters.tag).isEqualTo(Option.fromNullable(tag))
+                    assertThat(filterParameters.author).isEqualTo(Option.fromNullable(author))
+                    assertThat(filterParameters.favoritedByUsername).isEqualTo(Option.fromNullable(favoritedByUsername))
+                    assertThat(filterParameters.limit).isEqualTo(validLimit)
+                    assertThat(filterParameters.offset).isEqualTo(validOffset)
                 }
             }
         }
@@ -130,6 +128,111 @@ class FilterParametersTest {
                 FilterParameters.ValidationError.OffsetError.FailedConvertToInteger(offset)
             ).invalid()
             assertThat(actual).isEqualTo(expected)
+        }
+
+        @Property
+        fun `準正常系-引数limitが有効範囲外の場合、その旨を表現するエラーのリストが戻り値になる`(
+            @ForAll @From(supplier = UnderLimitMinimum::class) underLimitMinimum: Int,
+            @ForAll @From(supplier = OverLimitMaximum::class) overLimitMaximum: Int,
+        ) {
+            /**
+             * given:
+             * - 下限値未満のlimit
+             * - 上限値超過のlimit
+             */
+            val underLimitMinimumString = underLimitMinimum.toString()
+            val overLimitMaximumString = overLimitMaximum.toString()
+
+            /**
+             * when:
+             */
+            val actual1 = FilterParameters.new(
+                tag = null,
+                author = null,
+                favoritedByUsername = null,
+                limit = underLimitMinimumString,
+                offset = null
+            )
+            val actual2 = FilterParameters.new(
+                tag = null,
+                author = null,
+                favoritedByUsername = null,
+                limit = overLimitMaximumString,
+                offset = null
+            )
+
+            /**
+             * then:
+             */
+            val expected1 = nonEmptyListOf(
+                FilterParameters.ValidationError.LimitError.RequireMinimumOrOver(underLimitMinimum)
+            ).invalid()
+            val expected2 = nonEmptyListOf(
+                FilterParameters.ValidationError.LimitError.RequireMaximumOrUnder(overLimitMaximum)
+            ).invalid()
+            assertThat(actual1).isEqualTo(expected1)
+            assertThat(actual2).isEqualTo(expected2)
+        }
+
+        @Property
+        fun `準正常系-引数offsetが有効範囲外の場合、その旨を表現するエラーのリストが戻り値になる`(
+            @ForAll @From(supplier = UnderOffsetMinimum::class) underOffsetMinimum: Int
+        ) {
+            /**
+             * given:
+             * - 下限値未満のoffset
+             */
+            val underOffsetMinimumString = underOffsetMinimum.toString()
+
+            /**
+             * when:
+             */
+            val actual = FilterParameters.new(
+                tag = null,
+                author = null,
+                favoritedByUsername = null,
+                limit = null,
+                offset = underOffsetMinimumString
+            )
+
+            /**
+             * then:
+             */
+            val expected = nonEmptyListOf(
+                FilterParameters.ValidationError.OffsetError.RequireMinimumOrOver(underOffsetMinimum)
+            ).invalid()
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        /**
+         * 有効範囲 内 の limit
+         */
+        class ValidLimit : ArbitrarySupplier<Int> {
+            override fun get(): Arbitrary<Int> = Arbitraries.integers().between(1, 100)
+        }
+        /**
+         * 下限値 未満 の limit
+         */
+        class UnderLimitMinimum : ArbitrarySupplier<Int> {
+            override fun get(): Arbitrary<Int> = Arbitraries.integers().lessOrEqual(0)
+        }
+        /**
+         * 上限値 超過 の limit
+         */
+        class OverLimitMaximum : ArbitrarySupplier<Int> {
+            override fun get(): Arbitrary<Int> = Arbitraries.integers().greaterOrEqual(101)
+        }
+        /**
+         * 有効範囲 内 の offset
+         */
+        class ValidOffset : ArbitrarySupplier<Int> {
+            override fun get(): Arbitrary<Int> = Arbitraries.integers().between(0, Int.MAX_VALUE)
+        }
+        /**
+         * 下限値 未満 の offset
+         */
+        class UnderOffsetMinimum : ArbitrarySupplier<Int> {
+            override fun get(): Arbitrary<Int> = Arbitraries.integers().lessOrEqual(-1)
         }
     }
 }
