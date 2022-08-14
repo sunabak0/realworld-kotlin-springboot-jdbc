@@ -31,9 +31,26 @@ on:
 jobs:
   ci-test:
     runs-on: ubuntu-latest
+    #
+    # GitHubActionsで利用可能な権限
+    #
+    # URL
+    #   - https://docs.github.com/ja/actions/using-jobs/assigning-permissions-to-jobs
+    #
     permissions:
+      actions: none
       checks: write
+      contents: read
+      deployments: none
+      id-token: none
+      issues: none
+      discussions: none
+      packages: none
+      pages: none
       pull-requests: write
+      repository-projects: none
+      security-events: none
+      statuses: write
     steps:
       - name: リポジトリのチェックアウト
         uses: actions/checkout@v3
