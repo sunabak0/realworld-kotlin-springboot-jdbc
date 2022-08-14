@@ -62,7 +62,8 @@ class Javajwt {
             .withIssuer("sandbox")
             .sign(Algorithm.HMAC256(secret))
         val decodedToken = JWT.decode(encodedToken)
-        assertThat(decodedToken.getClaim("foobar").isNull).isTrue
+        assertThat(decodedToken.getClaim("foobar").isNull).isFalse
+        assertThat(decodedToken.getClaim("foobar").isMissing).isTrue
     }
 
     @Test
