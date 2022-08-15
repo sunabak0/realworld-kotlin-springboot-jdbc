@@ -146,14 +146,14 @@ class FilterParametersTest {
             /**
              * when:
              */
-            val actual1 = FilterParameters.new(
+            val actualUnderLimitMinimum = FilterParameters.new(
                 tag = null,
                 author = null,
                 favoritedByUsername = null,
                 limit = underLimitMinimumString,
                 offset = null
             )
-            val actual2 = FilterParameters.new(
+            val actualOverLimitMaximum = FilterParameters.new(
                 tag = null,
                 author = null,
                 favoritedByUsername = null,
@@ -164,14 +164,14 @@ class FilterParametersTest {
             /**
              * then:
              */
-            val expected1 = nonEmptyListOf(
+            val expectedUnderLimitMinimum = nonEmptyListOf(
                 FilterParameters.ValidationError.LimitError.RequireMinimumOrOver(underLimitMinimum)
             ).invalid()
-            val expected2 = nonEmptyListOf(
+            val expectedOverLimitMaximum = nonEmptyListOf(
                 FilterParameters.ValidationError.LimitError.RequireMaximumOrUnder(overLimitMaximum)
             ).invalid()
-            assertThat(actual1).isEqualTo(expected1)
-            assertThat(actual2).isEqualTo(expected2)
+            assertThat(actualUnderLimitMinimum).isEqualTo(expectedUnderLimitMinimum)
+            assertThat(actualOverLimitMaximum).isEqualTo(expectedOverLimitMaximum)
         }
 
         @Property
