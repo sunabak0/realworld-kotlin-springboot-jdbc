@@ -260,6 +260,17 @@ tasks.jacocoTestReport {
      * jacocoTestReportは必ずテスト終了後に作成するようにする(依存させる)
      */
     dependsOn(tasks.test)
+    /**
+     * レポート形式
+     * - XML(主用途: CodeClimate等のSaaS)
+     *   - build/reports/jacoco/test/jacocoTestReport.xml
+     * - HTML(主用途: ローカルで閲覧)
+     *   - build/reports/jacoco/test/html/index.html
+     */
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
 }
 jacoco {
     toolVersion = "0.8.8"
