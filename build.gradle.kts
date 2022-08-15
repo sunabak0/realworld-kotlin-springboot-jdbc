@@ -3,8 +3,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("org.springframework.boot") version "2.7.2"
     id("io.spring.dependency-management") version "1.0.13.RELEASE"
-    kotlin("jvm") version "1.6.21"
-    kotlin("plugin.spring") version "1.6.21"
+    /**
+     * 注意
+     * jvm と plugin.spring のバージョンは合わせること
+     */
+    kotlin("jvm") version "1.7.10"
+    kotlin("plugin.spring") version "1.7.10"
 
     /**
      * detekt
