@@ -142,7 +142,7 @@ dependencies {
      * - http://localhost:8080/api-docs でjsonのOpenAPI
      * - http://localhost:8080/api-docs.yaml でyaml版
      */
-    implementation("org.springdoc:springdoc-openapi-ui:1.6.9")
+    implementation("org.springdoc:springdoc-openapi-ui:1.6.10")
     implementation("org.springdoc:springdoc-openapi-webmvc-core:1.6.9")
 
     /**
