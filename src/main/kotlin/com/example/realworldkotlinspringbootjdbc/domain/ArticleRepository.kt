@@ -1,10 +1,18 @@
 package com.example.realworldkotlinspringbootjdbc.domain
 
 import arrow.core.Either
+import com.example.realworldkotlinspringbootjdbc.domain.article.FilterParameters
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.article.Tag
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.util.MyError
+/**
+ * 作成済み記事リスト with Metadata
+ *
+ * first: 作成済み記事リスト
+ * second: フィルタにかかった記事の総数
+ */
+typealias CreatedArticlesWithMetadata = Pair<List<CreatedArticle>, Int>
 
 interface ArticleRepository {
     /**
@@ -69,5 +77,39 @@ interface ArticleRepository {
         data class Unexpected(override val cause: Throwable, val slug: Slug, val currentUserId: UserId) :
             UnfavoriteError,
             MyError.MyErrorWithThrowable
+    }
+
+    /**
+     * 作成済み記事をフィルタ(フィルタがなければただの一覧取得)
+     *
+     * @param filterParameters フィルタ用パラメーター
+     * @return エラー or フィルタされた作成済み記事の一覧とフィルタにかかった記事の総数
+     */
+    fun filter(filterParameters: FilterParameters): Either<FilterError, CreatedArticlesWithMetadata> = TODO()
+    sealed interface FilterError : MyError {
+        data class OffsetOverTheNumberOfFilteredCreatedArticlesError(
+            val filterParameters: FilterParameters,
+            val createdArticleCount: Int,
+        ) : FilterError, MyError.Basic
+    }
+
+    /**
+     * 特定のユーザーから見た作成済み記事をフィルタ(フィルタがなければただの一覧取得)
+     *
+     * 備考
+     * - 特定の登録済ユーザーから見て、見つかった作成済み記事に対して お気に入り/非お気に入り の有無がある
+     * - 特定の登録済ユーザーから見て、見つかった作成済み記事の著者に対して フォロー/未フォロー の有無がある
+     *
+     * @param filterParameters フィルタ用パラメーター
+     * @param userId ユーザーID
+     * @return エラー or フィルタされた作成済み記事の一覧とフィルタにかかった記事の総数
+     */
+    fun filterFromRegisteredUserViewpoint(filterParameters: FilterParameters, userId: UserId): Either<FilterFromRegisteredUserViewpointError, CreatedArticlesWithMetadata> = TODO()
+    sealed interface FilterFromRegisteredUserViewpointError : MyError {
+        data class OffsetOverTheNumberOfFilteredCreatedArticlesError(
+            val filterParameters: FilterParameters,
+            val createdArticleCount: Int,
+        ) : FilterFromRegisteredUserViewpointError, MyError.Basic
+        data class NotFoundUser(val userId: UserId) : FilterFromRegisteredUserViewpointError, MyError.Basic
     }
 }
