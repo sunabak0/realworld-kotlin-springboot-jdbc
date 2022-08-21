@@ -15,7 +15,9 @@ interface CreateArticleUseCase {
         tagList: List<String>?
     ): Either<Error, CreatedArticle> = TODO()
 
-    sealed interface Error : MyError
+    sealed interface Error : MyError {
+        data class InvalidArticle(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
+    }
 }
 
 @Service

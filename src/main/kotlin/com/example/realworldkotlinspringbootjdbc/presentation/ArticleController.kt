@@ -162,7 +162,15 @@ class ArticleController(
                     /**
                      * 記事作成 失敗
                      */
-                    is Left -> TODO()
+                    is Left -> when (val useCaseError = createdArticle.value) {
+                        /**
+                         * 原因: バリデーションエラー
+                         */
+                        is CreateArticleUseCase.Error.InvalidArticle -> ResponseEntity(
+                            serializeMyErrorListForResponseBody(useCaseError.errors),
+                            HttpStatus.valueOf(422)
+                        )
+                    }
                     /**
                      * 記事作成 成功
                      */

@@ -450,6 +450,21 @@ class ArticleControllerTest {
                         HttpStatus.valueOf(200)
                     )
                 ),
+                TestCase(
+                    title = "準正常系-ユースケース（CreateArticleUseCase）がバリデーションエラーを返すとき、レスポンスのステータスコードが 422 になる",
+                    useCaseExecuteResult = CreateArticleUseCase.Error.InvalidArticle(
+                        listOf(
+                            object : MyError.ValidationError {
+                                override val message: String get() = "dummy-message"
+                                override val key: String get() = "dummy-key"
+                            }
+                        )
+                    ).left(),
+                    expected = ResponseEntity(
+                        """{"errors":{"body":[{"key":"dummy-key","message":"dummy-message"}]}}""",
+                        HttpStatus.valueOf(422)
+                    )
+                ),
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     /**
