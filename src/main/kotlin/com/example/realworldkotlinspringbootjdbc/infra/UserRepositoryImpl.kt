@@ -350,4 +350,45 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
 
         namedParameterJdbcTemplate.update(sql, sqlParams)
     }
+
+    override fun findByUsername(username: Username): Either<UserRepository.FindByUsernameError, RegisteredUser> {
+        val sql = """
+            SELECT
+                users.id
+                , users.email
+                , users.username
+                , users.password
+                , profiles.bio
+                , profiles.image
+            FROM
+                users
+            JOIN
+                profiles
+            ON
+                profiles.user_id = users.id
+                AND users.username = :username
+            ;
+        """.trimIndent()
+        val sqlParams = MapSqlParameterSource().addValue("username", username.value)
+        val users = namedParameterJdbcTemplate.queryForList(sql, sqlParams)
+        return when {
+            /**
+             * エラー: ユーザーが見つからなかった
+             */
+            users.isEmpty() -> UserRepository.FindByUsernameError.NotFound(username).left()
+            /**
+             * ユーザーが見つかった
+             */
+            else -> {
+                val user = users.first()
+                RegisteredUser.newWithoutValidation(
+                    UserId(user["id"].toString().toInt()),
+                    Email.newWithoutValidation(user["email"].toString()),
+                    username,
+                    Bio.newWithoutValidation(user["bio"].toString()),
+                    Image.newWithoutValidation(user["image"].toString()),
+                ).right()
+            }
+        }
+    }
 }

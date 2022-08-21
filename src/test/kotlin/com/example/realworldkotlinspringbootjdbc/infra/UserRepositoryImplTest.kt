@@ -309,4 +309,68 @@ class UserRepositoryImplTest {
             assertThat(actual).isEqualTo(expected)
         }
     }
+
+    @Nested
+    @Tag("WithLocalDb")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    class FindByUsername {
+        @BeforeAll
+        fun reset() = DbConnection.resetSequence()
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+            ]
+        )
+        fun `正常系-Usernameに該当する登録済みユーザーが存在する場合、登録済みユーザーが戻り値`() {
+            /**
+             * given:
+             */
+            val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val existedUsername = Username.newWithoutValidation("paul-graham")
+
+            /**
+             * when:
+             */
+            val actual = userRepository.findByUsername(existedUsername)
+
+            /**
+             * then:
+             */
+            when (actual) {
+                is Left -> assert(false) { "原因: ${actual.value}" }
+                is Right -> {
+                    val user = actual.value
+                    assertThat(user.username).isEqualTo(existedUsername)
+                }
+            }
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/empty-users.yml",
+            ]
+        )
+        fun `準正常系-Usernameに該当する登録済みユーザーが存在しない場合、その旨を表現するエラーが戻り値`() {
+            /**
+             * given:
+             */
+            val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val notExistedUsername = Username.newWithoutValidation("paul-graham")
+
+            /**
+             * when:
+             */
+            val actual = userRepository.findByUsername(notExistedUsername)
+
+            /**
+             * then:
+             */
+            val expected = UserRepository.FindByUsernameError.NotFound(notExistedUsername).left()
+            assertThat(actual).isEqualTo(expected)
+        }
+    }
 }

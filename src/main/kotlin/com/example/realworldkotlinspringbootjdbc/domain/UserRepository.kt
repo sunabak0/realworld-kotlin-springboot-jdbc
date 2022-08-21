@@ -50,6 +50,17 @@ interface UserRepository {
         data class AlreadyRegisteredUsername(val username: Username) : UpdateError, MyError.Basic
         data class Unexpected(override val cause: Throwable, val user: UpdatableRegisteredUser) : UpdateError, MyError.MyErrorWithThrowable
     }
+
+    /**
+     * 登録済みユーザー検索 by ユーザー名
+     *
+     * @param username ユーザー名
+     * @return エラー or 登録済みユーザー
+     */
+    fun findByUsername(username: Username): Either<FindByUsernameError, RegisteredUser> = TODO()
+    sealed interface FindByUsernameError : MyError {
+        data class NotFound(val username: Username) : FindByUsernameError, MyError.Basic
+    }
 }
 
 typealias RegisteredWithPassword = Pair<RegisteredUser, Password>
