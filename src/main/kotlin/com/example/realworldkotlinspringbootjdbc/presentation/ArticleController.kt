@@ -170,6 +170,13 @@ class ArticleController(
                             serializeMyErrorListForResponseBody(useCaseError.errors),
                             HttpStatus.valueOf(422)
                         )
+                        /**
+                         * 原因: 記事のタイトルが既に使われている
+                         */
+                        is CreateArticleUseCase.Error.AlreadyCreatedArticle -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("タイトルは既に使用されています。"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                            HttpStatus.valueOf(422)
+                        )
                     }
                     /**
                      * 記事作成 成功
