@@ -19,6 +19,142 @@ import com.example.realworldkotlinspringbootjdbc.domain.article.Body as ArticleB
 
 @Repository
 class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTemplate) : ArticleRepository {
+    override fun all(): Either<ArticleRepository.AllError, List<CreatedArticle>> {
+        val selectBySlugSql = """
+            SELECT
+                articles.id
+                , articles.title
+                , articles.slug
+                , articles.body
+                , articles.created_at
+                , articles.updated_at
+                , articles.description
+                , COALESCE((
+                    SELECT
+                        STRING_AGG(tags.name, ',')
+                    FROM
+                        tags
+                    JOIN
+                        article_tags
+                    ON
+                        article_tags.tag_id = tags.id
+                        AND article_tags.article_id = articles.id
+                    GROUP BY
+                        article_tags.article_id
+                ), '') AS tags
+                , articles.author_id
+                , (
+                    SELECT
+                        COUNT(favorites.id)
+                    FROM
+                        favorites
+                    WHERE
+                        favorites.article_id = articles.id
+                ) AS favoritesCount
+            FROM
+                articles
+            ;
+        """.trimIndent()
+        val articleList = namedParameterJdbcTemplate.queryForList(selectBySlugSql, MapSqlParameterSource())
+        return articleList.map {
+            CreatedArticle.newWithoutValidation(
+                id = ArticleId(it["id"].toString().toInt()),
+                title = Title.newWithoutValidation(it["title"].toString()),
+                slug = Slug.newWithoutValidation(it["slug"].toString()),
+                body = ArticleBody.newWithoutValidation(it["body"].toString()),
+                createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
+                updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
+                description = Description.newWithoutValidation(it["description"].toString()),
+                tagList = it["tags"].toString().split(",").map { tag -> Tag.newWithoutValidation(tag) },
+                authorId = UserId(it["author_id"].toString().toInt()),
+                favorited = false,
+                favoritesCount = it["favoritesCount"].toString().toInt()
+            )
+        }.right()
+    }
+
+    override fun allFromRegisteredUserViewpoint(userId: UserId): Either<ArticleRepository.AllFromRegisteredUserViewpointError, List<CreatedArticle>> {
+        val selectUserExistedSql = """
+            SELECT
+                id
+            FROM
+                users
+            WHERE
+                id = :user_id
+            ;
+        """.trimIndent()
+        val selectUserExistedSqlParams = MapSqlParameterSource()
+            .addValue("user_id", userId.value)
+        val userList = namedParameterJdbcTemplate.queryForMap(selectUserExistedSql, selectUserExistedSqlParams)
+        if (userList.isEmpty()) {
+            return ArticleRepository.AllFromRegisteredUserViewpointError.NotFoundUser(userId).left()
+        }
+        val selectBySlugSql = """
+            SELECT
+                articles.id
+                , articles.title
+                , articles.slug
+                , articles.body
+                , articles.created_at
+                , articles.updated_at
+                , articles.description
+                , COALESCE((
+                    SELECT
+                        STRING_AGG(tags.name, ',')
+                    FROM
+                        tags
+                    JOIN
+                        article_tags
+                    ON
+                        article_tags.tag_id = tags.id
+                        AND article_tags.article_id = articles.id
+                    GROUP BY
+                        article_tags.article_id
+                ), '') AS tags
+                , articles.author_id
+                , (
+                    SELECT
+                        CASE COUNT(favorites.id)
+                            WHEN 0 THEN 0
+                            ELSE 1
+                        END
+                    FROM
+                        favorites
+                    WHERE
+                        favorites.article_id = articles.id
+                        AND favorites.user_id = :user_id
+                ) AS favorited
+                , (
+                    SELECT
+                        COUNT(favorites.id)
+                    FROM
+                        favorites
+                    WHERE
+                        favorites.article_id = articles.id
+                ) AS favoritesCount
+            FROM
+                articles
+            ;
+        """.trimIndent()
+        val sqlParams = MapSqlParameterSource()
+            .addValue("user_id", userId.value)
+        val articleList = namedParameterJdbcTemplate.queryForList(selectBySlugSql, sqlParams)
+        return articleList.map {
+            CreatedArticle.newWithoutValidation(
+                id = ArticleId(it["id"].toString().toInt()),
+                title = Title.newWithoutValidation(it["title"].toString()),
+                slug = Slug.newWithoutValidation(it["slug"].toString()),
+                body = ArticleBody.newWithoutValidation(it["body"].toString()),
+                createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
+                updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
+                description = Description.newWithoutValidation(it["description"].toString()),
+                tagList = it["tags"].toString().split(",").map { tag -> Tag.newWithoutValidation(tag) },
+                authorId = UserId(it["author_id"].toString().toInt()),
+                favorited = it["favorited"].toString() == "1",
+                favoritesCount = it["favoritesCount"].toString().toInt()
+            )
+        }.right()
+    }
 
     override fun findBySlug(slug: Slug): Either<ArticleRepository.FindBySlugError, CreatedArticle> {
         val selectBySlugSql = """
