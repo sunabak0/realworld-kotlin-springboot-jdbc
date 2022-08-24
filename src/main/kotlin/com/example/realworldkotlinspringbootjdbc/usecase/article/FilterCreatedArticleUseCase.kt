@@ -3,13 +3,23 @@ package com.example.realworldkotlinspringbootjdbc.usecase.article
 import arrow.core.Either
 import arrow.core.Option
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
-import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticlesWithMetadata
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.FilterParameters
+import com.example.realworldkotlinspringbootjdbc.usecase.shared_model.CreatedArticleWithAuthor
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface FilterCreatedArticleUseCase {
+    /**
+     * フィルタされた作成済み記事一覧
+     *
+     * @property articles フィルタされた作成済み記事の一覧(最大数: limit)
+     * @property articlesCount フィルタで引っかかった作成済み記事の数(メタデータ)
+     */
+    data class FilteredCreatedArticleList(
+        val articles: List<CreatedArticleWithAuthor>,
+        val articlesCount: Int,
+    )
     /**
      * 作成済み記事をフィルタ(フィルタがなければただの一覧取得)
      *
@@ -27,7 +37,7 @@ interface FilterCreatedArticleUseCase {
         limit: String?,
         offset: String?,
         currentUser: Option<RegisteredUser>
-    ): Either<Error, CreatedArticlesWithMetadata> = TODO()
+    ): Either<Error, FilteredCreatedArticleList> = TODO()
 
     /**
      * - フィルタ用パラメータのバリデーションエラー

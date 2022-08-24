@@ -1,6 +1,9 @@
 package com.example.realworldkotlinspringbootjdbc.infra
 
 import arrow.core.Either
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
@@ -19,6 +22,121 @@ import com.example.realworldkotlinspringbootjdbc.domain.article.Body as ArticleB
 
 @Repository
 class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTemplate) : ArticleRepository {
+    override fun all(viewpointUserId: Option<UserId>): Either<ArticleRepository.AllError, List<CreatedArticle>> =
+        when (viewpointUserId) {
+            /**
+             * 作成済み記事一覧
+             * - favoritedが常に '0'
+             */
+            None -> namedParameterJdbcTemplate.queryForList(
+                """
+                    SELECT
+                        articles.id
+                        , articles.title
+                        , articles.slug
+                        , articles.body
+                        , articles.created_at
+                        , articles.updated_at
+                        , articles.description
+                        , COALESCE((
+                            SELECT
+                                STRING_AGG(tags.name, ',')
+                            FROM
+                                tags
+                            JOIN
+                                article_tags
+                            ON
+                                article_tags.tag_id = tags.id
+                                AND article_tags.article_id = articles.id
+                            GROUP BY
+                                article_tags.article_id
+                        ), '') AS tags
+                        , articles.author_id
+                        , '0' AS favorited
+                        , (
+                            SELECT
+                                COUNT(favorites.id)
+                            FROM
+                                favorites
+                            WHERE
+                                favorites.article_id = articles.id
+                        ) AS favoritesCount
+                    FROM
+                        articles
+                    ;                   
+                """.trimIndent(),
+                MapSqlParameterSource()
+            )
+            /**
+             * あるユーザー視点から見た作成済み記事一覧
+             * - favoritedが'0' or '1'
+             */
+            is Some -> namedParameterJdbcTemplate.queryForList(
+                """
+                    SELECT
+                        articles.id
+                        , articles.title
+                        , articles.slug
+                        , articles.body
+                        , articles.created_at
+                        , articles.updated_at
+                        , articles.description
+                        , COALESCE((
+                            SELECT
+                                STRING_AGG(tags.name, ',')
+                            FROM
+                                tags
+                            JOIN
+                                article_tags
+                            ON
+                                article_tags.tag_id = tags.id
+                                AND article_tags.article_id = articles.id
+                            GROUP BY
+                                article_tags.article_id
+                        ), '') AS tags
+                        , articles.author_id
+                        , (
+                            SELECT
+                                CASE COUNT(favorites.id)
+                                    WHEN 0 THEN '0'
+                                    ELSE '1'
+                                END
+                            FROM
+                                favorites
+                            WHERE
+                                favorites.article_id = articles.id
+                                AND favorites.user_id = :viewpoint_user_id
+                        ) AS favorited
+                        , (
+                            SELECT
+                                COUNT(favorites.id)
+                            FROM
+                                favorites
+                            WHERE
+                                favorites.article_id = articles.id
+                        ) AS favoritesCount
+                    FROM
+                        articles
+                    ;
+                """.trimIndent(),
+                MapSqlParameterSource()
+                    .addValue("viewpoint_user_id", viewpointUserId.value.value)
+            )
+        }.map {
+            CreatedArticle.newWithoutValidation(
+                id = ArticleId(it["id"].toString().toInt()),
+                title = Title.newWithoutValidation(it["title"].toString()),
+                slug = Slug.newWithoutValidation(it["slug"].toString()),
+                body = ArticleBody.newWithoutValidation(it["body"].toString()),
+                createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
+                updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
+                description = Description.newWithoutValidation(it["description"].toString()),
+                tagList = it["tags"].toString().split(",").map { tag -> Tag.newWithoutValidation(tag) },
+                authorId = UserId(it["author_id"].toString().toInt()),
+                favorited = it["favorited"].toString() == "1",
+                favoritesCount = it["favoritesCount"].toString().toInt()
+            )
+        }.right()
 
     override fun findBySlug(slug: Slug): Either<ArticleRepository.FindBySlugError, CreatedArticle> {
         val selectBySlugSql = """
@@ -169,7 +287,9 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             return ArticleRepository.FindBySlugFromRegisteredUserViewpointError.Unexpected(e, slug).left()
         }
         return when {
-            articleList.isEmpty() -> ArticleRepository.FindBySlugFromRegisteredUserViewpointError.NotFoundArticle(slug).left()
+            articleList.isEmpty() -> ArticleRepository.FindBySlugFromRegisteredUserViewpointError.NotFoundArticle(slug)
+                .left()
+
             else -> {
                 val articleMap = articleList.first()
 
@@ -361,7 +481,10 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         }
     }
 
-    override fun unfavorite(slug: Slug, currentUserId: UserId): Either<ArticleRepository.UnfavoriteError, CreatedArticle> {
+    override fun unfavorite(
+        slug: Slug,
+        currentUserId: UserId
+    ): Either<ArticleRepository.UnfavoriteError, CreatedArticle> {
         /**
          * article を取得
          */
