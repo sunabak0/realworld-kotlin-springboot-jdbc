@@ -778,11 +778,11 @@ class ProfileRepositoryImplTest {
                 "datasets/yml/given/users.yml",
             ]
         )
-        fun `仕様外-存在しないユーザー視点からユーザー名で検索しても例外は起きない`() {
+        fun `仕様外-存在しないユーザー視点から検索しても例外は起きない`() {
             /**
              * given:
-             * - Case1: 存在するユーザー名
-             * - Case2: 存在しないユーザー名
+             * - Case1: 検索対象-存在するユーザー名
+             * - Case2: 検索対象-存在しないユーザー名
              */
             val profileRepository = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val case1ExistedUsername = Username.newWithoutValidation("paul-graham")

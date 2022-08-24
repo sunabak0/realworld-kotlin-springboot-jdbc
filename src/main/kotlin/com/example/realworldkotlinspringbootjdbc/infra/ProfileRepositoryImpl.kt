@@ -335,7 +335,7 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                         , users.username
                         , profiles.bio
                         , profiles.image
-                        , CASE WHEN followings.id IS NOT NULL THEN 1 ELSE 0 END AS following_flg
+                        , CASE WHEN followings.id IS NOT NULL THEN '1' ELSE '0' END AS following_flg
                     FROM
                         users
                     JOIN

@@ -57,7 +57,7 @@ interface ProfileRepository {
      *   - followingの有無がある
      *
      * @param username ユーザー名
-     * @param viewpointUser 特定のユーザー視点
+     * @param viewpointUserId あるユーザー視点となるユーザーID
      * @return エラー or 登録済みユーザー
      */
     fun findByUsername(username: Username, viewpointUserId: Option<UserId> = none()): Either<FindByUsernameError, OtherUser> = TODO()
