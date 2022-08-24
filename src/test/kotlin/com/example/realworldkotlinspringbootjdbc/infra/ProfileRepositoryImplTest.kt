@@ -2,12 +2,16 @@ package com.example.realworldkotlinspringbootjdbc.infra
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import arrow.core.left
+import arrow.core.toOption
 import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
+import com.github.database.rider.core.api.dataset.DataSet
+import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
@@ -619,6 +623,198 @@ class ProfileRepositoryImplTest {
         @Disabled
         fun `異常系 UnexpectedError が戻り値`() {
             TODO()
+        }
+    }
+
+    @Nested
+    @Tag("WithLocalDb")
+    @DBRider
+    class FindByUsername {
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+            ]
+        )
+        fun `正常系-存在するユーザー名で検索した場合、該当する他ユーザーが戻り値`() {
+            /**
+             * given:
+             */
+            val profileRepository = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val existedUsername = Username.newWithoutValidation("paul-graham")
+
+            /**
+             * when:
+             */
+            val actual = profileRepository.findByUsername(existedUsername)
+
+            /**
+             * then:
+             * - 中身チェック
+             */
+            when (actual) {
+                is Left -> assert(false) { "原因: ${actual.value}" }
+                is Right -> {
+                    val user = actual.value
+                    assertThat(user.username).isEqualTo(existedUsername)
+                    assertThat(user.following).isFalse
+                    assertThat(user.bio.value).isEqualTo("Lisper")
+                    assertThat(user.image.value).isEqualTo("")
+                }
+            }
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+            ]
+        )
+        fun `正常系-あるユーザーがフォロー中のユーザー名で検索した場合、該当するフォロー中の他ユーザーが戻り値`() {
+            /**
+             * given:
+             * - 存在するユーザー名
+             * - 視点となるユーザーId
+             */
+            val profileRepository = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val existedUsername = Username.newWithoutValidation("paul-graham")
+            val viewpointUserId = UserId(2).toOption()
+
+            /**
+             * when:
+             */
+            val actual = profileRepository.findByUsername(existedUsername, viewpointUserId)
+
+            /**
+             * then:
+             */
+            when (actual) {
+                is Left -> assert(false) { "原因: ${actual.value}" }
+                is Right -> {
+                    val user = actual.value
+                    assertThat(user.username).isEqualTo(existedUsername)
+                    assertThat(user.following).isTrue
+                    assertThat(user.bio.value).isEqualTo("Lisper")
+                    assertThat(user.image.value).isEqualTo("")
+                }
+            }
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+            ]
+        )
+        fun `正常系-あるユーザーが未フォローのユーザー名で検索した場合、該当する未フォローの他ユーザーが戻り値`() {
+            /**
+             * given:
+             * - 存在するユーザー名
+             * - 視点となるユーザーId
+             */
+            val profileRepository = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val existedUsername = Username.newWithoutValidation("松本行弘")
+            val viewpointUserId = UserId(1).toOption()
+
+            /**
+             * when:
+             */
+            val actual = profileRepository.findByUsername(existedUsername, viewpointUserId)
+
+            /**
+             * then:
+             */
+            when (actual) {
+                is Left -> assert(false) { "原因: ${actual.value}" }
+                is Right -> {
+                    val user = actual.value
+                    assertThat(user.username).isEqualTo(existedUsername)
+                    assertThat(user.following).isFalse
+                    assertThat(user.bio.value).isEqualTo("Rubyを作った")
+                    assertThat(user.image.value).isEqualTo("")
+                }
+            }
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+            ]
+        )
+        fun `準正常系-存在しないユーザー名で検索した場合、見つからなかった旨のエラーが戻り値`() {
+            /**
+             * given:
+             */
+            val profileRepository = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val case1NotExistedUsername = Username.newWithoutValidation("名無しの権兵衛1")
+            val case2NotExistedUsername = Username.newWithoutValidation("名無しの権兵衛2")
+            val case2ViewpointUserId = UserId(1).toOption()
+
+            /**
+             * when:
+             * - Case1: 誰の視点からでもないユーザー名検索
+             * - Case2: あるユーザー視点から見たユーザー名検索
+             */
+            val case1Actual = profileRepository.findByUsername(case1NotExistedUsername)
+            val case2Actual = profileRepository.findByUsername(case2NotExistedUsername, case2ViewpointUserId)
+
+            /**
+             * then:
+             */
+            val case1Expected = ProfileRepository.FindByUsernameError.NotFound(case1NotExistedUsername).left()
+            val case2Expected = ProfileRepository.FindByUsernameError.NotFound(case2NotExistedUsername).left()
+            assertThat(case1Actual).isEqualTo(case1Expected)
+            assertThat(case2Actual).isEqualTo(case2Expected)
+        }
+
+        /**
+         * ユースケース上はありえない
+         * 技術詳細(引数)的には可能なためテストを記述
+         */
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+            ]
+        )
+        fun `仕様外-存在しないユーザー視点からユーザー名で検索しても例外は起きない`() {
+            /**
+             * given:
+             * - Case1: 存在するユーザー名
+             * - Case2: 存在しないユーザー名
+             */
+            val profileRepository = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val case1ExistedUsername = Username.newWithoutValidation("paul-graham")
+            val case1NotExistedViewpointUserId = UserId(-1).toOption()
+            val case2NotExistedUsername = Username.newWithoutValidation("名無しの権兵衛")
+            val case2NotExistedViewpointUserId = UserId(-1).toOption()
+
+            /**
+             * when:
+             * - Case1: 存在しないユーザー視点から見た存在するユーザー名で検索
+             * - Case2: 存在しないユーザー視点から見た存在しないユーザー名で検索
+             */
+            val case1Actual = profileRepository.findByUsername(case1ExistedUsername, case1NotExistedViewpointUserId)
+            val case2Actual = profileRepository.findByUsername(case2NotExistedUsername, case2NotExistedViewpointUserId)
+
+            /**
+             * then:
+             * - Case1: 例外は起きない-見つかるが、未フォロー状態の他ユーザーが戻り値
+             * - Case2: 例外は起きない-見つからなかった旨のエラーが戻り値
+             */
+            when (case1Actual) {
+                is Left -> assert(false) { "原因: ${case1Actual.value}" }
+                is Right -> {
+                    val user = case1Actual.value
+                    assertThat(user.username).isEqualTo(case1ExistedUsername)
+                    assertThat(user.following).isFalse
+                    assertThat(user.bio.value).isEqualTo("Lisper")
+                    assertThat(user.image.value).isEqualTo("")
+                }
+            }
+            val case2Expected = ProfileRepository.FindByUsernameError.NotFound(case2NotExistedUsername).left()
+            assertThat(case2Actual).isEqualTo(case2Expected)
         }
     }
 }

@@ -1,6 +1,9 @@
 package com.example.realworldkotlinspringbootjdbc.infra
 
 import arrow.core.Either
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
@@ -287,6 +290,87 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             ).right()
         } catch (e: Throwable) {
             ProfileRepository.UnfollowError.Unexpected(e, username, currentUserId).left()
+        }
+    }
+
+    override fun findByUsername(
+        username: Username,
+        viewpointUserId: Option<UserId>
+    ): Either<ProfileRepository.FindByUsernameError, OtherUser> {
+        val sqlParams = MapSqlParameterSource().addValue("username", username.value)
+        val userList = when (viewpointUserId) {
+            /**
+             * 登録済みユーザー検索
+             * - followingを '0' で固定
+             */
+            None -> namedParameterJdbcTemplate.queryForList(
+                """
+                    SELECT
+                        users.id
+                        , users.email
+                        , users.username
+                        , users.password
+                        , profiles.bio
+                        , profiles.image
+                        , '0' AS following_flg
+                    FROM
+                        users
+                    JOIN
+                        profiles
+                    ON
+                        profiles.user_id = users.id
+                        AND users.username = :username
+                    ;
+                """.trimIndent(),
+                sqlParams
+            )
+            /**
+             * 特定の登録済みユーザーから見た登録済みユーザー検索
+             * - followingが0 or 1
+             */
+            is Some -> namedParameterJdbcTemplate.queryForList(
+                """
+                    SELECT
+                        users.id
+                        , users.username
+                        , profiles.bio
+                        , profiles.image
+                        , CASE WHEN followings.id IS NOT NULL THEN 1 ELSE 0 END AS following_flg
+                    FROM
+                        users
+                    JOIN
+                        profiles
+                    ON
+                        users.id = profiles.user_id
+                        AND users.username = :username
+                    LEFT OUTER JOIN
+                        followings
+                    ON
+                        followings.following_id = users.id
+                        AND followings.follower_id = :viewpoint_user_id
+                    ;
+                """.trimIndent(),
+                sqlParams.addValue("viewpoint_user_id", viewpointUserId.value.value)
+            )
+        }
+        return when {
+            /**
+             * 見つからなかった
+             */
+            userList.isEmpty() -> ProfileRepository.FindByUsernameError.NotFound(username).left()
+            /**
+             * 見つかった
+             */
+            else -> {
+                val user = userList.first()
+                OtherUser.newWithoutValidation(
+                    userId = UserId(user["id"].toString().toInt()),
+                    username = Username.newWithoutValidation(user["username"].toString()),
+                    bio = Bio.newWithoutValidation(user["bio"].toString()),
+                    image = Image.newWithoutValidation(user["image"].toString()),
+                    following = user["following_flg"].toString() == "1"
+                ).right()
+            }
         }
     }
 }
