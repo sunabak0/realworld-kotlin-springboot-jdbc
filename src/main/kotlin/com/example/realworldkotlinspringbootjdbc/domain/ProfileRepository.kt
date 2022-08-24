@@ -1,10 +1,16 @@
 package com.example.realworldkotlinspringbootjdbc.domain
 
 import arrow.core.Either
+import arrow.core.Option
+import arrow.core.none
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
+/**
+ * 登録済みユーザーのRepository
+ *
+ */
 interface ProfileRepository {
     fun show(username: Username): Either<ShowWithoutAuthorizedError, OtherUser> = TODO()
     sealed interface ShowWithoutAuthorizedError : MyError {
@@ -42,5 +48,20 @@ interface ProfileRepository {
 
         data class Unexpected(override val cause: Throwable, val username: Username, val currentUserId: UserId) :
             UnfollowError, MyError.MyErrorWithThrowable
+    }
+
+    /**
+     * 登録済みユーザー検索 by ユーザー名
+     *
+     * - 特定のユーザー視点が有る場合
+     *   - followingの有無がある
+     *
+     * @param username ユーザー名
+     * @param viewpointUser 特定のユーザー視点
+     * @return エラー or 登録済みユーザー
+     */
+    fun findByUsername(username: Username, viewpointUserId: Option<UserId> = none()): Either<FindByUsernameError, OtherUser> = TODO()
+    sealed interface FindByUsernameError : MyError {
+        data class NotFound(val username: Username) : FindByUsernameError, MyError.Basic
     }
 }
