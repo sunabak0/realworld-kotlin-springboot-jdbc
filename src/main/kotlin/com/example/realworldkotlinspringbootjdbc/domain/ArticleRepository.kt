@@ -1,6 +1,8 @@
 package com.example.realworldkotlinspringbootjdbc.domain
 
 import arrow.core.Either
+import arrow.core.Option
+import arrow.core.none
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.article.Tag
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
@@ -10,24 +12,17 @@ interface ArticleRepository {
     /**
      * 作成済み記事を全て取得
      *
+     * Optional: あるユーザー視点から見た場合
+     * - ない場合
+     *   - 見つかった作成済み記事は全て 非お気に入り
+     * - ある場合
+     *   - 見つかった作成済み記事に対して、そのユーザーにとって お気に入り or 非お気に入り の情報がある
+     *
+     * @param viewpointUserId あるユーザー視点となるユーザーID
      * @return エラー or 作成済み記事の一覧
      */
-    fun all(): Either<AllError, List<CreatedArticle>> = TODO()
+    fun all(viewpointUserId: Option<UserId> = none()): Either<AllError, List<CreatedArticle>> = TODO()
     sealed interface AllError : MyError
-    /**
-     * 特定のユーザーから見た作成済み記事を全て取得
-     *
-     * 備考
-     * - 特定の登録済ユーザーから見て、見つかった作成済み記事に対して お気に入り/非お気に入り の有無がある
-     * - 特定の登録済ユーザーから見て、見つかった作成済み記事の著者に対して フォロー/未フォロー の有無がある
-     *
-     * @param userId ユーザーID
-     * @return エラー or 作成済み記事の一覧
-     */
-    fun allFromRegisteredUserViewpoint(userId: UserId): Either<AllFromRegisteredUserViewpointError, List<CreatedArticle>> = TODO()
-    sealed interface AllFromRegisteredUserViewpointError : MyError {
-        data class NotFoundUser(val userId: UserId) : AllFromRegisteredUserViewpointError, MyError.Basic
-    }
 
     /**
      * Slug で作成された記事検索
