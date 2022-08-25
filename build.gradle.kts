@@ -271,6 +271,17 @@ tasks.jacocoTestReport {
         xml.required.set(true)
         html.required.set(true)
     }
+
+    /**
+     * レポート作成時に特定のファイルやディレクトリ郡を除外
+     */
+    classDirectories.setFrom(files(classDirectories.files.map {
+        fileTree(it).apply {
+            exclude(listOf(
+                "**/infra/*"
+            ))
+        }
+    }))
 }
 jacoco {
     toolVersion = "0.8.8"
