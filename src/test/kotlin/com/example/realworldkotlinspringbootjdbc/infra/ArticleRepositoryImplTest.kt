@@ -348,6 +348,247 @@ class ArticleRepositoryImplTest {
         }
     }
 
+    @Tag("WithLocalDb")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    class FilterFavoritedByOtherUserId {
+        @BeforeAll
+        fun reset() = DbConnection.resetSequence()
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/empty-articles.yml"
+            ]
+        )
+        fun `正常系-他ユーザーのお気に入りの作成済み記事が1つも無い場合作成済み記事が1つも無い場合、空の作成済み記事の一覧が戻り値`() {
+            /**
+             * given:
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val otherUserId = UserId(2)
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.filterFavoritedByOtherUserId(otherUserId)
+
+            /**
+             * then:
+             */
+            val expected = emptyList<CreatedArticle>().right()
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `正常系-他ユーザーのお気に入りの作成済み記事がN個だけある場合、長さがNの作成済み記事の一覧が戻り値`() {
+            /**
+             * given:
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val otherUserId = UserId(2)
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.filterFavoritedByOtherUserId(otherUserId)
+
+            /**
+             * then:
+             * - created_at, updated_at以外の中身を比較する(想定したカラムの中身がきちんとセットされているか)
+             * - favoritedは全てfalse
+             */
+            val expected = listOf(
+                CreatedArticle.newWithoutValidation(
+                    id = ArticleId(1),
+                    title = Title.newWithoutValidation("Rust vs Scala vs Kotlin"),
+                    slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
+                    body = Body.newWithoutValidation("dummy-body"),
+                    createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                    updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                    description = Description.newWithoutValidation("dummy-description"),
+                    tagList = listOf(ArticleTag.newWithoutValidation("rust"), ArticleTag.newWithoutValidation("scala")),
+                    authorId = UserId(1),
+                    favorited = false,
+                    favoritesCount = 1
+                ),
+                CreatedArticle.newWithoutValidation(
+                    id = ArticleId(3),
+                    title = Title.newWithoutValidation("TDD(Type Driven Development)"),
+                    slug = Slug.newWithoutValidation("tdd-type-driven-development"),
+                    body = Body.newWithoutValidation("dummy-body"),
+                    createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                    updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                    description = Description.newWithoutValidation("dummy-description"),
+                    tagList = listOf(ArticleTag.newWithoutValidation("rust"), ArticleTag.newWithoutValidation("scala")),
+                    authorId = UserId(2),
+                    favorited = false,
+                    favoritesCount = 2
+                ),
+            )
+            when (actual) {
+                is Left -> assert(false) { "原因: ${actual.value}" }
+                is Right -> {
+                    val createdArticleList = actual.value
+                    assertThat(createdArticleList).hasSameElementsAs(expected) // サイズとCreatedArticle#equalsで確認
+                    createdArticleList.forEach { actualArticle ->
+                        val expectedArticle = expected.find { it.id == actualArticle.id }!! // 上のhasSameElementsAsで必ず存在することが確定している
+                        assertThat(actualArticle.id).isEqualTo(expectedArticle.id)
+                        assertThat(actualArticle.title).isEqualTo(expectedArticle.title)
+                        assertThat(actualArticle.slug).isEqualTo(expectedArticle.slug)
+                        assertThat(actualArticle.body).isEqualTo(expectedArticle.body)
+                        assertThat(actualArticle.description).isEqualTo(expectedArticle.description)
+                        assertThat(actualArticle.authorId).isEqualTo(expectedArticle.authorId)
+                        assertThat(actualArticle.favorited).isEqualTo(expectedArticle.favorited)
+                        assertThat(actualArticle.favoritesCount).isEqualTo(expectedArticle.favoritesCount)
+                    }
+                }
+            }
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/empty-articles.yml"
+            ]
+        )
+        fun `正常系-あるユーザー視点-他ユーザーのお気に入りの作成済み記事が1つも無い場合作成済み記事が1つも無い場合、空の作成済み記事の一覧が戻り値`() {
+            /**
+             * given:
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val otherUserId = UserId(2)
+            val viewpointUserId = UserId(1).toOption()
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.filterFavoritedByOtherUserId(otherUserId, viewpointUserId)
+
+            /**
+             * then:
+             */
+            val expected = emptyList<CreatedArticle>().right()
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `正常系-あるユーザー視点-他ユーザーのお気に入りの作成済み記事がN個だけある場合、長さがNの作成済み記事の一覧が戻り値`() {
+            /**
+             * given:
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val otherUserId = UserId(2)
+            val viewpointUserId = UserId(1).toOption()
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.filterFavoritedByOtherUserId(otherUserId, viewpointUserId)
+
+            /**
+             * then:
+             * - created_at, updated_at以外の中身を比較する(想定したカラムの中身がきちんとセットされているか)
+             * - あるユーザー視点からの お気に入り or 非お気に入り 情報がある
+             */
+            val expected = listOf(
+                CreatedArticle.newWithoutValidation(
+                    id = ArticleId(1),
+                    title = Title.newWithoutValidation("Rust vs Scala vs Kotlin"),
+                    slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
+                    body = Body.newWithoutValidation("dummy-body"),
+                    createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                    updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                    description = Description.newWithoutValidation("dummy-description"),
+                    tagList = listOf(ArticleTag.newWithoutValidation("rust"), ArticleTag.newWithoutValidation("scala")),
+                    authorId = UserId(1),
+                    favorited = false,
+                    favoritesCount = 1
+                ),
+                CreatedArticle.newWithoutValidation(
+                    id = ArticleId(3),
+                    title = Title.newWithoutValidation("TDD(Type Driven Development)"),
+                    slug = Slug.newWithoutValidation("tdd-type-driven-development"),
+                    body = Body.newWithoutValidation("dummy-body"),
+                    createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                    updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                    description = Description.newWithoutValidation("dummy-description"),
+                    tagList = listOf(ArticleTag.newWithoutValidation("rust"), ArticleTag.newWithoutValidation("scala")),
+                    authorId = UserId(2),
+                    favorited = true,
+                    favoritesCount = 2
+                ),
+            )
+            when (actual) {
+                is Left -> assert(false) { "原因: ${actual.value}" }
+                is Right -> {
+                    val createdArticleList = actual.value
+                    assertThat(createdArticleList).hasSameElementsAs(expected) // サイズとCreatedArticle#equalsで確認
+                    createdArticleList.forEach { actualArticle ->
+                        val expectedArticle = expected.find { it.id == actualArticle.id }!! // 上のhasSameElementsAsで必ず存在することが確定している
+                        assertThat(actualArticle.id).isEqualTo(expectedArticle.id)
+                        assertThat(actualArticle.title).isEqualTo(expectedArticle.title)
+                        assertThat(actualArticle.slug).isEqualTo(expectedArticle.slug)
+                        assertThat(actualArticle.body).isEqualTo(expectedArticle.body)
+                        assertThat(actualArticle.description).isEqualTo(expectedArticle.description)
+                        assertThat(actualArticle.authorId).isEqualTo(expectedArticle.authorId)
+                        assertThat(actualArticle.favorited).isEqualTo(expectedArticle.favorited)
+                        assertThat(actualArticle.favoritesCount).isEqualTo(expectedArticle.favoritesCount)
+                    }
+                }
+            }
+        }
+
+        /**
+         * ユースケース上はありえない
+         * 技術詳細(引数)的には可能なためテストを記述
+         */
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `仕様外-存在しない他ユーザーのお気に入りの作成済み記事をフィルタしても例外は起きない`() {
+            /**
+             * given:
+             * - 存在しない他ユーザーId
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val otherUserId = UserId(-1)
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.filterFavoritedByOtherUserId(otherUserId)
+
+            /**
+             * then:
+             * - 他ユーザーが存在しないので、空のリストとなる
+             */
+            val expected = emptyList<CreatedArticle>().right()
+            assertThat(actual).isEqualTo(expected)
+        }
+    }
+
     @Nested
     @Tag("WithLocalDb")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
