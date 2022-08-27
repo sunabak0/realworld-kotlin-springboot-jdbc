@@ -58,11 +58,11 @@ interface FilterParameters {
          * @return バリデーションエラー or フィルタ用パラメーター
          */
         fun new(
-            tag: String?,
-            author: String?,
-            favoritedByUsername: String?,
-            limit: String?,
-            offset: String?,
+            tag: String? = null,
+            author: String? = null,
+            favoritedByUsername: String? = null,
+            limit: String? = null,
+            offset: String? = null,
         ): ValidatedNel<ValidationError, FilterParameters> {
             val convertToValidatedLimit: (String?) -> ValidatedNel<ValidationError, Int> = { input ->
                 Option.fromNullable(input).fold(

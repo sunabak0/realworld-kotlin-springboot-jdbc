@@ -64,4 +64,20 @@ interface ProfileRepository {
     sealed interface FindByUsernameError : MyError {
         data class NotFound(val username: Username) : FindByUsernameError, MyError.Basic
     }
+
+    /**
+     * 登録済みユーザーフィルタ by 複数の登録済みユーザーID
+     *
+     * Optional: あるユーザー視点が見た場合
+     * - ない場合
+     *   - 見つかった登録済みユーザーは全て 未フォロー
+     * - ある場合
+     *   - 見つかった登録済みユーザーに対して、フォロー済 or 未フォロー の情報がある
+     *
+     * @param userIds 登録済みユーザーID郡
+     * @param viewpointUserId あるユーザー視点となるユーザーID
+     * @return エラー or 登録済みユーザー郡
+     */
+    fun filterByUserIds(userIds: Set<UserId>, viewpointUserId: Option<UserId> = none()): Either<FilterByUserIdsError, Set<OtherUser>> = TODO()
+    sealed interface FilterByUserIdsError : MyError
 }

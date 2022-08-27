@@ -59,4 +59,12 @@ class CreatedArticle private constructor(
     override fun hashCode(): Int {
         return id.value * 31
     }
+
+    /**
+     * 対象のTagを持っているか
+     *
+     * @param tag
+     * @return 持っている: true or 持っていない: false
+     */
+    fun hasTag(tag: Tag): Boolean = tagList.contains(tag)
 }
