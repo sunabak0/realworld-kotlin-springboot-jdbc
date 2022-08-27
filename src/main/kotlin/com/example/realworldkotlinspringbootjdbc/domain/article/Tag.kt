@@ -7,6 +7,8 @@ import arrow.core.Validated.Valid
 import arrow.core.ValidatedNel
 import arrow.core.invalidNel
 import arrow.core.valid
+import arrow.core.zip
+import arrow.typeclasses.Semigroup
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface Tag {
@@ -30,13 +32,16 @@ interface Tag {
         /**
          * Validation 有り
          */
-        fun new(tag: String?): ValidatedNel<ValidationError, Tag> {
-            return when (val result = ValidationError.Required.check(tag)) {
+        fun new(tag: String?): ValidatedNel<ValidationError, Tag> =
+            when (val result = ValidationError.Required.check(tag)) {
                 is Invalid -> result.value.invalidNel()
-                is Valid -> ValidationError.TooLong.check(result.value)
-                    .map { ValidatedTag(result.value) }
+                is Valid -> {
+                    ValidationError.TooShort.check(result.value).zip(
+                        Semigroup.nonEmptyList(),
+                        ValidationError.TooLong.check(result.value)
+                    ) { _, _ -> ValidatedTag(result.value) }
+                }
             }
-        }
     }
 
     /**
@@ -55,6 +60,22 @@ interface Tag {
                     { Invalid(Required) },
                     { Valid(it) }
                 )
+        }
+
+        /**
+         * 短すぎては駄目
+         */
+        data class TooShort(val tag: String) : ValidationError {
+            companion object {
+                private const val minimum: Int = 1
+                fun check(tag: String): ValidatedNel<TooShort, Unit> =
+                    if (minimum <= tag.length) {
+                        Unit.valid()
+                    } else {
+                        TooShort(tag).invalidNel()
+                    }
+            }
+            override val message: String get() = "tagは${minimum}文字以上にしてください。"
         }
 
         /**
