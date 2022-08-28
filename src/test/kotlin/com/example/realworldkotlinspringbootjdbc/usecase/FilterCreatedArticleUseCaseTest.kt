@@ -23,188 +23,221 @@ import com.example.realworldkotlinspringbootjdbc.usecase.article.FilterCreatedAr
 import com.example.realworldkotlinspringbootjdbc.usecase.article.FilterCreatedArticleUseCaseImpl
 import com.example.realworldkotlinspringbootjdbc.usecase.shared_model.CreatedArticleWithAuthor
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.DynamicNode
+import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import java.text.SimpleDateFormat
+import java.util.stream.Stream
 
 class FilterCreatedArticleUseCaseTest {
     class Execute {
         /**
-         * - 以下の2つのRepositoryがmockされたUseCase
-         *   - 3つの作成済み記事を戻り値とするmockされたArticleRepository
-         *   - 上記の作成済み記事を作成した著者(他ユーザー)郡を戻り値とするmockされたProfileRepository
+         * - 以下の2つのRepositoryがstubされたUseCase
+         *   - 3つの作成済み記事を戻り値とするstubされたArticleRepository
+         *   - 上記の作成済み記事を作成した著者(他ユーザー)郡を戻り値とするstubされたProfileRepository
          */
-        private val mockedFilterUseCase = FilterCreatedArticleUseCaseImpl(
+        private val filterUseCaseStub = FilterCreatedArticleUseCaseImpl(
             articleRepository = object : ArticleRepository {
                 override fun all(viewpointUserId: Option<UserId>): Either<ArticleRepository.AllError, List<CreatedArticle>> =
-                    mockedCreatedArticleWithAuthorList.map { it.article }.toList().right()
+                    createdArticleWithAuthorListStubResult.map { it.article }.toList().right()
             },
             profileRepository = object : ProfileRepository {
                 override fun filterByUserIds(
                     userIds: Set<UserId>,
                     viewpointUserId: Option<UserId>
                 ): Either<ProfileRepository.FilterByUserIdsError, Set<OtherUser>> =
-                    mockedCreatedArticleWithAuthorList.map { it.author }.toSet().right()
+                    createdArticleWithAuthorListStubResult.map { it.author }.toSet().right()
             }
         )
 
-        @Test
-        fun `正常系-フィルタが無いと、 "offsetとlimitが効いた著者情報付きの作成済みの記事のリストとフィルタでひっかかった数" が戻り値`() {
-            /**
-             * given:
-             * - Case1: offset=0, limit=1
-             * - Case2: offset=2, limit=5
-             */
-            val case1Offset = 0
-            val case1Limit = 1
-            val case2Offset = 2
-            val case2Limit = 5
+        private class TestCase(
+            val title: String,
+            val filterTagString: String? = null,
+            val filterAuthorUsernameString: String? = null,
+            val offset: String? = null,
+            val limit: String? = null,
+            val expected: Either<Nothing, FilterCreatedArticleUseCase.FilteredCreatedArticleList>,
+        )
 
-            /**
-             * when:
-             */
-            val case1Actual = mockedFilterUseCase.execute(
-                offset = case1Offset.toString(),
-                limit = case1Limit.toString()
-            )
-            val case2Actual = mockedFilterUseCase.execute(
-                offset = case2Offset.toString(),
-                limit = case2Limit.toString()
-            )
-
-            /**
-             * when:
-             * - Case1: limitが1なのでarticlesのサイズは1、見つかったカウントは3
-             * - Case2: offsetが2なので、(0から数えて)2番目からからlimitが5なのでarticlesのサイズは1、見つかったカウントは3
-             */
-            val case1Expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
-                articles = listOf(
-                    mockedCreatedArticleWithAuthorList[0]
+        @TestFactory
+        fun testOffsetAndLimit(): Stream<DynamicNode> =
+            Stream.of(
+                TestCase(
+                    title = "正常系-フィルタ結果から、0番目から数えてoffset番目から最大limit分だけ取得できる",
+                    offset = 0.toString(),
+                    limit = 1.toString(),
+                    expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
+                        articles = listOf(
+                            createdArticleWithAuthorListStubResult[0]
+                        ),
+                        articlesCount = createdArticleWithAuthorListStubResult.size
+                    ).right()
                 ),
-                articlesCount = mockedCreatedArticleWithAuthorList.size
-            ).right()
-            val case2Expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
-                articles = listOf(
-                    mockedCreatedArticleWithAuthorList[2]
+                TestCase(
+                    title = "正常系-フィルタ結果から、0番目から数えてoffset番目から最大limit分だけ取得できる",
+                    offset = 2.toString(),
+                    limit = 5.toString(),
+                    expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
+                        articles = listOf(
+                            createdArticleWithAuthorListStubResult[2]
+                        ),
+                        articlesCount = createdArticleWithAuthorListStubResult.size
+                    ).right()
+                )
+            ).map { testCase ->
+                DynamicTest.dynamicTest(testCase.title) {
+                    /**
+                     * given:
+                     */
+
+                    /**
+                     * when:
+                     */
+                    val actual = filterUseCaseStub.execute(
+                        offset = testCase.offset,
+                        limit = testCase.limit,
+                    )
+
+                    /**
+                     * then:
+                     */
+                    assertThat(actual).isEqualTo(testCase.expected)
+                }
+            }
+
+        @TestFactory
+        fun testTagFilter(): Stream<DynamicNode> =
+            Stream.of(
+                TestCase(
+                    title = "正常系-存在するタグでフィルタすると、そのタグを持つ作成済み記事のみがひっかかった情報が戻り値",
+                    filterTagString = "essay",
+                    expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
+                        articles = listOf(
+                            createdArticleWithAuthorListStubResult[0],
+                            createdArticleWithAuthorListStubResult[1]
+                        ),
+                        articlesCount = 2
+                    ).right()
                 ),
-                articlesCount = mockedCreatedArticleWithAuthorList.size
-            ).right()
-            assertThat(case1Actual).isEqualTo(case1Expected)
-            assertThat(case2Actual).isEqualTo(case2Expected)
-        }
+                TestCase(
+                    title = "正常系-存在しないタグでフィルタすると、1つもひっかからなかったことがわかる情報が戻り値",
+                    filterTagString = "nothing",
+                    expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
+                        articles = emptyList(),
+                        articlesCount = 0
+                    ).right()
+                )
+            ).map { testCase ->
+                DynamicTest.dynamicTest(testCase.title) {
+                    /**
+                     * given:
+                     */
 
-        @Test
-        fun `正常系-タグでフィルタすると、そのタグを持つ作成済み記事のみがひっかかった情報が戻り値`() {
-            /**
-             * given:
-             * - Case1: 存在するタグ文字列
-             * - Case2: 存在しないタグ文字列
-             */
-            val case1Tag = "essay"
-            val case2Tag = "nothing"
+                    /**
+                     * when:
+                     */
+                    val actual = filterUseCaseStub.execute(
+                        tag = testCase.filterTagString
+                    )
 
-            /**
-             * when:
-             */
-            val case1Actual = mockedFilterUseCase.execute(tag = case1Tag)
-            val case2Actual = mockedFilterUseCase.execute(tag = case2Tag)
+                    /**
+                     * then:
+                     */
+                    assertThat(actual).isEqualTo(testCase.expected)
+                }
+            }
 
-            /**
-             * then:
-             * - Case1: 2つ引っかかる
-             * - Case2: なにもない
-             */
-            val case1Expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
-                articles = listOf(
-                    mockedCreatedArticleWithAuthorList[0],
-                    mockedCreatedArticleWithAuthorList[1]
+        @TestFactory
+        fun testAuthorFilter(): Stream<DynamicNode> =
+            Stream.of(
+                TestCase(
+                    title = "正常系-存在する著者名でフィルタすると、その著者が投稿した作成済み記事のみがひっかかった情報が戻り値",
+                    filterAuthorUsernameString = "松本行弘",
+                    expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
+                        articles = listOf(
+                            createdArticleWithAuthorListStubResult[1]
+                        ),
+                        articlesCount = 1
+                    ).right()
                 ),
-                articlesCount = 2
-            ).right()
-            val case2Expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
-                articles = emptyList(),
-                articlesCount = 0
-            ).right()
-            assertThat(case1Actual).isEqualTo(case1Expected)
-            assertThat(case2Actual).isEqualTo(case2Expected)
-        }
+                TestCase(
+                    title = "正常系-存在しない著者名でフィルタすると、1つもひっかからなかったことがわかる情報が戻り値",
+                    filterAuthorUsernameString = "nobody",
+                    expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
+                        articles = emptyList(),
+                        articlesCount = 0
+                    ).right()
+                )
+            ).map { testCase ->
+                DynamicTest.dynamicTest(testCase.title) {
+                    /**
+                     * given:
+                     */
 
-        @Test
-        fun `正常系-著者名でフィルタすると、その方が著者である作成済み記事がひっかかった情報が戻り値`() {
-            /**
-             * given:
-             * - Case1: 存在する著者名
-             * - Case2: 存在しない著者名
-             */
-            val case1AuthorString = "松本行弘"
-            val case2AuthorString = "nobody"
+                    /**
+                     * when:
+                     */
+                    val actual = filterUseCaseStub.execute(
+                        author = testCase.filterAuthorUsernameString
+                    )
 
-            /**
-             * when:
-             */
-            val case1Actual = mockedFilterUseCase.execute(author = case1AuthorString)
-            val case2Actual = mockedFilterUseCase.execute(author = case2AuthorString)
+                    /**
+                     * then:
+                     */
+                    assertThat(actual).isEqualTo(testCase.expected)
+                }
+            }
 
-            /**
-             * then:
-             * - Case1: 1つひっかかる
-             * - Case2: なにもない
-             */
-            val case1Expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
-                articles = listOf(
-                    mockedCreatedArticleWithAuthorList[1]
+        @TestFactory
+        fun testTagFilterAndAuthorFilter(): Stream<DynamicNode> =
+            Stream.of(
+                TestCase(
+                    title = "正常系-タグと著者名でフィルタすると、(ANDフィルタなので)両方ともでひっかかる情報が戻り値",
+                    filterTagString = "ruby",
+                    filterAuthorUsernameString = "松本行弘",
+                    expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
+                        articles = listOf(
+                            createdArticleWithAuthorListStubResult[1]
+                        ),
+                        articlesCount = 1
+                    ).right()
                 ),
-                articlesCount = 1
-            ).right()
-            val case2Expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
-                articles = emptyList(),
-                articlesCount = 0
-            ).right()
-            assertThat(case1Actual).isEqualTo(case1Expected)
-            assertThat(case2Actual).isEqualTo(case2Expected)
-        }
+                TestCase(
+                    title = "正常系-どっちかだけにしかひっかからないタグと著者名でフィルタすると、(ANDフィルタなので)1つもひっかからなかったことがわかる情報が戻り値",
+                    filterTagString = "lisp",
+                    filterAuthorUsernameString = "松本行弘",
+                    expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
+                        articles = emptyList(),
+                        articlesCount = 0
+                    ).right()
+                )
+            ).map { testCase ->
+                DynamicTest.dynamicTest(testCase.title) {
+                    /**
+                     * given:
+                     */
 
-        @Test
-        fun `正常系-タグと著者名の両方でフィルタすると、両方ともひっかかる情報が戻り値`() {
-            /**
-             * given:
-             * - Case1: どっちにもひっかかるフィルタ
-             * - Case2: どっちかだけにしかひっかからないフィルタ
-             */
-            val case1AuthorString = "松本行弘"
-            val case1TagString = "ruby"
-            val case2AuthorString = "松本行弘"
-            val case2TagString = "lisp"
+                    /**
+                     * when:
+                     */
+                    val actual = filterUseCaseStub.execute(
+                        tag = testCase.filterTagString,
+                        author = testCase.filterAuthorUsernameString
+                    )
 
-            /**
-             * when:
-             */
-            val case1Actual = mockedFilterUseCase.execute(author = case1AuthorString, tag = case1TagString)
-            val case2Actual = mockedFilterUseCase.execute(author = case2AuthorString, tag = case2TagString)
-
-            /**
-             * then:
-             * - Case1: 1つひっかかる
-             * - Case2: なにもない
-             */
-            val case1Expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
-                articles = listOf(
-                    mockedCreatedArticleWithAuthorList[1]
-                ),
-                articlesCount = 1
-            ).right()
-            val case2Expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
-                articles = emptyList(),
-                articlesCount = 0
-            ).right()
-            assertThat(case1Actual).isEqualTo(case1Expected)
-            assertThat(case2Actual).isEqualTo(case2Expected)
-        }
+                    /**
+                     * then:
+                     */
+                    assertThat(actual).isEqualTo(testCase.expected)
+                }
+            }
 
         @Test
         fun `準正常系-offsetがフィルタ結果の数を超えていた場合、その旨のエラーが戻り値`() {
             /**
              * given:
-             * - RepositoryがmockされたUseCase
+             * - RepositoryがstubされたUseCase
              * - フィルタ結果の数を超えたoffset値
              */
             val overOffset = 5 // そもそも全体が3記事なので、どうあっても超える
@@ -212,7 +245,7 @@ class FilterCreatedArticleUseCaseTest {
             /**
              * when:
              */
-            val actual = mockedFilterUseCase.execute(offset = overOffset.toString())
+            val actual = filterUseCaseStub.execute(offset = overOffset.toString())
 
             /**
              * then:
@@ -233,11 +266,11 @@ class FilterCreatedArticleUseCaseTest {
         /**
          * 3つの作成済み記事With著者データが要素となるリスト
          *
-         * 1. UserId(1)が作成したタグ有り(lisp, essay)の記事
-         * 2. UserId(2)が作成したタグ有り(essay, ruby)の記事
-         * 3. UserId(1)が作成したタグ無しの記事
+         * - UserId(1)が作成したタグ有り(lisp, essay)の記事
+         * - UserId(2)が作成したタグ有り(essay, ruby)の記事
+         * - UserId(1)が作成したタグ無しの記事
          */
-        val mockedCreatedArticleWithAuthorList = listOf(
+        val createdArticleWithAuthorListStubResult = listOf(
             CreatedArticleWithAuthor(
                 article = CreatedArticle.newWithoutValidation(
                     id = ArticleId(1),

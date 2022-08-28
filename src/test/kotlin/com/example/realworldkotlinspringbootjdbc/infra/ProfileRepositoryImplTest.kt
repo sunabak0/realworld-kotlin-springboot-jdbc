@@ -737,35 +737,46 @@ class ProfileRepositoryImplTest {
         }
 
         @Test
-        @DataSet(
-            value = [
-                "datasets/yml/given/users.yml",
-            ]
-        )
         fun `準正常系-存在しないユーザー名で検索した場合、見つからなかった旨のエラーが戻り値`() {
             /**
              * given:
              */
             val profileRepository = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
-            val case1NotExistedUsername = Username.newWithoutValidation("名無しの権兵衛1")
-            val case2NotExistedUsername = Username.newWithoutValidation("名無しの権兵衛2")
-            val case2ViewpointUserId = UserId(1).toOption()
+            val notExistedUsername = Username.newWithoutValidation("名無しの権兵衛1")
 
             /**
              * when:
-             * - Case1: 誰の視点からでもないユーザー名検索
-             * - Case2: あるユーザー視点から見たユーザー名検索
+             * - 誰の視点からでもないユーザー名検索
              */
-            val case1Actual = profileRepository.findByUsername(case1NotExistedUsername)
-            val case2Actual = profileRepository.findByUsername(case2NotExistedUsername, case2ViewpointUserId)
+            val actual = profileRepository.findByUsername(notExistedUsername)
 
             /**
              * then:
              */
-            val case1Expected = ProfileRepository.FindByUsernameError.NotFound(case1NotExistedUsername).left()
-            val case2Expected = ProfileRepository.FindByUsernameError.NotFound(case2NotExistedUsername).left()
-            assertThat(case1Actual).isEqualTo(case1Expected)
-            assertThat(case2Actual).isEqualTo(case2Expected)
+            val expected = ProfileRepository.FindByUsernameError.NotFound(notExistedUsername).left()
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        fun `準正常系-ある登録済みユーザー視点で存在しないユーザー名で検索した場合、見つからなかった旨のエラーが戻り値`() {
+            /**
+             * given:
+             */
+            val profileRepository = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val notExistedUsername = Username.newWithoutValidation("名無しの権兵衛2")
+            val viewpointUserId = UserId(1).toOption()
+
+            /**
+             * when:
+             * - あるユーザー視点から見たユーザー名検索
+             */
+            val actual = profileRepository.findByUsername(notExistedUsername, viewpointUserId)
+
+            /**
+             * then:
+             */
+            val expected = ProfileRepository.FindByUsernameError.NotFound(notExistedUsername).left()
+            assertThat(actual).isEqualTo(expected)
         }
 
         /**
@@ -778,43 +789,62 @@ class ProfileRepositoryImplTest {
                 "datasets/yml/given/users.yml",
             ]
         )
-        fun `仕様外-存在しないユーザー視点から検索しても例外は起きない`() {
+        fun `仕様外-存在しないユーザー視点から存在するユーザー名を検索しても例外は起きない`() {
             /**
              * given:
-             * - Case1: 検索対象-存在するユーザー名
-             * - Case2: 検索対象-存在しないユーザー名
              */
             val profileRepository = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
-            val case1ExistedUsername = Username.newWithoutValidation("paul-graham")
-            val case1NotExistedViewpointUserId = UserId(-1).toOption()
-            val case2NotExistedUsername = Username.newWithoutValidation("名無しの権兵衛")
-            val case2NotExistedViewpointUserId = UserId(-1).toOption()
+            val existedUsername = Username.newWithoutValidation("paul-graham")
+            val notExistedViewpointUserId = UserId(-1).toOption()
 
             /**
              * when:
-             * - Case1: 存在しないユーザー視点から見た存在するユーザー名で検索
-             * - Case2: 存在しないユーザー視点から見た存在しないユーザー名で検索
+             * - 存在しないユーザー視点から存在するユーザー名で検索
              */
-            val case1Actual = profileRepository.findByUsername(case1ExistedUsername, case1NotExistedViewpointUserId)
-            val case2Actual = profileRepository.findByUsername(case2NotExistedUsername, case2NotExistedViewpointUserId)
+            val actual = profileRepository.findByUsername(existedUsername, notExistedViewpointUserId)
 
             /**
              * then:
-             * - Case1: 例外は起きない-見つかるが、未フォロー状態の他ユーザーが戻り値
-             * - Case2: 例外は起きない-見つからなかった旨のエラーが戻り値
+             * - 例外は起きない-見つかるが、未フォロー状態の他ユーザーが戻り値
              */
-            when (case1Actual) {
-                is Left -> assert(false) { "原因: ${case1Actual.value}" }
+            when (actual) {
+                is Left -> assert(false) { "原因: ${actual.value}" }
                 is Right -> {
-                    val user = case1Actual.value
-                    assertThat(user.username).isEqualTo(case1ExistedUsername)
+                    val user = actual.value
+                    assertThat(user.username).isEqualTo(existedUsername)
                     assertThat(user.following).isFalse
                     assertThat(user.bio.value).isEqualTo("Lisper")
                     assertThat(user.image.value).isEqualTo("")
                 }
             }
-            val case2Expected = ProfileRepository.FindByUsernameError.NotFound(case2NotExistedUsername).left()
-            assertThat(case2Actual).isEqualTo(case2Expected)
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+            ]
+        )
+        fun `仕様外-存在しないユーザー視点から存在しないユーザー名を検索しても例外は起きない`() {
+            /**
+             * given:
+             */
+            val profileRepository = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val notExistedUsername = Username.newWithoutValidation("名無しの権兵衛")
+            val notExistedViewpointUserId = UserId(-1).toOption()
+
+            /**
+             * when:
+             * - 存在しないユーザー視点から見た存在しないユーザー名で検索
+             */
+            val actual = profileRepository.findByUsername(notExistedUsername, notExistedViewpointUserId)
+
+            /**
+             * then:
+             * - 例外は起きない-見つからなかった旨のエラーが戻り値
+             */
+            val expected = ProfileRepository.FindByUsernameError.NotFound(notExistedUsername).left()
+            assertThat(actual).isEqualTo(expected)
         }
     }
 }
