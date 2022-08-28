@@ -141,7 +141,7 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
     override fun filterFavoritedByOtherUserId(
         otherUserId: UserId,
         viewpointUserId: Option<UserId>
-    ): Either<ArticleRepository.FilterFavoritedByUserIdError, List<CreatedArticle>> {
+    ): Either<ArticleRepository.FilterFavoritedByUserIdError, Set<CreatedArticle>> {
         val sqlParams = MapSqlParameterSource()
             .addValue("other_user_id", otherUserId.value)
         return when (viewpointUserId) {
@@ -267,7 +267,7 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                 favorited = it["favorited"].toString() == "1",
                 favoritesCount = it["favoritesCount"].toString().toInt()
             )
-        }.right()
+        }.toSet().right()
     }
 
     override fun findBySlug(slug: Slug): Either<ArticleRepository.FindBySlugError, CreatedArticle> {

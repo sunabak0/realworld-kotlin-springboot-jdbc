@@ -42,9 +42,9 @@ interface ArticleRepository {
      *
      * @param otherUserId お気に入りをフィルタしたい他ユーザーID
      * @param viewpointUserId あるユーザー視点となるユーザーID
-     * @return
+     * @return 作成済み記事のセット
      */
-    fun filterFavoritedByOtherUserId(otherUserId: UserId, viewpointUserId: Option<UserId> = none()): Either<FilterFavoritedByUserIdError, List<CreatedArticle>> = TODO()
+    fun filterFavoritedByOtherUserId(otherUserId: UserId, viewpointUserId: Option<UserId> = none()): Either<FilterFavoritedByUserIdError, Set<CreatedArticle>> = TODO()
     sealed interface FilterFavoritedByUserIdError : MyError
 
     /**

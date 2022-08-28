@@ -377,7 +377,7 @@ class ArticleRepositoryImplTest {
             /**
              * then:
              */
-            val expected = emptyList<CreatedArticle>().right()
+            val expected = emptySet<CreatedArticle>().right()
             assertThat(actual).isEqualTo(expected)
         }
 
@@ -406,7 +406,7 @@ class ArticleRepositoryImplTest {
              * - created_at, updated_at以外の中身を比較する(想定したカラムの中身がきちんとセットされているか)
              * - favoritedは全てfalse
              */
-            val expected = listOf(
+            val expected = setOf(
                 CreatedArticle.newWithoutValidation(
                     id = ArticleId(1),
                     title = Title.newWithoutValidation("Rust vs Scala vs Kotlin"),
@@ -477,7 +477,7 @@ class ArticleRepositoryImplTest {
             /**
              * then:
              */
-            val expected = emptyList<CreatedArticle>().right()
+            val expected = emptySet<CreatedArticle>().right()
             assertThat(actual).isEqualTo(expected)
         }
 
@@ -507,7 +507,7 @@ class ArticleRepositoryImplTest {
              * - created_at, updated_at以外の中身を比較する(想定したカラムの中身がきちんとセットされているか)
              * - あるユーザー視点からの お気に入り or 非お気に入り 情報がある
              */
-            val expected = listOf(
+            val expected = setOf(
                 CreatedArticle.newWithoutValidation(
                     id = ArticleId(1),
                     title = Title.newWithoutValidation("Rust vs Scala vs Kotlin"),
@@ -582,9 +582,9 @@ class ArticleRepositoryImplTest {
 
             /**
              * then:
-             * - 他ユーザーが存在しないので、空のリストとなる
+             * - 他ユーザーが存在しないので、空のセットとなる
              */
-            val expected = emptyList<CreatedArticle>().right()
+            val expected = emptySet<CreatedArticle>().right()
             assertThat(actual).isEqualTo(expected)
         }
     }
