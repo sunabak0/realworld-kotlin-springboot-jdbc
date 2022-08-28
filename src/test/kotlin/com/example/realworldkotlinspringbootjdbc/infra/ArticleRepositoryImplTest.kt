@@ -362,7 +362,7 @@ class ArticleRepositoryImplTest {
                 "datasets/yml/given/empty-articles.yml"
             ]
         )
-        fun `正常系-他ユーザーのお気に入りの作成済み記事が1つも無い場合作成済み記事が1つも無い場合、空の作成済み記事の一覧が戻り値`() {
+        fun `正常系-他ユーザーのお気に入りの作成済み記事が1つも無い場、空の作成済み記事の一覧が戻り値`() {
             /**
              * given:
              */
@@ -461,7 +461,7 @@ class ArticleRepositoryImplTest {
                 "datasets/yml/given/empty-articles.yml"
             ]
         )
-        fun `正常系-あるユーザー視点-他ユーザーのお気に入りの作成済み記事が1つも無い場合作成済み記事が1つも無い場合、空の作成済み記事の一覧が戻り値`() {
+        fun `正常系-あるユーザー視点-他ユーザーのお気に入りの作成済み記事が1つも無い場合、空の作成済み記事の一覧が戻り値`() {
             /**
              * given:
              */
