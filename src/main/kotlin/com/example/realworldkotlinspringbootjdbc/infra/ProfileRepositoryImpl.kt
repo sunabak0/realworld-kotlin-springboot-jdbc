@@ -373,4 +373,79 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             }
         }
     }
+
+    override fun filterByUserIds(
+        userIds: Set<UserId>,
+        viewpointUserId: Option<UserId>
+    ): Either<ProfileRepository.FilterByUserIdsError, Set<OtherUser>> {
+        if (userIds.isEmpty()) {
+            return emptySet<OtherUser>().right()
+        }
+        val sqlParams = MapSqlParameterSource().addValue("user_ids", userIds.map { it.value }.toSet())
+        return when (viewpointUserId) {
+            /**
+             * 登録済みユーザー検索
+             * - followingを '0' で固定
+             */
+            None -> namedParameterJdbcTemplate.queryForList(
+                """
+                    SELECT
+                        users.id
+                        , users.email
+                        , users.username
+                        , users.password
+                        , profiles.bio
+                        , profiles.image
+                        , '0' AS following_flg
+                    FROM
+                        users
+                    JOIN
+                        profiles
+                    ON
+                        profiles.user_id = users.id
+                    WHERE
+                        users.id IN (:user_ids)
+                    ;
+                """.trimIndent(),
+                sqlParams
+            )
+            /**
+             * 特定の登録済みユーザーから見た登録済みユーザー検索
+             * - followingが '0' or '1'
+             */
+            is Some -> namedParameterJdbcTemplate.queryForList(
+                """
+                    SELECT
+                        users.id
+                        , users.username
+                        , profiles.bio
+                        , profiles.image
+                        , CASE WHEN followings.id IS NOT NULL THEN '1' ELSE '0' END AS following_flg
+                    FROM
+                        users
+                    JOIN
+                        profiles
+                    ON
+                        users.id = profiles.user_id
+                    LEFT OUTER JOIN
+                        followings
+                    ON
+                        followings.following_id = users.id
+                        AND followings.follower_id = :viewpoint_user_id
+                    WHERE
+                        users.id IN (:user_ids)
+                    ;
+                """.trimIndent(),
+                sqlParams.addValue("viewpoint_user_id", viewpointUserId.value.value)
+            )
+        }.map { user ->
+            OtherUser.newWithoutValidation(
+                userId = UserId(user["id"].toString().toInt()),
+                username = Username.newWithoutValidation(user["username"].toString()),
+                bio = Bio.newWithoutValidation(user["bio"].toString()),
+                image = Image.newWithoutValidation(user["image"].toString()),
+                following = user["following_flg"].toString() == "1"
+            )
+        }.toSet().right()
+    }
 }

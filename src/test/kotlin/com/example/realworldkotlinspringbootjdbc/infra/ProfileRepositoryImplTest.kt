@@ -1,8 +1,12 @@
 package com.example.realworldkotlinspringbootjdbc.infra
 
+import arrow.core.Either
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import arrow.core.Option
 import arrow.core.left
+import arrow.core.none
+import arrow.core.right
 import arrow.core.toOption
 import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
@@ -16,14 +20,18 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.DynamicNode
+import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.TestInstance
 import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import java.text.SimpleDateFormat
+import java.util.stream.Stream
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Tag("WithLocalDb")
@@ -846,5 +854,180 @@ class ProfileRepositoryImplTest {
             val expected = ProfileRepository.FindByUsernameError.NotFound(notExistedUsername).left()
             assertThat(actual).isEqualTo(expected)
         }
+    }
+
+    @Nested
+    @Tag("WithLocalDb")
+    @DBRider
+    class FilterByUserIds {
+
+        private class TestCase(
+            val title: String,
+            val userIdSet: Set<UserId>,
+            val viewpointUserId: Option<UserId> = none(),
+            val expected: Either<Nothing, Set<OtherUser>>
+        )
+        @TestFactory
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+            ]
+        )
+        fun test(): Stream<DynamicNode> =
+            Stream.of(
+                TestCase(
+                    title = "正常系-存在する登録済みユーザーID郡でフィルタをした場合、それに該当する他ユーザー郡が戻り値",
+                    userIdSet = setOf(
+                        UserId(1)
+                    ),
+                    expected = setOf(
+                        OtherUser.newWithoutValidation(
+                            userId = UserId(1),
+                            username = Username.newWithoutValidation("paul-graham"),
+                            bio = Bio.newWithoutValidation("Lisper"),
+                            image = Image.newWithoutValidation(""),
+                            following = false
+                        )
+                    ).right()
+                ),
+                TestCase(
+                    title = "正常系-存在する登録済みユーザーID郡でフィルタをした場合、それに該当する他ユーザー郡が戻り値",
+                    userIdSet = setOf(
+                        UserId(1),
+                        UserId(3),
+                    ),
+                    expected = setOf(
+                        OtherUser.newWithoutValidation(
+                            userId = UserId(1),
+                            username = Username.newWithoutValidation("paul-graham"),
+                            bio = Bio.newWithoutValidation("Lisper"),
+                            image = Image.newWithoutValidation(""),
+                            following = false
+                        ),
+                        OtherUser.newWithoutValidation(
+                            userId = UserId(3),
+                            username = Username.newWithoutValidation("graydon-hoare"),
+                            bio = Bio.newWithoutValidation("Rustを作った"),
+                            image = Image.newWithoutValidation(""),
+                            following = false
+                        )
+                    ).right()
+                ),
+                TestCase(
+                    title = "正常系-登録済みユーザーID郡が空でフィルタをした場合、空の他ユーザー郡が戻り値",
+                    userIdSet = emptySet(),
+                    expected = emptySet<OtherUser>().right()
+                ),
+                TestCase(
+                    title = "正常系-ある特定ユーザー視点-存在する登録済みユーザーID郡でフィルタをした場合、それに該当するフォロー状態が表現された他ユーザー郡が戻り値",
+                    userIdSet = setOf(
+                        UserId(1),
+                        UserId(2),
+                        UserId(3),
+                    ),
+                    viewpointUserId = UserId(2).toOption(),
+                    expected = setOf(
+                        OtherUser.newWithoutValidation(
+                            userId = UserId(1),
+                            username = Username.newWithoutValidation("paul-graham"),
+                            bio = Bio.newWithoutValidation("Lisper"),
+                            image = Image.newWithoutValidation(""),
+                            following = true
+                        ),
+                        OtherUser.newWithoutValidation(
+                            userId = UserId(2),
+                            username = Username.newWithoutValidation("松本行弘"),
+                            bio = Bio.newWithoutValidation("Rubyを作った"),
+                            image = Image.newWithoutValidation(""),
+                            following = false
+                        ),
+                        OtherUser.newWithoutValidation(
+                            userId = UserId(3),
+                            username = Username.newWithoutValidation("graydon-hoare"),
+                            bio = Bio.newWithoutValidation("Rustを作った"),
+                            image = Image.newWithoutValidation(""),
+                            following = false
+                        ),
+                    ).right()
+                ),
+            ).map { testCase ->
+                dynamicTest(testCase.title) {
+                    /**
+                     * given:
+                     */
+                    val profileRepository = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+                    val userIdSet = testCase.userIdSet
+                    val viewpointUserId = testCase.viewpointUserId
+
+                    /**
+                     * when:
+                     */
+                    val actual = profileRepository.filterByUserIds(userIdSet, viewpointUserId)
+
+                    /**
+                     * then:
+                     */
+                    assertThat(actual).isEqualTo(testCase.expected)
+                }
+            }
+
+        /**
+         * ユースケース上はありえない
+         * 技術詳細(引数)的には可能なためテストを記述
+         */
+        @TestFactory
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+            ]
+        )
+        fun testOutOfSpecification(): Stream<DynamicNode> =
+            Stream.of(
+                TestCase(
+                    title = "仕様外-フィルタ対象が存在する登録済みユーザーIDと存在しないユーザーIDが混ざっていた場合、例外は起きず、それに該当する他ユーザー郡のみが戻り値",
+                    userIdSet = setOf(
+                        UserId(1),
+                        UserId(-1),
+                        UserId(-2),
+                    ),
+                    expected = setOf(
+                        OtherUser.newWithoutValidation(
+                            userId = UserId(1),
+                            username = Username.newWithoutValidation("paul-graham"),
+                            bio = Bio.newWithoutValidation("Lisper"),
+                            image = Image.newWithoutValidation(""),
+                            following = false
+                        )
+                    ).right()
+                ),
+                TestCase(
+                    title = "仕様外-フィルタ対象が存在しないユーザーID郡だった場合、例外は起きず、空の他ユーザー郡のみが戻り値",
+                    userIdSet = setOf(
+                        UserId(-1),
+                        UserId(-2),
+                        UserId(-3),
+                    ),
+                    expected = emptySet<OtherUser>().right()
+                ),
+            ).map { testCase ->
+                dynamicTest(testCase.title) {
+                    /**
+                     * given:
+                     */
+                    val profileRepository = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+                    val userIdSet = testCase.userIdSet
+                    val viewpointUserId = testCase.viewpointUserId
+
+                    /**
+                     * when:
+                     */
+                    val actual = profileRepository.filterByUserIds(userIdSet, viewpointUserId)
+
+                    /**
+                     * then:
+                     */
+                    assertThat(actual).isEqualTo(testCase.expected)
+                }
+            }
     }
 }
