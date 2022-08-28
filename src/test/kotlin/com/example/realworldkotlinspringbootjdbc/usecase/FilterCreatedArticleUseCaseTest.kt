@@ -1,9 +1,9 @@
 package com.example.realworldkotlinspringbootjdbc.usecase
 
 import arrow.core.Either
-import arrow.core.Either.Left
-import arrow.core.Either.Right
 import arrow.core.Option
+import arrow.core.left
+import arrow.core.orNull
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
@@ -12,6 +12,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
 import com.example.realworldkotlinspringbootjdbc.domain.article.Body
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
+import com.example.realworldkotlinspringbootjdbc.domain.article.FilterParameters
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.article.Tag
 import com.example.realworldkotlinspringbootjdbc.domain.article.Title
@@ -25,7 +26,6 @@ import com.example.realworldkotlinspringbootjdbc.usecase.shared_model.CreatedArt
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import java.text.SimpleDateFormat
 import java.util.stream.Stream
@@ -51,20 +51,17 @@ class FilterCreatedArticleUseCaseTest {
             }
         )
 
-        private class TestCase(
+        private class OffsetAndLimitTestCase(
             val title: String,
-            val filterTagString: String? = null,
-            val filterAuthorUsernameString: String? = null,
-            val offset: String? = null,
-            val limit: String? = null,
-            val expected: Either<Nothing, FilterCreatedArticleUseCase.FilteredCreatedArticleList>,
+            val offset: String,
+            val limit: String,
+            val expected: Either<FilterCreatedArticleUseCase.Error, FilterCreatedArticleUseCase.FilteredCreatedArticleList>,
         )
-
         @TestFactory
         fun testOffsetAndLimit(): Stream<DynamicNode> =
             Stream.of(
-                TestCase(
-                    title = "正常系-フィルタ結果から、0番目から数えてoffset番目から最大limit分だけ取得できる",
+                OffsetAndLimitTestCase(
+                    title = "正常系-フィルタ結果から、0番目から数えてoffset番目から最大limit分だけが取得できる",
                     offset = 0.toString(),
                     limit = 1.toString(),
                     expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
@@ -74,16 +71,28 @@ class FilterCreatedArticleUseCaseTest {
                         articlesCount = createdArticleWithAuthorListStubResult.size
                     ).right()
                 ),
-                TestCase(
-                    title = "正常系-フィルタ結果から、0番目から数えてoffset番目から最大limit分だけ取得できる",
+                OffsetAndLimitTestCase(
+                    title = "正常系-limitに余裕があっても最大limit分だけが取得できる",
                     offset = 2.toString(),
-                    limit = 5.toString(),
+                    limit = 100.toString(),
                     expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
                         articles = listOf(
                             createdArticleWithAuthorListStubResult[2]
                         ),
                         articlesCount = createdArticleWithAuthorListStubResult.size
                     ).right()
+                ),
+                OffsetAndLimitTestCase(
+                    title = "準正常系-offsetがフィルタ結果の全体の数より大きい場合、エラーが戻り値",
+                    offset = 100.toString(),
+                    limit = 1.toString(),
+                    expected = FilterCreatedArticleUseCase.Error.OffsetOverCreatedArticlesCountError(
+                        filterParameters = FilterParameters.new(
+                            offset = 100.toString(),
+                            limit = 1.toString()
+                        ).orNull()!!,
+                        articlesCount = createdArticleWithAuthorListStubResult.size
+                    ).left()
                 )
             ).map { testCase ->
                 DynamicTest.dynamicTest(testCase.title) {
@@ -106,11 +115,16 @@ class FilterCreatedArticleUseCaseTest {
                 }
             }
 
+        private class TagFilterOnlyTestCase(
+            val title: String,
+            val filterTagString: String,
+            val expected: Either<Nothing, FilterCreatedArticleUseCase.FilteredCreatedArticleList>,
+        )
         @TestFactory
         fun testTagFilter(): Stream<DynamicNode> =
             Stream.of(
-                TestCase(
-                    title = "正常系-存在するタグでフィルタすると、そのタグを持つ作成済み記事のみがひっかかった情報が戻り値",
+                TagFilterOnlyTestCase(
+                    title = "正常系-存在するタグの場合、そのタグを持つ作成済み記事のみがひっかかる",
                     filterTagString = "essay",
                     expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
                         articles = listOf(
@@ -120,8 +134,8 @@ class FilterCreatedArticleUseCaseTest {
                         articlesCount = 2
                     ).right()
                 ),
-                TestCase(
-                    title = "正常系-存在しないタグでフィルタすると、1つもひっかからなかったことがわかる情報が戻り値",
+                TagFilterOnlyTestCase(
+                    title = "正常系-存在しないタグの場合、1つもひっかからない",
                     filterTagString = "nothing",
                     expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
                         articles = emptyList(),
@@ -148,11 +162,16 @@ class FilterCreatedArticleUseCaseTest {
                 }
             }
 
+        private class AuthorUsernameFilterOnlyTestCase(
+            val title: String,
+            val filterAuthorUsernameString: String,
+            val expected: Either<Nothing, FilterCreatedArticleUseCase.FilteredCreatedArticleList>,
+        )
         @TestFactory
-        fun testAuthorFilter(): Stream<DynamicNode> =
+        fun testAuthorUsernameFilter(): Stream<DynamicNode> =
             Stream.of(
-                TestCase(
-                    title = "正常系-存在する著者名でフィルタすると、その著者が投稿した作成済み記事のみがひっかかった情報が戻り値",
+                AuthorUsernameFilterOnlyTestCase(
+                    title = "正常系-存在する著者名だった場合、その著者が投稿した作成済み記事のみがひっかかる",
                     filterAuthorUsernameString = "松本行弘",
                     expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
                         articles = listOf(
@@ -161,8 +180,8 @@ class FilterCreatedArticleUseCaseTest {
                         articlesCount = 1
                     ).right()
                 ),
-                TestCase(
-                    title = "正常系-存在しない著者名でフィルタすると、1つもひっかからなかったことがわかる情報が戻り値",
+                AuthorUsernameFilterOnlyTestCase(
+                    title = "正常系-存在しない著者名だった場合、1つもひっかからない",
                     filterAuthorUsernameString = "nobody",
                     expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
                         articles = emptyList(),
@@ -177,6 +196,7 @@ class FilterCreatedArticleUseCaseTest {
 
                     /**
                      * when:
+                     * - 指定するのはauthorのみ
                      */
                     val actual = filterUseCaseStub.execute(
                         author = testCase.filterAuthorUsernameString
@@ -189,11 +209,17 @@ class FilterCreatedArticleUseCaseTest {
                 }
             }
 
+        private class TagFilterAndAuthorUsernameFilterTestCase(
+            val title: String,
+            val filterTagString: String,
+            val filterAuthorUsernameString: String,
+            val expected: Either<Nothing, FilterCreatedArticleUseCase.FilteredCreatedArticleList>,
+        )
         @TestFactory
         fun testTagFilterAndAuthorFilter(): Stream<DynamicNode> =
             Stream.of(
-                TestCase(
-                    title = "正常系-タグと著者名でフィルタすると、(ANDフィルタなので)両方ともでひっかかる情報が戻り値",
+                TagFilterAndAuthorUsernameFilterTestCase(
+                    title = "正常系-タグと著者名の2つの場合、(ANDフィルタなので)どちらにも該当する作成済み記事のみがひっかかる",
                     filterTagString = "ruby",
                     filterAuthorUsernameString = "松本行弘",
                     expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
@@ -203,8 +229,8 @@ class FilterCreatedArticleUseCaseTest {
                         articlesCount = 1
                     ).right()
                 ),
-                TestCase(
-                    title = "正常系-どっちかだけにしかひっかからないタグと著者名でフィルタすると、(ANDフィルタなので)1つもひっかからなかったことがわかる情報が戻り値",
+                TagFilterAndAuthorUsernameFilterTestCase(
+                    title = "正常系-どっちかだけにしかひっかからないタグと著者名の場合、(ANDフィルタなので)1つもひっかからない",
                     filterTagString = "lisp",
                     filterAuthorUsernameString = "松本行弘",
                     expected = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
@@ -220,6 +246,7 @@ class FilterCreatedArticleUseCaseTest {
 
                     /**
                      * when:
+                     * - 指定するのはtag,authorの2つ
                      */
                     val actual = filterUseCaseStub.execute(
                         tag = testCase.filterTagString,
@@ -232,36 +259,6 @@ class FilterCreatedArticleUseCaseTest {
                     assertThat(actual).isEqualTo(testCase.expected)
                 }
             }
-
-        @Test
-        fun `準正常系-offsetがフィルタ結果の数を超えていた場合、その旨のエラーが戻り値`() {
-            /**
-             * given:
-             * - RepositoryがstubされたUseCase
-             * - フィルタ結果の数を超えたoffset値
-             */
-            val overOffset = 5 // そもそも全体が3記事なので、どうあっても超える
-
-            /**
-             * when:
-             */
-            val actual = filterUseCaseStub.execute(offset = overOffset.toString())
-
-            /**
-             * then:
-             * - フィルタした作成済み記事の数よりoffset値が超えた旨のエラーがわかる
-             * - フィルタした作成済み記事の数もわかる
-             */
-            when (actual) {
-                is Left -> when (val error = actual.value) {
-                    is FilterCreatedArticleUseCase.Error.OffsetOverCreatedArticlesCountError -> {
-                        assertThat(error.articlesCount).isEqualTo(3)
-                    }
-                    else -> assert(false) { "原因: ${error.javaClass}" }
-                }
-                is Right -> assert(false) { "原因: ${actual.value}" }
-            }
-        }
 
         /**
          * 3つの作成済み記事With著者データが要素となるリスト
