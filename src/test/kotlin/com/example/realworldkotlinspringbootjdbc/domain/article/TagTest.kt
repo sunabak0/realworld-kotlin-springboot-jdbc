@@ -38,29 +38,42 @@ class TagTest {
         }
 
         @Property
-        fun `準正常系-長さが有効でない場合、バリデーションエラーが戻り値`(
+        fun `準正常系-長さが長すぎる場合、バリデーションエラーが戻り値`(
             @ForAll @StringLength(min = 17) tooLongString: String
         ) {
             /**
              * given:
-             * - Case1: 短すぎる場合
-             * - Case2: 長すぎる場合
+             */
+
+            /**
+             * when:
+             */
+            val actual = Tag.new(tooLongString)
+
+            /**
+             * then:
+             */
+            val expected = Tag.ValidationError.TooLong(tooLongString).invalidNel()
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        fun `準正常系-長さが短すぎる場合、バリデーションエラーが戻り値`() {
+            /**
+             * given:
              */
             val tooShortString = ""
 
             /**
              * when:
              */
-            val case1Actual = Tag.new(tooShortString)
-            val case2Actual = Tag.new(tooLongString)
+            val actual = Tag.new(tooShortString)
 
             /**
              * then:
              */
-            val case1Expected = Tag.ValidationError.TooShort(tooShortString).invalidNel()
-            val case2Expected = Tag.ValidationError.TooLong(tooLongString).invalidNel()
-            assertThat(case1Actual).isEqualTo(case1Expected)
-            assertThat(case2Actual).isEqualTo(case2Expected)
+            val expected = Tag.ValidationError.TooShort(tooShortString).invalidNel()
+            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
