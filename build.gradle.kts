@@ -214,7 +214,7 @@ dependencies {
      * 概要
      * - テーブルの事前条件、事後条件を簡潔に設定できる
      */
-    val dbRiderVersion = "1.33.0"
+    val dbRiderVersion = "1.34.0"
     implementation("com.github.database-rider:rider-core:$dbRiderVersion")
     implementation("com.github.database-rider:rider-spring:$dbRiderVersion")
     testImplementation("com.github.database-rider:rider-junit5:$dbRiderVersion")
