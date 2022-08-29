@@ -25,6 +25,29 @@ interface ArticleRepository {
     sealed interface AllError : MyError
 
     /**
+     * 他ユーザーのお気に入りをフィルタ(〇〇さんがお気に入りしている作成済み記事が見たい！)
+     *
+     * Optional: あるユーザー視点から見た場合
+     * - ない場合
+     *   - 見つかった作成済み記事は全て 非お気に入り
+     * - ある場合
+     *   - 見つかった作成済み記事に対して、そのユーザーにとって お気に入り or 非お気に入り の情報がある
+     *
+     * 注意
+     * - 取得できるお気に入り情報はあるユーザー視点からであって、他ユーザーのお気に入り情報ではない
+     * 例
+     * - otherUserId: AさんのユーザーID
+     * - viewpointUserId: BさんのユーザーID
+     * - -> 取得した作成済み記事のお気に入り情報は、Bさんから見た場合のお気に入り情報
+     *
+     * @param otherUserId お気に入りをフィルタしたい他ユーザーID
+     * @param viewpointUserId あるユーザー視点となるユーザーID
+     * @return 作成済み記事のセット
+     */
+    fun filterFavoritedByOtherUserId(otherUserId: UserId, viewpointUserId: Option<UserId> = none()): Either<FilterFavoritedByUserIdError, Set<CreatedArticle>> = TODO()
+    sealed interface FilterFavoritedByUserIdError : MyError
+
+    /**
      * Slug で作成された記事検索
      */
     fun findBySlug(slug: Slug): Either<FindBySlugError, CreatedArticle> = TODO()

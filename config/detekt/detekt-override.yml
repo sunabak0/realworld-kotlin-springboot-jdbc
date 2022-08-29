@@ -32,6 +32,19 @@ complexity:
       - 'use'
       - 'with'
   #
+  # LargeClass
+  #
+  # 概要
+  # - 1クラスあたりの行数
+  #
+  # 補足
+  # - コメントはカウントされない
+  # - 空行はカウントされない
+  #
+  LargeClass:
+    active: true
+    threshold: 671 # (default: 600)
+  #
   # LongMethod
   #
   # 概要

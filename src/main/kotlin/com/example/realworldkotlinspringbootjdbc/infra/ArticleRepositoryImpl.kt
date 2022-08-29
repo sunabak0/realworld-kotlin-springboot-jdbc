@@ -138,6 +138,138 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             )
         }.right()
 
+    override fun filterFavoritedByOtherUserId(
+        otherUserId: UserId,
+        viewpointUserId: Option<UserId>
+    ): Either<ArticleRepository.FilterFavoritedByUserIdError, Set<CreatedArticle>> {
+        val sqlParams = MapSqlParameterSource()
+            .addValue("other_user_id", otherUserId.value)
+        return when (viewpointUserId) {
+            /**
+             * 他ユーザーのお気に入りである作成済み記事一覧
+             * あるユーザー視点 無し
+             */
+            None -> namedParameterJdbcTemplate.queryForList(
+                """
+                    SELECT
+                        articles.id
+                        , articles.title
+                        , articles.slug
+                        , articles.body
+                        , articles.created_at
+                        , articles.updated_at
+                        , articles.description
+                        , COALESCE((
+                            SELECT
+                                STRING_AGG(tags.name, ',')
+                            FROM
+                                tags
+                            JOIN
+                                article_tags
+                            ON
+                                article_tags.tag_id = tags.id
+                                AND article_tags.article_id = articles.id
+                            GROUP BY
+                                article_tags.article_id
+                        ), '') AS tags
+                        , articles.author_id
+                        , '0' AS favorited
+                        , (
+                            SELECT
+                                COUNT(favorites.id)
+                            FROM
+                                favorites
+                            WHERE
+                                favorites.article_id = articles.id
+                        ) AS favoritesCount
+                    FROM
+                        articles
+                    JOIN
+                        favorites
+                    ON
+                        favorites.article_id = articles.id
+                        AND favorites.user_id = :other_user_id
+                    ;
+                """.trimIndent(),
+                sqlParams
+            )
+            /**
+             * 他ユーザーのお気に入りである作成済み記事一覧
+             * あるユーザー視点 有り
+             */
+            is Some -> namedParameterJdbcTemplate.queryForList(
+                """
+                    SELECT
+                        articles.id
+                        , articles.title
+                        , articles.slug
+                        , articles.body
+                        , articles.created_at
+                        , articles.updated_at
+                        , articles.description
+                        , COALESCE((
+                            SELECT
+                                STRING_AGG(tags.name, ',')
+                            FROM
+                                tags
+                            JOIN
+                                article_tags
+                            ON
+                                article_tags.tag_id = tags.id
+                                AND article_tags.article_id = articles.id
+                            GROUP BY
+                                article_tags.article_id
+                        ), '') AS tags
+                        , articles.author_id
+                        , (
+                            SELECT
+                                CASE COUNT(favorites.id)
+                                    WHEN 0 THEN '0'
+                                    ELSE '1'
+                                END
+                            FROM
+                                favorites
+                            WHERE
+                                favorites.article_id = articles.id
+                                AND favorites.user_id = :viewpoint_user_id
+                        ) AS favorited
+                        , (
+                            SELECT
+                                COUNT(favorites.id)
+                            FROM
+                                favorites
+                            WHERE
+                                favorites.article_id = articles.id
+                        ) AS favoritesCount
+                    FROM
+                        articles
+                    JOIN
+                        favorites
+                    ON
+                        favorites.article_id = articles.id
+                        AND favorites.user_id = :other_user_id
+                    ;
+                """.trimIndent(),
+                sqlParams
+                    .addValue("viewpoint_user_id", viewpointUserId.value.value)
+            )
+        }.map {
+            CreatedArticle.newWithoutValidation(
+                id = ArticleId(it["id"].toString().toInt()),
+                title = Title.newWithoutValidation(it["title"].toString()),
+                slug = Slug.newWithoutValidation(it["slug"].toString()),
+                body = ArticleBody.newWithoutValidation(it["body"].toString()),
+                createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
+                updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
+                description = Description.newWithoutValidation(it["description"].toString()),
+                tagList = it["tags"].toString().split(",").map { tag -> Tag.newWithoutValidation(tag) },
+                authorId = UserId(it["author_id"].toString().toInt()),
+                favorited = it["favorited"].toString() == "1",
+                favoritesCount = it["favoritesCount"].toString().toInt()
+            )
+        }.toSet().right()
+    }
+
     override fun findBySlug(slug: Slug): Either<ArticleRepository.FindBySlugError, CreatedArticle> {
         val selectBySlugSql = """
             SELECT

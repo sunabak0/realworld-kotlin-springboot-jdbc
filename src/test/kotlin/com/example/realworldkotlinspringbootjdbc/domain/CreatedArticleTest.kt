@@ -4,8 +4,14 @@ import com.example.realworldkotlinspringbootjdbc.domain.article.Body
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.article.Tag
+import com.example.realworldkotlinspringbootjdbc.domain.article.TagTest
 import com.example.realworldkotlinspringbootjdbc.domain.article.Title
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
+import net.jqwik.api.ForAll
+import net.jqwik.api.From
+import net.jqwik.api.Property
+import net.jqwik.api.constraints.Size
+import net.jqwik.api.constraints.UniqueElements
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
@@ -90,6 +96,82 @@ class CreatedArticleTest {
             dynamicTest(testCase.title) {
                 assertThat(testCase.createdArticle == testCase.otherCreatedArticle).isEqualTo(testCase.expected)
             }
+        }
+    }
+
+    class HasTag {
+        @Property
+        fun `正常系-持っているタグを指定した場合、trueが戻り値`(
+            @ForAll @Size(min = 1, max = 10) @UniqueElements tagStringList: List<@From(supplier = TagTest.TagValidRange::class) String>
+        ) {
+            /**
+             * given:
+             * - 持っているTag
+             * - タグリスト
+             * - そのタグリストを持つ作成済み記事
+             */
+            val hadTag = Tag.newWithoutValidation(tagStringList.first())
+            val tagList = tagStringList.map { Tag.newWithoutValidation(it) }.shuffled()
+            val createdArticle = CreatedArticle.newWithoutValidation(
+                id = ArticleId(1),
+                title = Title.newWithoutValidation("dummy-title"),
+                slug = Slug.newWithoutValidation("dummy-slug"),
+                body = Body.newWithoutValidation("dummy-body"),
+                createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                description = Description.newWithoutValidation("dummy-description"),
+                tagList = tagList,
+                authorId = UserId(1),
+                favorited = false,
+                favoritesCount = 0
+            )
+
+            /**
+             * when:
+             */
+            val actual = createdArticle.hasTag(hadTag)
+
+            /**
+             * then:
+             */
+            assertThat(actual).isTrue
+        }
+
+        @Property
+        fun `正常系-持っていないタグを指定した場合、falseが戻り値`(
+            @ForAll @Size(min = 0, max = 10) @UniqueElements tagStringList: List<@From(supplier = TagTest.TagValidRange::class) String>
+        ) {
+            /**
+             * given:
+             * - 持っていないTag(TagValidRangeは"diff-"から始まるやつは出ない)
+             * - タグリスト
+             * - そのタグリストを持つ作成済み記事
+             */
+            val notHaveTag = Tag.newWithoutValidation("diff-tag")
+            val tagList = tagStringList.map { Tag.newWithoutValidation(it) }.shuffled()
+            val createdArticle = CreatedArticle.newWithoutValidation(
+                id = ArticleId(1),
+                title = Title.newWithoutValidation("dummy-title"),
+                slug = Slug.newWithoutValidation("dummy-slug"),
+                body = Body.newWithoutValidation("dummy-body"),
+                createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                description = Description.newWithoutValidation("dummy-description"),
+                tagList = tagList,
+                authorId = UserId(1),
+                favorited = false,
+                favoritesCount = 0
+            )
+
+            /**
+             * when:
+             */
+            val actual = createdArticle.hasTag(notHaveTag)
+
+            /**
+             * then:
+             */
+            assertThat(actual).isFalse
         }
     }
 }
