@@ -75,6 +75,25 @@ class SlugTest {
             val expected = Slug.ValidationError.Required.invalidNel()
             assertThat(actual).isEqualTo(expected)
         }
+
+        @Property
+        fun `new() （引数なし）で生成される文字列は32文字の英数字`() {
+            /**
+             * given:
+             */
+
+            /**
+             * when:
+             */
+            val actual = Slug.new().value
+
+            /**
+             * then:
+             * - 32 文字の英数字
+             */
+            val expectedPattern = "^[a-z0-9]{32}$"
+            assertThat(actual).matches(expectedPattern)
+        }
     }
 
     /**
