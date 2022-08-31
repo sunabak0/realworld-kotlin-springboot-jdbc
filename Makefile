@@ -6,6 +6,10 @@ up: ## サーバー起動
 up.db: ## db起動
 	docker-compose up
 
+.PHONY: db.dump
+db.dump: ## 現在のdbの状態をseedとしてdump
+	docker-compose exec realworld-pg bash -c 'pg_dump realworld-db --inserts -a -Urealworld-user > /docker-entrypoint-initdb.d/002-realworld-seed.sql'
+
 .PHONY: down.db
 down.db: ## dbを落とす
 	docker-compose down
