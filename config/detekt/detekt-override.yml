@@ -193,6 +193,7 @@ style:
   #
   MaxLineLength:
     active: true
+    excludes: ['**/test/**']
     maxLineLength: 311 # (default: 120)
     excludePackageStatements: true
     excludeImportStatements: true
@@ -223,5 +224,6 @@ formatting:
   #
   MaximumLineLength:
     active: true
+    excludes: ['**/test/**']
     maxLineLength: 311 # (default: 120)
     ignoreBackTickedIdentifier: false

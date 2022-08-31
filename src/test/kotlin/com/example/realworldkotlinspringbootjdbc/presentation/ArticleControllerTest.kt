@@ -3,11 +3,15 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 import arrow.core.Either
 import arrow.core.Option
 import arrow.core.left
+import arrow.core.none
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
+import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
+import com.example.realworldkotlinspringbootjdbc.domain.article.Body
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
+import com.example.realworldkotlinspringbootjdbc.domain.article.FilterParameters
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.article.Tag
 import com.example.realworldkotlinspringbootjdbc.domain.article.Title
@@ -16,7 +20,9 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
+import com.example.realworldkotlinspringbootjdbc.usecase.article.FilterCreatedArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.ShowArticleUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.shared_model.CreatedArticleWithAuthor
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.assertj.core.api.Assertions.assertThat
@@ -123,7 +129,8 @@ class ArticleControllerTest {
                                 currentUser: Option<RegisteredUser>
                             ): Either<ShowArticleUseCase.Error, CreatedArticle> =
                                 testCase.useCaseExecuteResult
-                        }
+                        },
+                        object : FilterCreatedArticleUseCase {} // 利用されない(fake)
                     )
 
                     /**
@@ -224,7 +231,8 @@ class ArticleControllerTest {
                                 currentUser: Option<RegisteredUser>
                             ): Either<ShowArticleUseCase.Error, CreatedArticle> =
                                 testCase.useCaseExecuteResult
-                        }
+                        },
+                        object : FilterCreatedArticleUseCase {} // 利用されない(fake)
                     )
 
                     /**
@@ -241,5 +249,157 @@ class ArticleControllerTest {
                 }
             }
         }
+    }
+
+    class Filter {
+        private class TestCase(
+            val title: String,
+            val useCaseResult: Either<FilterCreatedArticleUseCase.Error, FilterCreatedArticleUseCase.FilteredCreatedArticleList>,
+            val expected: ResponseEntity<String>
+        )
+
+        @TestFactory
+        fun testShowWithAuthorize(): Stream<DynamicNode> =
+            Stream.of(
+                TestCase(
+                    title = "正常系-フィルタが成功した場合、ステータスコードが200のレスポンス",
+                    useCaseResult = FilterCreatedArticleUseCase.FilteredCreatedArticleList(
+                        articles = listOf(
+                            CreatedArticleWithAuthor(
+                                article = CreatedArticle.newWithoutValidation(
+                                    id = ArticleId(1),
+                                    title = Title.newWithoutValidation("title-01"),
+                                    slug = Slug.newWithoutValidation("slug-01"),
+                                    body = Body.newWithoutValidation("body-01"),
+                                    createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                                    updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                                    description = Description.newWithoutValidation("description-01"),
+                                    tagList = listOf(Tag.newWithoutValidation("tag-01"), Tag.newWithoutValidation("tag-02")),
+                                    authorId = UserId(1),
+                                    favorited = false,
+                                    favoritesCount = 1,
+                                ),
+                                author = OtherUser.newWithoutValidation(
+                                    userId = UserId(1),
+                                    username = Username.newWithoutValidation("username-01"),
+                                    bio = Bio.newWithoutValidation("bio-01"),
+                                    image = Image.newWithoutValidation("image-01"),
+                                    following = false
+                                )
+                            ),
+                            CreatedArticleWithAuthor(
+                                article = CreatedArticle.newWithoutValidation(
+                                    id = ArticleId(2),
+                                    title = Title.newWithoutValidation("title-02"),
+                                    slug = Slug.newWithoutValidation("slug-02"),
+                                    body = Body.newWithoutValidation("body-02"),
+                                    createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                                    updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                                    description = Description.newWithoutValidation("description-02"),
+                                    tagList = listOf(Tag.newWithoutValidation("tag-03")),
+                                    authorId = UserId(2),
+                                    favorited = false,
+                                    favoritesCount = 1,
+                                ),
+                                author = OtherUser.newWithoutValidation(
+                                    userId = UserId(2),
+                                    username = Username.newWithoutValidation("username-02"),
+                                    bio = Bio.newWithoutValidation("bio-02"),
+                                    image = Image.newWithoutValidation("image-02"),
+                                    following = false
+                                )
+                            )
+                        ),
+                        articlesCount = 2,
+                    ).right(),
+                    expected = ResponseEntity(
+                        """{"articlesCount":2,"articles":[{"title":"title-01","slug":"slug-01","body":"body-01","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","description":"description-01","tagList":["tag-01","tag-02"],"authorId":1,"favorited":false,"favoritesCount":1},{"title":"title-02","slug":"slug-02","body":"body-02","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","description":"description-02","tagList":["tag-03"],"authorId":2,"favorited":false,"favoritesCount":1}]}""",
+                        HttpStatus.valueOf(200)
+                    )
+                ),
+                TestCase(
+                    title = "準正常系-フィルタパラメータのバリデーションエラーだった場合、ステータスコードが422のレスポンス",
+                    useCaseResult = FilterCreatedArticleUseCase.Error.FilterParametersValidationErrors(
+                        errors = listOf(
+                            FilterParameters.ValidationError.LimitError.RequireMaximumOrUnder(999),
+                            FilterParameters.ValidationError.OffsetError.FailedConvertToInteger("foo"),
+                        )
+                    ).left(),
+                    expected = ResponseEntity(
+                        """{"errors":{"body":[{"value":999,"key":"LimitError","message":"100以下である必要があります"},{"value":"foo","key":"LimitError","message":"数値に変換できる数字にしてください"}]}}""",
+                        HttpStatus.valueOf(422)
+                    )
+                ),
+                TestCase(
+                    title = "準正常系-ユーザーが見つからなかった旨のエラーだった場合、ステータスコードが404のレスポンス",
+                    useCaseResult = FilterCreatedArticleUseCase.Error.NotFoundUser(
+                        user = RegisteredUser.newWithoutValidation(
+                            userId = UserId(1),
+                            email = Email.newWithoutValidation("fake@example.com"),
+                            username = Username.newWithoutValidation("username-fake"),
+                            bio = Bio.newWithoutValidation("bio-fake"),
+                            image = Image.newWithoutValidation("image-fake")
+                        ),
+                        cause = object : MyError {}
+                    ).left(),
+                    expected = ResponseEntity(
+                        """{"errors":{"body":["ユーザー登録されていませんでした"]}}""",
+                        HttpStatus.valueOf(404)
+                    )
+                ),
+                TestCase(
+                    title = "準正常系-offset値がフィルタ後の作成済み記事の数を超えている旨のエラーだった場合、ステータスコードが422のレスポンス",
+                    useCaseResult = FilterCreatedArticleUseCase.Error.OffsetOverCreatedArticlesCountError(
+                        filterParameters = object : FilterParameters {
+                            override val tag: Option<String> get() = none()
+                            override val author: Option<String> get() = none()
+                            override val favoritedByUsername: Option<String> get() = none()
+                            override val limit: Int get() = 10
+                            override val offset: Int get() = 999
+                        },
+                        articlesCount = 20
+                    ).left(),
+                    expected = ResponseEntity(
+                        """{"errors":{"body":["offset値がフィルタした結果の作成済み記事の数を超えています(offset=999, articlesCount=20)"]}}""",
+                        HttpStatus.valueOf(422)
+                    )
+                ),
+            ).map { testCase ->
+                dynamicTest(testCase.title) {
+                    /**
+                     * given:
+                     * - JWT認証の結果を固定
+                     * - UseCaseの結果を固定
+                     */
+                    val articleController = ArticleController(
+                        object : MyAuth { // JWT 認証が失敗する
+                            override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> =
+                                MyAuth.Unauthorized.RequiredBearerToken.left()
+                        },
+                        object : ShowArticleUseCase {}, // 利用されない(fake)
+                        object : FilterCreatedArticleUseCase {
+                            override fun execute(
+                                tag: String?,
+                                author: String?,
+                                favoritedByUsername: String?,
+                                limit: String?,
+                                offset: String?,
+                                currentUser: Option<RegisteredUser>
+                            ): Either<FilterCreatedArticleUseCase.Error, FilterCreatedArticleUseCase.FilteredCreatedArticleList> =
+                                testCase.useCaseResult // UseCaseの結果を固定
+                        },
+                    )
+
+                    /**
+                     * when:
+                     */
+                    val actual = articleController.filter()
+
+                    /**
+                     * then:
+                     */
+                    assertThat(actual).isEqualTo(testCase.expected)
+                }
+            }
     }
 }
