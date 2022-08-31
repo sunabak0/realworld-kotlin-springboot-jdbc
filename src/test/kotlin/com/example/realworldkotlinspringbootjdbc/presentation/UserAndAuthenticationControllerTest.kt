@@ -160,7 +160,9 @@ class UserAndAuthenticationControllerTest {
          * @param[loginUseCaseResult] UseCaseの実行の戻り値となる値
          * @return 引数を戻り値とする login が実装された Controller
          */
-        private fun createUserAndAuthenticationController(loginUseCaseResult: Either<LoginUseCase.Error, RegisteredUser>): UserAndAuthenticationController =
+        private fun createUserAndAuthenticationController(
+            loginUseCaseResult: Either<LoginUseCase.Error, RegisteredUser>
+        ): UserAndAuthenticationController =
             UserAndAuthenticationController(
                 mySessionJwt = object : MySessionJwt {
                     override fun encode(session: MySession) = "dummy-jwt-token".right()
@@ -364,7 +366,9 @@ class UserAndAuthenticationControllerTest {
          * @param[updateUserUseCaseResult] UseCaseの実行の戻り値となる値
          * @return 引数を戻り値とする login が実装された Controller
          */
-        private fun createUserAndAuthenticationController(updateUserUseCaseResult: Either<UpdateUserUseCase.Error, RegisteredUser>): UserAndAuthenticationController =
+        private fun createUserAndAuthenticationController(
+            updateUserUseCaseResult: Either<UpdateUserUseCase.Error, RegisteredUser>
+        ): UserAndAuthenticationController =
             UserAndAuthenticationController(
                 mySessionJwt = object : MySessionJwt {
                     override fun encode(session: MySession) = "dummy-jwt-token".right()
