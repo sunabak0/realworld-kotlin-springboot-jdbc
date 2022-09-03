@@ -1,7 +1,9 @@
 package com.example.realworldkotlinspringbootjdbc.domain
 
+import arrow.core.Invalid
 import arrow.core.NonEmptyList
 import arrow.core.Option
+import arrow.core.Valid
 import arrow.core.ValidatedNel
 import arrow.core.invalid
 import arrow.core.valid
@@ -50,24 +52,17 @@ interface UncreatedArticle {
                 Option.fromNullable(input).fold(
                     { listOf<Tag>().valid() },
                     { tagList ->
-                        val a = tagList.map { tag ->
-                            Tag.new(tag)
+                        val errors = mutableListOf<ValidationError>()
+                        val validatedTagList = mutableListOf<Tag>()
+                        tagList.forEach {
+                            when (val tag = Tag.new(it)) {
+                                is Invalid -> errors.addAll(tag.value)
+                                is Valid -> validatedTagList.add(tag.value)
+                            }
                         }
-                        val b = mutableListOf<ValidationError>()
-                        val c = mutableListOf<Tag>()
-                        a.forEach {
-                            it.fold(
-                                { nel -> b.add(nel.first()) },
-                                { tag -> c.add(tag) }
-                            )
-                        }
-                        if (b.isEmpty()) {
-                            c.valid()
-                        } else {
-                            NonEmptyList.fromList(b).fold(
-                                { throw Exception("foo") },
-                                { it.invalid() }
-                            )
+                        when (errors.isEmpty()) {
+                            false -> NonEmptyList.fromList(errors).orNull()!!.invalid()
+                            true -> validatedTagList.valid()
                         }
                     }
                 )
