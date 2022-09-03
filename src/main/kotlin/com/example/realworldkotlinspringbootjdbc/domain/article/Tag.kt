@@ -36,10 +36,11 @@ interface Tag {
             when (val result = ValidationError.Required.check(tag)) {
                 is Invalid -> result.value.invalidNel()
                 is Valid -> {
-                    ValidationError.TooShort.check(result.value).zip(
+                    ValidationError.RequiredNotBlank.check(result.value).zip(
                         Semigroup.nonEmptyList(),
-                        ValidationError.TooLong.check(result.value)
-                    ) { _, _ -> ValidatedTag(result.value) }
+                        ValidationError.TooShort.check(result.value),
+                        ValidationError.TooLong.check(result.value),
+                    ) { _, _, _ -> ValidatedTag(result.value) }
                 }
             }
     }
@@ -60,6 +61,19 @@ interface Tag {
                     { Invalid(Required) },
                     { Valid(it) }
                 )
+        }
+
+        /**
+         * 空白のみは駄目
+         */
+        object RequiredNotBlank : ValidationError {
+            override val message: String get() = "tagを入力してください"
+            fun check(tag: String): ValidatedNel<RequiredNotBlank, Unit> =
+                if (tag.isNotBlank()) {
+                    Unit.valid()
+                } else {
+                    RequiredNotBlank.invalidNel()
+                }
         }
 
         /**
