@@ -228,6 +228,25 @@ dependencies {
      * - format自動適用オプションの autoCorrect が使えるようになる
      */
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.21.0")
+
+    /**
+     * Spring Boot Starter Actuator
+     *
+     * URL
+     * - https://github.com/spring-projects/spring-boot#spring-boot-actuator
+     * MavenCentral
+     * - https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-actuator
+     * Main用途
+     * - Healthチェック用エンドポイントを生やす
+     * 概要
+     * - 開発・デバッグに便利なエンドポイントを生やしてくれる
+     * - Production環境では気をつける必要がある
+     *
+     * エンドポイントを叩く例
+     * $ curl -XGET 'http://localhost:8080/${server.servlet.context-path}/actuator' | jq .
+     * $ curl -XGET 'http://localhost:8080/${server.servlet.context-path}/actuator/health' | jq .
+     */
+    implementation("org.springframework.boot:spring-boot-starter-actuator:2.7.3")
 }
 
 tasks.withType<KotlinCompile> {
@@ -243,6 +262,7 @@ tasks.withType<KotlinCompile> {
 tasks.withType<Test> {
     useJUnitPlatform {
         excludeTags("WithLocalDb")
+        excludeTags("ApiIntegration")
     }
     this.testLogging {
         /**
@@ -294,6 +314,22 @@ jacoco {
 task<Test>("withLocalDb") {
     useJUnitPlatform {
         includeTags("WithLocalDb")
+    }
+    this.testLogging {
+        /**
+         * Test時に標準出力を出力させる
+         */
+        this.showStandardStreams = true
+    }
+}
+
+/**
+ * APIテスト
+ * ./gradlew test apiIntegration
+ */
+task<Test>("apiIntegration") {
+    useJUnitPlatform {
+        includeTags("ApiIntegration")
     }
     this.testLogging {
         /**
