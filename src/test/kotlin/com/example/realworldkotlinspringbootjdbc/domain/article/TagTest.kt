@@ -9,6 +9,9 @@ import net.jqwik.api.ArbitrarySupplier
 import net.jqwik.api.ForAll
 import net.jqwik.api.From
 import net.jqwik.api.Property
+import net.jqwik.api.constraints.Chars
+import net.jqwik.api.constraints.NotBlank
+import net.jqwik.api.constraints.NotEmpty
 import net.jqwik.api.constraints.StringLength
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -17,7 +20,7 @@ class TagTest {
     class New {
         @Property
         fun `正常系-長さが有効な場合、検証済みのTagが戻り値`(
-            @ForAll @From(supplier = TagValidRange::class) validString: String,
+            @ForAll @From(supplier = TagValidRange::class) validString: String
         ) {
             /**
              * given:
@@ -39,7 +42,7 @@ class TagTest {
 
         @Property
         fun `準正常系-長さが長すぎる場合、バリデーションエラーが戻り値`(
-            @ForAll @StringLength(min = 17) tooLongString: String
+            @ForAll @NotBlank @StringLength(min = 17) tooLongString: String
         ) {
             /**
              * given:
@@ -54,25 +57,6 @@ class TagTest {
              * then:
              */
             val expected = Tag.ValidationError.TooLong(tooLongString).invalidNel()
-            assertThat(actual).isEqualTo(expected)
-        }
-
-        @Test
-        fun `準正常系-長さが短すぎる場合、バリデーションエラーが戻り値`() {
-            /**
-             * given:
-             */
-            val tooShortString = ""
-
-            /**
-             * when:
-             */
-            val actual = Tag.new(tooShortString)
-
-            /**
-             * then:
-             */
-            val expected = Tag.ValidationError.TooShort(tooShortString).invalidNel()
             assertThat(actual).isEqualTo(expected)
         }
 
@@ -94,16 +78,67 @@ class TagTest {
             val expected = Tag.ValidationError.Required.invalidNel()
             assertThat(actual).isEqualTo(expected)
         }
+
+        @Property
+        fun `準正常系-空白のみの場合、バリデーションエラーが戻り値`(
+            @ForAll @Chars(' ') @NotEmpty whiteSpaceOnlyTag: String
+        ) {
+            /**
+             * given:
+             */
+
+            /**
+             * when:
+             */
+            val actual = Tag.new(whiteSpaceOnlyTag)
+
+            /**
+             * then:
+             * - RequiredNotBlankエラーがある
+             */
+            when (actual) {
+                is Invalid -> {
+                    val errors = actual.value
+                    assertThat(errors).contains(Tag.ValidationError.RequiredNotBlank)
+                }
+                is Valid -> assert(false) { "バリデーションエラーになることを期待しています" }
+            }
+        }
     }
 
     /**
      * Tagの有効な範囲のStringプロパティ
      */
     class TagValidRange : ArbitrarySupplier<String> {
-        override fun get(): Arbitrary<String> =
-            Arbitraries.strings()
+        override fun get(): Arbitrary<String> {
+            return Arbitraries.strings()
                 .ofMinLength(1)
                 .ofMaxLength(16)
-                .filter { !it.startsWith("diff-") }
+                .filter { !it.startsWith("diff-") && it.isNotBlank() }
+        }
+    }
+
+    /**
+     * 有効な範囲のTagStringのList
+     *
+     * 背景
+     *
+     * ```kt
+     * @ForAll tagStringList : List<@From(supplier=TagValidRange::class) String>
+     * ```
+     *
+     * のようにgenericsの指定で@Fromを使うと、せっかくカスタマイズしたルールが外れて、使い物にならなかった
+     *
+     * なので、Listも定義してあげる
+     * このクラス定義によって
+     *
+     * ```kt
+     * @ForAll @From(supplier=TagValidedRangeList::class) tagStringList : List<String>
+     * ```
+     *
+     * というように使うことができる
+     */
+    class TagValidedRangeList : ArbitrarySupplier<List<String>> {
+        override fun get(): Arbitrary<List<String>> = TagValidRange().get().list().uniqueElements()
     }
 }

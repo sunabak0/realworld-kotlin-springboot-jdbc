@@ -6,6 +6,7 @@ import arrow.core.ValidatedNel
 import arrow.core.invalidNel
 import arrow.core.valid
 import com.example.realworldkotlinspringbootjdbc.util.MyError
+import java.util.UUID
 
 interface Slug {
     val value: String
@@ -35,6 +36,13 @@ interface Slug {
                     .map { ValidatedSlug(result.value) }
             }
         }
+
+        /**
+         * 引数がない場合、UUID を元に生成
+         */
+        fun new(): Slug {
+            return ValidatedSlug(UUID.randomUUID().toString().split("-").joinToString(""))
+        }
     }
 
     /**
@@ -42,6 +50,7 @@ interface Slug {
      */
     sealed interface ValidationError : MyError.ValidationError {
         override val key: String get() = Slug::class.simpleName.toString()
+
         /**
          * Nullは駄目
          */
@@ -61,8 +70,13 @@ interface Slug {
             companion object {
                 private const val maximum: Int = 32
                 fun check(slug: String): ValidatedNel<TooLong, Unit> =
-                    if (slug.length <= maximum) { Unit.valid() } else { TooLong(slug).invalidNel() }
+                    if (slug.length <= maximum) {
+                        Unit.valid()
+                    } else {
+                        TooLong(slug).invalidNel()
+                    }
             }
+
             override val message: String get() = "slugは${maximum}文字以下にしてください。"
         }
     }

@@ -36,9 +36,9 @@ interface Tag {
             when (val result = ValidationError.Required.check(tag)) {
                 is Invalid -> result.value.invalidNel()
                 is Valid -> {
-                    ValidationError.TooShort.check(result.value).zip(
+                    ValidationError.RequiredNotBlank.check(result.value).zip(
                         Semigroup.nonEmptyList(),
-                        ValidationError.TooLong.check(result.value)
+                        ValidationError.TooLong.check(result.value),
                     ) { _, _ -> ValidatedTag(result.value) }
                 }
             }
@@ -63,19 +63,16 @@ interface Tag {
         }
 
         /**
-         * 短すぎては駄目
+         * 空白のみは駄目
          */
-        data class TooShort(val tag: String) : ValidationError {
-            companion object {
-                private const val minimum: Int = 1
-                fun check(tag: String): ValidatedNel<TooShort, Unit> =
-                    if (minimum <= tag.length) {
-                        Unit.valid()
-                    } else {
-                        TooShort(tag).invalidNel()
-                    }
-            }
-            override val message: String get() = "tagは${minimum}文字以上にしてください。"
+        object RequiredNotBlank : ValidationError {
+            override val message: String get() = "tagを入力してください"
+            fun check(tag: String): ValidatedNel<RequiredNotBlank, Unit> =
+                if (tag.isNotBlank()) {
+                    Unit.valid()
+                } else {
+                    RequiredNotBlank.invalidNel()
+                }
         }
 
         /**

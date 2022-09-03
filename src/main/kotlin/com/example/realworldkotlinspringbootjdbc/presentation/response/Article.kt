@@ -1,6 +1,7 @@
 package com.example.realworldkotlinspringbootjdbc.presentation.response
 
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
+import com.example.realworldkotlinspringbootjdbc.usecase.shared_model.CreatedArticleWithAuthor
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonRootName
@@ -43,6 +44,21 @@ data class Article(
                 authorId = createdArticle.authorId.value,
                 favorited = createdArticle.favorited,
                 favoritesCount = createdArticle.favoritesCount
+            )
+
+        fun from(createdArticleWithAuthor: CreatedArticleWithAuthor): Article =
+            Article(
+                title = createdArticleWithAuthor.article.title.value,
+                slug = createdArticleWithAuthor.article.slug.value,
+                body = createdArticleWithAuthor.article.body.value,
+                createdAt = createdArticleWithAuthor.article.createdAt,
+                updatedAt = createdArticleWithAuthor.article.updatedAt,
+                description = createdArticleWithAuthor.article.description.value,
+                tagList = createdArticleWithAuthor.article.tagList.map { tag -> tag.value },
+                // TODO: authorId を author に変更
+                authorId = createdArticleWithAuthor.author.userId.value,
+                favorited = createdArticleWithAuthor.article.favorited,
+                favoritesCount = createdArticleWithAuthor.article.favoritesCount
             )
     }
 
