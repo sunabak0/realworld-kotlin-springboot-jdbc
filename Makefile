@@ -22,6 +22,10 @@ test: ## テスト実行
 test.with-local-db: ## テスト(with local db)実行
 	./gradlew test withLocalDb
 
+.PHONY: test.api-integration
+test.api-integration: ## テスト(API Integration)実行
+	./gradlew test apiIntegration
+
 .PHONY: test.e2e
 test.e2e: ## e2eテスト実行
 	bash e2e/run-api-tests.sh
