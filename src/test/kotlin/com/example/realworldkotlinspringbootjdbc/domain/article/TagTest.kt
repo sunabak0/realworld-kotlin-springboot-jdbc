@@ -10,6 +10,7 @@ import net.jqwik.api.ForAll
 import net.jqwik.api.From
 import net.jqwik.api.Property
 import net.jqwik.api.constraints.Chars
+import net.jqwik.api.constraints.NotBlank
 import net.jqwik.api.constraints.NotEmpty
 import net.jqwik.api.constraints.StringLength
 import org.assertj.core.api.Assertions.assertThat
@@ -41,7 +42,7 @@ class TagTest {
 
         @Property
         fun `準正常系-長さが長すぎる場合、バリデーションエラーが戻り値`(
-            @ForAll @StringLength(min = 17) tooLongString: String
+            @ForAll @NotBlank @StringLength(min = 17) tooLongString: String
         ) {
             /**
              * given:
@@ -56,25 +57,6 @@ class TagTest {
              * then:
              */
             val expected = Tag.ValidationError.TooLong(tooLongString).invalidNel()
-            assertThat(actual).isEqualTo(expected)
-        }
-
-        @Test
-        fun `準正常系-長さが短すぎる場合、バリデーションエラーが戻り値`() {
-            /**
-             * given:
-             */
-            val tooShortString = ""
-
-            /**
-             * when:
-             */
-            val actual = Tag.new(tooShortString)
-
-            /**
-             * then:
-             */
-            val expected = Tag.ValidationError.TooShort(tooShortString).invalidNel()
             assertThat(actual).isEqualTo(expected)
         }
 
@@ -124,21 +106,6 @@ class TagTest {
         }
     }
 
-    class TestForTest {
-        @Property
-        fun `Listの型指定時に@Fromアノテーションのsupplierが有効である`(
-            @ForAll suppliedTagList: List<@From(supplier = TagValidRange::class) String>
-        ) {
-            suppliedTagList.forEach { tagString ->
-                when (val tag = Tag.new(tagString)) {
-                    is Invalid -> {
-                        assert(false) { "tagString=$tagString, 原因: ${tag.value}" }
-                    }
-                    is Valid -> {}
-                }
-            }
-        }
-    }
     /**
      * Tagの有効な範囲のStringプロパティ
      */

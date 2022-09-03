@@ -413,7 +413,7 @@ class ArticleControllerTest {
 
         data class TestCase(
             val title: String,
-            val useCaseExecuteResult: Either<CreateArticleUseCase.Error, CreatedArticle>,
+            val useCaseExecuteResult: Either<CreateArticleUseCase.Error, CreatedArticleWithAuthor>,
             val expected: ResponseEntity<String>
         )
 
@@ -429,22 +429,31 @@ class ArticleControllerTest {
         fun test(): Stream<DynamicNode> {
             return Stream.of(
                 TestCase(
-                    title = "正常系-ユースケース（CreateArticleUseCase）が作成済記事（CreatedArticle）を返すとき、レスポンスのステータスコードが 200 になる",
-                    useCaseExecuteResult = CreatedArticle.newWithoutValidation(
-                        id = ArticleId(1),
-                        title = Title.newWithoutValidation("dummy-title"),
-                        slug = Slug.newWithoutValidation("dummy-slug"),
-                        body = ArticleBody.newWithoutValidation("dummy-body"),
-                        createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                        updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                        description = Description.newWithoutValidation("dummy-description"),
-                        tagList = listOf(
-                            Tag.newWithoutValidation("dummy-tag1"),
-                            Tag.newWithoutValidation("dummy-tag2")
+                    title = "正常系-ユースケース（CreateArticleUseCase）が著者情報付き作成済記事（CreatedArticleWithAuthor）を返すとき、レスポンスのステータスコードが 200 になる",
+                    useCaseExecuteResult = CreatedArticleWithAuthor(
+                        article = CreatedArticle.newWithoutValidation(
+                            id = ArticleId(1),
+                            title = Title.newWithoutValidation("dummy-title"),
+                            slug = Slug.newWithoutValidation("dummy-slug"),
+                            body = ArticleBody.newWithoutValidation("dummy-body"),
+                            createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                            updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                            description = Description.newWithoutValidation("dummy-description"),
+                            tagList = listOf(
+                                Tag.newWithoutValidation("dummy-tag1"),
+                                Tag.newWithoutValidation("dummy-tag2")
+                            ),
+                            authorId = UserId(1),
+                            favorited = true,
+                            favoritesCount = 1
                         ),
-                        authorId = UserId(1),
-                        favorited = true,
-                        favoritesCount = 1
+                        author = OtherUser.newWithoutValidation(
+                            userId = UserId(1),
+                            username = Username.newWithoutValidation("dummy-username"),
+                            bio = Bio.newWithoutValidation("dummy-bio"),
+                            image = Image.newWithoutValidation("dummy-image"),
+                            following = false,
+                        )
                     ).right(),
                     expected = ResponseEntity(
                         """{"article":{"title":"dummy-title","slug":"dummy-slug","body":"dummy-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","description":"dummy-description","tagList":["dummy-tag1","dummy-tag2"],"authorId":1,"favorited":true,"favoritesCount":1}}""",
@@ -508,7 +517,7 @@ class ArticleControllerTest {
                                 description: String?,
                                 body: String?,
                                 tagList: List<String>?
-                            ): Either<CreateArticleUseCase.Error, CreatedArticle> = testCase.useCaseExecuteResult
+                            ): Either<CreateArticleUseCase.Error, CreatedArticleWithAuthor> = testCase.useCaseExecuteResult
                         },
                     )
 

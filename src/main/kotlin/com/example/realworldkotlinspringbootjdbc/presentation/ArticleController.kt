@@ -151,7 +151,7 @@ class ArticleController(
             is Right -> {
                 val article = NullableArticle.from(rawRequestBody)
                 when (
-                    val createdArticle = createArticle.execute(
+                    val createdArticleWithAuthor = createArticle.execute(
                         authorizeResult.value,
                         article.title,
                         article.description,
@@ -162,7 +162,7 @@ class ArticleController(
                     /**
                      * 記事作成 失敗
                      */
-                    is Left -> when (val useCaseError = createdArticle.value) {
+                    is Left -> when (val useCaseError = createdArticleWithAuthor.value) {
                         /**
                          * 原因: バリデーションエラー
                          */
@@ -183,7 +183,7 @@ class ArticleController(
                      */
                     is Right -> {
                         ResponseEntity(
-                            Article.from(createdArticle.value).serializeWithRootName(),
+                            Article.from(createdArticleWithAuthor.value).serializeWithRootName(),
                             HttpStatus.valueOf(200),
                         )
                     }
