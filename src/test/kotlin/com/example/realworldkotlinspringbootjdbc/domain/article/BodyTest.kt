@@ -15,65 +15,67 @@ import org.junit.jupiter.api.Test
 
 class BodyTest {
 
-    @Property
-    fun `正常系-長さが有効な場合、検証済みの作成済み記事のBodyが戻り値`(
-        @ForAll @From(supplier = BodyValidRange::class) validString: String,
-    ) {
-        /**
-         * given:
-         */
+    class New {
+        @Property
+        fun `正常系-長さが有効な場合、検証済みの作成済み記事のBodyが戻り値`(
+            @ForAll @From(supplier = BodyValidRange::class) validString: String,
+        ) {
+            /**
+             * given:
+             */
 
-        /**
-         * when:
-         */
-        val actual = Body.new(validString)
+            /**
+             * when:
+             */
+            val actual = Body.new(validString)
 
-        /**
-         * then:
-         */
-        when (actual) {
-            is Invalid -> assert(false) { "原因: ${actual.value}" }
-            is Valid -> assertThat(actual.value.value).isEqualTo(validString)
+            /**
+             * then:
+             */
+            when (actual) {
+                is Invalid -> assert(false) { "原因: ${actual.value}" }
+                is Valid -> assertThat(actual.value.value).isEqualTo(validString)
+            }
         }
-    }
 
-    @Property
-    fun `準正常系-長さが長すぎる場合、バリデーションエラーが戻り値`(
-        @ForAll @StringLength(min = 1025) tooLongString: String
-    ) {
-        /**
-         * given:
-         */
+        @Property
+        fun `準正常系-長さが長すぎる場合、バリデーションエラーが戻り値`(
+            @ForAll @StringLength(min = 1025) tooLongString: String
+        ) {
+            /**
+             * given:
+             */
 
-        /**
-         * when:
-         */
-        val actual = Body.new(tooLongString)
+            /**
+             * when:
+             */
+            val actual = Body.new(tooLongString)
 
-        /**
-         * then:
-         */
-        val expected = Body.ValidationError.TooLong(tooLongString).invalidNel()
-        assertThat(actual).isEqualTo(expected)
-    }
+            /**
+             * then:
+             */
+            val expected = Body.ValidationError.TooLong(tooLongString).invalidNel()
+            assertThat(actual).isEqualTo(expected)
+        }
 
-    @Test
-    fun `準正常系-nullの場合、バリデーションエラーが戻り値`() {
-        /**
-         * given:
-         */
-        val nullString = null
+        @Test
+        fun `準正常系-nullの場合、バリデーションエラーが戻り値`() {
+            /**
+             * given:
+             */
+            val nullString = null
 
-        /**
-         * when:
-         */
-        val actual = Body.new(nullString)
+            /**
+             * when:
+             */
+            val actual = Body.new(nullString)
 
-        /**
-         * then:
-         */
-        val expected = Body.ValidationError.Required.invalidNel()
-        assertThat(actual).isEqualTo(expected)
+            /**
+             * then:
+             */
+            val expected = Body.ValidationError.Required.invalidNel()
+            assertThat(actual).isEqualTo(expected)
+        }
     }
 
     /**
