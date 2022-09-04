@@ -9,6 +9,7 @@ import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
+import com.example.realworldkotlinspringbootjdbc.domain.UncreatedArticle
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.article.Tag
@@ -17,7 +18,9 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 import java.text.SimpleDateFormat
+import java.util.*
 import com.example.realworldkotlinspringbootjdbc.domain.article.Body as ArticleBody
 
 @Repository
@@ -742,5 +745,139 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         } catch (e: Throwable) {
             ArticleRepository.UnfavoriteError.Unexpected(e, slug, currentUserId).left()
         }
+    }
+
+    @Transactional
+    override fun create(uncreatedArticle: UncreatedArticle): Either<ArticleRepository.CreateError, CreatedArticle> {
+        val currentDate = Date()
+        val insertArticleSql = """
+            INSERT INTO articles
+                (
+                    author_id
+                    , slug
+                    , title
+                    , body
+                    , description
+                    , created_at
+                    , updated_at
+                )
+            VALUES
+                (
+                    :author_id
+                    , :slug
+                    , :title
+                    , :body
+                    , :description
+                    , :created_at
+                    , :updated_at
+                )
+            RETURNING
+                id
+            ;
+        """.trimIndent()
+        val articleId = namedParameterJdbcTemplate.queryForMap(
+            insertArticleSql,
+            MapSqlParameterSource()
+                .addValue("author_id", uncreatedArticle.authorId.value)
+                .addValue("slug", uncreatedArticle.slug.value)
+                .addValue("title", uncreatedArticle.title.value)
+                .addValue("description", uncreatedArticle.description.value)
+                .addValue("body", uncreatedArticle.body.value)
+                .addValue("created_at", currentDate)
+                .addValue("updated_at", currentDate)
+        )["id"].toString().toInt()
+
+        val createdArticle = CreatedArticle.newWithoutValidation(
+            id = ArticleId(articleId),
+            title = uncreatedArticle.title,
+            slug = uncreatedArticle.slug,
+            body = uncreatedArticle.body,
+            description = uncreatedArticle.description,
+            tagList = uncreatedArticle.tagList,
+            authorId = uncreatedArticle.authorId,
+            favorited = false,
+            favoritesCount = 0,
+            createdAt = currentDate,
+            updatedAt = currentDate,
+        )
+
+        /**
+         * タグリストがない -> 不要-永続化
+         */
+        if (uncreatedArticle.tagList.isEmpty()) {
+            return createdArticle.right()
+        }
+
+        /**
+         * タグリストがある -> 要-永続化
+         */
+        val bulkInsertTagsSql = """
+            INSERT INTO tags
+                (
+                    name
+                    , created_at
+                    , updated_at
+                )
+            VALUES
+                (
+                    :name
+                    , :created_at
+                    , :updated_at
+                )
+            ON CONFLICT
+                (
+                    name
+                )
+            DO NOTHING
+            ;
+        """.trimIndent()
+        namedParameterJdbcTemplate.batchUpdate(
+            bulkInsertTagsSql,
+            uncreatedArticle.tagList.map {
+                MapSqlParameterSource()
+                    .addValue("name", it.value)
+                    .addValue("created_at", currentDate)
+                    .addValue("updated_at", currentDate)
+            }.toTypedArray()
+        )
+        val selectTagsSql = """
+            SELECT
+                id
+            FROM
+                tags
+            WHERE
+                name
+            IN (:name)
+            ;
+        """.trimIndent()
+        val tagIdList = namedParameterJdbcTemplate.queryForList(
+            selectTagsSql,
+            MapSqlParameterSource().addValue("name", uncreatedArticle.tagList.map { it.value }.toSet())
+        ).map { it["id"].toString().toInt() }
+        val bulkInsertRelationsOfArticleToTagSql = """
+            INSERT INTO article_tags
+                (
+                    article_id
+                    , tag_id
+                    , created_at
+                )
+            VALUES
+                (
+                    :article_id
+                    , :tag_id
+                    , :created_at
+                )
+            ;
+        """.trimIndent()
+        namedParameterJdbcTemplate.batchUpdate(
+            bulkInsertRelationsOfArticleToTagSql,
+            tagIdList.map { tagId ->
+                MapSqlParameterSource()
+                    .addValue("article_id", articleId)
+                    .addValue("tag_id", tagId)
+                    .addValue("created_at", currentDate)
+            }.toTypedArray()
+        )
+        return createdArticle.right()
     }
 }

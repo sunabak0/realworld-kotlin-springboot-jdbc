@@ -3,11 +3,13 @@ package com.example.realworldkotlinspringbootjdbc.infra
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import arrow.core.left
+import arrow.core.orNull
 import arrow.core.right
 import arrow.core.toOption
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
+import com.example.realworldkotlinspringbootjdbc.domain.UncreatedArticle
 import com.example.realworldkotlinspringbootjdbc.domain.article.Body
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
@@ -18,6 +20,7 @@ import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Tag
@@ -1121,6 +1124,247 @@ class ArticleRepositoryImplTest {
                 ArticleRepository.UnfavoriteError.NotFoundCreatedArticleBySlug(Slug.newWithoutValidation("not-existed-dummy-slug"))
                     .left()
             assertThat(actual).isEqualTo(expected)
+        }
+    }
+
+    @Nested
+    @Tag("WithLocalDb")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    class Create {
+        @BeforeEach
+        fun reset() = DbConnection.resetSequence()
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/article_repository/create-success-case-of-simple.yml"],
+            ignoreCols = ["id", "slug", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        // NOTE: @ExportDataSetはgivenの@DataSetを変更した時用に残しておく
+        // @ExportDataSet(
+        //     format = DataSetFormat.YML,
+        //     outputName = "src/test/resources/datasets/yml/then/article_repository/create-success-case-of-simple.yml",
+        //     includeTables = ["articles", "article_tags", "tags"]
+        // )
+        fun `正常系-articlesは1つ分増え、tagsとarticle_tagsはタグリスト分だけ増える`() {
+            /**
+             * given:
+             * - 未作成の記事
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val uncreatedArticle = UncreatedArticle.new(
+                title = "プログラマーが知るべき97のこと",
+                description = "2022年9月時点では、107個ある",
+                body = "1. 分別ある行動, 2. 関数型プログラミングを学ぶことの重要性, ...", // TODO: 改行が入っても大丈夫なようにする
+                tagList = listOf("エッセイ", "プログラミング"),
+                authorId = UserId(1)
+            ).orNull()!!
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.create(uncreatedArticle)
+
+            /**
+             * then:
+             * - 作成済み記事
+             */
+            when (actual) {
+                is Left -> assert(false) { "原因: ${actual.value}" }
+                is Right -> {
+                    val article = actual.value
+                    assertThat(article.slug).isEqualTo(uncreatedArticle.slug)
+                    assertThat(article.title).isEqualTo(uncreatedArticle.title)
+                    assertThat(article.description).isEqualTo(uncreatedArticle.description)
+                    assertThat(article.body).isEqualTo(uncreatedArticle.body)
+                    assertThat(article.tagList).hasSameElementsAs(uncreatedArticle.tagList)
+                    assertThat(article.authorId).isEqualTo(uncreatedArticle.authorId)
+                    assertThat(article.favorited).isFalse
+                    assertThat(article.favoritesCount).isEqualTo(0)
+                }
+            }
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/article_repository/create-success-case-of-empty-tag-list.yml"],
+            ignoreCols = ["id", "slug", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        // NOTE: @ExportDataSetはgivenの@DataSetを変更した時用に残しておく
+        // @ExportDataSet(
+        //     format = DataSetFormat.YML,
+        //     outputName = "src/test/resources/datasets/yml/then/article_repository/create-success-case-of-empty-tag-list.yml",
+        //     includeTables = ["articles", "article_tags", "tags"]
+        // )
+        fun `正常系-タグリストが空の場合、articlesが1つ分増えるが、tagsとarticle_tagsは増えない`() {
+            /**
+             * given:
+             * - 未作成の記事
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val uncreatedArticle = UncreatedArticle.new(
+                title = "ソフトウェアアーキテクトが知るべき97のこと",
+                description = "2022年9月時点では、108個ある",
+                body = "1. システムの要件よりも履歴書の見栄えを優先させてはならない, 2. 本質的な複雑さは単純に、付随的な複雑さは取り除け, ...",
+                tagList = emptyList(),
+                authorId = UserId(1)
+            ).orNull()!!
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.create(uncreatedArticle)
+
+            /**
+             * then:
+             * - 作成済み記事
+             */
+            when (actual) {
+                is Left -> assert(false) { "原因: ${actual.value}" }
+                is Right -> {
+                    val article = actual.value
+                    assertThat(article.slug).isEqualTo(uncreatedArticle.slug)
+                    assertThat(article.title).isEqualTo(uncreatedArticle.title)
+                    assertThat(article.description).isEqualTo(uncreatedArticle.description)
+                    assertThat(article.body).isEqualTo(uncreatedArticle.body)
+                    assertThat(article.tagList).hasSameElementsAs(uncreatedArticle.tagList)
+                    assertThat(article.authorId).isEqualTo(uncreatedArticle.authorId)
+                    assertThat(article.favorited).isFalse
+                    assertThat(article.favoritesCount).isEqualTo(0)
+                }
+            }
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/article_repository/create-success-case-of-partially-duplicated-tag-list.yml"],
+            ignoreCols = ["id", "slug", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        // NOTE: @ExportDataSetはgivenの@DataSetを変更した時用に残しておく
+        // @ExportDataSet(
+        //     format = DataSetFormat.YML,
+        //     outputName = "src/test/resources/datasets/yml/then/article_repository/create-success-case-of-partially-duplicated-tag-list.yml",
+        //     includeTables = ["articles", "article_tags", "tags"]
+        // )
+        fun `正常系-一部のタグが既に保存されている場合、tagsは差分だけ増え、article_tagsはタグリスト分だけ増える`() {
+            /**
+             * given:
+             * - 未作成の記事
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val uncreatedArticle = UncreatedArticle.new(
+                title = "Comparing JVM lang",
+                description = "JVM",
+                body = "",
+                tagList = listOf("kotlin", "clojure", "scala", "groovy"),
+                authorId = UserId(1)
+            ).orNull()!!
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.create(uncreatedArticle)
+
+            /**
+             * then:
+             * - 作成済み記事
+             */
+            when (actual) {
+                is Left -> assert(false) { "原因: ${actual.value}" }
+                is Right -> {
+                    val article = actual.value
+                    assertThat(article.slug).isEqualTo(uncreatedArticle.slug)
+                    assertThat(article.title).isEqualTo(uncreatedArticle.title)
+                    assertThat(article.description).isEqualTo(uncreatedArticle.description)
+                    assertThat(article.body).isEqualTo(uncreatedArticle.body)
+                    assertThat(article.tagList).hasSameElementsAs(uncreatedArticle.tagList)
+                    assertThat(article.authorId).isEqualTo(uncreatedArticle.authorId)
+                    assertThat(article.favorited).isFalse
+                    assertThat(article.favoritesCount).isEqualTo(0)
+                }
+            }
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/article_repository/create-success-case-of-full-duplicated-tag-list.yml"],
+            ignoreCols = ["id", "slug", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        // NOTE: @ExportDataSetはgivenの@DataSetを変更した時用に残しておく
+        // @ExportDataSet(
+        //     format = DataSetFormat.YML,
+        //     outputName = "src/test/resources/datasets/yml/then/article_repository/create-success-case-of-full-duplicated-tag-list.yml",
+        //     includeTables = ["articles", "article_tags", "tags"]
+        // )
+        fun `正常系-全てののタグが既に保存されている場合、tagsは増えず、article_tagsはタグリスト分だけ増える`() {
+            /**
+             * given:
+             * - 未作成の記事
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val uncreatedArticle = UncreatedArticle.new(
+                title = "Rust vs Scala vs Kotlin2",
+                description = "",
+                body = "",
+                tagList = listOf("kotlin", "scala", "rust"),
+                authorId = UserId(1)
+            ).orNull()!!
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.create(uncreatedArticle)
+
+            /**
+             * then:
+             * - 作成済み記事
+             */
+            when (actual) {
+                is Left -> assert(false) { "原因: ${actual.value}" }
+                is Right -> {
+                    val article = actual.value
+                    assertThat(article.slug).isEqualTo(uncreatedArticle.slug)
+                    assertThat(article.title).isEqualTo(uncreatedArticle.title)
+                    assertThat(article.description).isEqualTo(uncreatedArticle.description)
+                    assertThat(article.body).isEqualTo(uncreatedArticle.body)
+                    assertThat(article.tagList).hasSameElementsAs(uncreatedArticle.tagList)
+                    assertThat(article.authorId).isEqualTo(uncreatedArticle.authorId)
+                    assertThat(article.favorited).isFalse
+                    assertThat(article.favoritesCount).isEqualTo(0)
+                }
+            }
         }
     }
 }

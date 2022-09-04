@@ -42,8 +42,8 @@ complexity:
   # - 空行はカウントされない
   #
   LargeClass:
-    active: true
-    threshold: 671 # (default: 600)
+    active: false # (default: true)
+    threshold: 600 # (default: 600)
   #
   # LongMethod
   #
