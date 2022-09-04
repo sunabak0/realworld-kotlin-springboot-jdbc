@@ -51,7 +51,7 @@ class IntegerConstraints {
 
         @Property
         fun `@IntRange を用いると、0 を指定できる`(
-            @ForAll @IntRange(min=0, max=0) zero: Int
+            @ForAll @IntRange(min = 0, max = 0) zero: Int
         ) {
             /**
              * given:
