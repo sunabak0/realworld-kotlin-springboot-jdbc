@@ -26,9 +26,6 @@ interface CreateArticleUseCase {
 
     sealed interface Error : MyError {
         data class InvalidArticle(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
-        data class AlreadyCreatedArticle(override val cause: MyError, val article: UncreatedArticle) :
-            Error,
-            MyError.MyErrorWithMyError
     }
 }
 

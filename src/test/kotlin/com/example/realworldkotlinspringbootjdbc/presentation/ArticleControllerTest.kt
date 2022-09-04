@@ -474,29 +474,7 @@ class ArticleControllerTest {
                         """{"errors":{"body":[{"key":"dummy-key","message":"dummy-message"}]}}""",
                         HttpStatus.valueOf(422)
                     )
-                ),
-                TestCase(
-                    title = "準正常系-ユースケース（CreateArticleUseCase）が「既にタイトルは使用されています」を返すとき、レスポンスのステータスコードが 422 になる",
-                    useCaseExecuteResult = CreateArticleUseCase.Error.AlreadyCreatedArticle(
-                        cause = object : MyError {},
-                        article = object : UncreatedArticle {
-                            override val title: Title get() = Title.newWithoutValidation("dummy-title")
-                            override val slug: Slug get() = Slug.newWithoutValidation("dummy-slug")
-                            override val description: Description get() = Description.newWithoutValidation("dummy-description")
-                            override val body: ArticleBody get() = ArticleBody.newWithoutValidation("dummy-body")
-                            override val tagList: List<Tag>
-                                get() = listOf(
-                                    Tag.newWithoutValidation("dummy-tag1"),
-                                    Tag.newWithoutValidation("dummy-tag2")
-                                )
-                            override val authorId: UserId get() = UserId(1)
-                        }
-                    ).left(),
-                    expected = ResponseEntity(
-                        """{"errors":{"body":["タイトルは既に使用されています。"]}}""",
-                        HttpStatus.valueOf(422)
-                    )
-                ),
+                )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     /**
