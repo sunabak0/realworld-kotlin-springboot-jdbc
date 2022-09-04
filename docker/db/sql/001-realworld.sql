@@ -82,6 +82,7 @@ CREATE UNIQUE INDEX followings_index ON public.followings USING btree (following
 CREATE UNIQUE INDEX index_articles_on_slug ON public.articles USING btree (slug);
 CREATE UNIQUE INDEX index_users_on_email ON public.users USING btree (email);
 CREATE UNIQUE INDEX index_users_on_username ON public.users USING btree (username);
+CREATE UNIQUE INDEX index_tags_on_name ON public.tags USING btree (name);
 
 -- Relation
 --ALTER TABLE ONLY public.favorites
