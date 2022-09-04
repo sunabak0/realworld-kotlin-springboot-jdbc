@@ -1,5 +1,7 @@
 package com.example.realworldkotlinspringbootjdbc.domain.article
 
+import arrow.core.Validated.Invalid
+import arrow.core.Validated.Valid
 import arrow.core.invalidNel
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
 import net.jqwik.api.ForAll
@@ -10,6 +12,29 @@ import org.junit.jupiter.api.Test
 
 class CommentIdTest {
     class NewTest {
+
+        @Property(tries = 100)
+        fun `正常系-自然数の場合`(
+            @ForAll @IntRange(min = 1) naturalNumber: Int
+        ) {
+            /**
+             * given:
+             */
+
+            /**
+             * when:
+             */
+            val actual = CommentId.new(naturalNumber)
+
+            /**
+             * then:
+             */
+            when (actual) {
+                is Invalid -> assert(false) { "原因: ${actual.value}" }
+                is Valid -> assertThat(actual.value.value).isEqualTo(naturalNumber)
+            }
+        }
+
         @Test
         fun `準正常系-null の場合、バリデーションエラーが戻り値`() {
             /**
