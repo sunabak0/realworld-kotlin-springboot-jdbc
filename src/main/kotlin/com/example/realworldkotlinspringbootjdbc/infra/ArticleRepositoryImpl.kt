@@ -802,14 +802,14 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         )
 
         /**
-         * タグリストがない -> 不要-永続化
+         * タグリストが空 -> これ以上の永続化は不要
          */
         if (uncreatedArticle.tagList.isEmpty()) {
             return createdArticle.right()
         }
 
         /**
-         * タグリストがある -> 要-永続化
+         * タグリストが空ではない -> タグリストの永続化
          */
         val bulkInsertTagsSql = """
             INSERT INTO tags
