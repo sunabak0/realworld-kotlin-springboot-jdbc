@@ -25,6 +25,17 @@ class NullableCommentTest {
                 expected = NullableComment(
                     body = null
                 )
+            ),
+            TestCase(
+                title = "JSON のフォーマットがおかしい場合、メンバが全て null の NullableComment が取得できる",
+                rawRequestBody = """
+                    {
+                        "comment": {}...
+                    }
+                """.trimIndent(),
+                expected = NullableComment(
+                    body = null
+                )
             )
         ).map { testCase ->
             dynamicTest(testCase.title) {
@@ -43,18 +54,6 @@ class NullableCommentTest {
                 assertThat(actual).isEqualTo(testCase.expected)
             }
         }
-    }
-
-    @Test
-    fun `JSON のフォーマットがおかしい場合、メンバが全て null の NullableComment が取得できる`() {
-        val json = """
-            {
-                "comment": {}...
-            }
-        """.trimIndent()
-        val actual = NullableComment.from(json)
-        val expected = NullableComment(null)
-        Assertions.assertThat(actual).isEqualTo(expected)
     }
 
     @Nested
