@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test
 class CommentIdTest {
     class NewTest {
 
-        @Property(tries = 100)
+        @Property
         fun `正常系-自然数の場合`(
             @ForAll @IntRange(min = 1) naturalNumber: Int
         ) {
@@ -54,7 +54,7 @@ class CommentIdTest {
             assertThat(actual).isEqualTo(expected)
         }
 
-        @Property(tries = 100)
+        @Property
         fun `準正常系-自然数でない場合`(
             @ForAll @IntRange(min = 0) naturalNumber: Int
         ) {
