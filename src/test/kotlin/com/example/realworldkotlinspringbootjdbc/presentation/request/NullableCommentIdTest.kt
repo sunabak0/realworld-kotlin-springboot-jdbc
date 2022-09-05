@@ -32,8 +32,19 @@ class NullableCommentIdTest {
 
         @Test
         fun `0の場合、戻り値は整数`() {
+            /**
+             * given:
+             */
             val pathParam = "0"
+
+            /**
+             * when:
+             */
             val actual = NullableCommentId.from(pathParam)
+
+            /**
+             * then:
+             */
             val expected = 0
             Assertions.assertThat(actual).isEqualTo(expected)
         }
