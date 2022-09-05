@@ -47,6 +47,17 @@ class NullableCommentTest {
                 expected = NullableComment(
                     body = null
                 )
+            ),
+            TestCase(
+                title = "引数の JSON 文字列が \"comment\" を key に持ち、プロパティが揃っている場合、全てのプロパティを持つ NullableComment が取得できる",
+                rawRequestBody = """
+                    {
+                        "comment": {
+                            "body": "dummy-body"
+                        }
+                    }
+                """.trimIndent(),
+                expected = NullableComment("dummy-body")
             )
         ).map { testCase ->
             dynamicTest(testCase.title) {
@@ -69,21 +80,6 @@ class NullableCommentTest {
 
     @Nested
     class `引数の JSON 文字列が "comment" を key に持つ場合` {
-        @Test
-        fun `プロパティが揃っている場合、全てのプロパティを持つ NullableComment が取得できる`() {
-            val body = "dummy-body"
-            val json = """
-                {
-                    "comment": {
-                        "body": "$body"
-                    }
-                }
-            """.trimIndent()
-            val actual = NullableComment.from(json)
-            val expected = NullableComment(body)
-            Assertions.assertThat(actual).isEqualTo(expected)
-        }
-
         @Test
         fun `想定していないプロパティがあっても無視した NullableComment が取得できる`() {
             val body = "dummy-body"
