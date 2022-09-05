@@ -3,6 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.presentation.request
 import net.jqwik.api.ForAll
 import net.jqwik.api.Property
 import net.jqwik.api.constraints.IntRange
+import net.jqwik.api.constraints.Negative
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -49,12 +50,24 @@ class NullableCommentIdTest {
             Assertions.assertThat(actual).isEqualTo(expected)
         }
 
-        @Test
-        fun `負の整数の場合、戻り値は null`() {
-            val pathParam = "-1"
+        @Property
+        fun `負の整数の場合、戻り値は整数`(
+            @ForAll @Negative negativeNumber: Int
+        ) {
+            /**
+             * given:
+             */
+            val pathParam = negativeNumber.toString()
+
+            /**
+             * when:
+             */
             val actual = NullableCommentId.from(pathParam)
-            val expected = -1
-            Assertions.assertThat(actual).isEqualTo(expected)
+
+            /**
+             * then
+             */
+            Assertions.assertThat(actual).isEqualTo(negativeNumber)
         }
 
         @Test
