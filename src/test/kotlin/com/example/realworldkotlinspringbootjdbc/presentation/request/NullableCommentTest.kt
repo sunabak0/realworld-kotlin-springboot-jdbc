@@ -1,11 +1,8 @@
 package com.example.realworldkotlinspringbootjdbc.presentation.request
 
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import java.util.stream.Stream
 
@@ -58,6 +55,18 @@ class NullableCommentTest {
                     }
                 """.trimIndent(),
                 expected = NullableComment("dummy-body")
+            ),
+            TestCase(
+                title = "引数の JSON 文字列が \"commen\" を key に持ち、想定していないプロパティがあっても無視した NullableComment が取得できる",
+                rawRequestBody = """
+                    {
+                        "comment": {
+                            "must-ignore": "must-ignore",
+                            "body": "dummy-body"
+                        }
+                    }
+                """.trimIndent(),
+                expected = NullableComment("dummy-body")
             )
         ).map { testCase ->
             dynamicTest(testCase.title) {
@@ -75,25 +84,6 @@ class NullableCommentTest {
                  */
                 assertThat(actual).isEqualTo(testCase.expected)
             }
-        }
-    }
-
-    @Nested
-    class `引数の JSON 文字列が "comment" を key に持つ場合` {
-        @Test
-        fun `想定していないプロパティがあっても無視した NullableComment が取得できる`() {
-            val body = "dummy-body"
-            val json = """
-                {
-                    "comment": {
-                        "must-ignore": "must-ignore",
-                        "body": "$body"
-                    }
-                }
-            """.trimIndent()
-            val actual = NullableComment.from(json)
-            val expected = NullableComment(body)
-            Assertions.assertThat(actual).isEqualTo(expected)
         }
     }
 }
