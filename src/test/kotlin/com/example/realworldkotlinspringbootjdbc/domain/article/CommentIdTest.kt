@@ -56,13 +56,11 @@ class CommentIdTest {
 
         @Property
         fun `準正常系-自然数でない場合`(
-            @ForAll @IntRange(min = 0) naturalNumber: Int
+            @ForAll @IntRange(min = Int.MIN_VALUE, max = 0) notNaturalNumber: Int
         ) {
             /**
              * given:
-             * 0 以上の整数に -1 を乗算することで、自然数でない整数を表現する
              */
-            val notNaturalNumber = -1 * naturalNumber
 
             /**
              * when:
