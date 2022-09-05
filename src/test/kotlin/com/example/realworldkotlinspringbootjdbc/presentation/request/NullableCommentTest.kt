@@ -17,14 +17,14 @@ class NullableCommentTest {
     fun test(): Stream<DynamicNode> {
         return Stream.of(
             TestCase(
-                title = "引数が null の場合、メンバが全て null の NullableComment が取得できる",
+                title = "準正常系-引数が null の場合、メンバが全て null の NullableComment が取得できる",
                 rawRequestBody = null,
                 expected = NullableComment(
                     body = null
                 )
             ),
             TestCase(
-                title = "JSON のフォーマットがおかしい場合、メンバが全て null の NullableComment が取得できる",
+                title = "準正常系-JSON のフォーマットがおかしい場合、メンバが全て null の NullableComment が取得できる",
                 rawRequestBody = """
                     {
                         "comment": {}...
@@ -35,7 +35,7 @@ class NullableCommentTest {
                 )
             ),
             TestCase(
-                title = "引数の JSON 文字列が \"comment\" を key に持ち、残りが空の場合メンバが全て null の NullableComment が取得できる",
+                title = "準正常系-引数の JSON 文字列が \"comment\" を key に持ち、残りが空の場合メンバが全て null の NullableComment が取得できる",
                 rawRequestBody = """
                     {
                         "comment": {}
@@ -46,7 +46,7 @@ class NullableCommentTest {
                 )
             ),
             TestCase(
-                title = "引数の JSON 文字列が \"comment\" を key に持ち、プロパティが揃っている場合、全てのプロパティを持つ NullableComment が取得できる",
+                title = "正常系-引数の JSON 文字列が \"comment\" を key に持ち、プロパティが揃っている場合、全てのプロパティを持つ NullableComment が取得できる",
                 rawRequestBody = """
                     {
                         "comment": {
@@ -57,7 +57,7 @@ class NullableCommentTest {
                 expected = NullableComment("dummy-body")
             ),
             TestCase(
-                title = "引数の JSON 文字列が \"commen\" を key に持ち、想定していないプロパティがあっても無視した NullableComment が取得できる",
+                title = "正常系-引数の JSON 文字列が \"comment\" を key に持ち、想定していないプロパティがあっても無視した NullableComment が取得できる",
                 rawRequestBody = """
                     {
                         "comment": {
