@@ -9,7 +9,6 @@ import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
 import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
-import com.example.realworldkotlinspringbootjdbc.domain.UncreatedArticle
 import com.example.realworldkotlinspringbootjdbc.domain.article.Body
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
 import com.example.realworldkotlinspringbootjdbc.domain.article.FilterParameters
