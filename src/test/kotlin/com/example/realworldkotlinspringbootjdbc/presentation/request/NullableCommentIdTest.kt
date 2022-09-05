@@ -1,5 +1,8 @@
 package com.example.realworldkotlinspringbootjdbc.presentation.request
 
+import net.jqwik.api.ForAll
+import net.jqwik.api.Property
+import net.jqwik.api.constraints.IntRange
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -7,12 +10,24 @@ import org.junit.jupiter.api.Test
 class NullableCommentIdTest {
     @Nested
     class `引数の種類よって戻り値の型を確認する` {
-        @Test
-        fun `正の整数（0 以外）の場合、戻り値は整数`() {
-            val pathParam = "1"
+        @Property
+        fun `正常系-0 以上の整数の場合、戻り値は整数`(
+            @ForAll @IntRange(min = 0, max = Int.MAX_VALUE) positiveNumberOrZero: Int
+        ) {
+            /**
+             * given:
+             */
+            val pathParam = positiveNumberOrZero.toString()
+
+            /**
+             * when:
+             */
             val actual = NullableCommentId.from(pathParam)
-            val expected = 1
-            Assertions.assertThat(actual).isEqualTo(expected)
+
+            /**
+             * then:
+             */
+            Assertions.assertThat(actual).isEqualTo(positiveNumberOrZero)
         }
 
         @Test
