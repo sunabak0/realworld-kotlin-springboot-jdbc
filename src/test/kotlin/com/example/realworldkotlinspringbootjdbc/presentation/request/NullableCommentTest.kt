@@ -1,15 +1,48 @@
 package com.example.realworldkotlinspringbootjdbc.presentation.request
 
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.DynamicNode
+import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
+import java.util.stream.Stream
 
 class NullableCommentTest {
-    @Test
-    fun `引数が null の場合、メンバが全て null の NullableComment が取得できる`() {
-        val actual = NullableComment.from(null)
-        val expected = NullableComment(null)
-        Assertions.assertThat(actual).isEqualTo(expected)
+    private data class TestCase(
+        val title: String,
+        val rawRequestBody: String?,
+        val expected: NullableComment
+    )
+
+    @TestFactory
+    fun test(): Stream<DynamicNode> {
+        return Stream.of(
+            TestCase(
+                title = "引数が null の場合、メンバが全て null の NullableComment が取得できる",
+                rawRequestBody = null,
+                expected = NullableComment(
+                    body = null
+                )
+            )
+        ).map { testCase ->
+            dynamicTest(testCase.title) {
+                /**
+                 * given:
+                 */
+
+                /**
+                 * when:
+                 */
+                val actual = NullableComment.from(testCase.rawRequestBody)
+
+                /**
+                 * then:
+                 */
+                assertThat(actual).isEqualTo(testCase.expected)
+            }
+        }
     }
 
     @Test
