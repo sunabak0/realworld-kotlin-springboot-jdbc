@@ -8,7 +8,7 @@ import net.jqwik.api.constraints.Positive
 import org.assertj.core.api.Assertions.assertThat
 
 /**
- * jqwik の Integer Constraints の境界値（0未満、0、0超過）をテストする
+ * jqwik の Integer Constraints の境界値（0未満、0、0超過）と自然数をテストする
  * [integer-constrains](https://jqwik.net/docs/current/user-guide.html#integer-constraints)
  */
 class IntegerConstraints {
@@ -65,6 +65,42 @@ class IntegerConstraints {
              * then:
              */
             assertThat(zero == 0).isTrue
+        }
+
+        @Property
+        fun `@IntRange を用いると、自然数を指定できる`(
+            @ForAll @IntRange(min = 1, max = Int.MAX_VALUE) naturalNumber: Int
+        ) {
+            /**
+             * given:
+             */
+
+            /**
+             * when:
+             */
+
+            /**
+             * then:
+             */
+            assertThat(naturalNumber > 0).isTrue
+        }
+
+        @Property
+        fun `@IntRange を用いると、自然数でない整数（0 未満の整数）を指定できる`(
+            @ForAll @IntRange(min = Int.MIN_VALUE, max = 0) notNaturalNumber: Int
+        ) {
+            /**
+             * given:
+             */
+
+            /**
+             * when:
+             */
+
+            /**
+             * then:
+             */
+            assertThat(notNaturalNumber <= 0).isTrue
         }
     }
 }
