@@ -36,6 +36,17 @@ class NullableCommentTest {
                 expected = NullableComment(
                     body = null
                 )
+            ),
+            TestCase(
+                title = "引数の JSON 文字列が \"comment\" を key に持ち、残りが空の場合メンバが全て null の NullableComment が取得できる",
+                rawRequestBody = """
+                    {
+                        "comment": {}
+                    }
+                """.trimIndent(),
+                expected = NullableComment(
+                    body = null
+                )
             )
         ).map { testCase ->
             dynamicTest(testCase.title) {
@@ -58,18 +69,6 @@ class NullableCommentTest {
 
     @Nested
     class `引数の JSON 文字列が "comment" を key に持つ場合` {
-        @Test
-        fun `残りが空っぽの場合、メンバが全て null の NullableComment が取得できる`() {
-            val json = """
-                {
-                    "comment": {}
-                }
-            """.trimIndent()
-            val actual = NullableComment.from(json)
-            val expected = NullableComment(null)
-            Assertions.assertThat(actual).isEqualTo(expected)
-        }
-
         @Test
         fun `プロパティが揃っている場合、全てのプロパティを持つ NullableComment が取得できる`() {
             val body = "dummy-body"
