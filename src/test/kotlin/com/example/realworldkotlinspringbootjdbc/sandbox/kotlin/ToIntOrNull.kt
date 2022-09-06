@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test
  */
 class ToIntOrNull {
     @Nested
-    class `小数部が 0 の小数の場合、戻り値は null`() {
+    class `小数部が 0 の小数の場合、戻り値は null` {
         val expected = null
 
         @Test
