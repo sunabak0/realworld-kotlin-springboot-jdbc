@@ -34,7 +34,7 @@ class NullableCommentIdTest {
         }
 
         @Test
-        fun `文字列の場合、戻り値は null`() {
+        fun `正常系-文字列の場合、戻り値は null`() {
             /**
              * given:
              */
@@ -53,7 +53,7 @@ class NullableCommentIdTest {
         }
 
         @Test
-        fun `null の場合、戻り値は null`() {
+        fun `正常系-null の場合、戻り値は null`() {
             /**
              * given:
              */
