@@ -10,7 +10,6 @@ import net.jqwik.api.ArbitrarySupplier
 import net.jqwik.api.ForAll
 import net.jqwik.api.From
 import net.jqwik.api.Property
-import net.jqwik.api.constraints.IntRange
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -59,8 +58,8 @@ class CommentIdTest {
         }
 
         @Property
-        fun `準正常系-自然数でない場合`(
-            @ForAll @IntRange(min = Int.MIN_VALUE, max = 0) notNaturalNumber: Int
+        fun `準正常系-値が有効ではない（自然ではない）場合`(
+            @ForAll @From(supplier = CommentIdInvalidRange::class) invalidInt: Int
         ) {
             /**
              * given:
@@ -69,12 +68,12 @@ class CommentIdTest {
             /**
              * when:
              */
-            val actual = CommentId.new(notNaturalNumber)
+            val actual = CommentId.new(invalidInt)
 
             /**
              * then:
              */
-            val expected = CommentId.ValidationError.MustBeNaturalNumber(notNaturalNumber).invalidNel()
+            val expected = CommentId.ValidationError.MustBeNaturalNumber(invalidInt).invalidNel()
             assertThat(actual).isEqualTo(expected)
         }
     }
@@ -86,5 +85,14 @@ class CommentIdTest {
         override fun get(): Arbitrary<Int> =
             Arbitraries.integers()
                 .greaterOrEqual(1)
+    }
+
+    /**
+     * CommentId の無効な範囲（0 と 負の整数）の Int プロパティ
+     */
+    class CommentIdInvalidRange : ArbitrarySupplier<Int> {
+        override fun get(): Arbitrary<Int> =
+            Arbitraries.integers()
+                .lessOrEqual(0)
     }
 }
