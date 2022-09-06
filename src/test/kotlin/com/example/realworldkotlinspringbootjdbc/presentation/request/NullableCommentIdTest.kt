@@ -51,8 +51,19 @@ class NullableCommentIdTest {
 
         @Test
         fun `null の場合、戻り値は null`() {
+            /**
+             * given:
+             */
             val pathParam = null
+
+            /**
+             * when:
+             */
             val actual = NullableCommentId.from(pathParam)
+
+            /**
+             * then:
+             */
             val expected = null
             Assertions.assertThat(actual).isEqualTo(expected)
         }
