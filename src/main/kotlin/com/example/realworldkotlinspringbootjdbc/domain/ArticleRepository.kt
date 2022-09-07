@@ -110,4 +110,13 @@ interface ArticleRepository {
             UnfavoriteError,
             MyError.MyErrorWithThrowable
     }
+
+    /**
+     * 記事を作成
+     *
+     * @param uncreatedArticle 未作成の記事
+     * @return エラー or 作成済みの記事
+     */
+    fun create(uncreatedArticle: UncreatedArticle): Either<CreateError, CreatedArticle> = TODO()
+    sealed interface CreateError : MyError
 }

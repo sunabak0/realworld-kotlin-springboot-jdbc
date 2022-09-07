@@ -1,0 +1,86 @@
+articles:
+  - id: 1
+    author_id: 1
+    title: "Rust vs Scala vs Kotlin"
+    slug: "rust-vs-scala-vs-kotlin"
+    body: "dummy-body"
+    description: "dummy-description"
+    created_at: "2022-09-04 16:33:46.0"
+    updated_at: "2022-09-04 16:33:46.0"
+  - id: 2
+    author_id: 1
+    title: "Functional programming kotlin"
+    slug: "functional-programming-kotlin"
+    body: "dummy-body"
+    description: "dummy-description"
+    created_at: "2022-09-04 16:33:46.0"
+    updated_at: "2022-09-04 16:33:46.0"
+  - id: 3
+    author_id: 2
+    title: "TDD(Type Driven Development)"
+    slug: "tdd-type-driven-development"
+    body: "dummy-body"
+    description: "dummy-description"
+    created_at: "2022-09-04 16:33:46.0"
+    updated_at: "2022-09-04 16:33:46.0"
+  - id: 10001
+    author_id: 1
+    title: "Rust vs Scala vs Kotlin2"
+    slug: "b4ce13caf3f84796a62f6d496ca83684"
+    body: ""
+    description: ""
+    created_at: "2022-09-04 16:33:46.546"
+    updated_at: "2022-09-04 16:33:46.546"
+
+article_tags:
+  - id: 1
+    article_id: 1
+    tag_id: 1
+    created_at: "2022-09-04 16:33:46.0"
+  - id: 2
+    article_id: 1
+    tag_id: 2
+    created_at: "2022-09-04 16:33:46.0"
+  - id: 3
+    article_id: 1
+    tag_id: 3
+    created_at: "2022-09-04 16:33:46.0"
+  - id: 4
+    article_id: 2
+    tag_id: 3
+    created_at: "2022-09-04 16:33:46.0"
+  - id: 10001
+    article_id: 10001
+    tag_id: 1
+    created_at: "2022-09-04 16:33:46.546"
+  - id: 10002
+    article_id: 10001
+    tag_id: 2
+    created_at: "2022-09-04 16:33:46.546"
+  - id: 10003
+    article_id: 10001
+    tag_id: 3
+    created_at: "2022-09-04 16:33:46.546"
+
+tags:
+  - id: 1
+    name: "rust"
+    created_at: "2022-09-04 16:33:46.0"
+    updated_at: "2022-09-04 16:33:46.0"
+  - id: 2
+    name: "scala"
+    created_at: "2022-09-04 16:33:46.0"
+    updated_at: "2022-09-04 16:33:46.0"
+  - id: 3
+    name: "kotlin"
+    created_at: "2022-09-04 16:33:46.0"
+    updated_at: "2022-09-04 16:33:46.0"
+  - id: 4
+    name: "ocaml"
+    created_at: "2022-09-04 16:33:46.0"
+    updated_at: "2022-09-04 16:33:46.0"
+  - id: 5
+    name: "elixir"
+    created_at: "2022-09-04 16:33:46.0"
+    updated_at: "2022-09-04 16:33:46.0"
+

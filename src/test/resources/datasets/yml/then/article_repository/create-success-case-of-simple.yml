@@ -1,0 +1,90 @@
+articles:
+  - id: 1
+    author_id: 1
+    title: "Rust vs Scala vs Kotlin"
+    slug: "rust-vs-scala-vs-kotlin"
+    body: "dummy-body"
+    description: "dummy-description"
+    created_at: "2022-09-04 15:53:21.0"
+    updated_at: "2022-09-04 15:53:21.0"
+  - id: 2
+    author_id: 1
+    title: "Functional programming kotlin"
+    slug: "functional-programming-kotlin"
+    body: "dummy-body"
+    description: "dummy-description"
+    created_at: "2022-09-04 15:53:21.0"
+    updated_at: "2022-09-04 15:53:21.0"
+  - id: 3
+    author_id: 2
+    title: "TDD(Type Driven Development)"
+    slug: "tdd-type-driven-development"
+    body: "dummy-body"
+    description: "dummy-description"
+    created_at: "2022-09-04 15:53:21.0"
+    updated_at: "2022-09-04 15:53:21.0"
+  - id: 10001
+    author_id: 1
+    title: "プログラマーが知るべき97のこと"
+    slug: "59ef4a5a8a214524bf50790ef314dd37"
+    body: "1. 分別ある行動, 2. 関数型プログラミングを学ぶことの重要性, ..."
+    description: "2022年9月時点では、107個ある"
+    created_at: "2022-09-04 15:53:21.973"
+    updated_at: "2022-09-04 15:53:21.973"
+
+article_tags:
+  - id: 1
+    article_id: 1
+    tag_id: 1
+    created_at: "2022-09-04 15:53:21.0"
+  - id: 2
+    article_id: 1
+    tag_id: 2
+    created_at: "2022-09-04 15:53:21.0"
+  - id: 3
+    article_id: 1
+    tag_id: 3
+    created_at: "2022-09-04 15:53:21.0"
+  - id: 4
+    article_id: 2
+    tag_id: 3
+    created_at: "2022-09-04 15:53:21.0"
+  - id: 10001
+    article_id: 10001
+    tag_id: 10001
+    created_at: "2022-09-04 15:53:21.973"
+  - id: 10002
+    article_id: 10001
+    tag_id: 10002
+    created_at: "2022-09-04 15:53:21.973"
+
+tags:
+  - id: 1
+    name: "rust"
+    created_at: "2022-09-04 15:53:21.0"
+    updated_at: "2022-09-04 15:53:21.0"
+  - id: 2
+    name: "scala"
+    created_at: "2022-09-04 15:53:21.0"
+    updated_at: "2022-09-04 15:53:21.0"
+  - id: 3
+    name: "kotlin"
+    created_at: "2022-09-04 15:53:21.0"
+    updated_at: "2022-09-04 15:53:21.0"
+  - id: 4
+    name: "ocaml"
+    created_at: "2022-09-04 15:53:21.0"
+    updated_at: "2022-09-04 15:53:21.0"
+  - id: 5
+    name: "elixir"
+    created_at: "2022-09-04 15:53:21.0"
+    updated_at: "2022-09-04 15:53:21.0"
+  - id: 10001
+    name: "エッセイ"
+    created_at: "2022-09-04 15:53:21.973"
+    updated_at: "2022-09-04 15:53:21.973"
+  - id: 10002
+    name: "プログラミング"
+    created_at: "2022-09-04 15:53:21.973"
+    updated_at: "2022-09-04 15:53:21.973"
+

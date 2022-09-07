@@ -47,6 +47,7 @@ object DbConnection {
                 setval('users_id_seq', $sequenceValue)
                 , setval('profiles_id_seq', $sequenceValue)
                 , setval('followings_id_seq', $sequenceValue)
+                , setval('articles_id_seq', $sequenceValue)
                 , setval('tags_id_seq', $sequenceValue)
                 , setval('article_tags_id_seq', $sequenceValue)
                 , setval('article_comments_id_seq', $sequenceValue)
