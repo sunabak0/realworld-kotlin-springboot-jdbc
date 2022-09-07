@@ -119,4 +119,16 @@ interface ArticleRepository {
      */
     fun create(uncreatedArticle: UncreatedArticle): Either<CreateError, CreatedArticle> = TODO()
     sealed interface CreateError : MyError
+
+    /**
+     * 作成済み記事を削除
+     *   - 紐づくお気に入り関係も削除
+     *
+     * @param articleId 削除したい作成済み記事のId
+     * @return 準正常系:エラー or 正常系:Unit
+     */
+    fun delete(articleId: ArticleId): Either<DeleteError, Unit> = TODO()
+    sealed interface DeleteError : MyError {
+        data class NotFoundArticle(val articleId: ArticleId) : DeleteError, MyError.Basic
+    }
 }

@@ -880,4 +880,62 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         )
         return createdArticle.right()
     }
+
+    override fun delete(articleId: ArticleId): Either<ArticleRepository.DeleteError, Unit> {
+        val deletedCount = namedParameterJdbcTemplate.update(
+            """
+                DELETE
+                FROM
+                    articles
+                WHERE
+                    id = :article_id
+                ;
+            """.trimIndent(),
+            MapSqlParameterSource().addValue("article_id", articleId.value)
+        )
+        /**
+         * 0 -> 見つからなかった -> タグ/お気に入り/コメントは触れない
+         */
+        if (deletedCount == 0) {
+            return ArticleRepository.DeleteError.NotFoundArticle(articleId = articleId).left()
+        }
+
+        /**
+         * 1 -> 削除成功 -> タグ/お気に入り/コメントの関係を削除
+         */
+        namedParameterJdbcTemplate.update(
+            """
+                DELETE
+                FROM
+                    article_tags
+                WHERE
+                    article_id = :article_id
+                ;
+            """.trimIndent(),
+            MapSqlParameterSource().addValue("article_id", articleId.value)
+        )
+        namedParameterJdbcTemplate.update(
+            """
+                DELETE
+                FROM
+                    favorites
+                WHERE
+                    article_id = :article_id
+                ;
+            """.trimIndent(),
+            MapSqlParameterSource().addValue("article_id", articleId.value)
+        )
+        namedParameterJdbcTemplate.update(
+            """
+                DELETE
+                FROM
+                    article_comments
+                WHERE
+                    article_id = :article_id
+                ;
+            """.trimIndent(),
+            MapSqlParameterSource().addValue("article_id", articleId.value)
+        )
+        return Unit.right()
+    }
 }

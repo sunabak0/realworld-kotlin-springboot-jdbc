@@ -1367,4 +1367,86 @@ class ArticleRepositoryImplTest {
             }
         }
     }
+
+    @Tag("WithLocalDb")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    @DisplayName("記事の削除")
+    class Delete {
+        @BeforeAll
+        fun reset() = DbConnection.resetSequence()
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+                "datasets/yml/given/tags.yml",
+            ],
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/article_repository/delete-success.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        // NOTE: @ExportDataSetはgivenの@DataSetが変更された時用に残しておく
+        // @ExportDataSet(
+        //    format = DataSetFormat.YML,
+        //    outputName = "src/test/resources/datasets/yml/then/article_repository/delete-success.yml",
+        //    includeTables = ["articles", "tags", "article_tags", "favorites", "article_comments"]
+        // )
+        fun `正常系-存在する作成済み記事を削除した場合、紐づくタグ・お気に入り・コメント類の関連も削除されるが、タグそのものは削除されない`() {
+            /**
+             * given:
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val existedArticleId = ArticleId(1)
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.delete(existedArticleId)
+
+            /**
+             * then:
+             */
+            val expected = Unit.right()
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+                "datasets/yml/given/tags.yml",
+            ],
+        )
+        @ExpectedDataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+                "datasets/yml/given/tags.yml",
+            ],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-存在しない作成済み記事を削除しようとした場合、見つからなかった旨のエラーが戻り値`() {
+            /**
+             * given:
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val notExistedArticleId = ArticleId(99999)
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.delete(notExistedArticleId)
+
+            /**
+             * then:
+             */
+            val expected = ArticleRepository.DeleteError.NotFoundArticle(
+                articleId = notExistedArticleId
+            ).left()
+            assertThat(actual).isEqualTo(expected)
+        }
+    }
 }
