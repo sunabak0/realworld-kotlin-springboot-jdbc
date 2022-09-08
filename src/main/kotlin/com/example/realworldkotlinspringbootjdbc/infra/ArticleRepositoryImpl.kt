@@ -20,7 +20,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
 import com.example.realworldkotlinspringbootjdbc.domain.article.Body as ArticleBody
 
 @Repository
