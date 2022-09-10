@@ -11,6 +11,7 @@ import com.example.realworldkotlinspringbootjdbc.presentation.response.serialize
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
 import com.example.realworldkotlinspringbootjdbc.usecase.article.CreateArticleUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.article.DeleteCreatedArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.FilterCreatedArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.ShowArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
@@ -37,6 +38,7 @@ class ArticleController(
     val showArticle: ShowArticleUseCase,
     val filterCreatedArticle: FilterCreatedArticleUseCase,
     val createArticle: CreateArticleUseCase,
+    val deleteArticle: DeleteCreatedArticleUseCase,
 ) {
 
     /**
@@ -336,7 +338,52 @@ class ArticleController(
     }
 
     @DeleteMapping("/articles/{slug}")
-    fun delete(): ResponseEntity<String> {
-        return ResponseEntity("", HttpStatus.valueOf(200))
+    fun delete(
+        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
+        @PathVariable("slug") slug: String?
+    ): ResponseEntity<String> {
+        val author = when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
+            /**
+             * 認証: 失敗
+             */
+            is Left -> return AuthorizationError.handle(authorizeResult.value)
+            /**
+             * 認証: 成功
+             */
+            is Right -> authorizeResult.value
+        }
+
+        return when (
+            val deleteResult = deleteArticle.execute(
+                slug = slug,
+                author = author
+            )
+        ) {
+            /**
+             * 削除: 失敗
+             */
+            is Left -> when (val error = deleteResult.value) {
+                is DeleteCreatedArticleUseCase.Error.NotAuthor -> ResponseEntity(
+                    serializeUnexpectedErrorForResponseBody("削除する権限がありません"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                    HttpStatus.valueOf(422)
+                )
+                is DeleteCreatedArticleUseCase.Error.NotFoundArticle -> ResponseEntity(
+                    serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                    HttpStatus.valueOf(422)
+                )
+                /**
+                 * 原因: バリデーションエラー
+                 */
+                is DeleteCreatedArticleUseCase.Error.ValidationError -> ResponseEntity(
+                    serializeMyErrorListForResponseBody(error.errors),
+                    HttpStatus.valueOf(422)
+                )
+            }
+
+            /**
+             * 削除: 成功
+             */
+            is Right -> ResponseEntity("", HttpStatus.valueOf(200))
+        }
     }
 }
