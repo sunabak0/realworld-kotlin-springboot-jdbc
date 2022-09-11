@@ -4,7 +4,7 @@ up: ## サーバー起動
 
 .PHONY: up.db
 up.db: ## db起動
-	docker-compose up
+	docker-compose up pg-web realworld-pg
 
 .PHONY: db.dump
 db.dump: ## 現在のdbの状態をseedとしてdump
@@ -50,6 +50,10 @@ docs.generate-db-docs-schemaspy: ## schemaspyでDB用のドキュメントを作
 docs.generate-kdoc: ## KDocを生成と表示(gitに含めない)
 	./gradlew dokkaHtml
 	open build/dokka/html/index.html
+
+.PHONY: sql.lint
+sql.lint: ## SQL lint
+	docker-compose run --rm sql-fluff fix --dialect postgres .
 
 ################################################################################
 # Utility-Command help

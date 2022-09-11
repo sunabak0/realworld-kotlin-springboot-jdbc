@@ -1,0 +1,25 @@
+#
+# SQL Fluffの設定ファイル
+#
+# リファレンス
+# https://docs.sqlfluff.com/en/stable/configuration.html#configuration
+#
+
+[tool.sqlfluff.rules]
+#
+# カンマの位置
+#
+# - leading(先頭)
+# - trailing(末尾)
+#
+# default: trailing
+#
+comma_style = 'leading'
+
+#
+# L052
+# セミコロンで終わらせるかどうか(改行付きかどうか選択可能)
+#
+[tool.sqlfluff.rules.L052]
+multiline_newline = true # (default: false)
+require_final_semicolon = true # (default: false)

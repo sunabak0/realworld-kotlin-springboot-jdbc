@@ -49,3 +49,14 @@ out/
 # 適当なやつをDLする時に利用する
 #
 tmp/
+
+#
+# SQL Fluff(sqlのlinter)
+#
+# ktファイルに埋め込まれている
+# sqlをコピーしてlintを手元でやる予定(CIするのはむずそう)
+# (場所: docker/sql-fluff/sql/以下)
+#
+# なのでgit管理下に含めない
+#
+docker/sql-fluff/sql/*.sql

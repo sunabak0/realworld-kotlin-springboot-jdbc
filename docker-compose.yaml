@@ -34,7 +34,17 @@ services:
     depends_on:
       - realworld-pg
     restart: always # realworld-pgのコンテナではなくてDB起動するまでrestartしている
-
+  #
+  # SQL Fluff
+  #
+  #
+  sql-fluff:
+    image: sqlfluff/sqlfluff
+    container_name: sql-fluff
+    volumes:
+      - type: bind
+        source: ${PWD}/docker/sql-fluff/sql/
+        target: /sql/
 #networks:
 #  default:
 #    name: realworld-network
