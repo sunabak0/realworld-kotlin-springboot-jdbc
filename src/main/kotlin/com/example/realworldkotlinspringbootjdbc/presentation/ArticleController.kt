@@ -363,10 +363,16 @@ class ArticleController(
              * 削除: 失敗
              */
             is Left -> when (val error = deleteResult.value) {
+                /**
+                 * 原因: 著者ではなかった
+                 */
                 is DeleteCreatedArticleUseCase.Error.NotAuthor -> ResponseEntity(
                     serializeUnexpectedErrorForResponseBody("削除する権限がありません"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                     HttpStatus.valueOf(422)
                 )
+                /**
+                 * 原因: 削除したい作成済み記事が見つからなかった
+                 */
                 is DeleteCreatedArticleUseCase.Error.NotFoundArticle -> ResponseEntity(
                     serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                     HttpStatus.valueOf(422)

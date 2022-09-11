@@ -555,7 +555,7 @@ class ArticleControllerTest {
                             favoritesCount = 0,
                         ),
                         notAuthorizedUser = RegisteredUser.newWithoutValidation(
-                            userId = UserId(2),
+                            userId = UserId(2), // targetArticleのauthorIdとは異なる箇所
                             email = Email.newWithoutValidation("fake-email@example.com"),
                             username = Username.newWithoutValidation("fake-username"),
                             bio = Bio.newWithoutValidation("fake-bio"),
