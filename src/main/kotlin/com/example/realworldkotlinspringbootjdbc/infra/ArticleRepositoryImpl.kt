@@ -884,7 +884,8 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
     override fun delete(articleId: ArticleId): Either<ArticleRepository.DeleteError, Unit> {
         val deletedCount = namedParameterJdbcTemplate.update(
             """
-                DELETE FROM articles
+                DELETE FROM
+                    articles
                 WHERE
                     id = :article_id
                 ;
@@ -903,7 +904,8 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
          */
         namedParameterJdbcTemplate.update(
             """
-                DELETE FROM article_tags
+                DELETE FROM
+                    article_tags
                 WHERE
                     article_id = :article_id
                 ;
@@ -912,7 +914,8 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         )
         namedParameterJdbcTemplate.update(
             """
-                DELETE FROM favorites
+                DELETE FROM
+                    favorites
                 WHERE
                     article_id = :article_id
                 ;
@@ -921,7 +924,8 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         )
         namedParameterJdbcTemplate.update(
             """
-                DELETE FROM article_comments
+                DELETE FROM
+                    article_comments
                 WHERE
                     article_id = :article_id
                 ;
