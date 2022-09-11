@@ -1,7 +1,7 @@
 package com.example.realworldkotlinspringbootjdbc.domain
 
-import arrow.core.invalid
-import arrow.core.valid
+import arrow.core.left
+import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.article.Body
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
@@ -19,7 +19,7 @@ import net.jqwik.api.constraints.UniqueElements
 import org.assertj.core.api.Assertions.assertThat
 import java.util.Date
 
-class CreatedArticleAuthorValidationDomainServiceTest {
+class CreatedArticleAuthorVerificationTest {
     @Property
     fun `正常系-作成済み記事の著者である場合、有効である旨が戻り値`(
         @ForAll @IntRange(min = 1) userId: Int
@@ -52,7 +52,7 @@ class CreatedArticleAuthorValidationDomainServiceTest {
         /**
          * when:
          */
-        val actual = CreatedArticleAuthorValidationDomainService.validate(
+        val actual = CreatedArticleAuthorVerification.verify(
             article = createdArticle,
             user = registeredUser
         )
@@ -60,7 +60,7 @@ class CreatedArticleAuthorValidationDomainServiceTest {
         /**
          * then:
          */
-        val expected = Unit.valid()
+        val expected = Unit.right()
         assertThat(actual).isEqualTo(expected)
     }
 
@@ -98,7 +98,7 @@ class CreatedArticleAuthorValidationDomainServiceTest {
         /**
          * when:
          */
-        val actual = CreatedArticleAuthorValidationDomainService.validate(
+        val actual = CreatedArticleAuthorVerification.verify(
             article = createdArticle,
             user = registeredUser
         )
@@ -106,10 +106,10 @@ class CreatedArticleAuthorValidationDomainServiceTest {
         /**
          * then:
          */
-        val expected = CreatedArticleAuthorValidationDomainService.Error.NotMatchedUserId(
+        val expected = CreatedArticleAuthorVerification.Error.NotMatchedUserId(
             article = createdArticle,
             user = registeredUser
-        ).invalid()
+        ).left()
         assertThat(actual).isEqualTo(expected)
     }
 }

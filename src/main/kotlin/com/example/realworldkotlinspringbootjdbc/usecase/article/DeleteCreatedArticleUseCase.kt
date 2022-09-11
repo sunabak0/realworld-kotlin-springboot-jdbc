@@ -3,13 +3,11 @@ package com.example.realworldkotlinspringbootjdbc.usecase.article
 import arrow.core.Either
 import arrow.core.Either.Left
 import arrow.core.Either.Right
-import arrow.core.Invalid
-import arrow.core.Valid
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
-import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticleAuthorValidationDomainService
+import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticleAuthorVerification
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.util.MyError
@@ -64,7 +62,7 @@ class DeleteCreatedArticleUseCaseImpl(
          * 著者である -> 削除
          */
         return when (
-            val result = CreatedArticleAuthorValidationDomainService.validate(
+            val result = CreatedArticleAuthorVerification.verify(
                 article = foundArticle,
                 user = author
             )
@@ -72,7 +70,7 @@ class DeleteCreatedArticleUseCaseImpl(
             /**
              * 著者ではない
              */
-            is Invalid -> DeleteCreatedArticleUseCase.Error.NotAuthor(
+            is Left -> DeleteCreatedArticleUseCase.Error.NotAuthor(
                 cause = result.value,
                 targetArticle = foundArticle,
                 notAuthorizedUser = author
@@ -81,7 +79,7 @@ class DeleteCreatedArticleUseCaseImpl(
             /**
              * 著者である -> 削除
              */
-            is Valid -> when (val deleteResult = articleRepository.delete(foundArticle.id)) {
+            is Right -> when (val deleteResult = articleRepository.delete(foundArticle.id)) {
                 /**
                  * 削除: 失敗
                  */
