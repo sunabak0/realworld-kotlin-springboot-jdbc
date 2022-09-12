@@ -302,8 +302,7 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
     override fun deleteAll(articleId: ArticleId): Either.Right<Unit> {
         namedParameterJdbcTemplate.update(
             """
-                DELETE
-                FROM
+                DELETE FROM
                     article_comments
                 WHERE
                     article_id = :article_id
