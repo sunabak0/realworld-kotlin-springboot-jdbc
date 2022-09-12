@@ -8,6 +8,7 @@ import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticleAuthorVerification
+import com.example.realworldkotlinspringbootjdbc.domain.DeleteCreatedArticleAndComments
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.util.MyError
@@ -31,6 +32,7 @@ interface DeleteCreatedArticleUseCase {
 @Service
 class DeleteCreatedArticleUseCaseImpl(
     val articleRepository: ArticleRepository,
+    val deleteCreatedArticleAndComments: DeleteCreatedArticleAndComments,
 ) : DeleteCreatedArticleUseCase {
     override fun execute(author: RegisteredUser, slug: String?): Either<DeleteCreatedArticleUseCase.Error, Unit> {
         /**
@@ -79,12 +81,12 @@ class DeleteCreatedArticleUseCaseImpl(
             /**
              * 著者である -> 削除
              */
-            is Right -> when (val deleteResult = articleRepository.delete(foundArticle.id)) {
+            is Right -> when (val deleteResult = deleteCreatedArticleAndComments.execute(foundArticle.id)) {
                 /**
                  * 削除: 失敗
                  */
                 is Left -> when (deleteResult.value) {
-                    is ArticleRepository.DeleteError.NotFoundArticle -> DeleteCreatedArticleUseCase.Error.NotFoundArticle(
+                    is DeleteCreatedArticleAndComments.Error.NotFoundArticle -> DeleteCreatedArticleUseCase.Error.NotFoundArticle(
                         slug = validatedSlug
                     ).left()
                 }
