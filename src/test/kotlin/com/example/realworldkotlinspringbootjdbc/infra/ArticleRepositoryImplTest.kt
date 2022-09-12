@@ -1394,7 +1394,7 @@ class ArticleRepositoryImplTest {
         //    outputName = "src/test/resources/datasets/yml/then/article_repository/delete-success.yml",
         //    includeTables = ["articles", "tags", "article_tags", "favorites", "article_comments"]
         // )
-        fun `正常系-存在する作成済み記事を削除した場合、紐づくタグ・お気に入り・コメント類の関連も削除されるが、タグそのものは削除されない`() {
+        fun `正常系-存在する作成済み記事を削除した場合、紐づくタグ・お気に入りも削除されるが、タグそのものは削除されない`() {
             /**
              * given:
              */

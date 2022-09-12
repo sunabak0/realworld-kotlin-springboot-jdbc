@@ -922,16 +922,6 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             """.trimIndent(),
             MapSqlParameterSource().addValue("article_id", articleId.value)
         )
-        namedParameterJdbcTemplate.update(
-            """
-                DELETE FROM
-                    article_comments
-                WHERE
-                    article_id = :article_id
-                ;
-            """.trimIndent(),
-            MapSqlParameterSource().addValue("article_id", articleId.value)
-        )
         return Unit.right()
     }
 }
