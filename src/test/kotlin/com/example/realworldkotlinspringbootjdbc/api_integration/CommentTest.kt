@@ -80,5 +80,41 @@ class CommentTest {
                     }
                 }
         }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/articles.yml"
+            ]
+        )
+        fun `正常系-slug で指定した作成済記事のコメントが存在しない場合、コメントが 0 件で取得される`() {
+            /**
+             * given:
+             */
+            val pathParameter = "functional-programming-kotlin"
+
+            /**
+             * when:
+             */
+            val actual = mockMvc.get("/articles/$pathParameter/comments") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+
+            /**
+             * then:
+             */
+            actual.andExpect { status { isOk() } }
+                .andExpect {
+                    content {
+                        json(
+                            """
+                                {
+                                  "comments": []
+                                }
+                            """.trimIndent()
+                        )
+                    }
+                }
+        }
     }
 }
