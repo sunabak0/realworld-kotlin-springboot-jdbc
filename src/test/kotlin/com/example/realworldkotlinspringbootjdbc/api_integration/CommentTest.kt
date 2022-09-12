@@ -116,5 +116,36 @@ class CommentTest {
                     }
                 }
         }
+
+        @Test
+        fun `準正常系-slug で指定した作成済記事が存在しない場合、NotFoundError が返される`() {
+            /**
+             * given:
+             */
+            val pathParameter = "fake"
+
+            /**
+             * when:
+             */
+            val actual = mockMvc.get("/articles/$pathParameter/comments") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+
+            /**
+             * then:
+             */
+            actual.andExpect { status { isNotFound() } }
+                .andExpect {
+                    content {
+                        json(
+                            """
+                                {
+                                    "errors":{"body":["記事が見つかりませんでした"]}
+                                }
+                            """.trimIndent()
+                        )
+                    }
+                }
+        }
     }
 }
