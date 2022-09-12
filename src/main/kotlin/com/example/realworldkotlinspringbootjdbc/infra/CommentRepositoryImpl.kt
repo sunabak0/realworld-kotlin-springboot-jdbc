@@ -298,4 +298,19 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             CommentRepository.DeleteError.Unexpected(e, slug, commentId, currentUserId).left()
         }
     }
+
+    override fun deleteAll(articleId: ArticleId): Either.Right<Unit> {
+        namedParameterJdbcTemplate.update(
+            """
+                DELETE
+                FROM
+                    article_comments
+                WHERE
+                    article_id = :article_id
+                ;
+            """.trimIndent(),
+            MapSqlParameterSource().addValue("article_id", articleId.value)
+        )
+        return Either.Right(Unit)
+    }
 }
