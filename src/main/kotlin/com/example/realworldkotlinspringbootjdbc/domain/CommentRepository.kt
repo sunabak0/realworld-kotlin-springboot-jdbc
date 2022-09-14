@@ -44,4 +44,14 @@ interface CommentRepository {
             val currentUserId: UserId
         ) : DeleteError, MyError.MyErrorWithThrowable
     }
+
+    /**
+     * 作成済み記事に紐づくコメントを全て削除
+     *
+     * 注) 削除するコメントがない -> 作成済み記事が存在しないとは限らない
+     *
+     * @param articleId 削除したい作成済み記事のId
+     * @return Unit
+     */
+    fun deleteAll(articleId: ArticleId): Either.Right<Unit> = TODO()
 }

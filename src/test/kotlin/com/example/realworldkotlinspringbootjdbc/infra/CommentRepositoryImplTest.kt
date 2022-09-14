@@ -4,6 +4,7 @@ import arrow.core.Either.Left
 import arrow.core.Either.Right
 import arrow.core.left
 import arrow.core.right
+import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
 import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
@@ -377,6 +378,130 @@ class CommentRepositoryImplTest {
                 commentId = CommentId.newWithoutValidation(1),
                 currentUserId = UserId(100)
             ).left()
+            assertThat(actual).isEqualTo(expected)
+        }
+    }
+
+    @Tag("WithLocalDb")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    @DisplayName("DeleteAll（特定の作成済み記事のコメントを全て削除）")
+    class DeleteAll {
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/comment_repository/delete-all-success-case-of-simple.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        // NOTE: @ExportDataSetはgivenの@DataSetが変更された時用に残しておく
+        // @ExportDataSet(
+        //    format = DataSetFormat.YML,
+        //    outputName = "src/test/resources/datasets/yml/then/comment_repository/delete-all-success-case-of-simple.yml",
+        //    includeTables = ["articles", "article_comments"]
+        // )
+        fun `正常系-作成済み記事に紐づくコメントが全て削除される`() {
+            /**
+             * given:
+             * - コメントが複数紐付いている作成済み記事Id
+             */
+            val commentRepository = CommentRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val targetArticleId = ArticleId(1)
+
+            /**
+             * when:
+             */
+            val actual = commentRepository.deleteAll(targetArticleId)
+
+            /**
+             * then:
+             */
+            val expected = Right(Unit)
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/comment_repository/delete-all-success-case-of-no-comments.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        // NOTE: @ExportDataSetはgivenの@DataSetが変更された時用に残しておく
+        // @ExportDataSet(
+        //    format = DataSetFormat.YML,
+        //    outputName = "src/test/resources/datasets/yml/then/comment_repository/delete-all-success-case-of-no-comments.yml",
+        //    includeTables = ["articles", "article_comments"]
+        // )
+        fun `正常系-作成済み記事に紐づくコメントが1つもなくても、成功した旨が戻り値`() {
+            /**
+             * given:
+             * - 存在はするが、紐付くコメントが1つも無い作成済み記事Id
+             */
+            val commentRepository = CommentRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val targetArticleId = ArticleId(2)
+
+            /**
+             * when:
+             */
+            val actual = commentRepository.deleteAll(targetArticleId)
+
+            /**
+             * then:
+             */
+            val expected = Right(Unit)
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        /**
+         * ユースケース上はありえない
+         * 技術詳細(引数)的には可能なためテストを記述
+         */
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/comment_repository/delete-all-success-case-of-not-existed-article-id.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        // NOTE: @ExportDataSetはgivenの@DataSetが変更された時用に残しておく
+        // @ExportDataSet(
+        //    format = DataSetFormat.YML,
+        //    outputName = "src/test/resources/datasets/yml/then/comment_repository/delete-all-success-case-of-not-existed-article-id.yml",
+        //    includeTables = ["article_comments"]
+        // )
+        fun `仕様外-存在しない作成済み記事Idを指定しても、成功した旨が戻り値`() {
+            /**
+             * given:
+             * - 存在しない作成済み記事Id
+             */
+            val commentRepository = CommentRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val targetArticleId = ArticleId(99999)
+
+            /**
+             * when:
+             */
+            val actual = commentRepository.deleteAll(targetArticleId)
+
+            /**
+             * then:
+             */
+            val expected = Right(Unit)
             assertThat(actual).isEqualTo(expected)
         }
     }
