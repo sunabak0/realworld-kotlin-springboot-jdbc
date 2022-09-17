@@ -14,9 +14,9 @@ import com.example.realworldkotlinspringbootjdbc.usecase.article.CreateArticleUs
 import com.example.realworldkotlinspringbootjdbc.usecase.article.DeleteCreatedArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.FilterCreatedArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.ShowArticleUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.article.UpdateCreatedArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -39,6 +39,7 @@ class ArticleController(
     val filterCreatedArticle: FilterCreatedArticleUseCase,
     val createArticle: CreateArticleUseCase,
     val deleteArticle: DeleteCreatedArticleUseCase,
+    val updateArticle: UpdateCreatedArticleUseCase,
 ) {
 
     /**
@@ -318,23 +319,74 @@ class ArticleController(
     }
 
     @PutMapping("/articles/{slug}")
-    fun update(@Suppress("UnusedPrivateMember") @RequestBody rawRequestBody: String?): ResponseEntity<String> {
-        val article = Article(
-            "hoge-title",
-            "hoge-slug",
-            "hoge-body",
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-            "hoge-description",
-            listOf("dragons", "training"),
-            1,
-            true,
-            1,
-        )
-        return ResponseEntity(
-            ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
-            HttpStatus.valueOf(200),
-        )
+    fun update(
+        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
+        @PathVariable("slug") slug: String?,
+        @RequestBody rawRequestBody: String?,
+    ): ResponseEntity<String> {
+        val author = when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
+            /**
+             * 認証: 失敗
+             */
+            is Left -> return AuthorizationError.handle(authorizeResult.value)
+            /**
+             * 認証: 成功
+             */
+            is Right -> authorizeResult.value
+        }
+
+        val article = NullableArticle.from(rawRequestBody)
+
+        return when (
+            val updateArticleResult = updateArticle.execute(
+                requestedUser = author,
+                slug = slug,
+                title = article.title,
+                description = article.description,
+                body = article.body,
+            )
+        ) {
+            /**
+             * 作成済み記事の更新: 失敗　
+             */
+            is Left -> when (val error = updateArticleResult.value) {
+                /**
+                 * 原因: 記事のバリデーションエラー
+                 */
+                is UpdateCreatedArticleUseCase.Error.InvalidArticle -> ResponseEntity(
+                    serializeMyErrorListForResponseBody(error.errors),
+                    HttpStatus.valueOf(422)
+                )
+                /**
+                 * 原因: Slugのバリデーションエラー
+                 */
+                is UpdateCreatedArticleUseCase.Error.InvalidSlug -> ResponseEntity(
+                    serializeMyErrorListForResponseBody(error.errors),
+                    HttpStatus.valueOf(422)
+                )
+                /**
+                 * 原因: 更新をしようとしたユーザーが著者ではなかった
+                 */
+                is UpdateCreatedArticleUseCase.Error.NotAuthor -> ResponseEntity(
+                    serializeUnexpectedErrorForResponseBody("削除する権限がありません"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                    HttpStatus.valueOf(403)
+                )
+                /**
+                 * 原因: 記事が見つからなかった
+                 */
+                is UpdateCreatedArticleUseCase.Error.NotFoundArticle -> ResponseEntity(
+                    serializeUnexpectedErrorForResponseBody("記事が見つかりません　"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                    HttpStatus.valueOf(404)
+                )
+            }
+            /**
+             * 作成済み記事の更新: 成功
+             */
+            is Right -> ResponseEntity(
+                Article.from(updateArticleResult.value).serializeWithRootName(),
+                HttpStatus.valueOf(200)
+            )
+        }
     }
 
     @DeleteMapping("/articles/{slug}")

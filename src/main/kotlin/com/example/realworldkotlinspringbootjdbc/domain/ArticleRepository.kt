@@ -131,4 +131,15 @@ interface ArticleRepository {
     sealed interface DeleteError : MyError {
         data class NotFoundArticle(val articleId: ArticleId) : DeleteError, MyError.Basic
     }
+
+    /**
+     * 作成済み記事を更新
+     *
+     * @param updatableArticle 削除したい作成済み記事のId
+     * @return 準正常系:エラー or 正常系:Unit
+     */
+    fun update(updatableArticle: UpdatableCreatedArticle): Either<UpdateError, Unit> = TODO()
+    sealed interface UpdateError : MyError {
+        data class NotFoundArticle(val articleId: ArticleId) : UpdateError, MyError.Basic
+    }
 }
