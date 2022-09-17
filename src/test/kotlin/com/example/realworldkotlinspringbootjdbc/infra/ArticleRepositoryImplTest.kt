@@ -10,6 +10,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
 import com.example.realworldkotlinspringbootjdbc.domain.UncreatedArticle
+import com.example.realworldkotlinspringbootjdbc.domain.UpdatableCreatedArticle
 import com.example.realworldkotlinspringbootjdbc.domain.article.Body
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import java.text.SimpleDateFormat
+import java.util.Date
 import com.example.realworldkotlinspringbootjdbc.domain.article.Tag as ArticleTag
 
 class ArticleRepositoryImplTest {
@@ -1445,6 +1447,99 @@ class ArticleRepositoryImplTest {
              */
             val expected = ArticleRepository.DeleteError.NotFoundArticle(
                 articleId = notExistedArticleId
+            ).left()
+            assertThat(actual).isEqualTo(expected)
+        }
+    }
+
+    @Tag("WithLocalDb")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    @DisplayName("記事の更新")
+    class Update {
+        @BeforeAll
+        fun reset() = DbConnection.resetSequence()
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+            ],
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/article_repository/update-success.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        // NOTE: @ExportDataSetはgivenの@DataSetが変更された時用に残しておく
+        // @ExportDataSet(
+        //    format = DataSetFormat.YML,
+        //    outputName = "src/test/resources/datasets/yml/then/article_repository/update-success.yml",
+        //    includeTables = ["articles"]
+        // )
+        fun `正常系-articlesのidと対応する行が更新される`() {
+            /**
+             * given:
+             * - 存在する作成済み記事
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val updatableCreatedArticle = object : UpdatableCreatedArticle {
+                override val articleId: ArticleId get() = ArticleId(1)
+                override val title: Title get() = Title.newWithoutValidation("プログラマーが知るべき97のこと")
+                override val description: Description get() = Description.newWithoutValidation("エッセイ集")
+                override val body: Body get() = Body.newWithoutValidation("93. エラーを無視するな")
+                override val updatedAt: Date get() = Date()
+            }
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.update(updatableCreatedArticle)
+
+            /**
+             * then:
+             */
+            val expected = Unit.right()
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+            ],
+        )
+        @ExpectedDataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+            ],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-更新しようとした記事が見つからなかった場合、その旨のエラーが戻り値`() {
+            /**
+             * given:
+             * - 存在しない作成済み記事
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val notExistedUpdatableCreatedArticle = object : UpdatableCreatedArticle {
+                override val articleId: ArticleId get() = ArticleId(99999)
+                override val title: Title get() = Title.newWithoutValidation("プログラマーが知るべき97のこと")
+                override val description: Description get() = Description.newWithoutValidation("エッセイ集")
+                override val body: Body get() = Body.newWithoutValidation("52. 「その場しのぎ」が長生きしてしまう")
+                override val updatedAt: Date get() = Date()
+            }
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.update(notExistedUpdatableCreatedArticle)
+
+            /**
+             * then:
+             */
+            val expected = ArticleRepository.UpdateError.NotFoundArticle(
+                articleId = notExistedUpdatableCreatedArticle.articleId
             ).left()
             assertThat(actual).isEqualTo(expected)
         }

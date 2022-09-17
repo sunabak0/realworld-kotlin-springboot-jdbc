@@ -10,6 +10,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
 import com.example.realworldkotlinspringbootjdbc.domain.UncreatedArticle
+import com.example.realworldkotlinspringbootjdbc.domain.UpdatableCreatedArticle
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.article.Tag
@@ -923,5 +924,39 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             MapSqlParameterSource().addValue("article_id", articleId.value)
         )
         return Unit.right()
+    }
+
+    override fun update(updatableArticle: UpdatableCreatedArticle): Either<ArticleRepository.UpdateError, Unit> {
+        val updatedCount = namedParameterJdbcTemplate.update(
+            """
+                UPDATE
+                    articles
+                SET
+                    title = :title
+                    , description = :description
+                    , body = :body
+                    , updated_at = :updated_at
+                WHERE
+                    articles.id = :article_id
+                ;
+            """.trimIndent(),
+            MapSqlParameterSource()
+                .addValue("article_id", updatableArticle.articleId.value)
+                .addValue("title", updatableArticle.title.value)
+                .addValue("description", updatableArticle.description.value)
+                .addValue("body", updatableArticle.body.value)
+                .addValue("updated_at", updatableArticle.updatedAt)
+        )
+
+        return when (updatedCount) {
+            /**
+             * 見つからなかった
+             */
+            0 -> ArticleRepository.UpdateError.NotFoundArticle(updatableArticle.articleId).left()
+            /**
+             * 更新できた
+             */
+            else -> Unit.right()
+        }
     }
 }
