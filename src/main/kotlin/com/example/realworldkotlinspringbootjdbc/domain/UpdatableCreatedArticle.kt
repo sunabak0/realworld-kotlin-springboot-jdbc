@@ -11,6 +11,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.article.Body
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
 import com.example.realworldkotlinspringbootjdbc.domain.article.Title
 import com.example.realworldkotlinspringbootjdbc.util.MyError
+import java.util.Date
 
 /**
  * 更新可能な作成済み記事
@@ -23,6 +24,7 @@ interface UpdatableCreatedArticle {
     val title: Title
     val description: Description
     val body: Body
+    val updatedAt: Date
 
     /**
      * 実装
@@ -31,7 +33,8 @@ interface UpdatableCreatedArticle {
         override val articleId: ArticleId,
         override val title: Title,
         override val description: Description,
-        override val body: Body
+        override val body: Body,
+        override val updatedAt: Date,
     ) : UpdatableCreatedArticle
 
     companion object {
@@ -40,6 +43,7 @@ interface UpdatableCreatedArticle {
             title: String?,
             description: String?,
             body: String?,
+            updatedAt: Date = Date(),
         ): ValidatedNel<MyError.ValidationError, UpdatableCreatedArticle> {
             val newTitleOrOriginal: () -> ValidatedNel<Title.ValidationError, Title> = { ->
                 Option.fromNullable(title).fold(
@@ -76,12 +80,12 @@ interface UpdatableCreatedArticle {
             ) {
                 ValidationError.NothingAttributeToUpdatable.invalidNel()
             } else {
-
                 ValidatedUpdatableCreatedArticle(
                     articleId = originalCreatedArticle.id,
                     title = validatedTitle,
                     description = validatedDescription,
                     body = validatedBody,
+                    updatedAt = updatedAt,
                 ).validNel()
             }
         }
