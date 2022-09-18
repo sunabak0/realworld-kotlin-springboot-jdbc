@@ -227,7 +227,8 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
         }
     }
 
-    override fun update(user: UpdatableRegisteredUser): Either<UserRepository.UpdateError, RegisteredUser> {
+    @Transactional
+    override fun update(user: UpdatableRegisteredUser): Either<UserRepository.UpdateError, Unit> {
         /**
          * UserId と Email と Username の数をそれぞれカウント
          */
@@ -267,26 +268,11 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
             .addValue("user_id", user.userId.value)
             .addValue("email", user.email.value)
             .addValue("username", user.username.value)
-        val countMap = try {
-            namedParameterJdbcTemplate.queryForMap(sql, sqlParams)
-        } catch (e: Throwable) {
-            return UserRepository.UpdateError.Unexpected(e, user).left()
-        }
+        val countMap = namedParameterJdbcTemplate.queryForMap(sql, sqlParams)
+        val userCount = countMap["user_cnt"].toString().toInt()
+        val emailCount = countMap["email_cnt"].toString().toInt()
+        val usernameCount = countMap["username_cnt"].toString().toInt()
 
-        val (userCount, emailCount, usernameCount) = try {
-            data class Counts(
-                val userCount: Int,
-                val emailCount: Int,
-                val usernameCount: Int
-            )
-            Counts(
-                userCount = countMap["user_cnt"].toString().toInt(),
-                emailCount = countMap["email_cnt"].toString().toInt(),
-                usernameCount = countMap["username_cnt"].toString().toInt()
-            )
-        } catch (e: Throwable) {
-            return UserRepository.UpdateError.Unexpected(e, user).left()
-        }
         return when {
             /**
              * エラー: ユーザー が見つからなかった
@@ -303,51 +289,47 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
             /**
              * ユーザー 更新
              */
-            else -> try {
-                updateTransactionApply(user)
-                RegisteredUser.newWithoutValidation(
-                    user.userId,
-                    user.email,
-                    user.username,
-                    user.bio,
-                    user.image
-                ).right()
-            } catch (e: Throwable) {
-                UserRepository.UpdateError.Unexpected(e, user).left()
+            else -> {
+                val updatedCount = namedParameterJdbcTemplate.update(
+                    """
+                        UPDATE
+                            users
+                        SET
+                            email = :email
+                            , username = :username
+                            , updated_at = :updated_at
+                        WHERE
+                            id = :user_id
+                        ;
+                        UPDATE
+                            profiles
+                        SET
+                            bio = :bio
+                            , image = :image
+                            , updated_at = :updated_at
+                        WHERE
+                            user_id = :user_id
+                        ;
+                    """.trimIndent(),
+                    MapSqlParameterSource()
+                        .addValue("user_id", user.userId.value)
+                        .addValue("email", user.email.value)
+                        .addValue("username", user.username.value)
+                        .addValue("bio", user.bio.value)
+                        .addValue("image", user.image.value)
+                        .addValue("updated_at", user.updatedAt)
+                )
+                when (updatedCount) {
+                    /**
+                     * エラー: ユーザーが見つからなかった
+                     */
+                    0 -> UserRepository.UpdateError.NotFound(user.userId).left()
+                    /**
+                     * 成功
+                     */
+                    else -> Unit.right()
+                }
             }
         }
-    }
-
-    @Transactional
-    fun updateTransactionApply(user: UpdatableRegisteredUser) {
-        val sql = """
-            UPDATE
-                users
-            SET
-                email = :email
-                , username = :username
-                , updated_at = :updated_at
-            WHERE
-                id = :user_id
-            ;
-            UPDATE
-                profiles
-            SET
-                bio = :bio
-                , image = :image
-                , updated_at = :updated_at
-            WHERE
-                user_id = :user_id
-            ;
-        """.trimIndent()
-        val sqlParams = MapSqlParameterSource()
-            .addValue("user_id", user.userId.value)
-            .addValue("email", user.email.value)
-            .addValue("username", user.username.value)
-            .addValue("bio", user.bio.value)
-            .addValue("image", user.image.value)
-            .addValue("updated_at", Date())
-
-        namedParameterJdbcTemplate.update(sql, sqlParams)
     }
 }

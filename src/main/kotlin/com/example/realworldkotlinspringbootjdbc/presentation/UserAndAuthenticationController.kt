@@ -247,25 +247,32 @@ class UserAndAuthenticationController(
                      */
                     is Left -> when (val useCaseError = useCaseResult.value) {
                         /**
-                         * 原因: バリデーションエラー
+                         * 原因: 更新しようとした要素が異常
                          */
-                        is UpdateUserUseCase.Error.InvalidAttributesForUpdateUser -> ResponseEntity(
+                        is UpdateUserUseCase.Error.InvalidAttributes -> ResponseEntity(
                             serializeMyErrorListForResponseBody(useCaseError.errors),
+                            HttpStatus.valueOf(400)
+                        )
+                        /**
+                         * 原因: emailが既に利用されている
+                         */
+                        is UpdateUserUseCase.Error.AlreadyUsedEmail -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("メールアドレスは既に登録されています"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(422)
                         )
                         /**
-                         * 原因: 元々のユーザー情報から更新するべき項目がない
+                         * 原因: usernameが既に利用されている
                          */
-                        is UpdateUserUseCase.Error.NoChange -> ResponseEntity(
-                            "更新する項目がありません",
+                        is UpdateUserUseCase.Error.AlreadyUsedUsername -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("ユーザー名は既に登録されています"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(422)
                         )
                         /**
-                         * 原因: 不明
+                         * 原因: ユーザーが見つからなかった
                          */
-                        is UpdateUserUseCase.Error.Unexpected -> ResponseEntity(
-                            serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"),
-                            HttpStatus.valueOf(500)
+                        is UpdateUserUseCase.Error.NotFoundUser -> ResponseEntity(
+                            serializeUnexpectedErrorForResponseBody("ユーザーが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                            HttpStatus.valueOf(404)
                         )
                     }
                     /**

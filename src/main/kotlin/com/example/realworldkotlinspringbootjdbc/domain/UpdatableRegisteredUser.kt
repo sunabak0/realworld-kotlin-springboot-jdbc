@@ -17,6 +17,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
+import java.util.Date
 
 interface UpdatableRegisteredUser {
     val userId: UserId
@@ -24,6 +25,7 @@ interface UpdatableRegisteredUser {
     val username: Username
     val bio: Bio
     val image: Image
+    val updatedAt: Date
 
     /**
      * 実装
@@ -34,6 +36,7 @@ interface UpdatableRegisteredUser {
         override val username: Username,
         override val bio: Bio,
         override val image: Image,
+        override val updatedAt: Date = Date(),
     ) : UpdatableRegisteredUser
 
     /**

@@ -19,13 +19,13 @@ import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.SoftAssertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import java.util.Date
 
 class UserRepositoryImplTest {
     @Tag("WithLocalDb")
@@ -232,6 +232,7 @@ class UserRepositoryImplTest {
                 override val username: Username get() = existedRegisteredUser.username
                 override val bio: Bio get() = existedRegisteredUser.bio
                 override val image: Image get() = existedRegisteredUser.image
+                override val updatedAt: Date get() = Date()
             }
 
             /**
@@ -243,19 +244,8 @@ class UserRepositoryImplTest {
              * then:
              * - 詰め替えができているか
              */
-            when (actual) {
-                is Left -> assert(false) { "原因: ${actual.value}" }
-                is Right -> {
-                    val article = actual.value
-                    val softly = SoftAssertions()
-                    softly.assertThat(article.userId).isEqualTo(updatableRegisteredUser.userId)
-                    softly.assertThat(article.email).isEqualTo(updatableRegisteredUser.email)
-                    softly.assertThat(article.username).isEqualTo(updatableRegisteredUser.username)
-                    softly.assertThat(article.bio).isEqualTo(updatableRegisteredUser.bio)
-                    softly.assertThat(article.image).isEqualTo(updatableRegisteredUser.image)
-                    softly.assertAll()
-                }
-            }
+            val expected = Unit.right()
+            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
@@ -284,6 +274,7 @@ class UserRepositoryImplTest {
                 override val username: Username get() = Username.newWithoutValidation("new+${existedRegisteredUser.username.value}")
                 override val bio: Bio get() = existedRegisteredUser.bio
                 override val image: Image get() = existedRegisteredUser.image
+                override val updatedAt: Date get() = Date()
             }
 
             /**
@@ -293,21 +284,9 @@ class UserRepositoryImplTest {
 
             /**
              * then:
-             * - 詰め替えができているか
              */
-            when (actual) {
-                is Left -> assert(false) { "原因: ${actual.value}" }
-                is Right -> {
-                    val article = actual.value
-                    val softly = SoftAssertions()
-                    softly.assertThat(article.userId).isEqualTo(updatableRegisteredUser.userId)
-                    softly.assertThat(article.email).isEqualTo(updatableRegisteredUser.email)
-                    softly.assertThat(article.username).isEqualTo(updatableRegisteredUser.username)
-                    softly.assertThat(article.bio).isEqualTo(updatableRegisteredUser.bio)
-                    softly.assertThat(article.image).isEqualTo(updatableRegisteredUser.image)
-                    softly.assertAll()
-                }
-            }
+            val expected = Unit.right()
+            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
@@ -336,6 +315,7 @@ class UserRepositoryImplTest {
                 override val username: Username get() = Username.newWithoutValidation("new+${existedRegisteredUser.username.value}")
                 override val bio: Bio get() = Bio.newWithoutValidation("new+${existedRegisteredUser.bio}")
                 override val image: Image get() = Image.newWithoutValidation("new+${existedRegisteredUser.image}")
+                override val updatedAt: Date get() = Date()
             }
 
             /**
@@ -345,21 +325,9 @@ class UserRepositoryImplTest {
 
             /**
              * then:
-             * - 詰め替えができているか
              */
-            when (actual) {
-                is Left -> assert(false) { "原因: ${actual.value}" }
-                is Right -> {
-                    val article = actual.value
-                    val softly = SoftAssertions()
-                    softly.assertThat(article.userId).isEqualTo(updatableRegisteredUser.userId)
-                    softly.assertThat(article.email).isEqualTo(updatableRegisteredUser.email)
-                    softly.assertThat(article.username).isEqualTo(updatableRegisteredUser.username)
-                    softly.assertThat(article.bio).isEqualTo(updatableRegisteredUser.bio)
-                    softly.assertThat(article.image).isEqualTo(updatableRegisteredUser.image)
-                    softly.assertAll()
-                }
-            }
+            val expected = Unit.right()
+            assertThat(actual).isEqualTo(expected)
         }
 
         @Test
@@ -381,6 +349,7 @@ class UserRepositoryImplTest {
                 override val username: Username get() = existedUsers[0].username
                 override val bio: Bio get() = existedUsers[0].bio
                 override val image: Image get() = existedUsers[0].image
+                override val updatedAt: Date get() = Date()
             }
 
             /**
@@ -414,6 +383,7 @@ class UserRepositoryImplTest {
                 override val username: Username get() = existedUsers[1].username // 他の人が利用しているusername
                 override val bio: Bio get() = existedUsers[0].bio
                 override val image: Image get() = existedUsers[0].image
+                override val updatedAt: Date get() = Date()
             }
 
             /**
@@ -444,6 +414,7 @@ class UserRepositoryImplTest {
                 override val username: Username get() = Username.newWithoutValidation("fake-username")
                 override val bio: Bio get() = Bio.newWithoutValidation("fake-bio")
                 override val image: Image get() = Image.newWithoutValidation("fake-image")
+                override val updatedAt: Date get() = Date()
             }
 
             /**
