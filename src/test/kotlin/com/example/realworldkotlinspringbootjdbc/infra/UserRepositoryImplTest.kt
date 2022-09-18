@@ -14,11 +14,14 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.Password
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
+import com.example.realworldkotlinspringbootjdbc.infra.helper.SeedData
 import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.SoftAssertions
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -200,41 +203,163 @@ class UserRepositoryImplTest {
     @DBRider
     @DisplayName("ユーザー情報更新")
     class Update {
-        @BeforeAll
+        @BeforeEach
         fun reset() = DbConnection.resetSequence()
 
         @Test
         @DataSet("datasets/yml/given/users.yml")
         @ExpectedDataSet(
-            value = ["datasets/yml/then/user_repository/update-success.yml"],
+            value = ["datasets/yml/then/user_repository/update-success-case-of-unique-email.yml"],
             ignoreCols = ["id", "created_at", "updated_at"],
             orderBy = ["id"]
         )
         // NOTE: @ExportDataSetはgivenの@DataSetが変更用に残しておく
-        // @ExportDataSet(format = DataSetFormat.YML, outputName = "src/test/resources/datasets/yml/then/user_repository/update-success.yml", includeTables = ["users", "profiles", "followings"])
-        fun `成功-更新可能な登録済みユーザーの場合、更新が反映された登録済みユーザーが戻り値となり、更新される`() {
-            // given: Usernameだけ変更なしの更新可能な登録済みユーザー
+        // @ExportDataSet(
+        //     format = DataSetFormat.YML,
+        //     outputName = "src/test/resources/datasets/yml/then/user_repository/update-success-case-of-unique-email.yml",
+        //     includeTables = ["users", "profiles"]
+        // )
+        fun `正常系-emailが誰にも使われていない場合、更新が反映された登録済みユーザーが戻り値`() {
+            /**
+             * given:
+             * - (存在する)emailだけ更新する更新可能な登録済みユーザー
+             */
             val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val existedRegisteredUser = SeedData.users().minByOrNull { it.userId.value }!!
             val updatableRegisteredUser = object : UpdatableRegisteredUser {
-                override val userId: UserId get() = UserId(1)
-                override val email: Email get() = Email.newWithoutValidation("paul-graham-2022@example.com")
-                override val username: Username get() = Username.newWithoutValidation("paul-graham")
-                override val bio: Bio get() = Bio.newWithoutValidation("Lisper, ハッカーと画家")
-                override val image: Image get() = Image.newWithoutValidation("https://sep.yimg.com/ca/I/paulgraham_2239_13556")
+                override val userId: UserId get() = existedRegisteredUser.userId
+                override val email: Email get() = Email.newWithoutValidation("new+${existedRegisteredUser.email.value}")
+                override val username: Username get() = existedRegisteredUser.username
+                override val bio: Bio get() = existedRegisteredUser.bio
+                override val image: Image get() = existedRegisteredUser.image
             }
 
-            // when:
+            /**
+             * when:
+             */
             val actual = userRepository.update(updatableRegisteredUser)
 
-            // then:
-            val expected = RegisteredUser.newWithoutValidation(
-                updatableRegisteredUser.userId,
-                updatableRegisteredUser.email,
-                updatableRegisteredUser.username,
-                updatableRegisteredUser.bio,
-                updatableRegisteredUser.image,
-            ).right()
-            assertThat(actual).isEqualTo(expected)
+            /**
+             * then:
+             * - 詰め替えができているか
+             */
+            when (actual) {
+                is Left -> assert(false) { "原因: ${actual.value}" }
+                is Right -> {
+                    val article = actual.value
+                    val softly = SoftAssertions()
+                    softly.assertThat(article.userId).isEqualTo(updatableRegisteredUser.userId)
+                    softly.assertThat(article.email).isEqualTo(updatableRegisteredUser.email)
+                    softly.assertThat(article.username).isEqualTo(updatableRegisteredUser.username)
+                    softly.assertThat(article.bio).isEqualTo(updatableRegisteredUser.bio)
+                    softly.assertThat(article.image).isEqualTo(updatableRegisteredUser.image)
+                    softly.assertAll()
+                }
+            }
+        }
+
+        @Test
+        @DataSet("datasets/yml/given/users.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/user_repository/update-success-case-of-unique-username.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        // NOTE: @ExportDataSetはgivenの@DataSetが変更用に残しておく
+        // @ExportDataSet(
+        //     format = DataSetFormat.YML,
+        //     outputName = "src/test/resources/datasets/yml/then/user_repository/update-success-case-of-unique-username.yml",
+        //     includeTables = ["users", "profiles"]
+        // )
+        fun `正常系-usernameが誰にも使われていない場合、更新が反映された登録済みユーザーが戻り値`() {
+            /**
+             * given:
+             * - (存在する)usernameだけ更新する更新可能な登録済みユーザー
+             */
+            val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val existedRegisteredUser = SeedData.users().minByOrNull { it.userId.value }!!
+            val updatableRegisteredUser = object : UpdatableRegisteredUser {
+                override val userId: UserId get() = existedRegisteredUser.userId
+                override val email: Email get() = existedRegisteredUser.email
+                override val username: Username get() = Username.newWithoutValidation("new+${existedRegisteredUser.username.value}")
+                override val bio: Bio get() = existedRegisteredUser.bio
+                override val image: Image get() = existedRegisteredUser.image
+            }
+
+            /**
+             * when:
+             */
+            val actual = userRepository.update(updatableRegisteredUser)
+
+            /**
+             * then:
+             * - 詰め替えができているか
+             */
+            when (actual) {
+                is Left -> assert(false) { "原因: ${actual.value}" }
+                is Right -> {
+                    val article = actual.value
+                    val softly = SoftAssertions()
+                    softly.assertThat(article.userId).isEqualTo(updatableRegisteredUser.userId)
+                    softly.assertThat(article.email).isEqualTo(updatableRegisteredUser.email)
+                    softly.assertThat(article.username).isEqualTo(updatableRegisteredUser.username)
+                    softly.assertThat(article.bio).isEqualTo(updatableRegisteredUser.bio)
+                    softly.assertThat(article.image).isEqualTo(updatableRegisteredUser.image)
+                    softly.assertAll()
+                }
+            }
+        }
+
+        @Test
+        @DataSet("datasets/yml/given/users.yml")
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/user_repository/update-success-case-of-all-properties.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        // NOTE: @ExportDataSetはgivenの@DataSetが変更用に残しておく
+        // @ExportDataSet(
+        //     format = DataSetFormat.YML,
+        //     outputName = "src/test/resources/datasets/yml/then/user_repository/update-success-case-of-all-properties.yml",
+        //     includeTables = ["users", "profiles"]
+        // )
+        fun `正常系-emailもusernameも誰にも使われていない場合、全てのプロパティの更新が反映された登録済みユーザーが戻り値`() {
+            /**
+             * given:
+             * - (存在する)全て更新する更新可能な登録済みユーザー
+             */
+            val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val existedRegisteredUser = SeedData.users().minByOrNull { it.userId.value }!!
+            val updatableRegisteredUser = object : UpdatableRegisteredUser {
+                override val userId: UserId get() = existedRegisteredUser.userId
+                override val email: Email get() = Email.newWithoutValidation("new+${existedRegisteredUser.email.value}")
+                override val username: Username get() = Username.newWithoutValidation("new+${existedRegisteredUser.username.value}")
+                override val bio: Bio get() = Bio.newWithoutValidation("new+${existedRegisteredUser.bio}")
+                override val image: Image get() = Image.newWithoutValidation("new+${existedRegisteredUser.image}")
+            }
+
+            /**
+             * when:
+             */
+            val actual = userRepository.update(updatableRegisteredUser)
+
+            /**
+             * then:
+             * - 詰め替えができているか
+             */
+            when (actual) {
+                is Left -> assert(false) { "原因: ${actual.value}" }
+                is Right -> {
+                    val article = actual.value
+                    val softly = SoftAssertions()
+                    softly.assertThat(article.userId).isEqualTo(updatableRegisteredUser.userId)
+                    softly.assertThat(article.email).isEqualTo(updatableRegisteredUser.email)
+                    softly.assertThat(article.username).isEqualTo(updatableRegisteredUser.username)
+                    softly.assertThat(article.bio).isEqualTo(updatableRegisteredUser.bio)
+                    softly.assertThat(article.image).isEqualTo(updatableRegisteredUser.image)
+                    softly.assertAll()
+                }
+            }
         }
 
         @Test
@@ -243,21 +368,29 @@ class UserRepositoryImplTest {
             value = ["datasets/yml/given/users.yml"],
             ignoreCols = ["created_at", "updated_at"]
         )
-        fun `失敗-Email が既に利用されていた場合、その旨のエラーが戻り値となり、更新されない`() {
-            // given:
+        fun `準正常系-emailが自分以外の誰かに利用されていた場合、その旨のエラーが戻り値となり、DBは更新されない`() {
+            /**
+             * given:
+             * - emailだけ更新しようとしている更新可能な登録済みユーザー
+             */
             val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val existedUsers = SeedData.users().sortedBy { it.userId.value }
             val alreadyUsedEmailUpdatableRegisteredUser = object : UpdatableRegisteredUser {
-                override val userId: UserId get() = UserId(1)
-                override val email: Email get() = Email.newWithoutValidation("matz@example.com")
-                override val username: Username get() = Username.newWithoutValidation("paul-graham")
-                override val bio: Bio get() = Bio.newWithoutValidation("Lisper, ハッカーと画家")
-                override val image: Image get() = Image.newWithoutValidation("https://sep.yimg.com/ca/I/paulgraham_2239_13556")
+                override val userId: UserId get() = existedUsers[0].userId
+                override val email: Email get() = existedUsers[1].email // 他の人が利用しているemail
+                override val username: Username get() = existedUsers[0].username
+                override val bio: Bio get() = existedUsers[0].bio
+                override val image: Image get() = existedUsers[0].image
             }
 
-            // when:
+            /**
+             * when:
+             */
             val actual = userRepository.update(alreadyUsedEmailUpdatableRegisteredUser)
 
-            // then:
+            /**
+             * then:
+             */
             val expected = UserRepository.UpdateError.AlreadyRegisteredEmail(alreadyUsedEmailUpdatableRegisteredUser.email).left()
             assertThat(actual).isEqualTo(expected)
         }
@@ -268,21 +401,29 @@ class UserRepositoryImplTest {
             value = ["datasets/yml/given/users.yml"],
             ignoreCols = ["created_at", "updated_at"]
         )
-        fun `失敗-Username が既に利用されていた場合、その旨のエラーが戻り値となり、更新されない`() {
-            // given:
+        fun `準正常系-usernameが自分以外の誰かに利用されていた場合、その旨のエラーが戻り値となり、DBは更新されない`() {
+            /**
+             * given:
+             * - usernameだけ更新しようとしている更新可能な登録済みユーザー
+             */
             val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val existedUsers = SeedData.users().sortedBy { it.userId.value }
             val alreadyUsedUsernameUpdatableRegisteredUser = object : UpdatableRegisteredUser {
-                override val userId: UserId get() = UserId(1)
-                override val email: Email get() = Email.newWithoutValidation("paul-graham@example.com")
-                override val username: Username get() = Username.newWithoutValidation("graydon-hoare")
-                override val bio: Bio get() = Bio.newWithoutValidation("Lisper, ハッカーと画家")
-                override val image: Image get() = Image.newWithoutValidation("https://sep.yimg.com/ca/I/paulgraham_2239_13556")
+                override val userId: UserId get() = existedUsers[0].userId
+                override val email: Email get() = existedUsers[0].email
+                override val username: Username get() = existedUsers[1].username // 他の人が利用しているusername
+                override val bio: Bio get() = existedUsers[0].bio
+                override val image: Image get() = existedUsers[0].image
             }
 
-            // when:
+            /**
+             * when:
+             */
             val actual = userRepository.update(alreadyUsedUsernameUpdatableRegisteredUser)
 
-            // then:
+            /**
+             * then:
+             */
             val expected = UserRepository.UpdateError.AlreadyRegisteredUsername(alreadyUsedUsernameUpdatableRegisteredUser.username).left()
             assertThat(actual).isEqualTo(expected)
         }
@@ -290,22 +431,30 @@ class UserRepositoryImplTest {
         @Test
         @DataSet("datasets/yml/given/empty-users.yml")
         @ExpectedDataSet(value = ["datasets/yml/given/empty-users.yml"])
-        fun `失敗-対象の登録済みユーザーが存在しない場合、その旨のエラーが戻り値となり、更新されない`() {
+        fun `準正常系-指定した登録済みユーザーが存在しない場合、その旨のエラーが戻り値となり、DBは更新されない`() {
             // given: Usernameだけ変更なしの更新可能な登録済みユーザー
+            /**
+             * given:
+             * - 存在しないユーザー
+             */
             val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
-            val notFoundUpdatableRegisteredUser = object : UpdatableRegisteredUser {
-                override val userId: UserId get() = UserId(1)
-                override val email: Email get() = Email.newWithoutValidation("paul-graham-2022@example.com")
-                override val username: Username get() = Username.newWithoutValidation("paul-graham")
-                override val bio: Bio get() = Bio.newWithoutValidation("Lisper, ハッカーと画家")
-                override val image: Image get() = Image.newWithoutValidation("https://sep.yimg.com/ca/I/paulgraham_2239_13556")
+            val notExistedUpdatableRegisteredUser = object : UpdatableRegisteredUser {
+                override val userId: UserId get() = UserId(SeedData.users().size + 1)
+                override val email: Email get() = Email.newWithoutValidation("fake@example.com")
+                override val username: Username get() = Username.newWithoutValidation("fake-username")
+                override val bio: Bio get() = Bio.newWithoutValidation("fake-bio")
+                override val image: Image get() = Image.newWithoutValidation("fake-image")
             }
 
-            // when:
-            val actual = userRepository.update(notFoundUpdatableRegisteredUser)
+            /**
+             * when:
+             */
+            val actual = userRepository.update(notExistedUpdatableRegisteredUser)
 
-            // then:
-            val expected = UserRepository.UpdateError.NotFound(notFoundUpdatableRegisteredUser.userId).left()
+            /**
+             * then:
+             */
+            val expected = UserRepository.UpdateError.NotFound(notExistedUpdatableRegisteredUser.userId).left()
             assertThat(actual).isEqualTo(expected)
         }
     }
