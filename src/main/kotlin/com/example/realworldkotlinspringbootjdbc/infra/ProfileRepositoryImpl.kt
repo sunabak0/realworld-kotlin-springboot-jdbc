@@ -448,4 +448,36 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             )
         }.toSet().right()
     }
+
+    override fun filterFollowedByUser(userId: UserId): Either<ProfileRepository.FilterFollowedByUserError, Set<OtherUser>> =
+        namedParameterJdbcTemplate.queryForList(
+            """
+                SELECT
+                    users.id
+                    , users.username
+                    , profiles.bio
+                    , profiles.image
+                FROM
+                    users
+                JOIN
+                    profiles
+                ON
+                    profiles.user_id = users.id
+                JOIN
+                    followings
+                ON
+                    followings.following_id = users.id
+                    AND followings.follower_id = :user_id
+                ;
+            """.trimIndent(),
+            MapSqlParameterSource().addValue("user_id", userId.value)
+        ).map {
+            OtherUser.newWithoutValidation(
+                userId = UserId(it["id"].toString().toInt()),
+                username = Username.newWithoutValidation(it["username"].toString()),
+                bio = Bio.newWithoutValidation(it["bio"].toString()),
+                image = Image.newWithoutValidation(it["image"].toString()),
+                following = true
+            )
+        }.toSet().right()
 }

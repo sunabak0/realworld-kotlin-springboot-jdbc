@@ -80,4 +80,13 @@ interface ProfileRepository {
      */
     fun filterByUserIds(userIds: Set<UserId>, viewpointUserId: Option<UserId> = none()): Either<FilterByUserIdsError, Set<OtherUser>> = TODO()
     sealed interface FilterByUserIdsError : MyError
+
+    /**
+     * 対象の登録済みユーザーがフォローしているユーザー郡
+     *
+     * @param userId 対象の登録済みユーザーID
+     * @return エラー or ユーザー郡
+     */
+    fun filterFollowedByUser(userId: UserId): Either<FilterFollowedByUserError, Set<OtherUser>> = throw UnsupportedOperationException()
+    sealed interface FilterFollowedByUserError : MyError
 }
