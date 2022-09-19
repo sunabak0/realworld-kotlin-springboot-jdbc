@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
+import java.text.SimpleDateFormat
+import com.example.realworldkotlinspringbootjdbc.domain.article.Tag as ArticleTag
 
 /**
  * テストのためのテスト
@@ -211,6 +213,12 @@ class SeedDataTest {
                     .isEqualTo(expectedCreatedArticle["author_id"].toString().toInt())
                 softly.assertThat(actualCreatedArticle.favoritesCount)
                     .isEqualTo(expectedCreatedArticle["favorites_count"].toString().toInt())
+                softly.assertThat(actualCreatedArticle.createdAt)
+                    .isEqualTo(SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(expectedCreatedArticle["created_at"].toString()))
+                softly.assertThat(actualCreatedArticle.updatedAt)
+                    .isEqualTo(SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(expectedCreatedArticle["updated_at"].toString()))
+                softly.assertThat(actualCreatedArticle.tagList)
+                    .hasSameElementsAs(expectedCreatedArticle["tags"].toString().split(",").filter { it.isNotBlank() }.map { tag -> ArticleTag.newWithoutValidation(tag) })
                 softly.assertAll()
             }
 

@@ -23,24 +23,24 @@ articles:
     slug: "rust-vs-scala-vs-kotlin"
     body: "dummy-body"
     description: "dummy-description"
-    created_at: "[DAY,NOW]"
-    updated_at: "[DAY,NOW]"
+    created_at: "2022-01-01 00:00:00.0"
+    updated_at: "2022-01-01 00:00:00.0"
   - id: 2
     author_id: 1
     title: "Functional programming kotlin"
     slug: "functional-programming-kotlin"
     body: "dummy-body"
     description: "dummy-description"
-    created_at: "[DAY,NOW]"
-    updated_at: "[DAY,NOW]"
+    created_at: "2022-01-01 00:00:00.0"
+    updated_at: "2022-01-02 00:00:00.0"
   - id: 3
     author_id: 2
     title: "TDD(Type Driven Development)"
     slug: "tdd-type-driven-development"
     body: "dummy-body"
     description: "dummy-description"
-    created_at: "[DAY,NOW]"
-    updated_at: "[DAY,NOW]"
+    created_at: "2022-01-01 00:00:00.0"
+    updated_at: "2022-01-03 00:00:00.0"
 
 #
 # 記事1 --- article_tags1 --- Tag1
@@ -52,19 +52,19 @@ article_tags:
   - id: 1
     article_id: 1
     tag_id: 1
-    created_at: "[DAY,NOW]"
+    created_at: "2022-01-01 00:00:00.0"
   - id: 2
     article_id: 1
     tag_id: 2
-    created_at: "[DAY,NOW]"
+    created_at: "2022-01-01 00:00:00.0"
   - id: 3
     article_id: 1
     tag_id: 3
-    created_at: "[DAY,NOW]"
+    created_at: "2022-01-01 00:00:00.0"
   - id: 4
     article_id: 2
     tag_id: 3
-    created_at: "[DAY,NOW]"
+    created_at: "2022-01-01 00:00:00.0"
 
 #
 # 記事1 --- コメント1(by user3)

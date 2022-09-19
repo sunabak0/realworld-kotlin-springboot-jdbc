@@ -17,6 +17,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
+import java.text.SimpleDateFormat
 import java.util.Date
 import com.example.realworldkotlinspringbootjdbc.domain.comment.Body as CommentBody
 
@@ -113,8 +114,8 @@ object SeedData {
                 title = Title.newWithoutValidation("Rust vs Scala vs Kotlin"),
                 slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
                 body = Body.newWithoutValidation("dummy-body"),
-                createdAt = Date(),
-                updatedAt = Date(),
+                createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
                 description = Description.newWithoutValidation("dummy-description"),
                 tagList = listOf(
                     Tag.newWithoutValidation("rust"),
@@ -131,8 +132,8 @@ object SeedData {
                 title = Title.newWithoutValidation("Functional programming kotlin"),
                 slug = Slug.newWithoutValidation("functional-programming-kotlin"),
                 body = Body.newWithoutValidation("dummy-body"),
-                createdAt = Date(),
-                updatedAt = Date(),
+                createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-02T00:00:00+09:00"),
                 description = Description.newWithoutValidation("dummy-description"),
                 tagList = listOf(
                     Tag.newWithoutValidation("kotlin"),
@@ -147,8 +148,8 @@ object SeedData {
                 title = Title.newWithoutValidation("TDD(Type Driven Development)"),
                 slug = Slug.newWithoutValidation("tdd-type-driven-development"),
                 body = Body.newWithoutValidation("dummy-body"),
-                createdAt = Date(),
-                updatedAt = Date(),
+                createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-03T00:00:00+09:00"),
                 description = Description.newWithoutValidation("dummy-description"),
                 tagList = emptyList(),
                 authorId = UserId(2),
