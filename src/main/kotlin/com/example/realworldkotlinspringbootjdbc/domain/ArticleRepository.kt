@@ -142,4 +142,14 @@ interface ArticleRepository {
     sealed interface UpdateError : MyError {
         data class NotFoundArticle(val articleId: ArticleId) : UpdateError, MyError.Basic
     }
+
+    /**
+     * 指定した著者郡の最新の作成済み記事郡
+     *
+     * @param authorIds 著者郡
+     * @param viewpointUserId あるユーザー視点となるユーザーID
+     * @return 準正常系: エラー or 正常系: 指定した著者の最新の作成済み記事郡
+     */
+    fun latestByAuthors(authorIds: Set<UserId>, viewpointUserId: UserId): Either<LatestByAuthorsError, Set<CreatedArticle>> = throw UnsupportedOperationException()
+    sealed interface LatestByAuthorsError : MyError
 }

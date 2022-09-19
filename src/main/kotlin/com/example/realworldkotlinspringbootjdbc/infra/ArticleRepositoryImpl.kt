@@ -135,7 +135,7 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                 createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
                 updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
                 description = Description.newWithoutValidation(it["description"].toString()),
-                tagList = it["tags"].toString().split(",").map { tag -> Tag.newWithoutValidation(tag) },
+                tagList = it["tags"].toString().split(",").filter { tag -> tag.isNotBlank() }.map { tag -> Tag.newWithoutValidation(tag) },
                 authorId = UserId(it["author_id"].toString().toInt()),
                 favorited = it["favorited"].toString() == "1",
                 favoritesCount = it["favoritesCount"].toString().toInt()
@@ -266,7 +266,7 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                 createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
                 updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
                 description = Description.newWithoutValidation(it["description"].toString()),
-                tagList = it["tags"].toString().split(",").map { tag -> Tag.newWithoutValidation(tag) },
+                tagList = it["tags"].toString().split(",").filter { tag -> tag.isNotBlank() }.map { tag -> Tag.newWithoutValidation(tag) },
                 authorId = UserId(it["author_id"].toString().toInt()),
                 favorited = it["favorited"].toString() == "1",
                 favoritesCount = it["favoritesCount"].toString().toInt()
@@ -331,7 +331,7 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                     createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["created_at"].toString()),
                     updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["updated_at"].toString()),
                     description = Description.newWithoutValidation(articleMap["description"].toString()),
-                    tagList = articleMap["tags"].toString().split(",").map { Tag.newWithoutValidation(it) },
+                    tagList = articleMap["tags"].toString().split(",").filter { tag -> tag.isNotBlank() }.map { Tag.newWithoutValidation(it) },
                     authorId = UserId(articleMap["author_id"].toString().toInt()),
                     favorited = false,
                     favoritesCount = articleMap["favoritesCount"].toString().toInt()
@@ -438,7 +438,7 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                         createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["created_at"].toString()),
                         updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["updated_at"].toString()),
                         description = Description.newWithoutValidation(articleMap["description"].toString()),
-                        tagList = articleMap["tags"].toString().split(",").map { Tag.newWithoutValidation(it) },
+                        tagList = articleMap["tags"].toString().split(",").filter { tag -> tag.isNotBlank() }.map { Tag.newWithoutValidation(it) },
                         authorId = UserId(articleMap["author_id"].toString().toInt()),
                         favorited = articleMap["favorited"].toString() == "1",
                         favoritesCount = articleMap["favoritesCount"].toString().toInt()
@@ -607,7 +607,7 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                 createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["created_at"].toString()),
                 updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["updated_at"].toString()),
                 description = Description.newWithoutValidation(articleMap["description"].toString()),
-                tagList = articleMap["tags"].toString().split(",").map { Tag.newWithoutValidation(it) },
+                tagList = articleMap["tags"].toString().split(",").filter { tag -> tag.isNotBlank() }.map { Tag.newWithoutValidation(it) },
                 authorId = UserId(articleMap["author_id"].toString().toInt()),
                 favorited = articleMap["favorited"].toString() == "1",
                 favoritesCount = articleMap["favoritesCount"].toString().toInt()
@@ -738,7 +738,7 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                 createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["created_at"].toString()),
                 updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["updated_at"].toString()),
                 description = Description.newWithoutValidation(articleMap["description"].toString()),
-                tagList = articleMap["tags"].toString().split(",").map { Tag.newWithoutValidation(it) },
+                tagList = articleMap["tags"].toString().split(",").filter { tag -> tag.isNotBlank() }.map { Tag.newWithoutValidation(it) },
                 authorId = UserId(articleMap["author_id"].toString().toInt()),
                 favorited = articleMap["favorited"].toString() == "1",
                 favoritesCount = articleMap["favoritesCount"].toString().toInt()
@@ -959,4 +959,100 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             else -> Unit.right()
         }
     }
+
+    override fun latestByAuthors(
+        authorIds: Set<UserId>,
+        viewpointUserId: UserId
+    ): Either<ArticleRepository.LatestByAuthorsError, Set<CreatedArticle>> =
+        when (authorIds.isEmpty()) {
+            /**
+             * 指定された著者が1人以上いる場合
+             */
+            false -> namedParameterJdbcTemplate.queryForList(
+                """
+                SELECT
+                    articles.id
+                    , articles.title
+                    , articles.slug
+                    , articles.body
+                    , articles.created_at
+                    , articles.updated_at
+                    , articles.description
+                    , COALESCE((
+                        SELECT
+                            STRING_AGG(tags.name, ',')
+                        FROM
+                            tags
+                        JOIN
+                            article_tags
+                        ON
+                            article_tags.tag_id = tags.id
+                            AND article_tags.article_id = articles.id
+                        GROUP BY
+                            article_tags.article_id
+                    ), '') AS tags
+                    , articles.author_id
+                    , (
+                        SELECT
+                            CASE COUNT(favorites.id)
+                                WHEN 0 THEN '0'
+                                ELSE '1'
+                            END
+                        FROM
+                            favorites
+                        WHERE
+                            favorites.article_id = articles.id
+                            AND favorites.user_id = :viewpoint_user_id
+                    ) AS favorited
+                    , (
+                        SELECT
+                            COUNT(favorites.id)
+                        FROM
+                            favorites
+                        WHERE
+                            favorites.article_id = articles.id
+                    ) AS favoritesCount
+                FROM
+                    articles
+                LEFT JOIN
+                    articles AS right_self
+                ON
+                    articles.author_id = right_self.author_id
+                    AND
+                        (
+                            -- 更新日時: 左より新しい右の行が結合される。なければ(=最新)LEFT JOINなので右はNULL
+                            articles.updated_at < right_self.updated_at
+                            -- id: (被った場合は)左より右の大きい行が結合される。なければ(=1番若い)LEFT JOINなので右はNULL
+                            OR (articles.updated_at = right_self.updated_at AND articles.id > right_self.id)
+                        )
+                WHERE
+                    -- 右がNULLである行を指定することで、最新(被ったらidが若い方)の行を取得できる
+                    right_self.id IS NULL
+                    AND articles.author_id IN (:user_ids)
+                ;
+                """.trimIndent(),
+                MapSqlParameterSource()
+                    .addValue("user_ids", authorIds.map { it.value }.toSet())
+                    .addValue("viewpoint_user_id", viewpointUserId.value)
+            ).map {
+                CreatedArticle.newWithoutValidation(
+                    id = ArticleId(it["id"].toString().toInt()),
+                    title = Title.newWithoutValidation(it["title"].toString()),
+                    slug = Slug.newWithoutValidation(it["slug"].toString()),
+                    body = ArticleBody.newWithoutValidation(it["body"].toString()),
+                    createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
+                    updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
+                    description = Description.newWithoutValidation(it["description"].toString()),
+                    tagList = it["tags"].toString().split(",").filter { tag -> tag.isNotBlank() }.map { tag -> Tag.newWithoutValidation(tag) },
+                    authorId = UserId(it["author_id"].toString().toInt()),
+                    favorited = it["favorited"].toString() == "1",
+                    favoritesCount = it["favoritesCount"].toString().toInt()
+                )
+            }.toSet().right()
+            /**
+             * 指定された著者がいない場合
+             * - SQL投げなくてもよい
+             */
+            true -> emptySet<CreatedArticle>().right()
+        }
 }
