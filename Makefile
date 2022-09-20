@@ -4,27 +4,42 @@ up: ## サーバー起動
 
 .PHONY: up.db
 up.db: ## db起動
-	docker-compose up
+	docker compose up
 
 .PHONY: db.dump
 db.dump: ## 現在のdbの状態をseedとしてdump
-	docker-compose exec realworld-pg bash -c 'pg_dump realworld-db --inserts -a -Urealworld-user > /docker-entrypoint-initdb.d/002-realworld-seed.sql'
+	docker compose exec realworld-pg bash -c 'pg_dump realworld-db --inserts -a -Urealworld-user > /docker-entrypoint-initdb.d/002-realworld-seed.sql'
 
 .PHONY: down.db
 down.db: ## dbを落とす
-	docker-compose down
+	docker compose down
 
 .PHONY: test
 test: ## テスト実行
-	./gradlew test
+	@make test.clean
+	./gradlew test unit-without-db
 
-.PHONY: test.with-local-db
-test.with-local-db: ## テスト(with local db)実行
-	./gradlew test withLocalDb
+.PHONY: test.full
+test.full: ## db有りで全てのテスト実行(API/DBUnit含む、sandboxは除く)
+	@make test.clean
+	docker compose up -d --wait
+	./gradlew test full
 
-.PHONY: test.api-integration
-test.api-integration: ## テスト(API Integration)実行
-	./gradlew test apiIntegration
+.PHONY: test.full-dev
+test.full-dev: ## db有りで全てのテスト実行(API/DBUnit/sandbox含む)
+	@make test.clean
+	docker compose up -d --wait
+	./gradlew test full-dev
+
+.PHONY: test.integration
+test.integration: ## db有りでAPIテスト実行
+	@make test.clean
+	docker compose up -d --wait
+	./gradlew test api-integration
+
+.PHONY: test.clean
+test.clean: ## テストレポート類を削除
+	rm -rf build/jacoco/ build/reports/
 
 .PHONY: test.e2e
 test.e2e: ## e2eテスト実行
