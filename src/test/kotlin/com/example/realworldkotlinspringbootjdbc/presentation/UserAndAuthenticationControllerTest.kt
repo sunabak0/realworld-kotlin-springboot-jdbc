@@ -291,17 +291,6 @@ class UserAndAuthenticationControllerTest {
                     )
                 ),
                 TestCase(
-                    title = "失敗: authorize の実行結果が 'BearerTokenのパースに失敗した' 旨のエラーの場合、 401 レスポンスを返す",
-                    authorizeResult = MyAuth.Unauthorized.FailedParseBearerToken(
-                        cause = Throwable("dummy-例外"),
-                        authorizationHeader = "Authorization: Bearer dummy.dummy.dummy"
-                    ).left(),
-                    expected = ResponseEntity(
-                        "",
-                        HttpStatus.valueOf(401)
-                    )
-                ),
-                TestCase(
                     title = "失敗: authorize の実行結果が 'Decodeに失敗した' 旨のエラーの場合、 401 レスポンスを返す",
                     authorizeResult = MyAuth.Unauthorized.FailedDecodeToken(
                         cause = object : MyError {},
