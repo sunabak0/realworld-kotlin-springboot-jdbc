@@ -319,13 +319,8 @@ jacoco {
  */
 task<Test>("full") {
     this.useJUnitPlatform()
-    include(
-        "**/domain/**/*Test*",
-        "**/presentation/**/*Test*",
-        "**/usecase/**/*Test*",
-        "**/util/**/*Test*",
-        "**/infra/**/*Test*",
-        "**/api_integration/**/*Test*",
+    exclude(
+        "**/sandbox/*"
     )
 }
 
