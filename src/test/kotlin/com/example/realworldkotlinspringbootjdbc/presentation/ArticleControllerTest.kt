@@ -12,6 +12,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UpdatableCreatedArticle
 import com.example.realworldkotlinspringbootjdbc.domain.article.Body
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
+import com.example.realworldkotlinspringbootjdbc.domain.article.FeedParameters
 import com.example.realworldkotlinspringbootjdbc.domain.article.FilterParameters
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.article.Tag
@@ -21,8 +22,10 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
+import com.example.realworldkotlinspringbootjdbc.infra.helper.SeedData
 import com.example.realworldkotlinspringbootjdbc.usecase.article.CreateArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.DeleteCreatedArticleUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.article.FeedUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.FilterCreatedArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.ShowArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.UpdateCreatedArticleUseCase
@@ -141,6 +144,7 @@ class ArticleControllerTest {
                         object : CreateArticleUseCase {},
                         object : DeleteCreatedArticleUseCase {},
                         object : UpdateCreatedArticleUseCase {},
+                        object : FeedUseCase {},
                     )
 
                     /**
@@ -246,6 +250,7 @@ class ArticleControllerTest {
                         object : CreateArticleUseCase {},
                         object : DeleteCreatedArticleUseCase {},
                         object : UpdateCreatedArticleUseCase {},
+                        object : FeedUseCase {},
                     )
 
                     /**
@@ -287,7 +292,10 @@ class ArticleControllerTest {
                                     createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
                                     updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
                                     description = Description.newWithoutValidation("description-01"),
-                                    tagList = listOf(Tag.newWithoutValidation("tag-01"), Tag.newWithoutValidation("tag-02")),
+                                    tagList = listOf(
+                                        Tag.newWithoutValidation("tag-01"),
+                                        Tag.newWithoutValidation("tag-02")
+                                    ),
                                     authorId = UserId(1),
                                     favorited = false,
                                     favoritesCount = 1,
@@ -404,6 +412,7 @@ class ArticleControllerTest {
                         object : CreateArticleUseCase {},
                         object : DeleteCreatedArticleUseCase {},
                         object : UpdateCreatedArticleUseCase {},
+                        object : FeedUseCase {},
                     )
 
                     /**
@@ -506,10 +515,12 @@ class ArticleControllerTest {
                                 description: String?,
                                 body: String?,
                                 tagList: List<String>?
-                            ): Either<CreateArticleUseCase.Error, CreatedArticleWithAuthor> = testCase.useCaseExecuteResult
+                            ): Either<CreateArticleUseCase.Error, CreatedArticleWithAuthor> =
+                                testCase.useCaseExecuteResult
                         },
                         object : DeleteCreatedArticleUseCase {},
                         object : UpdateCreatedArticleUseCase {},
+                        object : FeedUseCase {},
                     )
 
                     /**
@@ -535,6 +546,7 @@ class ArticleControllerTest {
             val useCaseExecuteResult: Either<DeleteCreatedArticleUseCase.Error, Unit>,
             val expected: ResponseEntity<String>
         )
+
         @TestFactory
         fun test(): Stream<DynamicNode> {
             return Stream.of(
@@ -582,7 +594,10 @@ class ArticleControllerTest {
                     useCaseExecuteResult = DeleteCreatedArticleUseCase.Error.ValidationError(
                         errors = listOf(Slug.ValidationError.Required)
                     ).left(),
-                    expected = ResponseEntity("""{"errors":{"body":[{"key":"Slug","message":"slugを入力してください。"}]}}""", HttpStatus.valueOf(422))
+                    expected = ResponseEntity(
+                        """{"errors":{"body":[{"key":"Slug","message":"slugを入力してください。"}]}}""",
+                        HttpStatus.valueOf(422)
+                    )
                 ),
             ).map { testCase ->
                 dynamicTest(testCase.title) {
@@ -608,6 +623,7 @@ class ArticleControllerTest {
                                 testCase.useCaseExecuteResult
                         },
                         object : UpdateCreatedArticleUseCase {},
+                        object : FeedUseCase {},
                     )
 
                     /**
@@ -645,6 +661,7 @@ class ArticleControllerTest {
                 object : CreateArticleUseCase {},
                 object : DeleteCreatedArticleUseCase {},
                 object : UpdateCreatedArticleUseCase {},
+                object : FeedUseCase {},
             )
 
             /**
@@ -666,6 +683,7 @@ class ArticleControllerTest {
             val useCaseExecuteResult: Either<UpdateCreatedArticleUseCase.Error, CreatedArticleWithAuthor>,
             val expected: ResponseEntity<String>
         )
+
         @TestFactory
         fun test(): Stream<DynamicNode> = Stream.of(
             TestCase(
@@ -692,7 +710,10 @@ class ArticleControllerTest {
                         following = false,
                     ),
                 ).right(),
-                expected = ResponseEntity("""{"article":{"title":"更新後-プログラマーが知るべき97のこと","slug":"programmer-97","body":"更新後-21. 技術的例外とビジネス例外を明確に区別する","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","description":"更新後-エッセイ集","tagList":["essay","programming"],"authorId":1,"favorited":false,"favoritesCount":0}}""", HttpStatus.valueOf(200))
+                expected = ResponseEntity(
+                    """{"article":{"title":"更新後-プログラマーが知るべき97のこと","slug":"programmer-97","body":"更新後-21. 技術的例外とビジネス例外を明確に区別する","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2021-12-31T15:00:00.000Z","description":"更新後-エッセイ集","tagList":["essay","programming"],"authorId":1,"favorited":false,"favoritesCount":0}}""",
+                    HttpStatus.valueOf(200)
+                )
             ),
             TestCase(
                 title = "準正常系-記事のバリデーションエラーが原因で更新に失敗した場合、ステータスコード422のレスポンスが戻り値",
@@ -701,7 +722,10 @@ class ArticleControllerTest {
                         UpdatableCreatedArticle.ValidationError.NothingAttributeToUpdatable
                     )
                 ).left(),
-                expected = ResponseEntity("""{"errors":{"body":[{"key":"UpdatableCreatedArticle","message":"更新する項目が有りません"}]}}""", HttpStatus.valueOf(422))
+                expected = ResponseEntity(
+                    """{"errors":{"body":[{"key":"UpdatableCreatedArticle","message":"更新する項目が有りません"}]}}""",
+                    HttpStatus.valueOf(422)
+                )
             ),
             TestCase(
                 title = "準正常系-Slugのバリデーションエラーが原因で更新に失敗した場合、ステータスコード422のレスポンスが戻り値",
@@ -710,7 +734,10 @@ class ArticleControllerTest {
                         Slug.ValidationError.TooLong("fake-1111-2222-3333-4444-5555-6666")
                     )
                 ).left(),
-                expected = ResponseEntity("""{"errors":{"body":[{"slug":"fake-1111-2222-3333-4444-5555-6666","key":"Slug","message":"slugは32文字以下にしてください。"}]}}""", HttpStatus.valueOf(422))
+                expected = ResponseEntity(
+                    """{"errors":{"body":[{"slug":"fake-1111-2222-3333-4444-5555-6666","key":"Slug","message":"slugは32文字以下にしてください。"}]}}""",
+                    HttpStatus.valueOf(422)
+                )
             ),
             TestCase(
                 title = "準正常系-著者ではないことが原因で更新に失敗した場合、ステータスコード422のレスポンスが戻り値",
@@ -777,6 +804,7 @@ class ArticleControllerTest {
                         ): Either<UpdateCreatedArticleUseCase.Error, CreatedArticleWithAuthor> =
                             testCase.useCaseExecuteResult
                     },
+                    object : FeedUseCase {},
                 )
 
                 /**
@@ -786,6 +814,104 @@ class ArticleControllerTest {
                     rawAuthorizationHeader = "fake-auth-token",
                     slug = "fake-slug",
                     rawRequestBody = """{"article": {"title":"fake-title", "description":"fake-description", "body": "fake-body"}}""",
+                )
+
+                /**
+                 * then:
+                 */
+                assertThat(actual).isEqualTo(testCase.expected)
+            }
+        }
+    }
+
+    class Feed {
+        data class TestCase(
+            val title: String,
+            val useCaseExecuteResult: Either<FeedUseCase.Error, FeedUseCase.FeedCreatedArticles>,
+            val expected: ResponseEntity<String>
+        )
+
+        @TestFactory
+        fun test(): Stream<DynamicNode> = Stream.of(
+            TestCase(
+                title = "正常系-取得に成功した場合、ステータスコードが200のレスポンス",
+                useCaseExecuteResult = FeedUseCase.FeedCreatedArticles(
+                    articles = sortedSetOf(
+                        compareBy { it.article.id.value },
+                        CreatedArticleWithAuthor(
+                            article = SeedData.createdArticlesFromViewpointSet()[UserId(3)]!!.find { it.id == ArticleId(2) }!!,
+                            author = SeedData.otherUsersFromViewpointSet()[UserId(3)]!!.find { it.userId == UserId(1) }!!,
+                        ),
+                        CreatedArticleWithAuthor(
+                            article = SeedData.createdArticlesFromViewpointSet()[UserId(3)]!!.find { it.id == ArticleId(3) }!!,
+                            author = SeedData.otherUsersFromViewpointSet()[UserId(3)]!!.find { it.userId == UserId(2) }!!,
+                        ),
+                    ),
+                    articlesCount = 2
+                ).right(),
+                expected = ResponseEntity(
+                    """{"articlesCount":2,"articles":[{"title":"Functional programming kotlin","slug":"functional-programming-kotlin","body":"dummy-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2022-01-01T15:00:00.000Z","description":"dummy-description","tagList":["kotlin"],"authorId":1,"favorited":true,"favoritesCount":1},{"title":"TDD(Type Driven Development)","slug":"tdd-type-driven-development","body":"dummy-body","createdAt":"2021-12-31T15:00:00.000Z","updatedAt":"2022-01-02T15:00:00.000Z","description":"dummy-description","tagList":[],"authorId":2,"favorited":false,"favoritesCount":2}]}""",
+                    HttpStatus.valueOf(200)
+                )
+            ),
+            TestCase(
+                title = "準正常系-フィードパラメータのバリデーションエラーが原因で失敗した場合、ステータスコードが422のレスポンス",
+                useCaseExecuteResult = FeedUseCase.Error.FeedParameterValidationErrors(
+                    errors = listOf(
+                        FeedParameters.ValidationError.LimitError.RequireMaximumOrUnder(value = 101)
+                    )
+                ).left(),
+                expected = ResponseEntity(
+                    """{"errors":{"body":[{"value":101,"key":"LimitError","message":"100以下である必要があります"}]}}""",
+                    HttpStatus.valueOf(422)
+                )
+            ),
+            TestCase(
+                title = "準正常系-フィードパラメータのOffeset値がフィード結果の総記事数を超えていたことが原因で失敗した場合、ステータスコードが422のレスポンス",
+                useCaseExecuteResult = FeedUseCase.Error.OffsetOverCreatedArticlesCountError(
+                    feedParameters = object : FeedParameters {
+                        override val limit: Int get() = 20
+                        override val offset: Int get() = 3
+                    },
+                    articlesCount = 2,
+                ).left(),
+                expected = ResponseEntity(
+                    """{"errors":{"body":["offset値が作成済み記事の数を超えています(offset=3, articlesCount=2)"]}}""",
+                    HttpStatus.valueOf(422)
+                )
+            ),
+        ).map { testCase ->
+            dynamicTest(testCase.title) {
+                /**
+                 * given: JWT 認証が成功する ArticleController
+                 */
+                val articleController = ArticleController(
+                    object : MyAuth {
+                        override fun authorize(bearerToken: String?): Either<MyAuth.Unauthorized, RegisteredUser> =
+                            SeedData.users().find { it.userId == UserId(3) }!!.right()
+                    },
+                    object : ShowArticleUseCase {},
+                    object : FilterCreatedArticleUseCase {},
+                    object : CreateArticleUseCase {},
+                    object : DeleteCreatedArticleUseCase {},
+                    object : UpdateCreatedArticleUseCase {},
+                    object : FeedUseCase {
+                        override fun execute(
+                            currentUser: RegisteredUser,
+                            limit: String?,
+                            offset: String?
+                        ): Either<FeedUseCase.Error, FeedUseCase.FeedCreatedArticles> =
+                            testCase.useCaseExecuteResult
+                    },
+                )
+
+                /**
+                 * when:
+                 */
+                val actual = articleController.feed(
+                    "fake-token",
+                    "fake-limit",
+                    "fake-offset"
                 )
 
                 /**
