@@ -1,7 +1,18 @@
 package com.example.realworldkotlinspringbootjdbc.api_integration
 
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
+import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
+import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
+import com.example.realworldkotlinspringbootjdbc.domain.user.Email
+import com.example.realworldkotlinspringbootjdbc.domain.user.Image
+import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
+import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.infra.DbConnection
+import com.example.realworldkotlinspringbootjdbc.util.MySession
+import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
 import com.github.database.rider.core.api.dataset.DataSet
+import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Tag
@@ -13,6 +24,8 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 class CommentTest {
     @SpringBootTest
@@ -178,6 +191,71 @@ class CommentTest {
                         )
                     }
                 }
+        }
+    }
+
+    @SpringBootTest
+    @AutoConfigureMockMvc
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    @Tag("ApiIntegration")
+    class Create {
+
+        @Autowired
+        lateinit var mockMvc: MockMvc
+
+        @BeforeAll
+        fun reset() = DbConnection.resetSequence()
+
+        @Test
+        @DataSet(value = ["datasets/yml/given/articles.yml", "datasets/yml/given/users.yml"])
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/comment_repository/create-success.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `正常系-slug に該当する作成済記事が存在し、コメントの作成に成功する`() {
+            /**
+             * given:
+             */
+            val registeredUser = RegisteredUser.newWithoutValidation(
+                userId = UserId(1),
+                email = Email.newWithoutValidation("paul-graham@example.com"),
+                username = Username.newWithoutValidation("paul-graham"),
+                bio = Bio.newWithoutValidation("Rustを作った"),
+                image = Image.newWithoutValidation("")
+            )
+            val session = MySession(userId = registeredUser.userId, email = registeredUser.email)
+            val token =
+                JWT.create()
+                    .withIssuer(MySessionJwt.ISSUER)
+                    .withClaim(MySessionJwt.USER_ID_KEY, session.userId.value)
+                    .withClaim(MySessionJwt.EMAIL_KEY, session.email.value)
+                    .sign(Algorithm.HMAC256("secret"))
+            val pathParameter = "functional-programming-kotlin"
+            val rawRequestBody = """
+                {
+                    "comment": {
+                        "body": "created-dummy-body-1"
+                    }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val actual = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .post("/articles/$pathParameter/comments")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(rawRequestBody)
+                    .header("Authorization", token)
+            )
+
+            /**
+             * then:
+             */
+            actual.andExpect(status().isOk)
         }
     }
 }
