@@ -325,9 +325,9 @@ task<Test>("full") {
 }
 
 /**
- * ./gradlew test unit-without-db
+ * ./gradlew test unitWithoutDb
  */
-task<Test>("unit-without-db") {
+task<Test>("unitWithoutDb") {
     this.useJUnitPlatform()
     include(
         "**/domain/**/*Test*",
@@ -338,17 +338,17 @@ task<Test>("unit-without-db") {
 }
 
 /**
- * ./gradlew test full-dev
+ * ./gradlew test fullDev
  * sandboxなどもこれで走る
  */
-task<Test>("full-dev") {
+task<Test>("fullDev") {
     this.useJUnitPlatform()
 }
 
 /**
- * ./gradlew test api-integration
+ * ./gradlew test apiIntegration
  */
-task<Test>("api-integration") {
+task<Test>("apiIntegration") {
     this.useJUnitPlatform()
     this.include(
         "**/infra/helper/*Test*",

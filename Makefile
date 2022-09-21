@@ -17,7 +17,7 @@ down.db: ## dbを落とす
 .PHONY: test
 test: ## テスト実行
 	@make test.clean
-	./gradlew test unit-without-db
+	./gradlew test unitWithoutDb
 
 .PHONY: test.full
 test.full: ## db有りで全てのテスト実行(API/DBUnit含む、sandboxは除く)
@@ -29,13 +29,13 @@ test.full: ## db有りで全てのテスト実行(API/DBUnit含む、sandboxは�
 test.full-dev: ## db有りで全てのテスト実行(API/DBUnit/sandbox含む)
 	@make test.clean
 	docker compose up -d --wait
-	./gradlew test full-dev
+	./gradlew test fullDev
 
 .PHONY: test.integration
 test.integration: ## db有りでAPIテスト実行
 	@make test.clean
 	docker compose up -d --wait
-	./gradlew test api-integration
+	./gradlew test apiIntegration
 
 .PHONY: test.clean
 test.clean: ## テストレポート類を削除
