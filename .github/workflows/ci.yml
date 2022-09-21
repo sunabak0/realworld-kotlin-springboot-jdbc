@@ -72,7 +72,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: paambaati/codeclimate-action@v3.0.0
         with:
-          coverageCommand: make full
+          coverageCommand: make test.full
           coverageLocations: 'build/reports/jacoco/test/jacocoTestReport.xml:jacoco'
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
