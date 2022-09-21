@@ -13,7 +13,6 @@ import com.example.realworldkotlinspringbootjdbc.usecase.profile.UnfollowProfile
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
-import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController
 import javax.websocket.server.PathParam
 
 @RestController
-@Tag(name = "Profile")
 class ProfileController(
     val myAuth: MyAuth,
     val showProfileUseCase: ShowProfileUseCase,
