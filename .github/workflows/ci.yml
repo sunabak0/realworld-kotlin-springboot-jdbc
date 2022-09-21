@@ -85,7 +85,7 @@ jobs:
         if: always()
         with:
           check_name: 'JUnit5のテスト結果レポート'
-          files: 'build/test-results/**/*.xml'
+          junit_files: 'build/test-results/**/*.xml'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
