@@ -67,6 +67,14 @@ docs.generate-kdoc: ## KDocを生成と表示(gitに含めない)
 	open build/dokka/html/index.html
 
 ################################################################################
+# OpenAPI Generator
+################################################################################
+.PHONY: openapi.generate-api-doc
+openapi.generate-api-doc: ## スキーマファイル -> ドキュメントを生成
+	./gradlew :generateApiDoc
+	@echo "Please command. 'open ./build/openapi/doc/index.html'"
+
+################################################################################
 # Utility-Command help
 ################################################################################
 .DEFAULT_GOAL := help
