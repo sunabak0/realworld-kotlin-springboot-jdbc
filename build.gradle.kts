@@ -257,29 +257,36 @@ tasks.withType<KotlinCompile> {
 }
 
 /**
- * ./gradlew test
+ * tasks.test と task<Test>("***") の共通設定
  */
 tasks.withType<Test> {
-    useJUnitPlatform {
-        excludeTags("WithLocalDb")
-        excludeTags("ApiIntegration")
-    }
-    this.testLogging {
-        /**
-         * Test時に標準出力を出力させる
-         */
-        this.showStandardStreams = true
-    }
+    /**
+     * Test時に標準出力を出力させる
+     */
+    this.testLogging.showStandardStreams = true
     /**
      * testが終わった後にカバレッジレポートを出す
      */
     finalizedBy(tasks.jacocoTestReport)
 }
+tasks.test {
+    /**
+     * ここにthis.useJUnitPlatform()を記述すると、他のやつまで波及する
+     * 例
+     * $ ./gradlew test ***
+     * としても***で設定したうまく機能しない
+     *
+     * なので、./gradlew test ではなにもしない
+     */
+    println("Do nothing")
+    println("Please `./gradlew test full-dev`")
+}
 tasks.jacocoTestReport {
     /**
-     * jacocoTestReportは必ずテスト終了後に作成するようにする(依存させる)
+     * jacocoReportを出す時に使うファイル群の指定
      */
-    dependsOn(tasks.test)
+    this.executionData.setFrom(fileTree(buildDir).include("/jacoco/*.exec"))
+
     /**
      * レポート形式
      * - XML(主用途: CodeClimate等のSaaS)
@@ -298,7 +305,6 @@ tasks.jacocoTestReport {
     classDirectories.setFrom(files(classDirectories.files.map {
         fileTree(it).apply {
             exclude(listOf(
-                "**/infra/*",
                 "**/domain/*Repository*",
             ))
         }
@@ -309,34 +315,45 @@ jacoco {
 }
 
 /**
- * ./gradlew test withLocalDb
+ * ./gradlew test full
  */
-task<Test>("withLocalDb") {
-    useJUnitPlatform {
-        includeTags("WithLocalDb")
-    }
-    this.testLogging {
-        /**
-         * Test時に標準出力を出力させる
-         */
-        this.showStandardStreams = true
-    }
+task<Test>("full") {
+    this.useJUnitPlatform()
+    exclude(
+        "**/sandbox/*"
+    )
 }
 
 /**
- * APIテスト
+ * ./gradlew test unitWithoutDb
+ */
+task<Test>("unitWithoutDb") {
+    this.useJUnitPlatform()
+    include(
+        "**/domain/**/*Test*",
+        "**/presentation/**/*Test*",
+        "**/usecase/**/*Test*",
+        "**/util/**/*Test*",
+    )
+}
+
+/**
+ * ./gradlew test fullDev
+ * sandboxなどもこれで走る
+ */
+task<Test>("fullDev") {
+    this.useJUnitPlatform()
+}
+
+/**
  * ./gradlew test apiIntegration
  */
 task<Test>("apiIntegration") {
-    useJUnitPlatform {
-        includeTags("ApiIntegration")
-    }
-    this.testLogging {
-        /**
-         * Test時に標準出力を出力させる
-         */
-        this.showStandardStreams = true
-    }
+    this.useJUnitPlatform()
+    this.include(
+        "**/infra/helper/*Test*",
+        "**/api_integration/**/*Test*",
+    )
 }
 
 /**
