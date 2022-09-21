@@ -23,10 +23,6 @@ interface MyAuth {
          */
         object RequiredBearerToken : Unauthorized, MyError.Basic
         /**
-         * BearerTokenのパースに失敗
-         */
-        data class FailedParseBearerToken(override val cause: Throwable, val authorizationHeader: String) : Unauthorized, MyError.MyErrorWithThrowable
-        /**
          * Decodeに失敗
          */
         data class FailedDecodeToken(override val cause: MyError, val token: String) : Unauthorized, MyError.MyErrorWithMyError
@@ -56,11 +52,7 @@ class MyAuthImpl(
     override fun authorize(authorizationHeader: String?): Either<MyAuth.Unauthorized, RegisteredUser> {
         return Option.fromNullable(authorizationHeader)
             .toEither { MyAuth.Unauthorized.RequiredBearerToken }
-            .flatMap { // Parse bearer header to token
-                try { it.split(" ")[1].right() } catch (e: IndexOutOfBoundsException) {
-                    MyAuth.Unauthorized.FailedParseBearerToken(e, it).left()
-                }
-            }.flatMap { // Decode token to MySession
+            .flatMap { // Decode token to MySession
                     token ->
                 mySessionJwt.decode(token).fold(
                     { MyAuth.Unauthorized.FailedDecodeToken(it, token).left() },

@@ -1,8 +1,6 @@
 package com.example.realworldkotlinspringbootjdbc.util
 
 import arrow.core.Either
-import arrow.core.Either.Left
-import arrow.core.Either.Right
 import arrow.core.Some
 import arrow.core.left
 import arrow.core.right
@@ -30,21 +28,6 @@ class MyAuthTest {
     }
 
     @Test
-    fun `引数のAuthorization HeaderがBearer tokenとしての形式が異なった場合、Jwt認証は「Parseに失敗した」旨のエラーを返す`() {
-        val notImplementedMySessionJwt = object : MySessionJwt {}
-        val notImplementedUserRepository = object : UserRepository {}
-
-        // TODO: ThrowableのCompare方法
-        when (val actual = MyAuthImpl(notImplementedUserRepository, notImplementedMySessionJwt).authorize("dummy-empty")) {
-            is Left -> when (val error = actual.value) {
-                is MyAuth.Unauthorized.FailedParseBearerToken -> assertThat(error.authorizationHeader).isEqualTo("dummy-empty")
-                else -> assert(false)
-            }
-            is Right -> assert(false)
-        }
-    }
-
-    @Test
     fun `Jwtデコード時に「失敗した」旨のエラーが返ってきた場合、Jwt認証は「Decodeに失敗した」旨のエラーを返す`() {
         val decodeError = MySessionJwt.DecodeError.NothingRequiredClaim("dummy")
         val notImplementedUserRepository = object : UserRepository {}
@@ -53,7 +36,7 @@ class MyAuthTest {
                 decodeError.left()
         }
 
-        val actual = MyAuthImpl(notImplementedUserRepository, decodeReturnError).authorize("Bearer: abc")
+        val actual = MyAuthImpl(notImplementedUserRepository, decodeReturnError).authorize("abc")
         val expected = MyAuth.Unauthorized.FailedDecodeToken(decodeError, "abc").left()
         assertThat(actual).isEqualTo(expected)
     }
