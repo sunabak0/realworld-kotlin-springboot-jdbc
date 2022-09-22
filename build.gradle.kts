@@ -89,7 +89,7 @@ dependencies {
      * 概要
      * - Kotlinで関数型プログラミングをするときに便利なライブラリ
      */
-    implementation("io.arrow-kt:arrow-core:1.1.2")
+    implementation("io.arrow-kt:arrow-core:1.1.3")
 
     /**
      * AssertJ
