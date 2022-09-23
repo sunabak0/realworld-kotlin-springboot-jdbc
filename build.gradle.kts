@@ -250,7 +250,7 @@ dependencies {
      * $ curl -XGET 'http://localhost:8080/${server.servlet.context-path}/actuator' | jq .
      * $ curl -XGET 'http://localhost:8080/${server.servlet.context-path}/actuator/health' | jq .
      */
-    implementation("org.springframework.boot:spring-boot-starter-actuator:2.7.3")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
 
     /**
      * Swagger Annotations
