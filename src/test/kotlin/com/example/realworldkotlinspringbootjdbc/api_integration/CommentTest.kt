@@ -376,9 +376,13 @@ class CommentTest {
              * then:
              */
             actual.andExpect(status().isUnauthorized)
-                .andExpect(content().json("""
+                .andExpect(
+                    content().json(
+                        """
                     {"errors":{"body":["コメントの削除が許可されていません"]}}
-                """.trimIndent()))
+                        """.trimIndent()
+                    )
+                )
         }
     }
 }
