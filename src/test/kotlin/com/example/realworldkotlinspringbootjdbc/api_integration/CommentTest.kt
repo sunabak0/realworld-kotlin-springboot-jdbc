@@ -332,5 +332,53 @@ class CommentTest {
             actual.andExpect(status().isOk)
                 .andExpect(content().string(""))
         }
+
+        @Test
+        @DataSet(value = ["datasets/yml/given/articles.yml", "datasets/yml/given/users.yml"])
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/articles.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-slug に該当する作成済記事が存在し、コメント作成者が実行ユーザーじゃない場合、コメントの削除に失敗し、認可エラーが発生する`() {
+            /**
+             * given:
+             * - userId = 1, email = "paul-graham@example.com" の登録済ユーザーのログイン用 JWT を作成
+             */
+            val registeredUser = RegisteredUser.newWithoutValidation(
+                userId = UserId(1),
+                email = Email.newWithoutValidation("paul-graham@example.com"),
+                username = Username.newWithoutValidation("paul-graham"),
+                bio = Bio.newWithoutValidation("Lisper"),
+                image = Image.newWithoutValidation("")
+            )
+            val session = MySession(userId = registeredUser.userId, email = registeredUser.email)
+            val token =
+                JWT.create()
+                    .withIssuer(MySessionJwt.ISSUER)
+                    .withClaim(MySessionJwt.USER_ID_KEY, session.userId.value)
+                    .withClaim(MySessionJwt.EMAIL_KEY, session.email.value)
+                    .sign(Algorithm.HMAC256("secret"))
+            val slug = "rust-vs-scala-vs-kotlin"
+            val id = 1
+
+            /**
+             * when:
+             */
+            val actual = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .delete("/articles/$slug/comments/$id")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", token)
+            )
+
+            /**
+             * then:
+             */
+            actual.andExpect(status().isUnauthorized)
+                .andExpect(content().json("""
+                    {"errors":{"body":["コメントの削除が許可されていません"]}}
+                """.trimIndent()))
+        }
     }
 }
