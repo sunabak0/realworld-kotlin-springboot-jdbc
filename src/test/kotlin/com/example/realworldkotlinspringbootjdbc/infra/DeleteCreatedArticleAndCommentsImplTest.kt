@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
+import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
 import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
 import com.example.realworldkotlinspringbootjdbc.domain.DeleteCreatedArticleAndComments
 import com.github.database.rider.core.api.dataset.DataSet
@@ -17,18 +18,21 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.annotation.Primary
 import org.springframework.dao.DataAccessException
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 
 @Repository
-@Primary
 class ThrowDataAccessExceptionCommentRepositoryImpl : CommentRepository {
     @Transactional
     override fun deleteAll(articleId: ArticleId): Either.Right<Unit> =
         throw object : DataAccessException("CommentRepository.deleteAll時に、例外が投げられる") {}
 }
+@Repository
+class ThrowDataAccessExceptionDeleteCreatedArticleAndCommentsImpl(
+    articleRepository: ArticleRepository,
+    commentRepository: ThrowDataAccessExceptionCommentRepositoryImpl,
+) : DeleteCreatedArticleAndCommentsImpl(articleRepository, commentRepository)
 
 @SpringBootTest
 @Tag("WithLocalDb")
@@ -138,7 +142,7 @@ class DeleteCreatedArticleAndCommentsImplTest {
     //     includeTables = ["articles", "tags", "article_tags", "favorites", "article_comments"]
     // )
     fun `異常系-Commentの削除時にDBに関する例外が投げられた時、作成済み記事の削除もRollbackされて、なかったことになる`(
-        @Autowired deleteCreatedArticleAndComments: DeleteCreatedArticleAndComments
+        @Autowired deleteCreatedArticleAndComments: ThrowDataAccessExceptionDeleteCreatedArticleAndCommentsImpl
     ) {
         /**
          * given:

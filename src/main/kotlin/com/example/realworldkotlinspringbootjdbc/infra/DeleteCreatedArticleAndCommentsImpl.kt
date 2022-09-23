@@ -8,10 +8,12 @@ import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
 import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
 import com.example.realworldkotlinspringbootjdbc.domain.DeleteCreatedArticleAndComments
+import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 
 @Repository
+@Primary
 class DeleteCreatedArticleAndCommentsImpl(
     val articleRepository: ArticleRepository,
     val commentRepository: CommentRepository,
