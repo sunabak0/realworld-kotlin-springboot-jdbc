@@ -25,6 +25,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 class CommentTest {
@@ -217,6 +218,7 @@ class CommentTest {
         fun `正常系-slug に該当する作成済記事が存在し、コメントの作成に成功する`() {
             /**
              * given:
+             * - userId = 1、email = "paul-graham@example.com" の登録済ユーザーのログイン用 JWT を作成する
              */
             val registeredUser = RegisteredUser.newWithoutValidation(
                 userId = UserId(1),
@@ -254,8 +256,15 @@ class CommentTest {
 
             /**
              * then:
+             * - createdAt、updatedAt はメタデータなので比較しない
              */
-            actual.andExpect(status().isOk)
+            actual.andExpect(status().isOk).andExpect(
+                content().json(
+                    """
+                {"Comment":{"id":10001,"body":"created-dummy-body-1","authorId":1}}
+                    """.trimIndent()
+                )
+            )
         }
     }
 }
