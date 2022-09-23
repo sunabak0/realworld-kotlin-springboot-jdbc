@@ -74,6 +74,13 @@ openapi.generate-api-doc: ## スキーマファイル -> ドキュメントを�
 	./gradlew :generateApiDoc
 	@echo "Please command. 'open ./build/openapi/doc/index.html'"
 
+.PHONY: openapi.generate-api-server
+openapi.generate-api-server: ## スキーマファイル -> サーバー側のコードを生成
+	rm -rf ./build/openapi/server-code/
+	./gradlew :generateApiServer
+	@echo "Please command. 'open ./build/openapi/server-code/'"
+
+
 ################################################################################
 # Utility-Command help
 ################################################################################
