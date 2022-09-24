@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
     id("org.springframework.boot") version "2.7.3"
@@ -15,7 +16,7 @@ plugins {
      *
      * URL
      * - https://github.com/detekt/detekt
-     * GradlePlugins
+     * GradlePlugins(plugins.gradle.org)
      * - https://plugins.gradle.org/plugin/io.gitlab.arturbosch.detekt
      * Main用途
      * - Linter/Formatter
@@ -31,7 +32,7 @@ plugins {
      *
      * URL
      * - https://github.com/Kotlin/dokka
-     * GradlePlugins
+     * GradlePlugins(plugins.gradle.org)
      * - https://plugins.gradle.org/plugin/org.jetbrains.dokka
      * Main用途
      * - ドキュメント生成
@@ -47,6 +48,8 @@ plugins {
      *
      * URL
      * - https://docs.gradle.org/current/userguide/jacoco_plugin.html
+     * GradlePlugins(plugins.gradle.org)
+     * - 見つからない
      * GitHub
      * - https://github.com/gradle/gradle/blob/master/subprojects/jacoco/src/main/java/org/gradle/testing/jacoco/plugins/JacocoPlugin.java
      * Main用途
@@ -58,6 +61,26 @@ plugins {
      * - versionは jacoco {} の中で指定する
      */
     jacoco
+
+    /**
+     * openapi.generator
+     *
+     * 公式ページ
+     * - https://openapi-generator.tech/
+     * GradlePlugins(plugins.gradle.org)
+     * - https://plugins.gradle.org/plugin/org.openapi.generator
+     * GitHub
+     * - https://github.com/OpenAPITools/openapi-generator/tree/master/modules/openapi-generator-gradle-plugin
+     * Main用途
+     * - スキーマファイルからコード生成
+     * Sub用途
+     * - スキーマファイルからドキュメント生成
+     * 概要
+     * - スキーマ駆動開発するために使う
+     * - API仕様をスキーマファイル(yaml)に書いて、コード生成し、それを利用するようにする
+     * - 可能な限りプロダクトコードに依存しないようにする(生成したコードにプロダクトコードを依存させる)
+     */
+    id("org.openapi.generator") version "6.1.0"
 }
 
 group = "com.example"
@@ -125,25 +148,6 @@ dependencies {
      */
     testImplementation("net.jqwik:jqwik:1.6.5")
     testImplementation("net.jqwik:jqwik-kotlin:1.6.5")
-
-    /**
-     * Springdoc Openapi
-     *
-     * URL
-     * - https://springdoc.org/
-     * MavenCentral
-     * - https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-ui
-     * - https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-webmvc-core
-     * Main用途
-     * - SpringBootとswagger-uiの統合
-     * 概要
-     * - SpringBootのサーバ起動するとswagger-uiでOpenAPIが見える
-     * - http://localhost:8080/swagger-ui.html でswagger uiが見える
-     * - http://localhost:8080/api-docs でjsonのOpenAPI
-     * - http://localhost:8080/api-docs.yaml でyaml版
-     */
-    implementation("org.springdoc:springdoc-openapi-ui:1.6.11")
-    implementation("org.springdoc:springdoc-openapi-webmvc-core:1.6.11")
 
     /**
      * Java JWT
@@ -247,6 +251,43 @@ dependencies {
      * $ curl -XGET 'http://localhost:8080/${server.servlet.context-path}/actuator/health' | jq .
      */
     implementation("org.springframework.boot:spring-boot-starter-actuator:2.7.3")
+
+    /**
+     * Swagger Annotations
+     * Swagger Models
+     * Jakarta Annotations API
+     *
+     * MavenCentral
+     * - https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-annotations
+     * - https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-models
+     * - https://mvnrepository.com/artifact/jakarta.annotation/jakarta.annotation-api
+     * Main用途
+     * - OpenAPI Generatorで作成されるコードで利用
+     * Sub用途
+     * - 無し
+     * 概要
+     * - OpenAPI Generatorで作成されるコードがimportしている
+     * - 基本的にプロダクションコードでは使わない想定
+     */
+    compileOnly("io.swagger.core.v3:swagger-annotations:2.2.2")
+    compileOnly("io.swagger.core.v3:swagger-models:2.2.2")
+    compileOnly("jakarta.annotation:jakarta.annotation-api:2.1.1")
+
+    /**
+     * Spring Boot Starter Validation
+     *
+     * MavenCentral
+     * - https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-validation
+     * Main用途
+     * - OpenAPI Generatorで作成されるコードで利用
+     * Sub用途
+     * - 無し
+     * 概要
+     * - OpenAPI Generatorで作成されるコードがimportしている
+     * - javax.validation*を利用するため
+     * [Spring-Boot-2.3ではjavax.validationを依存関係に追加しなければならない](https://qiita.com/tatetsujitomorrow/items/a397c311a95d66e4f955)
+     */
+    implementation("org.springframework.boot:spring-boot-starter-validation")
 }
 
 tasks.withType<KotlinCompile> {
@@ -369,4 +410,48 @@ detekt {
         "$projectDir/config/detekt/detekt.yml",
         "$projectDir/config/detekt/detekt-override.yml",
     )
+}
+
+/**
+ * OpenAPI Generatorを使ってAPIドキュメント生成
+ * ./gradlew :generateApiDoc
+ */
+task<GenerateTask>("generateApiDoc") {
+    /**
+     * Generators
+     * https://github.com/OpenAPITools/openapi-generator/blob/master/docs/generators/README.md
+     */
+    generatorName.set("html2")
+    inputSpec.set("$projectDir/e2e/openapi.yml")
+    outputDir.set("$buildDir/openapi/doc/")
+}
+
+/**
+ * OpenAPI Generatorを使ってコード生成
+ * ./gradlew :generateApiServer
+ */
+task<GenerateTask>("generateApiServer") {
+    generatorName.set("kotlin-spring")
+    inputSpec.set("$projectDir/e2e/openapi.yml")
+    outputDir.set("$buildDir/openapi/server-code/") // .gitignoreされているので注意(わざとここにあります)
+    apiPackage.set("com.example.realworldkotlinspringbootjdbc.openapi.generated.controller")
+    modelPackage.set("com.example.realworldkotlinspringbootjdbc.openapi.generated.model")
+    configOptions.set(
+        mapOf(
+            "interfaceOnly" to "true",
+        )
+    )
+}
+/**
+ * Kotlinをコンパイルする前に、generateApiServerタスクを実行
+ * (必ずスキーマファイルから最新のコードが生成され、もし変更があったら、コンパイル時に失敗して気付ける)
+ */
+tasks.compileKotlin {
+    dependsOn("generateApiServer")
+}
+/**
+ * OpenAPI Generatorによって生成されたコードをimportできるようにする
+ */
+kotlin.sourceSets.main {
+    kotlin.srcDir("$buildDir/openapi/server-code/src/main")
 }

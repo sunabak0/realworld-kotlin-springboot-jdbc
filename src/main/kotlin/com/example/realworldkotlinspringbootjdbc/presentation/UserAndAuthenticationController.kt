@@ -13,7 +13,6 @@ import com.example.realworldkotlinspringbootjdbc.usecase.user_and_authentication
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
-import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@Tag(name = "User and Authentication")
 class UserAndAuthenticationController(
     val mySessionJwt: MySessionJwt,
     val myAuth: MyAuth,

@@ -10,7 +10,6 @@ import com.example.realworldkotlinspringbootjdbc.usecase.favorite.UnfavoriteUseC
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
-import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -21,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController
 import java.text.SimpleDateFormat
 
 @RestController
-@Tag(name = "Favorites")
 class FavoriteController(
     val myAuth: MyAuth,
     val favoriteUseCase: FavoriteUseCase,
