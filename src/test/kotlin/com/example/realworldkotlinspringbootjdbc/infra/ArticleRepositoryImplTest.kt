@@ -16,10 +16,12 @@ import com.example.realworldkotlinspringbootjdbc.domain.article.Description
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.article.Title
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
+import com.example.realworldkotlinspringbootjdbc.infra.helper.SeedData
 import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.SoftAssertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -1542,6 +1544,223 @@ class ArticleRepositoryImplTest {
                 articleId = notExistedUpdatableCreatedArticle.articleId
             ).left()
             assertThat(actual).isEqualTo(expected)
+        }
+    }
+
+    @Tag("WithLocalDb")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    @DisplayName("著者の最新記事郡")
+    class LatestByAuthors {
+        @BeforeEach
+        fun reset() = DbConnection.resetSequence()
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ],
+        )
+        fun `正常系-対象の登録済みユーザー視点から見た、指定した著者の最新の作成済み記事郡が戻り値`() {
+            /**
+             * given:
+             * - 指定した著者分(2人分)
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val authors = setOf(
+                UserId(1),
+                UserId(2),
+            )
+            val viewpointUserId = UserId(1)
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.latestByAuthors(authors, viewpointUserId)
+
+            /**
+             * then:
+             * - 詰め替えができているか
+             */
+            val updatedAtAndIdComparator = Comparator<CreatedArticle> { a, b -> b.updatedAt.compareTo(a.updatedAt) }
+                .thenComparator { a, b -> a.id.value.compareTo(b.id.value) }
+            val expectedCreatedArticleList = SeedData.createdArticlesFromViewpointSet()[viewpointUserId]!!
+                .groupBy { it.authorId } // 著者毎
+                .filter { (userId, _) -> authors.contains(userId) } // 指定した著者分に含まれているかどうか
+                .values // 著者の作成済み記事のList
+                .map { it.sortedWith(updatedAtAndIdComparator).first() } // それぞれ更新日時が最新(もし被っていたらIdの若い方)
+
+            when (actual) {
+                is Left -> assert(false) { "原因: ${actual.value}" }
+                is Right -> {
+                    val actualArticles = actual.value
+                    actualArticles.forEach { actualArticle ->
+                        val expected = expectedCreatedArticleList.find { it.id == actualArticle.id }!!
+
+                        val softly = SoftAssertions()
+                        softly.assertThat(actualArticle.title).isEqualTo(expected.title)
+                        softly.assertThat(actualArticle.description).isEqualTo(expected.description)
+                        softly.assertThat(actualArticle.body).isEqualTo(expected.body)
+                        softly.assertThat(actualArticle.slug).isEqualTo(expected.slug)
+                        softly.assertThat(actualArticle.tagList).isEqualTo(expected.tagList)
+                        softly.assertThat(actualArticle.createdAt).isEqualTo(expected.createdAt)
+                        softly.assertThat(actualArticle.updatedAt).isEqualTo(expected.updatedAt)
+                        softly.assertThat(actualArticle.favorited).isEqualTo(expected.favorited)
+                        softly.assertThat(actualArticle.favoritesCount).isEqualTo(expected.favoritesCount)
+                        softly.assertAll()
+                    }
+                    assertThat(actualArticles.size)
+                        .`as`("取得できる数が一致する")
+                        .isEqualTo(expectedCreatedArticleList.size)
+                }
+            }
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ],
+        )
+        fun `正常系-著者を誰も指定しなかった場合、空の作成済み記事郡が戻り値`() {
+            /**
+             * given:
+             * - 著者を指定しない
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val authors = emptySet<UserId>()
+            val viewpointUserId = UserId(1)
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.latestByAuthors(authors, viewpointUserId)
+
+            /**
+             * then:
+             */
+            val expected = emptySet<CreatedArticle>().right()
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ],
+        )
+        fun `正常系-指定した著者が記事を書いていなかった場合、その著者分の最新記事は無い`() {
+            /**
+             * given:
+             * - 記事を書いていない著者(1人分)
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val authors = setOf(
+                UserId(3),
+            )
+            val viewpointUserId = UserId(1)
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.latestByAuthors(authors, viewpointUserId)
+
+            /**
+             * then:
+             */
+            val expected = emptySet<CreatedArticle>().right()
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ],
+        )
+        fun `正常系-存在しない著者を指定した場合、その著者分の最新記事は無い`() {
+            /**
+             * given:
+             * - 存在しない著者(3人分)
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val authors = setOf(
+                UserId(SeedData.users().size + 1),
+                UserId(SeedData.users().size + 2),
+                UserId(SeedData.users().size + 3),
+            )
+            val viewpointUserId = UserId(1)
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.latestByAuthors(authors, viewpointUserId)
+
+            /**
+             * then:
+             */
+            val expected = emptySet<CreatedArticle>().right()
+            assertThat(actual).isEqualTo(expected)
+        }
+
+        /**
+         * 基本ありえない/あってはいけない
+         * 引数的にはできてしまう、例外も投げられないので、注意を込めたテスト
+         */
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ],
+        )
+        fun `仕様外-視点となる登録済みユーザーに存在しない著者を指定した場合、全ての作成済み記事のお気に入り状態は全てfalse`() {
+            /**
+             * given:
+             * - 著者は登録済みユーザー全員分
+             */
+            val articleRepository = ArticleRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val authors = SeedData.users().groupBy { it.userId }.keys
+            val viewpointUserId = UserId(SeedData.users().size + 1)
+
+            /**
+             * when:
+             */
+            val actual = articleRepository.latestByAuthors(authors, viewpointUserId)
+
+            /**
+             * then:
+             * - 取得できる作成済み記事の数と各作成済み記事Idは一致する
+             * - お気に入り状態は全て非お気に入り
+             */
+            val updatedAtAndIdComparator = Comparator<CreatedArticle> { a, b -> b.updatedAt.compareTo(a.updatedAt) }
+                .thenComparator { a, b -> a.id.value.compareTo(b.id.value) }
+            val expected = SeedData.createdArticles()
+                .groupBy { it.authorId } // 著者毎にグルーピング
+                .filter { (userId, _) -> authors.contains(userId) } // 指定した著者だけ
+                .values // 著者毎の作成済み記事のリスト
+                .map { it.sortedWith(updatedAtAndIdComparator).first() } // それぞれ更新日時が最新(もし被っていたらIdの若い方)
+                .toSet()
+
+            when (actual) {
+                is Left -> assert(false) { "原因: ${actual.value}" }
+                is Right -> {
+                    val articles = actual.value
+                    assertThat(articles)
+                        .`as`("取得できる作成済み記事の数と各作成済み記事Idは一致する")
+                        .isEqualTo(expected)
+
+                    articles.forEach {
+                        assertThat(it.favorited)
+                            .`as`("お気に入り状態は非お気に入り")
+                            .isEqualTo(false)
+                    }
+                }
+            }
         }
     }
 }

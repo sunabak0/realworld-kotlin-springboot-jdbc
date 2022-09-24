@@ -1,8 +1,10 @@
 package com.example.realworldkotlinspringbootjdbc.infra.helper
 
+import arrow.core.toOption
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleId
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
+import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.Body
 import com.example.realworldkotlinspringbootjdbc.domain.article.Description
@@ -15,6 +17,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
+import java.text.SimpleDateFormat
 import java.util.Date
 import com.example.realworldkotlinspringbootjdbc.domain.comment.Body as CommentBody
 
@@ -104,54 +107,58 @@ object SeedData {
      * @param favorited
      * @return ジェネレートされた作成済み記事
      */
-    private fun generateCreatedArticleWithFavorited(articleId: ArticleId, favorited: Boolean): CreatedArticle = when (articleId) {
-        ArticleId(1) -> CreatedArticle.newWithoutValidation(
-            id = articleId,
-            title = Title.newWithoutValidation("Rust vs Scala vs Kotlin"),
-            slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
-            body = Body.newWithoutValidation("dummy-body"),
-            createdAt = Date(),
-            updatedAt = Date(),
-            description = Description.newWithoutValidation("dummy-description"),
-            tagList = listOf(
-                Tag.newWithoutValidation("rust"),
-                Tag.newWithoutValidation("scala"),
-                Tag.newWithoutValidation("kotlin"),
-            ),
-            authorId = UserId(1),
-            favorited = favorited,
-            favoritesCount = 1,
-        )
-        ArticleId(2) -> CreatedArticle.newWithoutValidation(
-            id = articleId,
-            title = Title.newWithoutValidation("Functional programming kotlin"),
-            slug = Slug.newWithoutValidation("functional-programming-kotlin"),
-            body = Body.newWithoutValidation("dummy-body"),
-            createdAt = Date(),
-            updatedAt = Date(),
-            description = Description.newWithoutValidation("dummy-description"),
-            tagList = listOf(
-                Tag.newWithoutValidation("kotlin"),
-            ),
-            authorId = UserId(1),
-            favorited = favorited,
-            favoritesCount = 1,
-        )
-        ArticleId(3) -> CreatedArticle.newWithoutValidation(
-            id = articleId,
-            title = Title.newWithoutValidation("TDD(Type Driven Development)"),
-            slug = Slug.newWithoutValidation("tdd-type-driven-development"),
-            body = Body.newWithoutValidation("dummy-body"),
-            createdAt = Date(),
-            updatedAt = Date(),
-            description = Description.newWithoutValidation("dummy-description"),
-            tagList = emptyList(),
-            authorId = UserId(2),
-            favorited = favorited,
-            favoritesCount = 2,
-        )
-        else -> throw IllegalArgumentException("articleId(value=$articleId)の定義がありません")
-    }
+    private fun generateCreatedArticleWithFavorited(articleId: ArticleId, favorited: Boolean): CreatedArticle =
+        when (articleId) {
+            ArticleId(1) -> CreatedArticle.newWithoutValidation(
+                id = articleId,
+                title = Title.newWithoutValidation("Rust vs Scala vs Kotlin"),
+                slug = Slug.newWithoutValidation("rust-vs-scala-vs-kotlin"),
+                body = Body.newWithoutValidation("dummy-body"),
+                createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                description = Description.newWithoutValidation("dummy-description"),
+                tagList = listOf(
+                    Tag.newWithoutValidation("rust"),
+                    Tag.newWithoutValidation("scala"),
+                    Tag.newWithoutValidation("kotlin"),
+                ),
+                authorId = UserId(1),
+                favorited = favorited,
+                favoritesCount = 1,
+            )
+
+            ArticleId(2) -> CreatedArticle.newWithoutValidation(
+                id = articleId,
+                title = Title.newWithoutValidation("Functional programming kotlin"),
+                slug = Slug.newWithoutValidation("functional-programming-kotlin"),
+                body = Body.newWithoutValidation("dummy-body"),
+                createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-02T00:00:00+09:00"),
+                description = Description.newWithoutValidation("dummy-description"),
+                tagList = listOf(
+                    Tag.newWithoutValidation("kotlin"),
+                ),
+                authorId = UserId(1),
+                favorited = favorited,
+                favoritesCount = 1,
+            )
+
+            ArticleId(3) -> CreatedArticle.newWithoutValidation(
+                id = articleId,
+                title = Title.newWithoutValidation("TDD(Type Driven Development)"),
+                slug = Slug.newWithoutValidation("tdd-type-driven-development"),
+                body = Body.newWithoutValidation("dummy-body"),
+                createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
+                updatedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-03T00:00:00+09:00"),
+                description = Description.newWithoutValidation("dummy-description"),
+                tagList = emptyList(),
+                authorId = UserId(2),
+                favorited = favorited,
+                favoritesCount = 2,
+            )
+
+            else -> throw IllegalArgumentException("articleId(value=$articleId)の定義がありません")
+        }
 
     /**
      * @return DBにSeedDataとして入っている作成済み記事に紐付いているコメント一覧
@@ -198,4 +205,53 @@ object SeedData {
             ),
         )
     )
+
+    /**
+     * @return ログインしていない人から見た他ユーザー郡
+     */
+    fun otherUsers(): Set<OtherUser> = users().map { generateOtherUserWithFollowing(it.userId, false) }.toSet()
+
+    /**
+     * @return 対象のユーザーから見た他ユーザー郡
+     */
+    fun otherUsersFromViewpointSet(): Map<UserId, Set<OtherUser>> = mapOf(
+        UserId(1) to setOf(
+            generateOtherUserWithFollowing(UserId(1), false),
+            generateOtherUserWithFollowing(UserId(2), false),
+            generateOtherUserWithFollowing(UserId(3), false),
+        ),
+        UserId(2) to setOf(
+            generateOtherUserWithFollowing(UserId(1), true),
+            generateOtherUserWithFollowing(UserId(2), false),
+            generateOtherUserWithFollowing(UserId(3), false),
+        ),
+        UserId(3) to setOf(
+            generateOtherUserWithFollowing(UserId(1), true),
+            generateOtherUserWithFollowing(UserId(2), true),
+            generateOtherUserWithFollowing(UserId(3), false),
+        ),
+    )
+
+    /**
+     * SeedDataである他ユーザーのDomainObjectジェネレータ
+     *
+     * - フォロー済みかどうかを任意で入れられる
+     *
+     * @param userId
+     * @param following
+     * @return ジェネレートされた他ユーザー
+     */
+    private fun generateOtherUserWithFollowing(userId: UserId, following: Boolean): OtherUser =
+        users().find { it.userId == userId }.toOption().fold(
+            { throw IllegalArgumentException("UserId(value=$userId)のユーザがいません") },
+            {
+                OtherUser.newWithoutValidation(
+                    userId = it.userId,
+                    username = it.username,
+                    bio = it.bio,
+                    image = it.image,
+                    following = following,
+                )
+            }
+        )
 }

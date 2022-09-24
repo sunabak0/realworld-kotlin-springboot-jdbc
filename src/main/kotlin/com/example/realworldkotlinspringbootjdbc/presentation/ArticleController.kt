@@ -12,6 +12,7 @@ import com.example.realworldkotlinspringbootjdbc.presentation.response.serialize
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
 import com.example.realworldkotlinspringbootjdbc.usecase.article.CreateArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.DeleteCreatedArticleUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.article.FeedUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.FilterCreatedArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.ShowArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.UpdateCreatedArticleUseCase
@@ -28,7 +29,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import java.text.SimpleDateFormat
 
 @RestController
 class ArticleController(
@@ -38,6 +38,7 @@ class ArticleController(
     val createArticle: CreateArticleUseCase,
     val deleteArticle: DeleteCreatedArticleUseCase,
     val updateArticle: UpdateCreatedArticleUseCase,
+    val feed: FeedUseCase,
 ) {
 
     /**
@@ -186,29 +187,88 @@ class ArticleController(
         }
     }
 
+    /**
+     * フォローしているユーザーの最新記事を取得
+     *
+     * - 認証: 必須
+     * - クエリパラメータで制限可能
+     *
+     * @param rawRequestBody
+     * @return
+     */
     @GetMapping("/articles/feed")
-    fun feed(@Suppress("UnusedPrivateMember") @RequestBody rawRequestBody: String?): ResponseEntity<String> {
-        val articles = Articles(
-            1,
-            listOf(
-                Article(
-                    "hoge-title",
-                    "hoge-slug",
-                    "hoge-body",
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-                    "hoge-description",
-                    listOf("dragons", "training"),
-                    1,
-                    true,
-                    1,
-                )
+    fun feed(
+        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
+        @RequestParam(name = "limit", required = false) limit: String? = null,
+        @RequestParam(name = "offset", required = false) offset: String? = null,
+    ): ResponseEntity<String> {
+        val currentUser = when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
+            /**
+             * 認証: 失敗
+             */
+            is Left -> return AuthorizationError.handle(authorizeResult.value)
+            /**
+             * 認証: 成功
+             */
+            is Right -> authorizeResult.value
+        }
+
+        return when (
+            val useCaseResult = feed.execute(
+                currentUser = currentUser,
+                limit = limit,
+                offset = offset,
             )
-        )
-        return ResponseEntity(
-            ObjectMapper().writeValueAsString(articles),
-            HttpStatus.valueOf(200)
-        )
+        ) {
+            /**
+             * ユースケース: 失敗
+             */
+            is Left -> when (val error = useCaseResult.value) {
+                /**
+                 * 原因: フィードパラメータのバリデーションエラー
+                 */
+                is FeedUseCase.Error.FeedParameterValidationErrors -> ResponseEntity(
+                    serializeMyErrorListForResponseBody(error.errors),
+                    HttpStatus.valueOf(422)
+                )
+                /**
+                 * 原因: Offset値が総記事数を超えている
+                 */
+                is FeedUseCase.Error.OffsetOverCreatedArticlesCountError -> ResponseEntity(
+                    serializeUnexpectedErrorForResponseBody(
+                        """
+                            offset値が作成済み記事の数を超えています(offset=${error.feedParameters.offset}, articlesCount=${error.articlesCount})
+                        """.trimIndent()
+                    ), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
+                    HttpStatus.valueOf(422)
+                )
+            }
+            /**
+             * ユースケース: 成功
+             */
+            is Right -> ResponseEntity(
+                ObjectMapper().writeValueAsString(
+                    Articles(
+                        articlesCount = useCaseResult.value.articlesCount,
+                        articles = useCaseResult.value.articles.map {
+                            Article(
+                                title = it.article.title.value,
+                                slug = it.article.slug.value,
+                                body = it.article.body.value,
+                                createdAt = it.article.createdAt,
+                                updatedAt = it.article.updatedAt,
+                                description = it.article.description.value,
+                                tagList = it.article.tagList.map { tag -> tag.value },
+                                authorId = it.author.userId.value,
+                                favorited = it.article.favorited,
+                                favoritesCount = it.article.favoritesCount,
+                            )
+                        }
+                    )
+                ),
+                HttpStatus.valueOf(200)
+            )
+        }
     }
 
     @GetMapping("/articles/{slug}")

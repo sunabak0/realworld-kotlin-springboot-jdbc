@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
+import java.text.SimpleDateFormat
+import com.example.realworldkotlinspringbootjdbc.domain.article.Tag as ArticleTag
 
 /**
  * テストのためのテスト
@@ -202,11 +204,21 @@ class SeedDataTest {
                 }!!
 
                 val softly = SoftAssertions()
-                softly.assertThat(actualCreatedArticle.title.value).isEqualTo(expectedCreatedArticle["title"].toString())
+                softly.assertThat(actualCreatedArticle.title.value)
+                    .isEqualTo(expectedCreatedArticle["title"].toString())
                 softly.assertThat(actualCreatedArticle.body.value).isEqualTo(expectedCreatedArticle["body"].toString())
-                softly.assertThat(actualCreatedArticle.description.value).isEqualTo(expectedCreatedArticle["description"].toString())
-                softly.assertThat(actualCreatedArticle.authorId.value).isEqualTo(expectedCreatedArticle["author_id"].toString().toInt())
-                softly.assertThat(actualCreatedArticle.favoritesCount).isEqualTo(expectedCreatedArticle["favorites_count"].toString().toInt())
+                softly.assertThat(actualCreatedArticle.description.value)
+                    .isEqualTo(expectedCreatedArticle["description"].toString())
+                softly.assertThat(actualCreatedArticle.authorId.value)
+                    .isEqualTo(expectedCreatedArticle["author_id"].toString().toInt())
+                softly.assertThat(actualCreatedArticle.favoritesCount)
+                    .isEqualTo(expectedCreatedArticle["favorites_count"].toString().toInt())
+                softly.assertThat(actualCreatedArticle.createdAt)
+                    .isEqualTo(SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(expectedCreatedArticle["created_at"].toString()))
+                softly.assertThat(actualCreatedArticle.updatedAt)
+                    .isEqualTo(SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(expectedCreatedArticle["updated_at"].toString()))
+                softly.assertThat(actualCreatedArticle.tagList)
+                    .hasSameElementsAs(expectedCreatedArticle["tags"].toString().split(",").filter { it.isNotBlank() }.map { tag -> ArticleTag.newWithoutValidation(tag) })
                 softly.assertAll()
             }
 
@@ -325,10 +337,12 @@ class SeedDataTest {
             )
             actualCommentsSet.forEach { (articleId, actualComments) ->
                 actualComments.forEach { actualComment ->
-                    val expectedComment = expectedComments.find { it["id"].toString().toInt() == actualComment.id.value }!!
+                    val expectedComment =
+                        expectedComments.find { it["id"].toString().toInt() == actualComment.id.value }!!
 
                     val softly = SoftAssertions()
-                    softly.assertThat(actualComment.authorId.value).isEqualTo(expectedComment["author_id"].toString().toInt())
+                    softly.assertThat(actualComment.authorId.value)
+                        .isEqualTo(expectedComment["author_id"].toString().toInt())
                     softly.assertThat(articleId.value).isEqualTo(expectedComment["article_id"].toString().toInt())
                     softly.assertThat(actualComment.body.value).isEqualTo(expectedComment["body"].toString())
                     softly.assertAll()
@@ -338,6 +352,70 @@ class SeedDataTest {
             assertThat(actualCommentsSet.values.sumOf { it.size })
                 .`as`("レコード総数と一致する")
                 .isEqualTo(expectedComments.size)
+        }
+    }
+
+    @Tag("WithLocalDb")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    class OtherUsersFromViewpoint {
+        @BeforeEach
+        fun reset() = DbConnection.resetSequence()
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+            ]
+        )
+        fun `SeedData#otherUsersFromViewpointSet()はDBのSeedDataを網羅している`() {
+            /**
+             * given:
+             */
+
+            /**
+             * when:
+             */
+            val actualOtherUsersFromViewpointSet = SeedData.otherUsersFromViewpointSet()
+
+            /**
+             * then:
+             * - 特定の登録済みユーザーから見た登録済みユーザーのフォロー状態が一致する
+             * - フォローレコードの総数が一致する
+             */
+            val expectedFollowings = DbConnection.namedParameterJdbcTemplate.queryForList(
+                """
+                    SELECT
+                        following_id,
+                        follower_id
+                    FROM
+                        followings
+                    ;
+                """.trimIndent(),
+                MapSqlParameterSource()
+            )
+            actualOtherUsersFromViewpointSet.forEach { (userId, actualOtherUsers) ->
+                val softly = SoftAssertions()
+                actualOtherUsers.forEach { actualOtherUser ->
+                    val following = expectedFollowings.find {
+                        it["following_id"].toString().toInt() == actualOtherUser.userId.value &&
+                            it["follower_id"].toString().toInt() == userId.value
+                    }
+                    when (actualOtherUser.following) {
+                        false -> softly.assertThat(following)
+                            .`as`("$userId は${actualOtherUser.userId}をフォローしていない")
+                            .isNull()
+                        true -> softly.assertThat(following)
+                            .`as`("$userId は${actualOtherUser.userId}をフォローしている")
+                            .isNotNull
+                    }
+                }
+                softly.assertAll()
+            }
+
+            assertThat(actualOtherUsersFromViewpointSet.values.sumOf { it.filter { otherUser -> otherUser.following }.size })
+                .`as`("followingがtrueである数は、followingsレコード数と一致する")
+                .isEqualTo(expectedFollowings.size)
         }
     }
 }

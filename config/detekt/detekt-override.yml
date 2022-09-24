@@ -80,6 +80,24 @@ complexity:
   NestedBlockDepth:
     active: true
     threshold: 5 # (default: 4)
+  #
+  # TooManyFunctions
+  #
+  # 概要
+  # - functionがたくさん過ぎてはいけない
+  #
+  TooManyFunctions:
+    active: true
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/iosTest/**']
+    thresholdInFiles: 11
+    thresholdInClasses: 12 # (default: 11)
+    thresholdInInterfaces: 12 # (default: 11)
+    thresholdInObjects: 11
+    thresholdInEnums: 11
+    ignoreDeprecated: false
+    ignorePrivate: false
+    ignoreOverridden: false
+
 
 exceptions:
   active: true
