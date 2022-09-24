@@ -10,6 +10,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.Body
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
+import org.springframework.context.annotation.Primary
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
@@ -19,6 +20,7 @@ import java.time.ZoneId
 import java.util.Date
 
 @Repository
+@Primary
 class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTemplate) : CommentRepository {
     override fun list(slug: Slug): Either<CommentRepository.ListError, List<Comment>> {
         /**
