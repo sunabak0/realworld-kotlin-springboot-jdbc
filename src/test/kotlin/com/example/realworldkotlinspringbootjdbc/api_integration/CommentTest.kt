@@ -379,7 +379,11 @@ class CommentTest {
                 .andExpect(
                     content().json(
                         """
-                    {"errors":{"body":["コメントの削除が許可されていません"]}}
+                            {
+                                "errors": {
+                                    "body": ["コメントの削除が許可されていません"]
+                                }
+                            }
                         """.trimIndent()
                     )
                 )
