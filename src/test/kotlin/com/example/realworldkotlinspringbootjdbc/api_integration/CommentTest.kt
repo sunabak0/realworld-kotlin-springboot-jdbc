@@ -261,7 +261,13 @@ class CommentTest {
             actual.andExpect(status().isOk).andExpect(
                 content().json(
                     """
-                {"Comment":{"id":10001,"body":"created-dummy-body-1","authorId":1}}
+                        {
+                            "Comment": {
+                                "id": 10001,
+                                "body": "created-dummy-body-1",
+                                "authorId": 1
+                            }
+                        }
                     """.trimIndent()
                 )
             )
