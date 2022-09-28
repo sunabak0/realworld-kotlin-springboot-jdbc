@@ -1,6 +1,52 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:base"
-  ]
+  //
+  // extends
+  // https://docs.renovatebot.com/configuration-options/#extends
+  //
+  // プリセットを使用
+  //
+  extends: [
+    "config:base",
+    //
+    // timezone
+    // https://docs.renovatebot.com/configuration-options/#timezone
+    // https://docs.renovatebot.com/presets-default/#timezonearg0
+    //
+    // 概要
+    // - タイムゾーン
+    //
+    // default: null(UTC)
+    //
+    ":timezone(Asia/Tokyo)",
+  ],
+
+  //
+  // dependencyDashboard
+  // https://docs.renovatebot.com/configuration-options/#dependencydashboard
+  //
+  // 概要
+  // - ダッシュボード作成する・しない
+  //
+  // default: false
+  //
+  dependencyDashboard: true,
+
+  //
+  // packageRules
+  // https://docs.renovatebot.com/configuration-options/#packagerules
+  //
+  // 概要
+  // - updateするパッケージの単位(まとめることができる)
+  //
+  // default: なし
+  //
+  packageRules: [
+    {
+      groupName: "io.swagger.core.v3:swaagger-*",
+      matchPackagePatterns: [
+        "io.swagger.core.v3:swagger-annotations",
+        "io.swagger.core.v3:swagger-models",
+      ]
+    },
+  ],
 }
