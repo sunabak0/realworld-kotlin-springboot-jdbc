@@ -18,6 +18,10 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.skyscreamer.jsonassert.Customization
+import org.skyscreamer.jsonassert.JSONAssert
+import org.skyscreamer.jsonassert.JSONCompareMode
+import org.skyscreamer.jsonassert.comparator.CustomComparator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -63,36 +67,47 @@ class CommentTest {
 
             /**
              * then:
+             * - ステータスコードが 200
              * - 作成日時と更新日時以外を比較する
              */
-            actual.andExpect { status { isOk() } }
-                .andExpect {
-                    content {
-                        json(
-                            """
-                                {
-                                  "comments": [
-                                    {
-                                      "id": 1,
-                                      "body": "dummy-comment-body-01",
-                                      "authorId": 3
-                                    },
-                                    {
-                                      "id": 3,
-                                      "body": "dummy-comment-body-03",
-                                      "authorId": 2
-                                    },
-                                    {
-                                      "id": 5,
-                                      "body": "dummy-comment-body-02",
-                                      "authorId": 3
-                                    }
-                                  ]
-                                }
-                            """.trimIndent()
-                        )
+            val expected =
+                """
+                    {
+                      "comments": [
+                        {
+                          "id": 1,
+                          "body": "dummy-comment-body-01",
+                          "createdAt": "2022-09-26T15:00:00.000Z",
+                          "updatedAt": "2022-09-26T15:00:00.000Z",
+                          "authorId": 3
+                        },
+                        {
+                          "id": 3,
+                          "body": "dummy-comment-body-03",
+                          "createdAt": "2022-09-26T15:00:00.000Z",
+                          "updatedAt": "2022-09-26T15:00:00.000Z",
+                          "authorId": 2
+                        },
+                        {
+                          "id": 5,
+                          "body": "dummy-comment-body-02",
+                          "createdAt": "2022-09-26T15:00:00.000Z",
+                          "updatedAt": "2022-09-26T15:00:00.000Z",
+                          "authorId": 3
+                        }
+                      ]
                     }
-                }
+                """.trimIndent()
+            val actualResponseBody = actual.andExpect { status { isOk() } }.andReturn().response.contentAsString
+            JSONAssert.assertEquals(
+                expected,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.STRICT,
+                    Customization("*.createdAt") { _, _ -> true },
+                    Customization("*.updatedAt") { _, _ -> true },
+                )
+            )
         }
 
         @Test
