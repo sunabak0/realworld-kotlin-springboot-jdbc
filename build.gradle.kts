@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
-    id("org.springframework.boot") version "2.7.3"
+    id("org.springframework.boot") version "2.7.4"
     id("io.spring.dependency-management") version "1.0.14.RELEASE"
     /**
      * 注意
@@ -250,7 +250,7 @@ dependencies {
      * $ curl -XGET 'http://localhost:8080/${server.servlet.context-path}/actuator' | jq .
      * $ curl -XGET 'http://localhost:8080/${server.servlet.context-path}/actuator/health' | jq .
      */
-    implementation("org.springframework.boot:spring-boot-starter-actuator:2.7.3")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
 
     /**
      * Swagger Annotations
