@@ -141,7 +141,7 @@ class ArticleTest {
                                         "slug":"tdd-type-driven-development",
                                         "body":"dummy-body",
                                         "description":"dummy-description",
-                                        "tagList":[""],
+                                        "tagList":[],
                                         "authorId":2,
                                         "favorited":false,
                                         "favoritesCount":2

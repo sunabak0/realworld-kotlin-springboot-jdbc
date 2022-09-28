@@ -16,6 +16,7 @@ services:
       POSTGRES_PASSWORD: realworld-pass
       POSTGRES_DB: realworld-db
       POSTGRES_INIT_DB_ARGS: --encoding=UTF-8
+      TZ: Asia/Tokyo
     volumes:
       - type: bind
         source: ${PWD}/docker/db/sql/
