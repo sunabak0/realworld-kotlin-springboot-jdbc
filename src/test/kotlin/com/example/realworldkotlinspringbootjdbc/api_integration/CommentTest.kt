@@ -271,19 +271,31 @@ class CommentTest {
 
             /**
              * then:
+             * - ステータスコードが 200
              * - createdAt、updatedAt はメタデータなので比較しない
              */
-            actual.andExpect(status().isOk).andExpect(
-                content().json(
-                    """
-                        {
-                            "Comment": {
-                                "id": 10001,
-                                "body": "created-dummy-body-1",
-                                "authorId": 1
-                            }
-                        }
-                    """.trimIndent()
+            val expected =
+                """
+                    {
+                      "Comment": {
+                        "id": 10001,
+                        "body": "created-dummy-body-1",
+                        "createdAt": "2022-09-26T15:00:00.000Z",
+                        "updatedAt": "2022-09-26T15:00:00.000Z",
+                        "authorId": 1
+                      }
+                    }
+                """.trimIndent()
+            val actualResponseBody = actual
+                .andExpect(status().isOk)
+                .andReturn().response.contentAsString
+            JSONAssert.assertEquals(
+                expected,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.STRICT,
+                    Customization("Comment.createdAt") { _, _ -> true },
+                    Customization("Comment.updatedAt") { _, _ -> true },
                 )
             )
         }
