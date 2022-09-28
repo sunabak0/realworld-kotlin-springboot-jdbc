@@ -77,9 +77,12 @@ jobs:
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
           JACOCO_SOURCE_PATH: ${{ github.workspace }}/src/main/kotlin
+          TZ: Asia/Tokyo
       - name: '【mainブランチ以外】 make test'
         if: github.ref != 'refs/heads/main'
         run: make test
+        env:
+          TZ: Asia/Tokyo
       - name: テスト結果レポートをGitHub Actionsの上部に公開
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
