@@ -132,18 +132,18 @@ class CommentTest {
             /**
              * then:
              */
-            actual.andExpect { status { isOk() } }
-                .andExpect {
-                    content {
-                        json(
-                            """
-                                {
-                                  "comments": []
-                                }
-                            """.trimIndent()
-                        )
+            val expected =
+                """
+                    {
+                      "comments": []
                     }
-                }
+                """.trimIndent()
+            val actualResponseBody = actual.andExpect { status { isOk() } }.andReturn().response.contentAsString
+            JSONAssert.assertEquals(
+                expected,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.STRICT)
+            )
         }
 
         @Test
