@@ -162,19 +162,20 @@ class CommentTest {
 
             /**
              * then:
+             * - ステータスコードが 404
              */
-            actual.andExpect { status { isNotFound() } }
-                .andExpect {
-                    content {
-                        json(
-                            """
-                                {
-                                    "errors":{"body":["記事が見つかりませんでした"]}
-                                }
-                            """.trimIndent()
-                        )
+            val expected =
+                """
+                    {
+                        "errors":{"body":["記事が見つかりませんでした"]}
                     }
-                }
+                """.trimIndent()
+            val actualResponseBody = actual.andExpect { status { isNotFound() } }.andReturn().response.contentAsString
+            JSONAssert.assertEquals(
+                expected,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.STRICT)
+            )
         }
 
         @Test
