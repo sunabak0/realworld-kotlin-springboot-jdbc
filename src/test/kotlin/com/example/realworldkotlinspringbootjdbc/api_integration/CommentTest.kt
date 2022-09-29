@@ -403,19 +403,22 @@ class CommentTest {
 
             /**
              * then:
+             * - ステータスコードが 401
              */
-            actual.andExpect(status().isUnauthorized)
-                .andExpect(
-                    content().json(
-                        """
-                            {
-                                "errors": {
-                                    "body": ["コメントの削除が許可されていません"]
-                                }
-                            }
-                        """.trimIndent()
-                    )
-                )
+            val expected =
+                """
+                    {
+                        "errors": {
+                            "body": ["コメントの削除が許可されていません"]
+                        }
+                    }
+                """.trimIndent()
+            val actualResponseBody = actual.andExpect(status().isUnauthorized).andReturn().response.contentAsString
+            JSONAssert.assertEquals(
+                expected,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.STRICT)
+            )
         }
     }
 }
