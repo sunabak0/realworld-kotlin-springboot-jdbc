@@ -21,6 +21,15 @@
   ],
 
   //
+  // labels
+  // https://docs.renovatebot.com/configuration-options/#labels
+  //
+  // 概要
+  // - 全てのPRにつけるラベル
+  //
+  labels: ["dependencies"],
+
+  //
   // dependencyDashboard
   // https://docs.renovatebot.com/configuration-options/#dependencydashboard
   //
