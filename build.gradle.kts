@@ -9,7 +9,7 @@ plugins {
      * jvm と plugin.spring のバージョンは合わせること
      */
     kotlin("jvm") version "1.7.10"
-    kotlin("plugin.spring") version "1.7.10"
+    kotlin("plugin.spring") version "1.7.20"
 
     /**
      * detekt
