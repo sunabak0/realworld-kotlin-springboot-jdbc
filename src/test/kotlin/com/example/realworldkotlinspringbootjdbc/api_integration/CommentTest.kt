@@ -2,6 +2,7 @@ package com.example.realworldkotlinspringbootjdbc.api_integration
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.example.realworldkotlinspringbootjdbc.api_integration.helper.DatetimeVerificationHelper
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
@@ -18,6 +19,10 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.skyscreamer.jsonassert.Customization
+import org.skyscreamer.jsonassert.JSONAssert
+import org.skyscreamer.jsonassert.JSONCompareMode
+import org.skyscreamer.jsonassert.comparator.CustomComparator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -63,36 +68,51 @@ class CommentTest {
 
             /**
              * then:
+             * - ステータスコードが 200
              * - 作成日時と更新日時以外を比較する
              */
-            actual.andExpect { status { isOk() } }
-                .andExpect {
-                    content {
-                        json(
-                            """
-                                {
-                                  "comments": [
-                                    {
-                                      "id": 1,
-                                      "body": "dummy-comment-body-01",
-                                      "authorId": 3
-                                    },
-                                    {
-                                      "id": 3,
-                                      "body": "dummy-comment-body-03",
-                                      "authorId": 2
-                                    },
-                                    {
-                                      "id": 5,
-                                      "body": "dummy-comment-body-02",
-                                      "authorId": 3
-                                    }
-                                  ]
-                                }
-                            """.trimIndent()
-                        )
+            val expected =
+                """
+                    {
+                      "comments": [
+                        {
+                          "id": 1,
+                          "body": "dummy-comment-body-01",
+                          "createdAt": "2022-01-01T00:00:00.000Z",
+                          "updatedAt": "2022-01-01T00:00:00.000Z",
+                          "authorId": 3
+                        },
+                        {
+                          "id": 3,
+                          "body": "dummy-comment-body-03",
+                          "createdAt": "2022-01-01T00:00:00.000Z",
+                          "updatedAt": "2022-01-01T00:00:00.000Z",
+                          "authorId": 2
+                        },
+                        {
+                          "id": 5,
+                          "body": "dummy-comment-body-02",
+                          "createdAt": "2022-01-01T00:00:00.000Z",
+                          "updatedAt": "2022-01-01T00:00:00.000Z",
+                          "authorId": 3
+                        }
+                      ]
                     }
-                }
+                """.trimIndent()
+            val actualResponseBody = actual.andExpect { status { isOk() } }.andReturn().response.contentAsString
+            JSONAssert.assertEquals(
+                expected,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.STRICT,
+                    Customization("*.createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(actualCreatedAt) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("*.updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(actualUpdatedAt) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                )
+            )
         }
 
         @Test
@@ -117,18 +137,18 @@ class CommentTest {
             /**
              * then:
              */
-            actual.andExpect { status { isOk() } }
-                .andExpect {
-                    content {
-                        json(
-                            """
-                                {
-                                  "comments": []
-                                }
-                            """.trimIndent()
-                        )
+            val expected =
+                """
+                    {
+                      "comments": []
                     }
-                }
+                """.trimIndent()
+            val actualResponseBody = actual.andExpect { status { isOk() } }.andReturn().response.contentAsString
+            JSONAssert.assertEquals(
+                expected,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.STRICT)
+            )
         }
 
         @Test
@@ -147,19 +167,20 @@ class CommentTest {
 
             /**
              * then:
+             * - ステータスコードが 404
              */
-            actual.andExpect { status { isNotFound() } }
-                .andExpect {
-                    content {
-                        json(
-                            """
-                                {
-                                    "errors":{"body":["記事が見つかりませんでした"]}
-                                }
-                            """.trimIndent()
-                        )
+            val expected =
+                """
+                    {
+                        "errors":{"body":["記事が見つかりませんでした"]}
                     }
-                }
+                """.trimIndent()
+            val actualResponseBody = actual.andExpect { status { isNotFound() } }.andReturn().response.contentAsString
+            JSONAssert.assertEquals(
+                expected,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.STRICT)
+            )
         }
 
         @Test
@@ -179,19 +200,20 @@ class CommentTest {
 
             /**
              * then:
+             * - ステータスコードが 404
              */
-            actual.andExpect { status { isNotFound() } }
-                .andExpect {
-                    content {
-                        json(
-                            """
-                                {
-                                    "errors":{"body":["記事が見つかりませんでした"]}
-                                }
-                            """.trimIndent()
-                        )
+            val expected =
+                """
+                    {
+                        "errors":{"body":["記事が見つかりませんでした"]}
                     }
-                }
+                """.trimIndent()
+            val actualResponseBody = actual.andExpect { status { isNotFound() } }.andReturn().response.contentAsString
+            JSONAssert.assertEquals(
+                expected,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.STRICT)
+            )
         }
     }
 
@@ -256,19 +278,39 @@ class CommentTest {
 
             /**
              * then:
+             * - ステータスコードが 200
              * - createdAt、updatedAt はメタデータなので比較しない
              */
-            actual.andExpect(status().isOk).andExpect(
-                content().json(
-                    """
-                        {
-                            "Comment": {
-                                "id": 10001,
-                                "body": "created-dummy-body-1",
-                                "authorId": 1
-                            }
-                        }
-                    """.trimIndent()
+            val expected =
+                """
+                    {
+                      "Comment": {
+                        "id": 10001,
+                        "body": "created-dummy-body-1",
+                        "createdAt": "2022-01-01T00:00:00.000Z",
+                        "updatedAt": "2022-01-01T00:00:00.000Z",
+                        "authorId": 1
+                      }
+                    }
+                """.trimIndent()
+            val actualResponseBody = actual
+                .andExpect(status().isOk)
+                .andReturn().response.contentAsString
+            JSONAssert.assertEquals(
+                expected,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.STRICT,
+                    Customization("Comment.createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualCreatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("Comment.updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualUpdatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
                 )
             )
         }
@@ -374,19 +416,22 @@ class CommentTest {
 
             /**
              * then:
+             * - ステータスコードが 401
              */
-            actual.andExpect(status().isUnauthorized)
-                .andExpect(
-                    content().json(
-                        """
-                            {
-                                "errors": {
-                                    "body": ["コメントの削除が許可されていません"]
-                                }
-                            }
-                        """.trimIndent()
-                    )
-                )
+            val expected =
+                """
+                    {
+                        "errors": {
+                            "body": ["コメントの削除が許可されていません"]
+                        }
+                    }
+                """.trimIndent()
+            val actualResponseBody = actual.andExpect(status().isUnauthorized).andReturn().response.contentAsString
+            JSONAssert.assertEquals(
+                expected,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.STRICT)
+            )
         }
     }
 }
