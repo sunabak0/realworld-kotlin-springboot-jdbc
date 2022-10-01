@@ -2,6 +2,7 @@ package com.example.realworldkotlinspringbootjdbc.api_integration
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.example.realworldkotlinspringbootjdbc.api_integration.helper.DatetimeVerificationHelper
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
@@ -77,22 +78,22 @@ class CommentTest {
                         {
                           "id": 1,
                           "body": "dummy-comment-body-01",
-                          "createdAt": "2022-09-26T15:00:00.000Z",
-                          "updatedAt": "2022-09-26T15:00:00.000Z",
+                          "createdAt": "2022-01-01T00:00:00.000Z",
+                          "updatedAt": "2022-01-01T00:00:00.000Z",
                           "authorId": 3
                         },
                         {
                           "id": 3,
                           "body": "dummy-comment-body-03",
-                          "createdAt": "2022-09-26T15:00:00.000Z",
-                          "updatedAt": "2022-09-26T15:00:00.000Z",
+                          "createdAt": "2022-01-01T00:00:00.000Z",
+                          "updatedAt": "2022-01-01T00:00:00.000Z",
                           "authorId": 2
                         },
                         {
                           "id": 5,
                           "body": "dummy-comment-body-02",
-                          "createdAt": "2022-09-26T15:00:00.000Z",
-                          "updatedAt": "2022-09-26T15:00:00.000Z",
+                          "createdAt": "2022-01-01T00:00:00.000Z",
+                          "updatedAt": "2022-01-01T00:00:00.000Z",
                           "authorId": 3
                         }
                       ]
@@ -104,8 +105,12 @@ class CommentTest {
                 actualResponseBody,
                 CustomComparator(
                     JSONCompareMode.STRICT,
-                    Customization("*.createdAt") { _, _ -> true },
-                    Customization("*.updatedAt") { _, _ -> true },
+                    Customization("*.createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(actualCreatedAt) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("*.updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(actualUpdatedAt) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
                 )
             )
         }
@@ -282,8 +287,8 @@ class CommentTest {
                       "Comment": {
                         "id": 10001,
                         "body": "created-dummy-body-1",
-                        "createdAt": "2022-09-26T15:00:00.000Z",
-                        "updatedAt": "2022-09-26T15:00:00.000Z",
+                        "createdAt": "2022-01-01T00:00:00.000Z",
+                        "updatedAt": "2022-01-01T00:00:00.000Z",
                         "authorId": 1
                       }
                     }
@@ -296,8 +301,16 @@ class CommentTest {
                 actualResponseBody,
                 CustomComparator(
                     JSONCompareMode.STRICT,
-                    Customization("Comment.createdAt") { _, _ -> true },
-                    Customization("Comment.updatedAt") { _, _ -> true },
+                    Customization("Comment.createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualCreatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("Comment.updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualUpdatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
                 )
             )
         }
