@@ -21,6 +21,15 @@
   ],
 
   //
+  // labels
+  // https://docs.renovatebot.com/configuration-options/#labels
+  //
+  // 概要
+  // - 全てのPRにつけるラベル
+  //
+  labels: ["dependencies"],
+
+  //
   // dependencyDashboard
   // https://docs.renovatebot.com/configuration-options/#dependencydashboard
   //
@@ -43,9 +52,15 @@
   packageRules: [
     {
       groupName: "io.swagger.core.v3:swaagger-*",
-      matchPackagePatterns: [
-        "io.swagger.core.v3:swagger-annotations",
-        "io.swagger.core.v3:swagger-models",
+      matchPackagePrefixes: [
+        "io.swagger.core.v3:swagger-",
+      ]
+    },
+    {
+      groupName: "org.jetbrains.kotlin.*",
+      description: "一緒に上げないとCIが落ちる",
+      matchPackagePrefixes: [
+        "org.jetbrains.kotlin.",
       ]
     },
   ],
