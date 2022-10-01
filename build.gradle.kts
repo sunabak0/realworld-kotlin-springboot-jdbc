@@ -147,7 +147,7 @@ dependencies {
      * - https://johanneslink.net/property-based-testing-in-kotlin/#jqwiks-kotlin-support
      */
     testImplementation("net.jqwik:jqwik:1.6.5")
-    testImplementation("net.jqwik:jqwik-kotlin:1.6.5")
+    testImplementation("net.jqwik:jqwik-kotlin:1.7.0")
 
     /**
      * Java JWT
