@@ -19,7 +19,7 @@ services:
       TZ: Asia/Tokyo
     volumes:
       - type: bind
-        source: ${PWD}/docker/db/sql/
+        source: ./docker/db/sql/
         target: /docker-entrypoint-initdb.d/
   #
   # pgweb
