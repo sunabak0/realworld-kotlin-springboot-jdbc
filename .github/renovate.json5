@@ -63,5 +63,11 @@
         "org.jetbrains.kotlin.",
       ]
     },
+    {
+      groupName: "jqwik系",
+      matchPackagePrefixes: [
+        "net.jqwik",
+      ]
+    },
   ],
 }
