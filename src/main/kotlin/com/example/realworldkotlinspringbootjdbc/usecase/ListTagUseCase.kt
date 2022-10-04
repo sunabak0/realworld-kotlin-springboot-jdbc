@@ -10,7 +10,7 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface ListTagUseCase {
-    fun execute(): Either<Error, List<Tag>> = TODO()
+    fun execute(): Either<Error, List<Tag>> = throw NotImplementedError()
     sealed interface Error : MyError {
         data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }

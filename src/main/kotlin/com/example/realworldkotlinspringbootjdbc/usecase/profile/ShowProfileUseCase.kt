@@ -18,7 +18,9 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface ShowProfileUseCase {
-    fun execute(username: String?, currentUser: Option<RegisteredUser>): Either<Error, OtherUser> = TODO()
+    fun execute(username: String?, currentUser: Option<RegisteredUser>): Either<Error, OtherUser> =
+        throw NotImplementedError()
+
     sealed interface Error : MyError {
         data class InvalidUsername(override val errors: List<MyError.ValidationError>) :
             Error,
@@ -54,8 +56,8 @@ class ShowProfileUseCaseImpl(
                      * プロフィール取得失敗
                      */
                     is Left -> when (showProfileResult.value) {
-                        is ProfileRepository.ShowWithoutAuthorizedError.NotFoundProfileByUsername -> TODO()
-                        is ProfileRepository.ShowWithoutAuthorizedError.Unexpected -> TODO()
+                        is ProfileRepository.ShowWithoutAuthorizedError.NotFoundProfileByUsername -> throw NotImplementedError()
+                        is ProfileRepository.ShowWithoutAuthorizedError.Unexpected -> throw NotImplementedError()
                     }
                     /**
                      * プロフィール取得成功
@@ -76,8 +78,8 @@ class ShowProfileUseCaseImpl(
                      * プロフィール取得失敗
                      */
                     is Left -> when (showProfileResult.value) {
-                        is ProfileRepository.ShowError.NotFoundProfileByUsername -> TODO()
-                        is ProfileRepository.ShowError.Unexpected -> TODO()
+                        is ProfileRepository.ShowError.NotFoundProfileByUsername -> throw NotImplementedError()
+                        is ProfileRepository.ShowError.Unexpected -> throw NotImplementedError()
                     }
                     /**
                      * プロフィール取得成功

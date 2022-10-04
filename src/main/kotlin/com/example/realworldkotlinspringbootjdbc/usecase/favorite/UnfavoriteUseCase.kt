@@ -14,7 +14,7 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface UnfavoriteUseCase {
-    fun execute(slug: String?, currentUser: RegisteredUser): Either<Error, CreatedArticle> = TODO()
+    fun execute(slug: String?, currentUser: RegisteredUser): Either<Error, CreatedArticle> = throw NotImplementedError()
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
         data class NotFoundArticleBySlug(override val cause: MyError, val slug: Slug) :
@@ -46,11 +46,11 @@ class UnfavoriteUseCaseImpl(
                     /**
                      * 原因: 作成済記事が見つからなかった
                      */
-                    is ArticleRepository.UnfavoriteError.NotFoundCreatedArticleBySlug -> TODO()
+                    is ArticleRepository.UnfavoriteError.NotFoundCreatedArticleBySlug -> throw NotImplementedError()
                     /**
                      * 原因: 不明
                      */
-                    is ArticleRepository.UnfavoriteError.Unexpected -> TODO()
+                    is ArticleRepository.UnfavoriteError.Unexpected -> throw NotImplementedError()
                 }
                 /**
                  * お気に入り登録解除 成功

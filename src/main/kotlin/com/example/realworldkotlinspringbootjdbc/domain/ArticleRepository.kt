@@ -21,7 +21,9 @@ interface ArticleRepository {
      * @param viewpointUserId あるユーザー視点となるユーザーID
      * @return エラー or 作成済み記事の一覧
      */
-    fun all(viewpointUserId: Option<UserId> = none()): Either<AllError, List<CreatedArticle>> = TODO()
+    fun all(viewpointUserId: Option<UserId> = none()): Either<AllError, List<CreatedArticle>> =
+        throw NotImplementedError()
+
     sealed interface AllError : MyError
 
     /**
@@ -44,16 +46,22 @@ interface ArticleRepository {
      * @param viewpointUserId あるユーザー視点となるユーザーID
      * @return 作成済み記事のセット
      */
-    fun filterFavoritedByOtherUserId(otherUserId: UserId, viewpointUserId: Option<UserId> = none()): Either<FilterFavoritedByUserIdError, Set<CreatedArticle>> = TODO()
+    fun filterFavoritedByOtherUserId(
+        otherUserId: UserId,
+        viewpointUserId: Option<UserId> = none()
+    ): Either<FilterFavoritedByUserIdError, Set<CreatedArticle>> = throw NotImplementedError()
+
     sealed interface FilterFavoritedByUserIdError : MyError
 
     /**
      * Slug で作成された記事検索
      */
-    fun findBySlug(slug: Slug): Either<FindBySlugError, CreatedArticle> = TODO()
+    fun findBySlug(slug: Slug): Either<FindBySlugError, CreatedArticle> = throw NotImplementedError()
     sealed interface FindBySlugError : MyError {
         data class NotFound(val slug: Slug) : FindBySlugError, MyError.Basic
-        data class Unexpected(override val cause: Throwable, val slug: Slug) : FindBySlugError, MyError.MyErrorWithThrowable
+        data class Unexpected(override val cause: Throwable, val slug: Slug) :
+            FindBySlugError,
+            MyError.MyErrorWithThrowable
     }
 
     /**
@@ -66,11 +74,16 @@ interface ArticleRepository {
      * @param userId 登録済みユーザーid
      * @return 準正常系:エラー or 正常系:作成済み記事
      */
-    fun findBySlugFromRegisteredUserViewpoint(slug: Slug, userId: UserId): Either<FindBySlugFromRegisteredUserViewpointError, CreatedArticle> = TODO()
+    fun findBySlugFromRegisteredUserViewpoint(
+        slug: Slug,
+        userId: UserId
+    ): Either<FindBySlugFromRegisteredUserViewpointError, CreatedArticle> = throw NotImplementedError()
+
     sealed interface FindBySlugFromRegisteredUserViewpointError : MyError {
         data class NotFoundArticle(val slug: Slug) : FindBySlugFromRegisteredUserViewpointError, MyError.Basic
         data class NotFoundUser(val userId: UserId) : FindBySlugFromRegisteredUserViewpointError, MyError.Basic
-        data class Unexpected(override val cause: Throwable, val slug: Slug) : FindBySlugFromRegisteredUserViewpointError, MyError.MyErrorWithThrowable
+        data class Unexpected(override val cause: Throwable, val slug: Slug) :
+            FindBySlugFromRegisteredUserViewpointError, MyError.MyErrorWithThrowable
     }
 
     /**
@@ -88,7 +101,7 @@ interface ArticleRepository {
      * @param currentUserId ログインユーザー
      * @return 準正常系:エラー or 正常系:お気に入り
      */
-    fun favorite(slug: Slug, currentUserId: UserId): Either<FavoriteError, CreatedArticle> = TODO()
+    fun favorite(slug: Slug, currentUserId: UserId): Either<FavoriteError, CreatedArticle> = throw NotImplementedError()
     sealed interface FavoriteError : MyError {
         data class NotFoundCreatedArticleBySlug(val slug: Slug) : FavoriteError, MyError.Basic
         data class Unexpected(override val cause: Throwable, val slug: Slug, val currentUserId: UserId) :
@@ -103,7 +116,9 @@ interface ArticleRepository {
      * @param currentUserId ログインユーザー
      * @return 準正常系:エラー or 正常系:Unit
      */
-    fun unfavorite(slug: Slug, currentUserId: UserId): Either<UnfavoriteError, CreatedArticle> = TODO()
+    fun unfavorite(slug: Slug, currentUserId: UserId): Either<UnfavoriteError, CreatedArticle> =
+        throw NotImplementedError()
+
     sealed interface UnfavoriteError : MyError {
         data class NotFoundCreatedArticleBySlug(val slug: Slug) : UnfavoriteError, MyError.Basic
         data class Unexpected(override val cause: Throwable, val slug: Slug, val currentUserId: UserId) :
@@ -117,7 +132,7 @@ interface ArticleRepository {
      * @param uncreatedArticle 未作成の記事
      * @return エラー or 作成済みの記事
      */
-    fun create(uncreatedArticle: UncreatedArticle): Either<CreateError, CreatedArticle> = TODO()
+    fun create(uncreatedArticle: UncreatedArticle): Either<CreateError, CreatedArticle> = throw NotImplementedError()
     sealed interface CreateError : MyError
 
     /**
@@ -127,7 +142,7 @@ interface ArticleRepository {
      * @param articleId 削除したい作成済み記事のId
      * @return 準正常系:エラー or 正常系:Unit
      */
-    fun delete(articleId: ArticleId): Either<DeleteError, Unit> = TODO()
+    fun delete(articleId: ArticleId): Either<DeleteError, Unit> = throw NotImplementedError()
     sealed interface DeleteError : MyError {
         data class NotFoundArticle(val articleId: ArticleId) : DeleteError, MyError.Basic
     }
@@ -138,7 +153,7 @@ interface ArticleRepository {
      * @param updatableArticle 削除したい作成済み記事のId
      * @return 準正常系:エラー or 正常系:Unit
      */
-    fun update(updatableArticle: UpdatableCreatedArticle): Either<UpdateError, Unit> = TODO()
+    fun update(updatableArticle: UpdatableCreatedArticle): Either<UpdateError, Unit> = throw NotImplementedError()
     sealed interface UpdateError : MyError {
         data class NotFoundArticle(val articleId: ArticleId) : UpdateError, MyError.Basic
     }
@@ -150,6 +165,10 @@ interface ArticleRepository {
      * @param viewpointUserId あるユーザー視点となるユーザーID
      * @return 準正常系: エラー or 正常系: 指定した著者の最新の作成済み記事郡
      */
-    fun latestByAuthors(authorIds: Set<UserId>, viewpointUserId: UserId): Either<LatestByAuthorsError, Set<CreatedArticle>> = throw UnsupportedOperationException()
+    fun latestByAuthors(
+        authorIds: Set<UserId>,
+        viewpointUserId: UserId
+    ): Either<LatestByAuthorsError, Set<CreatedArticle>> = throw UnsupportedOperationException()
+
     sealed interface LatestByAuthorsError : MyError
 }

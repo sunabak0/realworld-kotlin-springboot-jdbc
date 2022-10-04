@@ -15,7 +15,7 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface UnfollowProfileUseCase {
-    fun execute(username: String?, currentUser: RegisteredUser): Either<Error, OtherUser> = TODO()
+    fun execute(username: String?, currentUser: RegisteredUser): Either<Error, OtherUser> = throw NotImplementedError()
     sealed interface Error : MyError {
         data class InvalidUsername(override val errors: List<MyError.ValidationError>) :
             Error,
@@ -50,11 +50,11 @@ class UnfollowProfileUseCaseImpl(
                     /**
                      * 原因: プロフィールが見つからなかった
                      */
-                    is ProfileRepository.UnfollowError.NotFoundProfileByUsername -> TODO()
+                    is ProfileRepository.UnfollowError.NotFoundProfileByUsername -> throw NotImplementedError()
                     /**
                      * 原因: 不明
                      */
-                    is ProfileRepository.UnfollowError.Unexpected -> TODO()
+                    is ProfileRepository.UnfollowError.Unexpected -> throw NotImplementedError()
                 }
                 /**
                  * アンフォロー 成功

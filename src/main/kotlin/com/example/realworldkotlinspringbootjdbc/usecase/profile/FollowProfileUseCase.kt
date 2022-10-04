@@ -15,7 +15,7 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface FollowProfileUseCase {
-    fun execute(username: String?, currentUser: RegisteredUser): Either<Error, OtherUser> = TODO()
+    fun execute(username: String?, currentUser: RegisteredUser): Either<Error, OtherUser> = throw NotImplementedError()
     sealed interface Error : MyError {
         data class InvalidUsername(override val errors: List<MyError.ValidationError>) :
             Error,
@@ -29,7 +29,10 @@ interface FollowProfileUseCase {
 @Service
 class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) :
     FollowProfileUseCase {
-    override fun execute(username: String?, currentUser: RegisteredUser): Either<FollowProfileUseCase.Error, OtherUser> {
+    override fun execute(
+        username: String?,
+        currentUser: RegisteredUser
+    ): Either<FollowProfileUseCase.Error, OtherUser> {
         return when (val it = Username.new(username)) {
             /**
              * Username が不正
@@ -46,11 +49,11 @@ class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) :
                     /**
                      * 原因: プロフィールが見つからなかった
                      */
-                    is ProfileRepository.FollowError.NotFoundProfileByUsername -> TODO()
+                    is ProfileRepository.FollowError.NotFoundProfileByUsername -> throw NotImplementedError()
                     /**
                      * 原因: 不明
                      */
-                    is ProfileRepository.FollowError.Unexpected -> TODO()
+                    is ProfileRepository.FollowError.Unexpected -> throw NotImplementedError()
                 }
                 /**
                  * フォロー 成功
