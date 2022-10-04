@@ -320,7 +320,7 @@ tasks.test {
      * なので、./gradlew test ではなにもしない
      */
     println("Do nothing")
-    println("Please `./gradlew test full-dev`")
+    println("Please `./gradlew test fullDev`")
 }
 tasks.jacocoTestReport {
     /**
