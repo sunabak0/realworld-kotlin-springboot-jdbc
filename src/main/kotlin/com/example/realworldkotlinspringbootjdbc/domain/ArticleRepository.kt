@@ -168,7 +168,7 @@ interface ArticleRepository {
     fun latestByAuthors(
         authorIds: Set<UserId>,
         viewpointUserId: UserId
-    ): Either<LatestByAuthorsError, Set<CreatedArticle>> = throw UnsupportedOperationException()
+    ): Either<LatestByAuthorsError, Set<CreatedArticle>> = throw NotImplementedError()
 
     sealed interface LatestByAuthorsError : MyError
 }

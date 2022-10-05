@@ -98,7 +98,7 @@ interface ProfileRepository {
      * @return エラー or ユーザー郡
      */
     fun filterFollowedByUser(userId: UserId): Either<FilterFollowedByUserError, Set<OtherUser>> =
-        throw UnsupportedOperationException()
+        throw NotImplementedError()
 
     sealed interface FilterFollowedByUserError : MyError
 }
