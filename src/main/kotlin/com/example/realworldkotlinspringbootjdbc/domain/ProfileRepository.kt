@@ -12,7 +12,7 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
  *
  */
 interface ProfileRepository {
-    fun show(username: Username): Either<ShowWithoutAuthorizedError, OtherUser> = TODO()
+    fun show(username: Username): Either<ShowWithoutAuthorizedError, OtherUser> = throw NotImplementedError()
     sealed interface ShowWithoutAuthorizedError : MyError {
         data class NotFoundProfileByUsername(val username: Username) : ShowWithoutAuthorizedError, MyError.Basic
         data class Unexpected(override val cause: Throwable, val username: Username) :
@@ -20,7 +20,7 @@ interface ProfileRepository {
             MyError.MyErrorWithThrowable
     }
 
-    fun show(username: Username, currentUserId: UserId): Either<ShowError, OtherUser> = TODO()
+    fun show(username: Username, currentUserId: UserId): Either<ShowError, OtherUser> = throw NotImplementedError()
     sealed interface ShowError : MyError {
         data class NotFoundProfileByUsername(val username: Username, val currentUserId: UserId) :
             ShowError,
@@ -30,7 +30,7 @@ interface ProfileRepository {
             ShowError, MyError.MyErrorWithThrowable
     }
 
-    fun follow(username: Username, currentUserId: UserId): Either<FollowError, OtherUser> = TODO()
+    fun follow(username: Username, currentUserId: UserId): Either<FollowError, OtherUser> = throw NotImplementedError()
     sealed interface FollowError : MyError {
         data class NotFoundProfileByUsername(val username: Username, val currentUserId: UserId) :
             FollowError,
@@ -40,7 +40,9 @@ interface ProfileRepository {
             FollowError, MyError.MyErrorWithThrowable
     }
 
-    fun unfollow(username: Username, currentUserId: UserId): Either<UnfollowError, OtherUser> = TODO()
+    fun unfollow(username: Username, currentUserId: UserId): Either<UnfollowError, OtherUser> =
+        throw NotImplementedError()
+
     sealed interface UnfollowError : MyError {
         data class NotFoundProfileByUsername(val username: Username, val currentUserId: UserId) :
             UnfollowError,
@@ -60,7 +62,11 @@ interface ProfileRepository {
      * @param viewpointUserId あるユーザー視点となるユーザーID
      * @return エラー or 登録済みユーザー
      */
-    fun findByUsername(username: Username, viewpointUserId: Option<UserId> = none()): Either<FindByUsernameError, OtherUser> = TODO()
+    fun findByUsername(
+        username: Username,
+        viewpointUserId: Option<UserId> = none()
+    ): Either<FindByUsernameError, OtherUser> = throw NotImplementedError()
+
     sealed interface FindByUsernameError : MyError {
         data class NotFound(val username: Username) : FindByUsernameError, MyError.Basic
     }
@@ -78,7 +84,11 @@ interface ProfileRepository {
      * @param viewpointUserId あるユーザー視点となるユーザーID
      * @return エラー or 登録済みユーザー郡
      */
-    fun filterByUserIds(userIds: Set<UserId>, viewpointUserId: Option<UserId> = none()): Either<FilterByUserIdsError, Set<OtherUser>> = TODO()
+    fun filterByUserIds(
+        userIds: Set<UserId>,
+        viewpointUserId: Option<UserId> = none()
+    ): Either<FilterByUserIdsError, Set<OtherUser>> = throw NotImplementedError()
+
     sealed interface FilterByUserIdsError : MyError
 
     /**
@@ -87,6 +97,8 @@ interface ProfileRepository {
      * @param userId 対象の登録済みユーザーID
      * @return エラー or ユーザー郡
      */
-    fun filterFollowedByUser(userId: UserId): Either<FilterFollowedByUserError, Set<OtherUser>> = throw UnsupportedOperationException()
+    fun filterFollowedByUser(userId: UserId): Either<FilterFollowedByUserError, Set<OtherUser>> =
+        throw NotImplementedError()
+
     sealed interface FilterFollowedByUserError : MyError
 }

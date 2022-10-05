@@ -51,7 +51,7 @@ interface FilterCreatedArticleUseCase {
         limit: String? = null,
         offset: String? = null,
         currentUser: Option<RegisteredUser> = none()
-    ): Either<Error, FilteredCreatedArticleList> = TODO()
+    ): Either<Error, FilteredCreatedArticleList> = throw NotImplementedError()
 
     /**
      * - フィルタ用パラメータのバリデーションエラー

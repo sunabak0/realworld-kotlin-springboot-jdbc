@@ -15,7 +15,7 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface CreateCommentUseCase {
-    fun execute(slug: String?, body: String?, currentUser: RegisteredUser): Either<Error, Comment> = TODO()
+    fun execute(slug: String?, body: String?, currentUser: RegisteredUser): Either<Error, Comment> = throw NotImplementedError()
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
         data class InvalidCommentBody(override val errors: List<MyError.ValidationError>) :

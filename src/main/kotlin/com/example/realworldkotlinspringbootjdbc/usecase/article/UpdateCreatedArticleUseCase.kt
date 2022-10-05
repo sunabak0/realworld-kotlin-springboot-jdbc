@@ -41,7 +41,7 @@ interface UpdateCreatedArticleUseCase {
         title: String?,
         description: String?,
         body: String?,
-    ): Either<Error, CreatedArticleWithAuthor> = TODO()
+    ): Either<Error, CreatedArticleWithAuthor> = throw NotImplementedError()
 
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors

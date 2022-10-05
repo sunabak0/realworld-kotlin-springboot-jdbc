@@ -17,11 +17,19 @@ import org.springframework.stereotype.Service
  * ユーザー登録
  */
 interface RegisterUserUseCase {
-    fun execute(email: String?, password: String?, username: String?): Either<Error, RegisteredUser> = TODO()
+    fun execute(email: String?, password: String?, username: String?): Either<Error, RegisteredUser> =
+        throw NotImplementedError()
+
     sealed interface Error : MyError {
         data class InvalidUser(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
-        data class AlreadyRegisteredEmail(override val cause: MyError, val user: UnregisteredUser) : Error, MyError.MyErrorWithMyError
-        data class AlreadyRegisteredUsername(override val cause: MyError, val user: UnregisteredUser) : Error, MyError.MyErrorWithMyError
+        data class AlreadyRegisteredEmail(override val cause: MyError, val user: UnregisteredUser) :
+            Error,
+            MyError.MyErrorWithMyError
+
+        data class AlreadyRegisteredUsername(override val cause: MyError, val user: UnregisteredUser) :
+            Error,
+            MyError.MyErrorWithMyError
+
         data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
 }
@@ -30,7 +38,11 @@ interface RegisterUserUseCase {
 class RegisterUserUseCaseImpl(
     val userRepository: UserRepository
 ) : RegisterUserUseCase {
-    override fun execute(email: String?, password: String?, username: String?): Either<RegisterUserUseCase.Error, RegisteredUser> =
+    override fun execute(
+        email: String?,
+        password: String?,
+        username: String?
+    ): Either<RegisterUserUseCase.Error, RegisteredUser> =
         when (val user = UnregisteredUser.new(email, password, username)) {
             is Invalid -> RegisterUserUseCase.Error.InvalidUser(user.value).left()
             is Valid -> when (val registerResult = userRepository.register(user.value)) {
@@ -59,7 +71,8 @@ class RegisterUserUseCaseImpl(
                     /**
                      * 原因: 不明
                      */
-                    is UserRepository.RegisterError.Unexpected -> RegisterUserUseCase.Error.Unexpected(registerError).left()
+                    is UserRepository.RegisterError.Unexpected -> RegisterUserUseCase.Error.Unexpected(registerError)
+                        .left()
                 }
             }
         }

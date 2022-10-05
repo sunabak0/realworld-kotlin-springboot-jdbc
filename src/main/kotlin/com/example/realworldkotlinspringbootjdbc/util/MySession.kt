@@ -22,16 +22,26 @@ interface MySessionJwt {
         const val USER_ID_KEY = "userId"
         const val EMAIL_KEY = "email"
     }
-    fun decode(token: String): Either<DecodeError, MySession> = TODO()
-    fun encode(session: MySession): Either<EncodeError, String> = TODO()
+
+    fun decode(token: String): Either<DecodeError, MySession> = throw NotImplementedError()
+    fun encode(session: MySession): Either<EncodeError, String> = throw NotImplementedError()
 
     sealed interface DecodeError : MyError {
-        data class FailedDecode(override val cause: JWTDecodeException, val token: String) : DecodeError, MyError.MyErrorWithThrowable
-        data class NotMatchIssuer(val token: String, val actual: String, val expected: String) : DecodeError, MyError.Basic
+        data class FailedDecode(override val cause: JWTDecodeException, val token: String) :
+            DecodeError,
+            MyError.MyErrorWithThrowable
+
+        data class NotMatchIssuer(val token: String, val actual: String, val expected: String) :
+            DecodeError,
+            MyError.Basic
+
         data class NothingRequiredClaim(val token: String) : DecodeError, MyError
     }
+
     sealed interface EncodeError : MyError {
-        data class FailedEncode(override val cause: JWTCreationException, val session: MySession) : EncodeError, MyError.MyErrorWithThrowable
+        data class FailedEncode(override val cause: JWTCreationException, val session: MySession) :
+            EncodeError,
+            MyError.MyErrorWithThrowable
     }
 }
 

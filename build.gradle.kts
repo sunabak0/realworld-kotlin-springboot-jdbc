@@ -320,7 +320,7 @@ tasks.test {
      * なので、./gradlew test ではなにもしない
      */
     println("Do nothing")
-    println("Please `./gradlew test full-dev`")
+    println("Please `./gradlew test fullDev`")
 }
 tasks.jacocoTestReport {
     /**
@@ -345,9 +345,11 @@ tasks.jacocoTestReport {
      */
     classDirectories.setFrom(files(classDirectories.files.map {
         fileTree(it).apply {
-            exclude(listOf(
-                "**/domain/*Repository*",
-            ))
+            exclude(
+                listOf(
+                    "**/domain/*Repository*",
+                )
+            )
         }
     }))
 }

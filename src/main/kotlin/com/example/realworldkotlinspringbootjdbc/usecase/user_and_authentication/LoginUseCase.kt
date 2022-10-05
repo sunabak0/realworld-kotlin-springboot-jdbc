@@ -17,9 +17,12 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface LoginUseCase {
-    fun execute(email: String?, password: String?): Either<Error, RegisteredUser> = TODO()
+    fun execute(email: String?, password: String?): Either<Error, RegisteredUser> = throw NotImplementedError()
     sealed interface Error : MyError {
-        data class InvalidEmailOrPassword(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
+        data class InvalidEmailOrPassword(override val errors: List<MyError.ValidationError>) :
+            Error,
+            MyError.ValidationErrors
+
         data class Unauthorized(val email: Email) : Error, MyError.Basic
         data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
@@ -39,14 +42,19 @@ class LoginUseCaseImpl(
             /**
              * Email, Password両方ともバリデーションはOK -> User 検索
              */
-            is Valid -> when (val registeredUserWithPassword = userRepository.findByEmailWithPassword(validatedInput.value.first)) {
+            is Valid -> when (
+                val registeredUserWithPassword =
+                    userRepository.findByEmailWithPassword(validatedInput.value.first)
+            ) {
                 /**
                  * 何かしらのエラー
                  */
                 is Left -> when (val error = registeredUserWithPassword.value) {
                     is UserRepository.FindByEmailWithPasswordError.NotFound -> LoginUseCase.Error.Unauthorized(error.email)
                         .left()
-                    is UserRepository.FindByEmailWithPasswordError.Unexpected -> LoginUseCase.Error.Unexpected(error).left()
+
+                    is UserRepository.FindByEmailWithPasswordError.Unexpected -> LoginUseCase.Error.Unexpected(error)
+                        .left()
                 }
                 /**
                  * Found user by email
@@ -57,7 +65,9 @@ class LoginUseCaseImpl(
                     /**
                      * 認証 成功/失敗
                      */
-                    if (aPassword == bPassword) { registeredUser.right() } else {
+                    if (aPassword == bPassword) {
+                        registeredUser.right()
+                    } else {
                         LoginUseCase.Error.Unauthorized(
                             validatedInput.value.first
                         ).left()

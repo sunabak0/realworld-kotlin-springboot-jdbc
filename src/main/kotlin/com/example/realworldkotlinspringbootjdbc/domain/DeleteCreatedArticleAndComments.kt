@@ -16,7 +16,7 @@ interface DeleteCreatedArticleAndComments {
      * @param articleId 削除したい作成済み記事のId
      * @return 準正常系: エラー or 正常系: Unit
      */
-    fun execute(articleId: ArticleId): Either<Error, Unit> = TODO()
+    fun execute(articleId: ArticleId): Either<Error, Unit> = throw NotImplementedError()
 
     sealed interface Error : MyError {
         data class NotFoundArticle(val articleId: ArticleId) : Error, MyError.Basic

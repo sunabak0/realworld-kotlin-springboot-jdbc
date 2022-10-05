@@ -15,7 +15,7 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface DeleteCommentUseCase {
-    fun execute(slug: String?, commentId: Int?, currentUser: RegisteredUser): Either<Error, Unit> = TODO()
+    fun execute(slug: String?, commentId: Int?, currentUser: RegisteredUser): Either<Error, Unit> = throw NotImplementedError()
 
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors

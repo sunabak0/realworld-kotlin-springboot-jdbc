@@ -8,13 +8,13 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 
 interface CommentRepository {
-    fun list(slug: Slug): Either<ListError, List<Comment>> = TODO()
+    fun list(slug: Slug): Either<ListError, List<Comment>> = throw NotImplementedError()
     sealed interface ListError : MyError {
         data class NotFoundArticleBySlug(val slug: Slug) : ListError, MyError.Basic
         data class Unexpected(override val cause: Throwable, val slug: Slug) : ListError, MyError.MyErrorWithThrowable
     }
 
-    fun create(slug: Slug, body: Body, currentUserId: UserId): Either<CreateError, Comment> = TODO()
+    fun create(slug: Slug, body: Body, currentUserId: UserId): Either<CreateError, Comment> = throw NotImplementedError()
     sealed interface CreateError : MyError {
         data class NotFoundArticleBySlug(val slug: Slug) : CreateError, MyError.Basic
         data class Unexpected(
@@ -25,7 +25,7 @@ interface CommentRepository {
         ) : CreateError, MyError.MyErrorWithThrowable
     }
 
-    fun delete(slug: Slug, commentId: CommentId, currentUserId: UserId): Either<DeleteError, Unit> = TODO()
+    fun delete(slug: Slug, commentId: CommentId, currentUserId: UserId): Either<DeleteError, Unit> = throw NotImplementedError()
     sealed interface DeleteError : MyError {
         data class NotFoundArticleBySlug(val slug: Slug, val commentId: CommentId, val currentUserId: UserId) :
             DeleteError,
@@ -53,5 +53,5 @@ interface CommentRepository {
      * @param articleId 削除したい作成済み記事のId
      * @return Unit
      */
-    fun deleteAll(articleId: ArticleId): Either.Right<Unit> = TODO()
+    fun deleteAll(articleId: ArticleId): Either.Right<Unit> = throw NotImplementedError()
 }

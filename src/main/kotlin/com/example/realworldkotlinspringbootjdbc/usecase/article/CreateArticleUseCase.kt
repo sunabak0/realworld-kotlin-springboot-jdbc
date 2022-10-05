@@ -22,7 +22,7 @@ interface CreateArticleUseCase {
         description: String?,
         body: String?,
         tagList: List<String>?
-    ): Either<Error, CreatedArticleWithAuthor> = TODO()
+    ): Either<Error, CreatedArticleWithAuthor> = throw NotImplementedError()
 
     sealed interface Error : MyError {
         data class InvalidArticle(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors

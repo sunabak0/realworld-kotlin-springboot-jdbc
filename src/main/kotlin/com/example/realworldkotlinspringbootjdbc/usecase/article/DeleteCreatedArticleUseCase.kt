@@ -15,7 +15,7 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface DeleteCreatedArticleUseCase {
-    fun execute(author: RegisteredUser, slug: String?): Either<Error, Unit> = TODO()
+    fun execute(author: RegisteredUser, slug: String?): Either<Error, Unit> = throw NotImplementedError()
 
     sealed interface Error : MyError {
         data class ValidationError(override val errors: List<MyError.ValidationError>) :
