@@ -345,9 +345,11 @@ tasks.jacocoTestReport {
      */
     classDirectories.setFrom(files(classDirectories.files.map {
         fileTree(it).apply {
-            exclude(listOf(
-                "**/domain/*Repository*",
-            ))
+            exclude(
+                listOf(
+                    "**/domain/*Repository*",
+                )
+            )
         }
     }))
 }
