@@ -36,6 +36,15 @@ on:
 # 概要
 #   - JacocoレポートをCodeClimateに送る
 
+#
+# actions/upload-pages-artifact
+#
+# URL
+#   - https://github.com/actions/upload-pages-artifact
+# 概要
+#   - GitHub Pagesにデプロイできるアーティファクト(成果物)をパッケージングしてくれる
+#   - アーティファクトの保存期間はデフォルトだと1日
+
 jobs:
   ci-test:
     runs-on: ubuntu-latest
@@ -91,6 +100,10 @@ jobs:
           junit_files: 'build/test-results/**/*.xml'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: テストカバレッジレポートを成果物(アーティファクト)にする
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: ./build/reports/jacoco/test/html/
 
   ci-lint:
     runs-on: ubuntu-latest
