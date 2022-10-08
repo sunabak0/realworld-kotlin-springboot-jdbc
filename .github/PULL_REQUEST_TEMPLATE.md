@@ -49,6 +49,8 @@
 
 ## レビューする時
 
+[コードレビューはつまらないから丁寧なプルリクエストでチームの生産性向上を目指す](https://blog.tai2.net/how-to-code-review.html)
+
 [Googleに学ぶコードレビューのポイント](https://cloudsmith.co.jp/blog/efficient/2021/08/1866630.html)
 
 [レビュアーの時によく使うGitHubの便利機能](https://qiita.com/kata_1997/items/fd6cd3009e3d7704f984)
