@@ -106,6 +106,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: テストカバレッジレポートを成果物(アーティファクト)にする
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v1
         with:
           path: ./build/reports/jacoco/test/html/
