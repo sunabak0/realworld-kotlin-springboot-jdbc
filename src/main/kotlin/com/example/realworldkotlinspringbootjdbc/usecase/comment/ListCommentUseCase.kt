@@ -23,7 +23,6 @@ interface ListCommentUseCase {
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
         data class NotFound(override val cause: MyError) : Error, MyError.MyErrorWithMyError
-        data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
 }
 
@@ -52,12 +51,6 @@ class ListCommentUseCaseImpl(
                      * 原因: Slug に該当する記事が見つからなかった
                      */
                     is CommentRepository.ListError.NotFoundArticleBySlug -> ListCommentUseCase.Error.NotFound(
-                        listError
-                    ).left()
-                    /**
-                     * 原因: 不明
-                     */
-                    is CommentRepository.ListError.Unexpected -> ListCommentUseCase.Error.Unexpected(
                         listError
                     ).left()
                 }

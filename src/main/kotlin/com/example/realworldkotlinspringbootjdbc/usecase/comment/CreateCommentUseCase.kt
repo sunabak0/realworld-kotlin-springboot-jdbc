@@ -23,7 +23,6 @@ interface CreateCommentUseCase {
             MyError.ValidationErrors
 
         data class NotFound(override val cause: MyError) : Error, MyError.MyErrorWithMyError
-        data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
 }
 
@@ -61,9 +60,6 @@ class CreateCommentUseCaseImpl(
                      */
                     is Left -> when (val createError = createResult.value) {
                         is CommentRepository.CreateError.NotFoundArticleBySlug -> CreateCommentUseCase.Error.NotFound(
-                            createError
-                        ).left()
-                        is CommentRepository.CreateError.Unexpected -> CreateCommentUseCase.Error.Unexpected(
                             createError
                         ).left()
                     }

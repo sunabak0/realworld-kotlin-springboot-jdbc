@@ -62,13 +62,6 @@ class CommentController(
                     serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                     HttpStatus.valueOf(404)
                 )
-                /**
-                 * 原因: 不明
-                 */
-                is ListCommentUseCase.Error.Unexpected -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                    HttpStatus.valueOf(500)
-                )
             }
             /**
              * コメント取得に成功
@@ -139,13 +132,6 @@ class CommentController(
                         is CreateCommentUseCase.Error.NotFound -> ResponseEntity(
                             serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(404)
-                        )
-                        /**
-                         * 原因: 不明
-                         */
-                        is CreateCommentUseCase.Error.Unexpected -> ResponseEntity(
-                            serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                            HttpStatus.valueOf(500)
                         )
                     }
                     /**
@@ -218,13 +204,6 @@ class CommentController(
                         is DeleteCommentUseCase.Error.NotAuthorizedDeleteComment -> ResponseEntity(
                             serializeUnexpectedErrorForResponseBody("コメントの削除が許可されていません"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(401)
-                        )
-                        /**
-                         * 原因: 未知のエラー
-                         */
-                        is DeleteCommentUseCase.Error.Unexpected -> ResponseEntity(
-                            serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                            HttpStatus.valueOf(500)
                         )
                     }
                     /**
