@@ -135,7 +135,6 @@ class ArticleController(
         }
     }
 
-    @Suppress("UnusedPrivateMember")
     @PostMapping("/articles")
     fun create(
         @RequestHeader("Authorization") rawAuthorizationHeader: String?,
@@ -145,7 +144,7 @@ class ArticleController(
             /**
              * JWT 認証 失敗
              */
-            is Left -> AuthorizationError.handle(authorizeResult.value)
+            is Left -> AuthorizationError.handle()
 
             /**
              * JWT 認証 成功
@@ -206,7 +205,7 @@ class ArticleController(
             /**
              * 認証: 失敗
              */
-            is Left -> return AuthorizationError.handle(authorizeResult.value)
+            is Left -> return AuthorizationError.handle()
             /**
              * 認証: 成功
              */
@@ -372,7 +371,7 @@ class ArticleController(
             /**
              * 認証: 失敗
              */
-            is Left -> return AuthorizationError.handle(authorizeResult.value)
+            is Left -> return AuthorizationError.handle()
             /**
              * 認証: 成功
              */
@@ -442,7 +441,7 @@ class ArticleController(
             /**
              * 認証: 失敗
              */
-            is Left -> return AuthorizationError.handle(authorizeResult.value)
+            is Left -> return AuthorizationError.handle()
             /**
              * 認証: 成功
              */

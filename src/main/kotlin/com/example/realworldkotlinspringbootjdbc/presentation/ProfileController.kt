@@ -129,7 +129,7 @@ class ProfileController(
             /**
              * JWT 認証 失敗
              */
-            is Left -> AuthorizationError.handle(authorizeResult.value)
+            is Left -> AuthorizationError.handle()
             /**
              * JWT 認証 成功
              */
@@ -176,7 +176,7 @@ class ProfileController(
             /**
              * JWT 認証 失敗
              */
-            is Left -> AuthorizationError.handle(authorizeResult.value)
+            is Left -> AuthorizationError.handle()
             /**
              * JWT 認証 成功
              */
