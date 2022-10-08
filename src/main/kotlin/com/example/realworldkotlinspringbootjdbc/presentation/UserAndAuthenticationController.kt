@@ -167,7 +167,7 @@ class UserAndAuthenticationController(
             /**
              * JWT認証 失敗
              */
-            is Left -> AuthorizationError.handle(authorizeResult.value)
+            is Left -> AuthorizationError.handle()
             /**
              * JWT認証 成功
              */
@@ -215,7 +215,7 @@ class UserAndAuthenticationController(
             /**
              * JWT認証 失敗
              */
-            is Left -> AuthorizationError.handle(authorizeResult.value)
+            is Left -> AuthorizationError.handle()
             /**
              * JWT認証 成功
              */
