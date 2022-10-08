@@ -42,11 +42,8 @@
 
 ## 挙動確認する手順
 
-<!-- 不要な行は消してください -->
-
-- ✅ 挙動確認しなくて良い(眺めて、気になったところ等のレビューが欲しい)
-- ✅ CIが成功(GitHub Actions等が成功してればOK => レビュアーが確認することは無い)
-- ✅ branchをチェックアウトして `make test.with-local-db` or `./gradlew test withLocalDb`
+- ✅ 手元で挙動確認しなくて良い(眺めて、気になったところ等のレビューが欲しい)
+- ✅ branchをチェックアウトして `./gradlew test.full`
 
 ----
 
