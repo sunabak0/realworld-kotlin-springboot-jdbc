@@ -135,7 +135,6 @@ class ArticleController(
         }
     }
 
-    @Suppress("UnusedPrivateMember")
     @PostMapping("/articles")
     fun create(
         @RequestHeader("Authorization") rawAuthorizationHeader: String?,

@@ -45,7 +45,7 @@ class UnfollowProfileUseCaseImpl(
                 /**
                  * アンフォロー 失敗
                  */
-                is Left -> when (@Suppress("UnusedPrivateMember") val error = unfollowResult.value) {
+                is Left -> when (unfollowResult.value) {
                     /**
                      * 原因: プロフィールが見つからなかった
                      */
