@@ -15,10 +15,6 @@ interface UserRepository {
     sealed interface RegisterError : MyError {
         data class AlreadyRegisteredEmail(val email: Email) : RegisterError, MyError.Basic
         data class AlreadyRegisteredUsername(val username: Username) : RegisterError, MyError.Basic
-        data class Unexpected(
-            override val cause: Throwable,
-            val user: UnregisteredUser
-        ) : RegisterError, MyError.MyErrorWithThrowable
     }
 
     /**
@@ -29,9 +25,6 @@ interface UserRepository {
 
     sealed interface FindByEmailWithPasswordError : MyError {
         data class NotFound(val email: Email) : FindByEmailWithPasswordError, MyError.Basic
-        data class Unexpected(override val cause: Throwable, val email: Email) :
-            FindByEmailWithPasswordError,
-            MyError.MyErrorWithThrowable
     }
 
     /**
@@ -40,9 +33,6 @@ interface UserRepository {
     fun findByUserId(id: UserId): Either<FindByUserIdError, RegisteredUser> = throw NotImplementedError()
     sealed interface FindByUserIdError : MyError {
         data class NotFound(val id: UserId) : FindByUserIdError, MyError.Basic
-        data class Unexpected(override val cause: Throwable, val userId: UserId) :
-            FindByUserIdError,
-            MyError.MyErrorWithThrowable
     }
 
     /**

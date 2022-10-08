@@ -60,20 +60,12 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
         val sqlParams = MapSqlParameterSource()
             .addValue("email", user.email.value)
             .addValue("username", user.username.value)
-        val emailAndUsernameCountMap = try {
-            namedParameterJdbcTemplate.queryForMap(sql, sqlParams)
-        } catch (e: Throwable) {
-            return UserRepository.RegisterError.Unexpected(e, user).left()
-        }
+        val emailAndUsernameCountMap = namedParameterJdbcTemplate.queryForMap(sql, sqlParams)
 
-        val (emailCount, usernameCount) = try {
-            Pair(
-                emailAndUsernameCountMap["email_cnt"].toString().toInt(),
-                emailAndUsernameCountMap["username_cnt"].toString().toInt()
-            )
-        } catch (e: Throwable) {
-            return UserRepository.RegisterError.Unexpected(e, user).left()
-        }
+        val (emailCount, usernameCount) = Pair(
+            emailAndUsernameCountMap["email_cnt"].toString().toInt(),
+            emailAndUsernameCountMap["username_cnt"].toString().toInt()
+        )
 
         return when {
             /**
@@ -88,11 +80,7 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
              * ユーザー登録
              */
             else -> {
-                val userId = try {
-                    registerTransactionApply(user)
-                } catch (e: Throwable) {
-                    return UserRepository.RegisterError.Unexpected(e, user).left()
-                }
+                val userId = registerTransactionApply(user)
                 RegisteredUser.newWithoutValidation(
                     userId,
                     user.email,
@@ -144,11 +132,7 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
             ;
         """.trimIndent()
         val sqlParams = MapSqlParameterSource().addValue("email", email.value)
-        val users = try {
-            namedParameterJdbcTemplate.queryForList(sql, sqlParams)
-        } catch (e: Throwable) {
-            return FindByEmailWithPasswordError.Unexpected(e, email).left()
-        }
+        val users = namedParameterJdbcTemplate.queryForList(sql, sqlParams)
 
         return when {
             /**
@@ -160,19 +144,15 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
              */
             else -> {
                 val userRecord = users.first()
-                try {
-                    val user = RegisteredUser.newWithoutValidation(
-                        UserId(userRecord["id"].toString().toInt()),
-                        Email.newWithoutValidation(userRecord["email"].toString()),
-                        Username.newWithoutValidation(userRecord["username"].toString()),
-                        Bio.newWithoutValidation(userRecord["bio"].toString()),
-                        Image.newWithoutValidation(userRecord["image"].toString()),
-                    )
-                    val password = Password.newWithoutValidation(userRecord["password"].toString())
-                    Pair(user, password).right()
-                } catch (e: Throwable) {
-                    FindByEmailWithPasswordError.Unexpected(e, email).left()
-                }
+                val user = RegisteredUser.newWithoutValidation(
+                    UserId(userRecord["id"].toString().toInt()),
+                    Email.newWithoutValidation(userRecord["email"].toString()),
+                    Username.newWithoutValidation(userRecord["username"].toString()),
+                    Bio.newWithoutValidation(userRecord["bio"].toString()),
+                    Image.newWithoutValidation(userRecord["image"].toString()),
+                )
+                val password = Password.newWithoutValidation(userRecord["password"].toString())
+                Pair(user, password).right()
             }
         }
     }
@@ -196,11 +176,7 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
             ;
         """.trimIndent()
         val sqlParams = MapSqlParameterSource().addValue("user_id", id.value)
-        val users = try {
-            namedParameterJdbcTemplate.queryForList(sql, sqlParams)
-        } catch (e: Throwable) {
-            return FindByUserIdError.Unexpected(e, id).left()
-        }
+        val users = namedParameterJdbcTemplate.queryForList(sql, sqlParams)
 
         return when {
             /**
@@ -212,17 +188,13 @@ class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTempl
              */
             else -> {
                 val userRecord = users.first()
-                try {
-                    RegisteredUser.newWithoutValidation(
-                        UserId(userRecord["id"].toString().toInt()),
-                        Email.newWithoutValidation(userRecord["email"].toString()),
-                        Username.newWithoutValidation(userRecord["username"].toString()),
-                        Bio.newWithoutValidation(userRecord["bio"].toString()),
-                        Image.newWithoutValidation(userRecord["image"].toString()),
-                    ).right()
-                } catch (e: Throwable) {
-                    FindByUserIdError.Unexpected(e, id).left()
-                }
+                RegisteredUser.newWithoutValidation(
+                    UserId(userRecord["id"].toString().toInt()),
+                    Email.newWithoutValidation(userRecord["email"].toString()),
+                    Username.newWithoutValidation(userRecord["username"].toString()),
+                    Bio.newWithoutValidation(userRecord["bio"].toString()),
+                    Image.newWithoutValidation(userRecord["image"].toString()),
+                ).right()
             }
         }
     }

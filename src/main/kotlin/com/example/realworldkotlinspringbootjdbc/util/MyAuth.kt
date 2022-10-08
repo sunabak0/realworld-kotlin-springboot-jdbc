@@ -60,7 +60,6 @@ class MyAuthImpl(
                     {
                         when (it) {
                             is UserRepository.FindByUserIdError.NotFound -> MyAuth.Unauthorized.NotFound(it, session.userId).left()
-                            is UserRepository.FindByUserIdError.Unexpected -> TODO("UserRepository.FindByUserIdError.Unexpectedを消す時に消します")
                         }
                     },
                     { Pair(session.email, it).right() }

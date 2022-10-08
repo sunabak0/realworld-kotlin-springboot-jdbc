@@ -24,7 +24,6 @@ interface LoginUseCase {
             MyError.ValidationErrors
 
         data class Unauthorized(val email: Email) : Error, MyError.Basic
-        data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
 }
 
@@ -51,9 +50,6 @@ class LoginUseCaseImpl(
                  */
                 is Left -> when (val error = registeredUserWithPassword.value) {
                     is UserRepository.FindByEmailWithPasswordError.NotFound -> LoginUseCase.Error.Unauthorized(error.email)
-                        .left()
-
-                    is UserRepository.FindByEmailWithPasswordError.Unexpected -> LoginUseCase.Error.Unexpected(error)
                         .left()
                 }
                 /**
