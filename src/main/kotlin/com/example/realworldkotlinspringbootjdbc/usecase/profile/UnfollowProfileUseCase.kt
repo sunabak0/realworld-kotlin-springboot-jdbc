@@ -22,7 +22,6 @@ interface UnfollowProfileUseCase {
             MyError.ValidationErrors
 
         data class NotFound(override val cause: MyError) : Error, MyError.MyErrorWithMyError
-        data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
 }
 
@@ -51,10 +50,6 @@ class UnfollowProfileUseCaseImpl(
                      * 原因: プロフィールが見つからなかった
                      */
                     is ProfileRepository.UnfollowError.NotFoundProfileByUsername -> throw NotImplementedError()
-                    /**
-                     * 原因: 不明
-                     */
-                    is ProfileRepository.UnfollowError.Unexpected -> throw NotImplementedError()
                 }
                 /**
                  * アンフォロー 成功

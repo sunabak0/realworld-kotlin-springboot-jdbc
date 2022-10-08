@@ -87,11 +87,7 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                 ;
         """.trimIndent()
         val sqlParams = MapSqlParameterSource().addValue("username", username.value)
-        val profileFromDb = try {
-            namedParameterJdbcTemplate.queryForList(sql, sqlParams)
-        } catch (e: Throwable) {
-            return ProfileRepository.ShowWithoutAuthorizedError.Unexpected(e, username).left()
-        }
+        val profileFromDb = namedParameterJdbcTemplate.queryForList(sql, sqlParams)
 
         /**
          * user が存在しなかった時 NotFoundError
@@ -101,17 +97,13 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         }
         val it = profileFromDb.first()
 
-        return try {
-            OtherUser.newWithoutValidation(
-                UserId(it["id"].toString().toInt()),
-                Username.newWithoutValidation(it["username"].toString()),
-                Bio.newWithoutValidation(it["bio"].toString()),
-                Image.newWithoutValidation(it["image"].toString()),
-                it["following_flg"].toString() == "1"
-            ).right()
-        } catch (e: Throwable) {
-            ProfileRepository.ShowWithoutAuthorizedError.Unexpected(e, username).left()
-        }
+        return OtherUser.newWithoutValidation(
+            UserId(it["id"].toString().toInt()),
+            Username.newWithoutValidation(it["username"].toString()),
+            Bio.newWithoutValidation(it["bio"].toString()),
+            Image.newWithoutValidation(it["image"].toString()),
+            it["following_flg"].toString() == "1"
+        ).right()
     }
 
     override fun follow(username: Username, currentUserId: UserId): Either<ProfileRepository.FollowError, OtherUser> {
@@ -142,11 +134,7 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         val sqlSelectUserSqlParams = MapSqlParameterSource()
             .addValue("username", username.value)
             .addValue("current_user_id", currentUserId.value)
-        val profileFromDb = try {
-            namedParameterJdbcTemplate.queryForList(selectUserSql, sqlSelectUserSqlParams)
-        } catch (e: Throwable) {
-            return ProfileRepository.FollowError.Unexpected(e, username, currentUserId).left()
-        }
+        val profileFromDb = namedParameterJdbcTemplate.queryForList(selectUserSql, sqlSelectUserSqlParams)
 
         /**
          * user が存在しなかった時 NotFoundError
@@ -192,24 +180,16 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         val insertFollowingsSqlParams = MapSqlParameterSource()
             .addValue("username", username.value)
             .addValue("current_user_id", currentUserId.value)
-        try {
-            namedParameterJdbcTemplate.update(insertFollowingsSql, insertFollowingsSqlParams)
-        } catch (e: Throwable) {
-            return ProfileRepository.FollowError.Unexpected(e, username, currentUserId).left()
-        }
+        namedParameterJdbcTemplate.update(insertFollowingsSql, insertFollowingsSqlParams)
 
         val it = profileFromDb.first()
-        return try {
-            OtherUser.newWithoutValidation(
-                UserId(it["id"].toString().toInt()),
-                Username.newWithoutValidation(it["username"].toString()),
-                Bio.newWithoutValidation(it["bio"].toString()),
-                Image.newWithoutValidation(it["image"].toString()),
-                true
-            ).right()
-        } catch (e: Throwable) {
-            ProfileRepository.FollowError.Unexpected(e, username, currentUserId).left()
-        }
+        return OtherUser.newWithoutValidation(
+            UserId(it["id"].toString().toInt()),
+            Username.newWithoutValidation(it["username"].toString()),
+            Bio.newWithoutValidation(it["bio"].toString()),
+            Image.newWithoutValidation(it["image"].toString()),
+            true
+        ).right()
     }
 
     override fun unfollow(
@@ -243,11 +223,7 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         val sqlSelectUserSqlParams = MapSqlParameterSource()
             .addValue("username", username.value)
             .addValue("current_user_id", currentUserId.value)
-        val profileFromDb = try {
-            namedParameterJdbcTemplate.queryForList(selectUserSql, sqlSelectUserSqlParams)
-        } catch (e: Throwable) {
-            return ProfileRepository.UnfollowError.Unexpected(e, username, currentUserId).left()
-        }
+        val profileFromDb = namedParameterJdbcTemplate.queryForList(selectUserSql, sqlSelectUserSqlParams)
 
         /**
          * user が存在しなかった時 NotFoundError
@@ -273,24 +249,16 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         val deleteFollowingsSqlParams = MapSqlParameterSource()
             .addValue("username", username.value)
             .addValue("current_user_id", currentUserId.value)
-        try {
-            namedParameterJdbcTemplate.update(deleteFollowingsSql, deleteFollowingsSqlParams)
-        } catch (e: Throwable) {
-            return ProfileRepository.UnfollowError.Unexpected(e, username, currentUserId).left()
-        }
+        namedParameterJdbcTemplate.update(deleteFollowingsSql, deleteFollowingsSqlParams)
 
         val it = profileFromDb.first()
-        return try {
-            OtherUser.newWithoutValidation(
-                UserId(it["id"].toString().toInt()),
-                Username.newWithoutValidation(it["username"].toString()),
-                Bio.newWithoutValidation(it["bio"].toString()),
-                Image.newWithoutValidation(it["image"].toString()),
-                false
-            ).right()
-        } catch (e: Throwable) {
-            ProfileRepository.UnfollowError.Unexpected(e, username, currentUserId).left()
-        }
+        return OtherUser.newWithoutValidation(
+            UserId(it["id"].toString().toInt()),
+            Username.newWithoutValidation(it["username"].toString()),
+            Bio.newWithoutValidation(it["bio"].toString()),
+            Image.newWithoutValidation(it["image"].toString()),
+            false
+        ).right()
     }
 
     override fun findByUsername(

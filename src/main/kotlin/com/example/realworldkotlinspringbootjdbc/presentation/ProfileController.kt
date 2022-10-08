@@ -57,13 +57,6 @@ class ProfileController(
                         serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                         HttpStatus.valueOf(404)
                     )
-                    /**
-                     * 原因: 不明
-                     */
-                    is ShowProfileUseCase.Error.Unexpected -> ResponseEntity(
-                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                        HttpStatus.valueOf(500)
-                    )
                 }
                 /**
                  * プロフィール取得に成功
@@ -122,13 +115,6 @@ class ProfileController(
                         serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                         HttpStatus.valueOf(404)
                     )
-                    /**
-                     * 原因: 不明
-                     */
-                    is ShowProfileUseCase.Error.Unexpected -> ResponseEntity(
-                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                        HttpStatus.valueOf(500)
-                    )
                 }
             }
         }
@@ -168,13 +154,6 @@ class ProfileController(
                     is FollowProfileUseCase.Error.NotFound -> ResponseEntity(
                         serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                         HttpStatus.valueOf(404)
-                    )
-                    /**
-                     * 原因: 不明
-                     */
-                    is FollowProfileUseCase.Error.Unexpected -> ResponseEntity(
-                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                        HttpStatus.valueOf(500)
                     )
                 }
                 /**
@@ -222,13 +201,6 @@ class ProfileController(
                     is UnfollowProfileUseCase.Error.NotFound -> ResponseEntity(
                         serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                         HttpStatus.valueOf(404)
-                    )
-                    /**
-                     * 原因: 不明
-                     */
-                    is UnfollowProfileUseCase.Error.Unexpected -> ResponseEntity(
-                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                        HttpStatus.valueOf(500)
                     )
                 }
                 /**

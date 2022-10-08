@@ -15,9 +15,6 @@ interface ProfileRepository {
     fun show(username: Username): Either<ShowWithoutAuthorizedError, OtherUser> = throw NotImplementedError()
     sealed interface ShowWithoutAuthorizedError : MyError {
         data class NotFoundProfileByUsername(val username: Username) : ShowWithoutAuthorizedError, MyError.Basic
-        data class Unexpected(override val cause: Throwable, val username: Username) :
-            ShowWithoutAuthorizedError,
-            MyError.MyErrorWithThrowable
     }
 
     fun show(username: Username, currentUserId: UserId): Either<ShowError, OtherUser> = throw NotImplementedError()
@@ -25,9 +22,6 @@ interface ProfileRepository {
         data class NotFoundProfileByUsername(val username: Username, val currentUserId: UserId) :
             ShowError,
             MyError.Basic
-
-        data class Unexpected(override val cause: Throwable, val username: Username, val currentUserId: UserId) :
-            ShowError, MyError.MyErrorWithThrowable
     }
 
     fun follow(username: Username, currentUserId: UserId): Either<FollowError, OtherUser> = throw NotImplementedError()
@@ -35,9 +29,6 @@ interface ProfileRepository {
         data class NotFoundProfileByUsername(val username: Username, val currentUserId: UserId) :
             FollowError,
             MyError.Basic
-
-        data class Unexpected(override val cause: Throwable, val username: Username, val currentUserId: UserId) :
-            FollowError, MyError.MyErrorWithThrowable
     }
 
     fun unfollow(username: Username, currentUserId: UserId): Either<UnfollowError, OtherUser> =
@@ -47,9 +38,6 @@ interface ProfileRepository {
         data class NotFoundProfileByUsername(val username: Username, val currentUserId: UserId) :
             UnfollowError,
             MyError.Basic
-
-        data class Unexpected(override val cause: Throwable, val username: Username, val currentUserId: UserId) :
-            UnfollowError, MyError.MyErrorWithThrowable
     }
 
     /**
