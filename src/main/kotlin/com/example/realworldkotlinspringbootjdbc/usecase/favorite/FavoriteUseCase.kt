@@ -20,8 +20,6 @@ interface FavoriteUseCase {
         data class NotFoundArticleBySlug(override val cause: MyError, val slug: Slug) :
             Error,
             MyError.MyErrorWithMyError
-
-        data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
 }
 
@@ -47,10 +45,6 @@ class FavoriteUseCaseImpl(
                      * 原因: 作成済記事が見つからなかった
                      */
                     is ArticleRepository.FavoriteError.NotFoundCreatedArticleBySlug -> throw NotImplementedError()
-                    /**
-                     * 原因: 不明
-                     */
-                    is ArticleRepository.FavoriteError.Unexpected -> throw NotImplementedError()
                 }
                 /**
                  * お気に入り追加 成功

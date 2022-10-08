@@ -114,14 +114,6 @@ class ArticleControllerTest {
                         HttpStatus.valueOf(404)
                     )
                 ),
-                TestCase(
-                    title = "準正常系-ユースケース（ShowArticleUseCase）が原因不明のエラー（Unexpected）を返すとき、レスポンスのステータスコードが 500 になる",
-                    useCaseExecuteResult = ShowArticleUseCase.Error.Unexpected(object : MyError {}).left(),
-                    expected = ResponseEntity(
-                        """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
-                        HttpStatus.valueOf(500)
-                    )
-                )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     /**
@@ -220,14 +212,6 @@ class ArticleControllerTest {
                         HttpStatus.valueOf(404)
                     )
                 ),
-                TestCase(
-                    title = "準正常系-ユースケース（ShowArticleUseCase）が原因不明のエラー（Unexpected）を返すとき、レスポンスのステータスコードが 500 になる",
-                    useCaseExecuteResult = ShowArticleUseCase.Error.Unexpected(cause = object : MyError {}).left(),
-                    expected = ResponseEntity(
-                        """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
-                        HttpStatus.valueOf(500)
-                    )
-                )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     /**

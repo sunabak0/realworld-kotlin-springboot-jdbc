@@ -84,7 +84,6 @@ class UpdateCreatedArticleUseCaseImpl(
                 is ArticleRepository.FindBySlugError.NotFound -> return UpdateCreatedArticleUseCase.Error.NotFoundArticle(
                     slug = validatedSlug
                 ).left()
-                is ArticleRepository.FindBySlugError.Unexpected -> TODO("後々消すので、TODOにしておく")
             }
             is Right -> result.value
         }

@@ -93,11 +93,6 @@ class FavoriteControllerTest {
                     ).left(),
                     expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
                 ),
-                TestCase(
-                    title = "準正常系: FavoriteUseCase が「原因不明（Unexpected）」エラーを返す場合、500 レスポンスを返す",
-                    useCaseExecuteResult = FavoriteUseCase.Error.Unexpected(object : MyError {}).left(),
-                    expected = ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500)),
-                )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     // given
@@ -191,11 +186,6 @@ class FavoriteControllerTest {
                     ).left(),
                     expected = ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
                 ),
-                TestCase(
-                    title = "準正常系: UnfavoriteUseCase が「原因不明（Unexpected）」エラーを返す場合、500 レスポンスを返す",
-                    useCaseExecuteResult = UnfavoriteUseCase.Error.Unexpected(object : MyError {}).left(),
-                    expected = ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500)),
-                )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     /**

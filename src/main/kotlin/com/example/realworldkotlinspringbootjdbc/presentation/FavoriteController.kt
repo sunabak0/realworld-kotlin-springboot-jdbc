@@ -58,13 +58,6 @@ class FavoriteController(
                             serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(404)
                         )
-                        /**
-                         * 原因: 不明
-                         */
-                        is FavoriteUseCase.Error.Unexpected -> ResponseEntity(
-                            serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                            HttpStatus.valueOf(500)
-                        )
                     }
                     /**
                      * お気に入り登録 成功
@@ -137,13 +130,6 @@ class FavoriteController(
                         is UnfavoriteUseCase.Error.NotFoundArticleBySlug -> ResponseEntity(
                             serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                             HttpStatus.valueOf(404)
-                        )
-                        /**
-                         * 原因: 不明
-                         */
-                        is UnfavoriteUseCase.Error.Unexpected -> ResponseEntity(
-                            serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                            HttpStatus.valueOf(500)
                         )
                     }
                     /**
