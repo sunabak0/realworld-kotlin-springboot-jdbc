@@ -42,15 +42,14 @@
 
 ## 挙動確認する手順
 
-<!-- 不要な行は消してください -->
-
-- ✅ 挙動確認しなくて良い(眺めて、気になったところ等のレビューが欲しい)
-- ✅ CIが成功(GitHub Actions等が成功してればOK => レビュアーが確認することは無い)
-- ✅ branchをチェックアウトして `make test.with-local-db` or `./gradlew test withLocalDb`
+- ✅ 手元で挙動確認しなくて良い(眺めて、気になったところ等のレビューが欲しい)
+- ✅ branchをチェックアウトして `./gradlew test.full`
 
 ----
 
 ## レビューする時
+
+[コードレビューはつまらないから丁寧なプルリクエストでチームの生産性向上を目指す](https://blog.tai2.net/how-to-code-review.html)
 
 [Googleに学ぶコードレビューのポイント](https://cloudsmith.co.jp/blog/efficient/2021/08/1866630.html)
 
