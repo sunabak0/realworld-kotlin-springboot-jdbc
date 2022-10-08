@@ -307,13 +307,6 @@ class ArticleController(
                         serializeUnexpectedErrorForResponseBody("ユーザー登録されていませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                         HttpStatus.valueOf(404)
                     )
-                    /**
-                     * 原因: 不明
-                     */
-                    is ShowArticleUseCase.Error.Unexpected -> ResponseEntity(
-                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                        HttpStatus.valueOf(500)
-                    )
                 }
                 /**
                  * 記事取得 成功
@@ -354,13 +347,6 @@ class ArticleController(
                     is ShowArticleUseCase.Error.NotFoundUser -> ResponseEntity(
                         serializeUnexpectedErrorForResponseBody("ユーザー登録されていませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                         HttpStatus.valueOf(404)
-                    )
-                    /**
-                     * 原因: 不明
-                     */
-                    is ShowArticleUseCase.Error.Unexpected -> ResponseEntity(
-                        serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                        HttpStatus.valueOf(500)
                     )
                 }
                 /**

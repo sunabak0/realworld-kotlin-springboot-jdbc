@@ -20,8 +20,6 @@ interface UnfavoriteUseCase {
         data class NotFoundArticleBySlug(override val cause: MyError, val slug: Slug) :
             Error,
             MyError.MyErrorWithMyError
-
-        data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
 }
 
@@ -47,10 +45,6 @@ class UnfavoriteUseCaseImpl(
                      * 原因: 作成済記事が見つからなかった
                      */
                     is ArticleRepository.UnfavoriteError.NotFoundCreatedArticleBySlug -> throw NotImplementedError()
-                    /**
-                     * 原因: 不明
-                     */
-                    is ArticleRepository.UnfavoriteError.Unexpected -> throw NotImplementedError()
                 }
                 /**
                  * お気に入り登録解除 成功

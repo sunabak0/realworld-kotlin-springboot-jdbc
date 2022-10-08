@@ -1,7 +1,6 @@
 package com.example.realworldkotlinspringbootjdbc.util
 
 import arrow.core.Either
-import arrow.core.Some
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
@@ -80,25 +79,6 @@ class MyAuthTest {
 
         val actual = MyAuthImpl(findByUserIdReturnError, decodeReturnSuccess).authorize("Bearer: dummy")
         val expected = MyAuth.Unauthorized.NotFound(notFoundError, userId).left()
-        assertThat(actual).isEqualTo(expected)
-    }
-
-    @Test
-    fun `UserRepositoryがユーザー検索時に謎のエラーを返した場合、Jwt認証は「謎のエラー」を返す`() {
-        val userId = UserId(1)
-        val dummyEmail = Email.newWithoutValidation("dummy@example.com")
-        val decodeReturnSuccess = object : MySessionJwt {
-            override fun decode(token: String): Either<MySessionJwt.DecodeError, MySession> = MySession(userId, dummyEmail).right()
-        }
-        val unexpectedError = UserRepository.FindByUserIdError.Unexpected(Throwable(), userId)
-        val findByUserIdReturnUnexpectedError = object : UserRepository {
-            override fun findByUserId(id: UserId): Either<UserRepository.FindByUserIdError, RegisteredUser> =
-                unexpectedError.left()
-        }
-        val input = "Bearer: dummy"
-
-        val actual = MyAuthImpl(findByUserIdReturnUnexpectedError, decodeReturnSuccess).authorize(input)
-        val expected = MyAuth.Unauthorized.Unexpected(unexpectedError, Some(input)).left()
         assertThat(actual).isEqualTo(expected)
     }
 }

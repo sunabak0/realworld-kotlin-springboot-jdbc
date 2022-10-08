@@ -3,7 +3,6 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Tags
-import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.usecase.ListTagUseCase
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.http.HttpStatus
@@ -28,15 +27,7 @@ class DefaultController(
             /**
              * 失敗
              */
-            is Left -> when (result.value) {
-                /**
-                 * 原因: 不明
-                 */
-                is ListTagUseCase.Error.Unexpected -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody("原因不明のエラーが発生しました"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                    HttpStatus.valueOf(500)
-                )
-            }
+            is Left -> TODO("成功する想定なため、この分岐に入ることはない。こういう時にUnexpected？")
             /**
              * 成功
              */

@@ -88,14 +88,6 @@ class ProfileControllerTest {
                         HttpStatus.valueOf(404)
                     ),
                 ),
-                TestCase(
-                    "UseCase:失敗（Unexpected）を返す場合、500 レスポンスを返す",
-                    ShowProfileUseCase.Error.Unexpected(object : MyError {}).left(),
-                    ResponseEntity(
-                        """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
-                        HttpStatus.valueOf(500)
-                    ),
-                )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     val actual = profileController(
@@ -183,14 +175,6 @@ class ProfileControllerTest {
                         HttpStatus.valueOf(404)
                     )
                 ),
-                TestCase(
-                    "UseCase:失敗（Unexpected）を返す場合、500 レスポンスを返す",
-                    FollowProfileUseCase.Error.Unexpected(object : MyError {}).left(),
-                    ResponseEntity(
-                        """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
-                        HttpStatus.valueOf(500)
-                    )
-                )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     val actual = profileController(
@@ -278,14 +262,6 @@ class ProfileControllerTest {
                         HttpStatus.valueOf(404)
                     ),
                 ),
-                TestCase(
-                    "UseCase:失敗（Unexpected）を返す場合、500 レスポンスを返す",
-                    UnfollowProfileUseCase.Error.Unexpected(object : MyError {}).left(),
-                    ResponseEntity(
-                        """{"errors":{"body":["原因不明のエラーが発生しました"]}}""",
-                        HttpStatus.valueOf(500)
-                    )
-                )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     val actual = profileController(

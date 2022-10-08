@@ -59,9 +59,6 @@ interface ArticleRepository {
     fun findBySlug(slug: Slug): Either<FindBySlugError, CreatedArticle> = throw NotImplementedError()
     sealed interface FindBySlugError : MyError {
         data class NotFound(val slug: Slug) : FindBySlugError, MyError.Basic
-        data class Unexpected(override val cause: Throwable, val slug: Slug) :
-            FindBySlugError,
-            MyError.MyErrorWithThrowable
     }
 
     /**
@@ -82,17 +79,13 @@ interface ArticleRepository {
     sealed interface FindBySlugFromRegisteredUserViewpointError : MyError {
         data class NotFoundArticle(val slug: Slug) : FindBySlugFromRegisteredUserViewpointError, MyError.Basic
         data class NotFoundUser(val userId: UserId) : FindBySlugFromRegisteredUserViewpointError, MyError.Basic
-        data class Unexpected(override val cause: Throwable, val slug: Slug) :
-            FindBySlugFromRegisteredUserViewpointError, MyError.MyErrorWithThrowable
     }
 
     /**
      * タグ一覧
      */
-    fun tags(): Either<TagsError, List<Tag>> = TODO("テストでDIする時、余計なoverrideを記述不要にするため")
-    sealed interface TagsError : MyError {
-        data class Unexpected(override val cause: Throwable) : TagsError, MyError.MyErrorWithThrowable
-    }
+    fun tags(): Either<TagsError, List<Tag>> = throw NotImplementedError()
+    sealed interface TagsError : MyError
 
     /**
      * 記事をお気に入りに追加
@@ -104,9 +97,6 @@ interface ArticleRepository {
     fun favorite(slug: Slug, currentUserId: UserId): Either<FavoriteError, CreatedArticle> = throw NotImplementedError()
     sealed interface FavoriteError : MyError {
         data class NotFoundCreatedArticleBySlug(val slug: Slug) : FavoriteError, MyError.Basic
-        data class Unexpected(override val cause: Throwable, val slug: Slug, val currentUserId: UserId) :
-            FavoriteError,
-            MyError.MyErrorWithThrowable
     }
 
     /**
@@ -121,9 +111,6 @@ interface ArticleRepository {
 
     sealed interface UnfavoriteError : MyError {
         data class NotFoundCreatedArticleBySlug(val slug: Slug) : UnfavoriteError, MyError.Basic
-        data class Unexpected(override val cause: Throwable, val slug: Slug, val currentUserId: UserId) :
-            UnfavoriteError,
-            MyError.MyErrorWithThrowable
     }
 
     /**

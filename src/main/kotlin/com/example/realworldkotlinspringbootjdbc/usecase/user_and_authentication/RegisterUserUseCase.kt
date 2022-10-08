@@ -29,8 +29,6 @@ interface RegisterUserUseCase {
         data class AlreadyRegisteredUsername(override val cause: MyError, val user: UnregisteredUser) :
             Error,
             MyError.MyErrorWithMyError
-
-        data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
 }
 
@@ -68,11 +66,6 @@ class RegisterUserUseCaseImpl(
                         registerError,
                         user.value
                     ).left()
-                    /**
-                     * 原因: 不明
-                     */
-                    is UserRepository.RegisterError.Unexpected -> RegisterUserUseCase.Error.Unexpected(registerError)
-                        .left()
                 }
             }
         }

@@ -27,7 +27,6 @@ interface ShowProfileUseCase {
             MyError.ValidationErrors
 
         data class NotFound(override val cause: MyError) : Error, MyError.MyErrorWithMyError
-        data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
 }
 
@@ -57,7 +56,6 @@ class ShowProfileUseCaseImpl(
                      */
                     is Left -> when (showProfileResult.value) {
                         is ProfileRepository.ShowWithoutAuthorizedError.NotFoundProfileByUsername -> throw NotImplementedError()
-                        is ProfileRepository.ShowWithoutAuthorizedError.Unexpected -> throw NotImplementedError()
                     }
                     /**
                      * プロフィール取得成功
@@ -79,7 +77,6 @@ class ShowProfileUseCaseImpl(
                      */
                     is Left -> when (showProfileResult.value) {
                         is ProfileRepository.ShowError.NotFoundProfileByUsername -> throw NotImplementedError()
-                        is ProfileRepository.ShowError.Unexpected -> throw NotImplementedError()
                     }
                     /**
                      * プロフィール取得成功

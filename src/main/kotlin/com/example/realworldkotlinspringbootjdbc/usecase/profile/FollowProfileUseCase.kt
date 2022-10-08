@@ -22,7 +22,6 @@ interface FollowProfileUseCase {
             MyError.ValidationErrors
 
         data class NotFound(override val cause: MyError) : Error, MyError.MyErrorWithMyError
-        data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
 }
 
@@ -50,10 +49,6 @@ class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) :
                      * 原因: プロフィールが見つからなかった
                      */
                     is ProfileRepository.FollowError.NotFoundProfileByUsername -> throw NotImplementedError()
-                    /**
-                     * 原因: 不明
-                     */
-                    is ProfileRepository.FollowError.Unexpected -> throw NotImplementedError()
                 }
                 /**
                  * フォロー 成功

@@ -53,7 +53,6 @@ class DeleteCreatedArticleUseCaseImpl(
                 is ArticleRepository.FindBySlugError.NotFound -> return DeleteCreatedArticleUseCase.Error.NotFoundArticle(
                     slug = validatedSlug
                 ).left()
-                is ArticleRepository.FindBySlugError.Unexpected -> TODO("想定外なので、TODOにしておく")
             }
             is Right -> targetArticle.value
         }

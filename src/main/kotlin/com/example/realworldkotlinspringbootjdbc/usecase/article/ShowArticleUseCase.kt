@@ -30,8 +30,6 @@ interface ShowArticleUseCase {
         data class NotFoundUser(override val cause: MyError, val user: RegisteredUser) :
             Error,
             MyError.MyErrorWithMyError
-
-        data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
 }
 
@@ -59,11 +57,6 @@ class ShowArticleUseCaseImpl(val articleRepository: ArticleRepository) : ShowArt
                             error,
                             it.value
                         )
-                            .left()
-                        /**
-                         * 原因: 不明
-                         */
-                        is ArticleRepository.FindBySlugError.Unexpected -> ShowArticleUseCase.Error.Unexpected(error)
                             .left()
                     }
                     /**
@@ -95,12 +88,6 @@ class ShowArticleUseCaseImpl(val articleRepository: ArticleRepository) : ShowArt
                         is ArticleRepository.FindBySlugFromRegisteredUserViewpointError.NotFoundUser -> ShowArticleUseCase.Error.NotFoundUser(
                             error,
                             currentUser.value
-                        ).left()
-                        /**
-                         * 原因: 不明
-                         */
-                        is ArticleRepository.FindBySlugFromRegisteredUserViewpointError.Unexpected -> ShowArticleUseCase.Error.Unexpected(
-                            error
                         ).left()
                     }
                     /**

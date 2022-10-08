@@ -314,14 +314,10 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         """.trimIndent()
         val sqlParams = MapSqlParameterSource()
             .addValue("slug", slug.value)
-        val articleList = try {
-            namedParameterJdbcTemplate.queryForList(selectBySlugSql, sqlParams)
-        } catch (e: Throwable) {
-            return ArticleRepository.FindBySlugError.Unexpected(e, slug).left()
-        }
+        val articleList = namedParameterJdbcTemplate.queryForList(selectBySlugSql, sqlParams)
         return when {
             articleList.isEmpty() -> ArticleRepository.FindBySlugError.NotFound(slug).left()
-            else -> try {
+            else -> {
                 val articleMap = articleList.first()
                 CreatedArticle.newWithoutValidation(
                     id = ArticleId(articleMap["id"].toString().toInt()),
@@ -336,8 +332,6 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                     favorited = false,
                     favoritesCount = articleMap["favoritesCount"].toString().toInt()
                 ).right()
-            } catch (e: Throwable) {
-                ArticleRepository.FindBySlugError.Unexpected(e, slug).left()
             }
         }
     }
@@ -357,11 +351,8 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         """.trimIndent()
         val selectUserExistedSqlParams = MapSqlParameterSource()
             .addValue("user_id", userId.value)
-        val userList = try {
-            namedParameterJdbcTemplate.queryForList(selectUserExistedSql, selectUserExistedSqlParams)
-        } catch (e: Throwable) {
-            return ArticleRepository.FindBySlugFromRegisteredUserViewpointError.Unexpected(e, slug).left()
-        }
+        val userList = namedParameterJdbcTemplate.queryForList(selectUserExistedSql, selectUserExistedSqlParams)
+
         if (userList.isEmpty()) {
             return ArticleRepository.FindBySlugFromRegisteredUserViewpointError.NotFoundUser(userId).left()
         }
@@ -417,35 +408,27 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         val sqlParams = MapSqlParameterSource()
             .addValue("slug", slug.value)
             .addValue("user_id", userId.value)
-        val articleList = try {
-            namedParameterJdbcTemplate.queryForList(selectBySlugSql, sqlParams)
-        } catch (e: Throwable) {
-            return ArticleRepository.FindBySlugFromRegisteredUserViewpointError.Unexpected(e, slug).left()
-        }
+        val articleList = namedParameterJdbcTemplate.queryForList(selectBySlugSql, sqlParams)
+
         return when {
             articleList.isEmpty() -> ArticleRepository.FindBySlugFromRegisteredUserViewpointError.NotFoundArticle(slug)
                 .left()
 
             else -> {
                 val articleMap = articleList.first()
-
-                try {
-                    CreatedArticle.newWithoutValidation(
-                        id = ArticleId(articleMap["id"].toString().toInt()),
-                        title = Title.newWithoutValidation(articleMap["title"].toString()),
-                        slug = Slug.newWithoutValidation(articleMap["slug"].toString()),
-                        body = ArticleBody.newWithoutValidation(articleMap["body"].toString()),
-                        createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["created_at"].toString()),
-                        updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["updated_at"].toString()),
-                        description = Description.newWithoutValidation(articleMap["description"].toString()),
-                        tagList = articleMap["tags"].toString().split(",").filter { tag -> tag.isNotBlank() }.map { Tag.newWithoutValidation(it) },
-                        authorId = UserId(articleMap["author_id"].toString().toInt()),
-                        favorited = articleMap["favorited"].toString() == "1",
-                        favoritesCount = articleMap["favoritesCount"].toString().toInt()
-                    ).right()
-                } catch (e: Throwable) {
-                    ArticleRepository.FindBySlugFromRegisteredUserViewpointError.Unexpected(e, slug).left()
-                }
+                CreatedArticle.newWithoutValidation(
+                    id = ArticleId(articleMap["id"].toString().toInt()),
+                    title = Title.newWithoutValidation(articleMap["title"].toString()),
+                    slug = Slug.newWithoutValidation(articleMap["slug"].toString()),
+                    body = ArticleBody.newWithoutValidation(articleMap["body"].toString()),
+                    createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["created_at"].toString()),
+                    updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["updated_at"].toString()),
+                    description = Description.newWithoutValidation(articleMap["description"].toString()),
+                    tagList = articleMap["tags"].toString().split(",").filter { tag -> tag.isNotBlank() }.map { Tag.newWithoutValidation(it) },
+                    authorId = UserId(articleMap["author_id"].toString().toInt()),
+                    favorited = articleMap["favorited"].toString() == "1",
+                    favoritesCount = articleMap["favoritesCount"].toString().toInt()
+                ).right()
             }
         }
     }
@@ -458,13 +441,9 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                 tags
             ;
         """.trimIndent()
-        return try {
-            namedParameterJdbcTemplate.queryForList(tagListSql, MapSqlParameterSource())
-                .map { Tag.newWithoutValidation(it["name"].toString()) }
-                .right()
-        } catch (e: Throwable) {
-            ArticleRepository.TagsError.Unexpected(e).left()
-        }
+        return namedParameterJdbcTemplate.queryForList(tagListSql, MapSqlParameterSource())
+            .map { Tag.newWithoutValidation(it["name"].toString()) }
+            .right()
     }
 
     override fun favorite(slug: Slug, currentUserId: UserId): Either<ArticleRepository.FavoriteError, CreatedArticle> {
@@ -481,11 +460,7 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         """.trimIndent()
         val selectArticleSqlParams = MapSqlParameterSource()
             .addValue("slug", slug.value)
-        val articleFromDb = try {
-            namedParameterJdbcTemplate.queryForList(selectArticleSql, selectArticleSqlParams)
-        } catch (e: Throwable) {
-            return ArticleRepository.FavoriteError.Unexpected(e, slug, currentUserId).left()
-        }
+        val articleFromDb = namedParameterJdbcTemplate.queryForList(selectArticleSql, selectArticleSqlParams)
 
         /**
          * article が存在しなかったとき NotFoundError
@@ -493,12 +468,7 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         if (articleFromDb.isEmpty()) {
             return ArticleRepository.FavoriteError.NotFoundCreatedArticleBySlug(slug).left()
         }
-        val articleId = try {
-            val it = articleFromDb.first()
-            ArticleId(it["id"].toString().toInt())
-        } catch (e: Throwable) {
-            return ArticleRepository.FavoriteError.Unexpected(e, slug, currentUserId).left()
-        }
+        val articleId = ArticleId(articleFromDb.first()["id"].toString().toInt())
 
         /**
          * お気に入りではないとき、お気に入りに追加する
@@ -536,11 +506,7 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         val insertFavoritesSqlParams = MapSqlParameterSource()
             .addValue("user_id", currentUserId.value)
             .addValue("article_id", articleId.value)
-        try {
-            namedParameterJdbcTemplate.update(insertFavoritesSql, insertFavoritesSqlParams)
-        } catch (e: Throwable) {
-            return ArticleRepository.FavoriteError.Unexpected(e, slug, currentUserId).left()
-        }
+        namedParameterJdbcTemplate.update(insertFavoritesSql, insertFavoritesSqlParams)
 
         /**
          * Slug に該当する、作成済記事を取得する
@@ -598,23 +564,19 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             .addValue("slug", slug.value)
             .addValue("user_id", currentUserId.value)
         val articleMap = namedParameterJdbcTemplate.queryForList(selectBySlugSql, sqlParams).first()
-        return try {
-            CreatedArticle.newWithoutValidation(
-                id = ArticleId(articleMap["id"].toString().toInt()),
-                title = Title.newWithoutValidation(articleMap["title"].toString()),
-                slug = Slug.newWithoutValidation(articleMap["slug"].toString()),
-                body = com.example.realworldkotlinspringbootjdbc.domain.article.Body.newWithoutValidation(articleMap["body"].toString()),
-                createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["created_at"].toString()),
-                updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["updated_at"].toString()),
-                description = Description.newWithoutValidation(articleMap["description"].toString()),
-                tagList = articleMap["tags"].toString().split(",").filter { tag -> tag.isNotBlank() }.map { Tag.newWithoutValidation(it) },
-                authorId = UserId(articleMap["author_id"].toString().toInt()),
-                favorited = articleMap["favorited"].toString() == "1",
-                favoritesCount = articleMap["favoritesCount"].toString().toInt()
-            ).right()
-        } catch (e: Throwable) {
-            ArticleRepository.FavoriteError.Unexpected(e, slug, currentUserId).left()
-        }
+        return CreatedArticle.newWithoutValidation(
+            id = ArticleId(articleMap["id"].toString().toInt()),
+            title = Title.newWithoutValidation(articleMap["title"].toString()),
+            slug = Slug.newWithoutValidation(articleMap["slug"].toString()),
+            body = com.example.realworldkotlinspringbootjdbc.domain.article.Body.newWithoutValidation(articleMap["body"].toString()),
+            createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["created_at"].toString()),
+            updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["updated_at"].toString()),
+            description = Description.newWithoutValidation(articleMap["description"].toString()),
+            tagList = articleMap["tags"].toString().split(",").filter { tag -> tag.isNotBlank() }.map { Tag.newWithoutValidation(it) },
+            authorId = UserId(articleMap["author_id"].toString().toInt()),
+            favorited = articleMap["favorited"].toString() == "1",
+            favoritesCount = articleMap["favoritesCount"].toString().toInt()
+        ).right()
     }
 
     override fun unfavorite(
@@ -634,11 +596,7 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         """.trimIndent()
         val selectArticleSqlParams = MapSqlParameterSource()
             .addValue("slug", slug.value)
-        val articleFromDb = try {
-            namedParameterJdbcTemplate.queryForList(selectArticleSql, selectArticleSqlParams)
-        } catch (e: Throwable) {
-            return ArticleRepository.UnfavoriteError.Unexpected(e, slug, currentUserId).left()
-        }
+        val articleFromDb = namedParameterJdbcTemplate.queryForList(selectArticleSql, selectArticleSqlParams)
 
         /**
          * article が存在しなかったとき NotFoundError
@@ -646,12 +604,7 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         if (articleFromDb.isEmpty()) {
             return ArticleRepository.UnfavoriteError.NotFoundCreatedArticleBySlug(slug).left()
         }
-        val articleId = try {
-            val it = articleFromDb.first()
-            ArticleId(it["id"].toString().toInt())
-        } catch (e: Throwable) {
-            return ArticleRepository.UnfavoriteError.Unexpected(e, slug, currentUserId).left()
-        }
+        val articleId = ArticleId(articleFromDb.first()["id"].toString().toInt())
 
         /**
          * お気に入りのとき、お気に入りから削除する
@@ -667,11 +620,7 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         val deleteFavoritesSqlParams = MapSqlParameterSource()
             .addValue("article_id", articleId.value)
             .addValue("user_id", currentUserId.value)
-        try {
-            namedParameterJdbcTemplate.update(deleteFavoritesSql, deleteFavoritesSqlParams)
-        } catch (e: Throwable) {
-            return ArticleRepository.UnfavoriteError.Unexpected(e, slug, currentUserId).left()
-        }
+        namedParameterJdbcTemplate.update(deleteFavoritesSql, deleteFavoritesSqlParams)
 
         /**
          * Slug に該当する、作成済記事を取得する
@@ -729,23 +678,19 @@ class ArticleRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             .addValue("slug", slug.value)
             .addValue("user_id", currentUserId.value)
         val articleMap = namedParameterJdbcTemplate.queryForList(selectBySlugSql, sqlParams).first()
-        return try {
-            CreatedArticle.newWithoutValidation(
-                id = ArticleId(articleMap["id"].toString().toInt()),
-                title = Title.newWithoutValidation(articleMap["title"].toString()),
-                slug = Slug.newWithoutValidation(articleMap["slug"].toString()),
-                body = com.example.realworldkotlinspringbootjdbc.domain.article.Body.newWithoutValidation(articleMap["body"].toString()),
-                createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["created_at"].toString()),
-                updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["updated_at"].toString()),
-                description = Description.newWithoutValidation(articleMap["description"].toString()),
-                tagList = articleMap["tags"].toString().split(",").filter { tag -> tag.isNotBlank() }.map { Tag.newWithoutValidation(it) },
-                authorId = UserId(articleMap["author_id"].toString().toInt()),
-                favorited = articleMap["favorited"].toString() == "1",
-                favoritesCount = articleMap["favoritesCount"].toString().toInt()
-            ).right()
-        } catch (e: Throwable) {
-            ArticleRepository.UnfavoriteError.Unexpected(e, slug, currentUserId).left()
-        }
+        return CreatedArticle.newWithoutValidation(
+            id = ArticleId(articleMap["id"].toString().toInt()),
+            title = Title.newWithoutValidation(articleMap["title"].toString()),
+            slug = Slug.newWithoutValidation(articleMap["slug"].toString()),
+            body = com.example.realworldkotlinspringbootjdbc.domain.article.Body.newWithoutValidation(articleMap["body"].toString()),
+            createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["created_at"].toString()),
+            updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(articleMap["updated_at"].toString()),
+            description = Description.newWithoutValidation(articleMap["description"].toString()),
+            tagList = articleMap["tags"].toString().split(",").filter { tag -> tag.isNotBlank() }.map { Tag.newWithoutValidation(it) },
+            authorId = UserId(articleMap["author_id"].toString().toInt()),
+            favorited = articleMap["favorited"].toString() == "1",
+            favoritesCount = articleMap["favoritesCount"].toString().toInt()
+        ).right()
     }
 
     @Transactional

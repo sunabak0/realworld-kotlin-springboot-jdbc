@@ -34,10 +34,6 @@ interface MyAuth {
          * Emailが合わなかった
          */
         data class NotMatchEmail(val oldEmail: Email, val newEmail: Email) : Unauthorized, MyError.Basic
-        /**
-         * 謎エラー
-         */
-        data class Unexpected(override val cause: MyError, val bearerToken: Option<String>) : Unauthorized, MyError.MyErrorWithMyError
     }
 }
 
@@ -64,7 +60,6 @@ class MyAuthImpl(
                     {
                         when (it) {
                             is UserRepository.FindByUserIdError.NotFound -> MyAuth.Unauthorized.NotFound(it, session.userId).left()
-                            is UserRepository.FindByUserIdError.Unexpected -> MyAuth.Unauthorized.Unexpected(it, Option.fromNullable(authorizationHeader)).left()
                         }
                     },
                     { Pair(session.email, it).right() }

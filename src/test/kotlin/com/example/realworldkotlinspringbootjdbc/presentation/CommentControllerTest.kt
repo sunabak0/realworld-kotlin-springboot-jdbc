@@ -97,11 +97,6 @@ class CommentControllerTest {
                     ).left(),
                     ResponseEntity("""{"errors":{"body":["記事が見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
                 ),
-                TestCase(
-                    "UseCase:失敗（Unexpected）を返す場合、500 エラーレスポンスを返す",
-                    ListCommentUseCase.Error.Unexpected(object : MyError {}).left(),
-                    ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500)),
-                )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     val actual =
@@ -193,11 +188,6 @@ class CommentControllerTest {
                         HttpStatus.valueOf(404)
                     )
                 ),
-                TestCase(
-                    "UseCase:失敗（Unexpectedを返す場合、404 レスポンスを返す",
-                    ListCommentUseCase.Error.Unexpected(object : MyError {}).left(),
-                    ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500))
-                )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     val actual =
@@ -303,11 +293,6 @@ class CommentControllerTest {
                         HttpStatus.valueOf(422)
                     ),
                 ),
-                TestCase(
-                    "UseCase:失敗（Unexpected）を返す場合、500 エラーレスポンスを返す",
-                    CreateCommentUseCase.Error.Unexpected(object : MyError {}).left(),
-                    ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500)),
-                )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     val actual =
@@ -412,11 +397,6 @@ class CommentControllerTest {
                     ).left(),
                     ResponseEntity("""{"errors":{"body":["コメントが見つかりませんでした"]}}""", HttpStatus.valueOf(404)),
                 ),
-                TestCase(
-                    "UseCase:失敗（Undefined）を返す場合、500 エラーレスポンスを返す",
-                    DeleteCommentUseCase.Error.Unexpected(object : MyError {}).left(),
-                    ResponseEntity("""{"errors":{"body":["原因不明のエラーが発生しました"]}}""", HttpStatus.valueOf(500)),
-                )
             ).map { testCase ->
                 dynamicTest(testCase.title) {
                     val actual =

@@ -37,11 +37,7 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         """.trimIndent()
         val selectArticleSqlParams = MapSqlParameterSource()
             .addValue("slug", slug.value)
-        val articleList = try {
-            namedParameterJdbcTemplate.queryForList(selectArticleSql, selectArticleSqlParams)
-        } catch (e: Throwable) {
-            return CommentRepository.ListError.Unexpected(e, slug).left()
-        }
+        val articleList = namedParameterJdbcTemplate.queryForList(selectArticleSql, selectArticleSqlParams)
 
         /**
          * article が存在しなかった時 NotFoundError
@@ -49,12 +45,7 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         if (articleList.isEmpty()) {
             return CommentRepository.ListError.NotFoundArticleBySlug(slug).left()
         }
-        val articleId = try {
-            val it = articleList.first()
-            ArticleId(it["id"].toString().toInt())
-        } catch (e: Throwable) {
-            return CommentRepository.ListError.Unexpected(e, slug).left()
-        }
+        val articleId = ArticleId(articleList.first()["id"].toString().toInt())
 
         /**
          * comment を取得
@@ -74,25 +65,17 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         """.trimIndent()
         val selectCommentsSqlParams = MapSqlParameterSource()
             .addValue("article_id", articleId.value)
-        val commentsMap = try {
-            namedParameterJdbcTemplate.queryForList(selectCommentsSql, selectCommentsSqlParams)
-        } catch (e: Throwable) {
-            return CommentRepository.ListError.Unexpected(e, slug).left()
-        }
+        val commentsMap = namedParameterJdbcTemplate.queryForList(selectCommentsSql, selectCommentsSqlParams)
 
-        return try {
-            commentsMap.map {
-                Comment.newWithoutValidation(
-                    CommentId.newWithoutValidation(it["id"].toString().toInt()),
-                    Body.newWithoutValidation(it["body"].toString()),
-                    createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
-                    updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
-                    UserId(it["author_id"].toString().toInt()),
-                )
-            }.right()
-        } catch (e: Throwable) {
-            CommentRepository.ListError.Unexpected(e, slug).left()
-        }
+        return commentsMap.map {
+            Comment.newWithoutValidation(
+                CommentId.newWithoutValidation(it["id"].toString().toInt()),
+                Body.newWithoutValidation(it["body"].toString()),
+                createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
+                updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
+                UserId(it["author_id"].toString().toInt()),
+            )
+        }.right()
     }
 
     override fun create(slug: Slug, body: Body, currentUserId: UserId): Either<CommentRepository.CreateError, Comment> {
@@ -110,11 +93,7 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
 
         val selectArticleSqlParams = MapSqlParameterSource()
             .addValue("slug", slug.value)
-        val articleFromDb = try {
-            namedParameterJdbcTemplate.queryForList(selectArticleSql, selectArticleSqlParams)
-        } catch (e: Throwable) {
-            return CommentRepository.CreateError.Unexpected(e, slug, body, currentUserId).left()
-        }
+        val articleFromDb = namedParameterJdbcTemplate.queryForList(selectArticleSql, selectArticleSqlParams)
 
         /**
          * article が存在しなかった時 NotFoundError
@@ -122,12 +101,7 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         if (articleFromDb.isEmpty()) {
             return CommentRepository.CreateError.NotFoundArticleBySlug(slug).left()
         }
-        val articleId = try {
-            val it = articleFromDb.first()
-            UserId(it["id"].toString().toInt())
-        } catch (e: Throwable) {
-            return CommentRepository.CreateError.Unexpected(e, slug, body, currentUserId).left()
-        }
+        val articleId = UserId(articleFromDb.first()["id"].toString().toInt())
 
         /**
          * comment を作成
@@ -159,30 +133,17 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             .addValue("body", body.value)
             .addValue("created_at", now)
             .addValue("updated_at", now)
-        val commentMap = try {
-            namedParameterJdbcTemplate.queryForList(insertCommentSql, insertCommentSqlParams)
-        } catch (e: Throwable) {
-            return CommentRepository.CreateError.Unexpected(e, slug, body, currentUserId).left()
-        }
+        val commentMap = namedParameterJdbcTemplate.queryForList(insertCommentSql, insertCommentSqlParams)
 
-        val commentId = try {
-            val it = commentMap.first()
-            CommentId.newWithoutValidation(it["id"].toString().toInt())
-        } catch (e: Throwable) {
-            return CommentRepository.CreateError.Unexpected(e, slug, body, currentUserId).left()
-        }
+        val commentId = CommentId.newWithoutValidation(commentMap.first()["id"].toString().toInt())
 
-        return try {
-            Comment.newWithoutValidation(
-                commentId,
-                body,
-                createdAt = Date.from(now.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant()),
-                updatedAt = Date.from(now.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant()),
-                currentUserId
-            ).right()
-        } catch (e: Throwable) {
-            CommentRepository.CreateError.Unexpected(e, slug, body, currentUserId).left()
-        }
+        return Comment.newWithoutValidation(
+            commentId,
+            body,
+            createdAt = Date.from(now.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant()),
+            updatedAt = Date.from(now.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant()),
+            currentUserId
+        ).right()
     }
 
     override fun delete(
@@ -204,11 +165,7 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
 
         val selectArticleSqlParams = MapSqlParameterSource()
             .addValue("slug", slug.value)
-        val articleIdMap = try {
-            namedParameterJdbcTemplate.queryForList(selectArticleSql, selectArticleSqlParams)
-        } catch (e: Throwable) {
-            return CommentRepository.DeleteError.NotFoundArticleBySlug(slug, commentId, currentUserId).left()
-        }
+        val articleIdMap = namedParameterJdbcTemplate.queryForList(selectArticleSql, selectArticleSqlParams)
 
         /**
          * article が存在しなかった時 NotFoundError
@@ -216,11 +173,7 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         if (articleIdMap.isEmpty()) {
             return CommentRepository.DeleteError.NotFoundArticleBySlug(slug, commentId, currentUserId).left()
         }
-        val articleId = try {
-            articleIdMap.first()["id"].toString().toInt()
-        } catch (e: Throwable) {
-            return CommentRepository.DeleteError.Unexpected(e, slug, commentId, currentUserId).left()
-        }
+        val articleId = articleIdMap.first()["id"].toString().toInt()
 
         /**
          * article_comments テーブルで以下を確認
@@ -248,22 +201,14 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         val checkValidCommentIdOrAuthorIdSqlParams = MapSqlParameterSource()
             .addValue("current_user_id", currentUserId.value)
             .addValue("comment_id", commentId.value)
-        val checkValidCommentIdOrAuthorIdMap = try {
-            namedParameterJdbcTemplate.queryForMap(
-                checkValidCommentIdOrAuthorIdSql,
-                checkValidCommentIdOrAuthorIdSqlParams
-            )
-        } catch (e: Throwable) {
-            return CommentRepository.DeleteError.Unexpected(e, slug, commentId, currentUserId).left()
-        }
-        val (commentIdCount, commentAuthorIdCount) = try {
-            Pair(
-                checkValidCommentIdOrAuthorIdMap["comment_id_count"].toString().toInt(),
-                checkValidCommentIdOrAuthorIdMap["author_id_count"].toString().toInt()
-            )
-        } catch (e: Throwable) {
-            return CommentRepository.DeleteError.Unexpected(e, slug, commentId, currentUserId).left()
-        }
+        val checkValidCommentIdOrAuthorIdMap = namedParameterJdbcTemplate.queryForMap(
+            checkValidCommentIdOrAuthorIdSql,
+            checkValidCommentIdOrAuthorIdSqlParams
+        )
+        val (commentIdCount, commentAuthorIdCount) = Pair(
+            checkValidCommentIdOrAuthorIdMap["comment_id_count"].toString().toInt(),
+            checkValidCommentIdOrAuthorIdMap["author_id_count"].toString().toInt()
+        )
         /**
          * 該当するコメントが存在するとき、CommentNotFoundByCommentId エラー
          */
@@ -293,12 +238,8 @@ class CommentRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
             .addValue("current_user_id", currentUserId.value)
             .addValue("article_id", articleId)
             .addValue("comment_id", commentId.value)
-        return try {
-            namedParameterJdbcTemplate.update(deleteCommentsSql, deleteCommentSqlParams)
-            Unit.right()
-        } catch (e: Throwable) {
-            CommentRepository.DeleteError.Unexpected(e, slug, commentId, currentUserId).left()
-        }
+        namedParameterJdbcTemplate.update(deleteCommentsSql, deleteCommentSqlParams)
+        return Unit.right()
     }
 
     override fun deleteAll(articleId: ArticleId): Either.Right<Unit> {

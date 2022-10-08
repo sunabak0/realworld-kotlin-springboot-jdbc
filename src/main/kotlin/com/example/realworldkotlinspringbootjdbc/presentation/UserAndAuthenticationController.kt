@@ -91,13 +91,6 @@ class UserAndAuthenticationController(
                     serializeUnexpectedErrorForResponseBody("ユーザー名は既に登録されています"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
                     HttpStatus.valueOf(422)
                 )
-                /**
-                 * 原因: DB周りのエラー
-                 */
-                is RegisterUserUseCase.Error.Unexpected -> ResponseEntity(
-                    "DBエラー",
-                    HttpStatus.valueOf(500)
-                )
             }
         }
     }
@@ -153,10 +146,6 @@ class UserAndAuthenticationController(
                 is LoginUseCase.Error.Unauthorized -> ResponseEntity(
                     serializeUnexpectedErrorForResponseBody("認証に失敗しました"),
                     HttpStatus.valueOf(401)
-                )
-                is LoginUseCase.Error.Unexpected -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody("予期せぬエラーが発生しました(cause: ${useCaseError::class.simpleName})"),
-                    HttpStatus.valueOf(422)
                 )
             }
         }

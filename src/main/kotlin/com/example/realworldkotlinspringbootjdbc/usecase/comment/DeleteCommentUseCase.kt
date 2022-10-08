@@ -34,8 +34,6 @@ interface DeleteCommentUseCase {
         data class NotAuthorizedDeleteComment(override val cause: MyError, val currentUserId: UserId) :
             Error,
             MyError.MyErrorWithMyError
-
-        data class Unexpected(override val cause: MyError) : Error, MyError.MyErrorWithMyError
     }
 }
 
@@ -93,11 +91,6 @@ class DeleteCommentUseCaseImpl(
                             error,
                             currentUser.userId
                         ).left()
-                        /**
-                         * 原因: 不明
-                         */
-                        is CommentRepository.DeleteError.Unexpected -> DeleteCommentUseCase.Error.Unexpected(error)
-                            .left()
                     }
                     /**
                      * コメント削除 成功
