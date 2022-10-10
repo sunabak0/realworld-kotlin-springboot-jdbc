@@ -5,13 +5,11 @@ import arrow.core.left
 import arrow.core.nonEmptyListOf
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
-import com.example.realworldkotlinspringbootjdbc.domain.UnregisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UpdatableRegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UserRepository
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
-import com.example.realworldkotlinspringbootjdbc.domain.user.Password
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.infra.helper.SeedData
@@ -34,118 +32,6 @@ import java.util.Date
 import java.util.stream.Stream
 
 class UserAndAuthenticationControllerTest {
-    @Nested
-    @DisplayName("ユーザー登録")
-    class RegisterTest {
-        data class TestCase(
-            val title: String,
-            val useCaseExecuteResult: Either<RegisterUserUseCase.Error, RegisteredUser>,
-            val expected: ResponseEntity<String>
-        )
-
-        /**
-         * ユーザー登録UseCase の戻り値を固定した Controller を作成
-         *
-         * JWTエンコーディングは必ず '成功' する
-         *
-         * @param[registerUserUseCaseResult] UseCaseの実行の戻り値となる値
-         * @return 引数を戻り値とする register が実装された Controller
-         */
-        private fun createUserAndAuthenticationController(
-            registerUserUseCaseResult: Either<RegisterUserUseCase.Error, RegisteredUser>
-        ): UserAndAuthenticationController =
-            UserAndAuthenticationController(
-                mySessionJwt = object : MySessionJwt {
-                    override fun encode(session: MySession) = "dummy-jwt-token".right()
-                },
-                myAuth = object : MyAuth {}, // 関係ない
-                registerUserUseCase = object : RegisterUserUseCase {
-                    override fun execute(
-                        email: String?,
-                        password: String?,
-                        username: String?,
-                    ): Either<RegisterUserUseCase.Error, RegisteredUser> = registerUserUseCaseResult
-                },
-                loginUseCase = object : LoginUseCase {}, // 関係ない
-                updateUserUseCase = object : UpdateUserUseCase {}, // 関係ない
-            )
-
-        @TestFactory
-        fun test(): Stream<DynamicNode> {
-            return Stream.of(
-                TestCase(
-                    title = "成功: UseCase の実行結果が '登録されたユーザー' の場合、 201 レスポンスを返す",
-                    useCaseExecuteResult = RegisteredUser.newWithoutValidation(
-                        userId = UserId(1),
-                        email = Email.newWithoutValidation("dummy@example.com"),
-                        username = Username.newWithoutValidation("dummy-username"),
-                        bio = Bio.newWithoutValidation("dummy-bio"),
-                        image = Image.newWithoutValidation("dummy-image")
-                    ).right(),
-                    expected = ResponseEntity(
-                        """{"user":{"email":"dummy@example.com","username":"dummy-username","bio":"dummy-bio","image":"dummy-image","token":"dummy-jwt-token"}}""",
-                        HttpStatus.valueOf(201)
-                    )
-                ),
-                TestCase(
-                    title = "失敗: UseCase の実行結果が 'プロパティが不正である' 旨のエラーの場合、 422 エラーレスポンスを返す",
-                    useCaseExecuteResult = RegisterUserUseCase.Error.InvalidUser(
-                        listOf(
-                            object : MyError.ValidationError {
-                                override val message: String get() = "dummy-原因"
-                                override val key: String get() = "dummy-プロパティ名"
-                            }
-                        )
-                    ).left(),
-                    expected = ResponseEntity(
-                        """{"errors":{"body":[{"key":"dummy-プロパティ名","message":"dummy-原因"}]}}""",
-                        HttpStatus.valueOf(422)
-                    )
-                ),
-                TestCase(
-                    title = "失敗: UseCase の実行結果が 'Emailが既に登録されている' 旨のエラーの場合、 422 エラーレスポンスを返す",
-                    useCaseExecuteResult = RegisterUserUseCase.Error.AlreadyRegisteredEmail(
-                        cause = object : MyError {},
-                        user = object : UnregisteredUser {
-                            override val email: Email get() = Email.newWithoutValidation("dummy@example.com")
-                            override val password: Password get() = Password.newWithoutValidation("dummy-password")
-                            override val username: Username get() = Username.newWithoutValidation("dummy-username")
-                        }
-                    ).left(),
-                    expected = ResponseEntity(
-                        """{"errors":{"body":["メールアドレスは既に登録されています"]}}""",
-                        HttpStatus.valueOf(422)
-                    )
-                ),
-                TestCase(
-                    title = "失敗: UseCase の実行結果が 'ユーザー名が既に登録されている' 旨のエラーの場合、 422 エラーレスポンスを返す",
-                    useCaseExecuteResult = RegisterUserUseCase.Error.AlreadyRegisteredUsername(
-                        cause = object : MyError {},
-                        user = object : UnregisteredUser {
-                            override val email: Email get() = Email.newWithoutValidation("dummy@example.com")
-                            override val password: Password get() = Password.newWithoutValidation("dummy-password")
-                            override val username: Username get() = Username.newWithoutValidation("dummy-username")
-                        }
-                    ).left(),
-                    expected = ResponseEntity(
-                        """{"errors":{"body":["ユーザー名は既に登録されています"]}}""",
-                        HttpStatus.valueOf(422)
-                    )
-                )
-            ).map { testCase ->
-                dynamicTest(testCase.title) {
-                    // given:
-                    val controller = createUserAndAuthenticationController(testCase.useCaseExecuteResult)
-
-                    // when:
-                    val actual = controller.register("""{"user": {}}""")
-
-                    // then:
-                    assertThat(actual).isEqualTo(testCase.expected)
-                }
-            }
-        }
-    }
 
     @Nested
     @DisplayName("ログイン")
