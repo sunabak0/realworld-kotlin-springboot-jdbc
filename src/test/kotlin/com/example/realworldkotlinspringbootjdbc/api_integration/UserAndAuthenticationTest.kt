@@ -289,4 +289,189 @@ class UserAndAuthenticationTest {
             )
         }
     }
+
+    @SpringBootTest
+    @AutoConfigureMockMvc
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    class Login {
+        @Autowired
+        lateinit var mockMvc: MockMvc
+
+        @BeforeEach
+        fun reset() = DbConnection.resetSequence()
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml"
+            ]
+        )
+        fun `正常系-emailが存在しpassword正しい場合、ログインに成功`() {
+            /**
+             * given:
+             * - 存在するemail
+             * - 正しいpassword
+             */
+            val existedUser = SeedData.users().first()
+            val requestBody = """
+                {
+                    "user": {
+                        "email": "${existedUser.email.value}",
+                        "password": "Passw0rd"
+                    }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .post("/api/users/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 200
+            val expectedResponseBody = """
+                {
+                  "user": {
+                    "email": "${existedUser.email.value}",
+                    "username": "${existedUser.username.value}",
+                    "image": "${existedUser.image.value}",
+                    "bio": "${existedUser.bio.value}",
+                    "token": "dummy.jwt.JSONWebToken"
+                  }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.NON_EXTENSIBLE,
+                    Customization("user.token") { actualToken, expectedToken ->
+                        MySessionJwtImpl.decode(actualToken.toString()).isRight() &&
+                            expectedToken == "dummy.jwt.JSONWebToken"
+                    }
+                )
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml"
+            ]
+        )
+        fun `準正常系-passwordが誤っている場合、ログインに失敗`() {
+            /**
+             * given:
+             * - 存在するemail
+             * - 誤ったpassword
+             */
+            val existedUser = SeedData.users().first()
+            val requestBody = """
+                {
+                    "user": {
+                        "email": "${existedUser.email.value}",
+                        "password": "wrong-password"
+                    }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .post("/api/users/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 401
+            val expectedResponseBody = """
+                {
+                  "errors": {
+                    "body": ["認証に失敗しました"]
+                  }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml"
+            ]
+        )
+        fun `準正常系-バリデーションエラーがある場合、ログインに失敗`() {
+            /**
+             * given:
+             * - Emailとして間違っているemail
+             */
+            val requestBody = """
+                {
+                    "user": {
+                        "email": "wrong-format",
+                        "password": "fake-password"
+                    }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .post("/api/users/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 401
+            val expectedResponseBody = """
+                {
+                  "errors": {
+                    "body": ["メールアドレスが不正な形式です。(正しい形式例：john@example.com)"]
+                  }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
+    }
 }
