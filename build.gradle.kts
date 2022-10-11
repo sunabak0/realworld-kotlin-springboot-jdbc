@@ -198,7 +198,7 @@ dependencies {
      *
      * dokka Pluginを適用するのに必要
      */
-    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.7.10")
+    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.7.20")
 
     /**
      * Database Rider
