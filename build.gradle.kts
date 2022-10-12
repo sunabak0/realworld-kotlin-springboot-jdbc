@@ -443,6 +443,31 @@ task<GenerateTask>("generateApiServer") {
             "interfaceOnly" to "true",
         )
     )
+    /**
+     * OpenAPI GeneratorがサポートしているConfig
+     * URL
+     * - https://openapi-generator.tech/docs/generators/spring/
+     *
+     * useTags
+     * 概要
+     * - true
+     *   - スキーマファイルはグルーピング用にtagを利用できるが、そのtagを利用してファイル名を決定するようにする
+     *   - スキーマファイルでtagを複数指定すると重複して生成されるので注意(=tagは1つだけにする)
+     *   - 例: tags: ["User and Authentication"] -> UserAndAuthenticationApiの${operationId}メソッド
+     *
+     * - false (default)
+     *   - スキーマファイルで定義したルーティングパスがファイル名に採用される
+     *   - 例: /user/login -> UserApiの${operationId}メソッド or UserApiのloginメソッド
+     *     - operationIdが優先される
+     *
+     * スキーマファイルのtagsについてのドキュメントURL
+     * - https://spec.openapis.org/oas/v3.0.1#operation-object
+     */
+    additionalProperties.set(
+        mapOf(
+            "useTags" to "true"
+        )
+    )
 }
 /**
  * Kotlinをコンパイルする前に、generateApiServerタスクを実行
