@@ -41,7 +41,7 @@ plugins {
      * 概要
      * - JDocの代替(=KDoc)
      */
-    id("org.jetbrains.dokka") version "1.7.10"
+    id("org.jetbrains.dokka") version "1.7.20"
 
     /**
      * jacoco
@@ -198,7 +198,7 @@ dependencies {
      *
      * dokka Pluginを適用するのに必要
      */
-    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.7.10")
+    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.7.20")
 
     /**
      * Database Rider
