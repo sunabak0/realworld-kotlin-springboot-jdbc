@@ -161,7 +161,7 @@ dependencies {
      * 概要
      * - 特になし
      */
-    implementation("com.auth0:java-jwt:4.0.0")
+    implementation("com.auth0:java-jwt:4.1.0")
 
     /**
      * Spring JDBC
