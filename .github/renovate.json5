@@ -69,5 +69,11 @@
         "net.jqwik",
       ]
     },
+    {
+      groupName: "org.jetbrains.dokka*系",
+      matchPackagePrefixes: [
+        "org.jetbrains.dokka",
+      ]
+    },
   ],
 }
