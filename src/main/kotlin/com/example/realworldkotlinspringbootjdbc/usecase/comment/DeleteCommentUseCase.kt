@@ -12,7 +12,20 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
+/**
+ * 作成済記事のコメントの削除
+ *
+ * - コメントの作成者じゃないと削除できない
+ */
 interface DeleteCommentUseCase {
+    /**
+     * 実行
+     *
+     * @param slug Slug
+     * @param commentId コメント ID
+     * @param currentUser リクエストしたユーザー（コメントの作成者である必要がある）
+     * @return エラー or 削除成功
+     */
     fun execute(slug: String?, commentId: Int?, currentUser: RegisteredUser): Either<Error, Unit> =
         throw NotImplementedError()
 
