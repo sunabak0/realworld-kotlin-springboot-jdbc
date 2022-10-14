@@ -3,8 +3,6 @@ package com.example.realworldkotlinspringbootjdbc.usecase.comment
 import arrow.core.Either
 import arrow.core.Either.Left
 import arrow.core.Either.Right
-import arrow.core.Invalid
-import arrow.core.Valid
 import arrow.core.left
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
 import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
@@ -46,31 +44,29 @@ class CreateCommentUseCaseImpl(
             { it }
         )
 
-        return when (val commentBody = Body.new(body)) {
+        /**
+         * Body のバリデーション
+         * Invalid -> 早期リターン
+         */
+        val commentBody = Body.new(body).fold(
+            { return CreateCommentUseCase.Error.InvalidCommentBody(it).left() },
+            { it }
+        )
+
+        return when (val createResult = commentRepository.create(validatedSlug, commentBody, currentUser.userId)) {
             /**
-             * CommentBody が不正
+             * コメント登録 失敗
              */
-            is Invalid -> CreateCommentUseCase.Error.InvalidCommentBody(commentBody.value).left()
-            /**
-             * CommentBody が適切
-             */
-            is Valid -> when (
-                val createResult =
-                    commentRepository.create(validatedSlug, commentBody.value, currentUser.userId)
-            ) {
-                /**
-                 * コメント登録 失敗
-                 */
-                is Left -> when (val createError = createResult.value) {
-                    is CommentRepository.CreateError.NotFoundArticleBySlug -> CreateCommentUseCase.Error.NotFound(
-                        createError
-                    ).left()
-                }
-                /**
-                 * コメント登録 成功
-                 */
-                is Right -> createResult
+            is Left -> when (val createError = createResult.value) {
+                is CommentRepository.CreateError.NotFoundArticleBySlug -> CreateCommentUseCase.Error.NotFound(
+                    createError
+                ).left()
             }
+
+            /**
+             * コメント登録 成功
+             */
+            is Right -> createResult
         }
     }
 }
