@@ -12,7 +12,18 @@ import com.example.realworldkotlinspringbootjdbc.domain.comment.Body
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
+/**
+ * 作成済み記事のコメントの作成
+ */
 interface CreateCommentUseCase {
+    /**
+     * 実行
+     *
+     * @param slug Slug
+     * @param body コメントの本文
+     * @param currentUser リクエストしたユーザー
+     * @return エラー or 作成済み記事のコメント
+     */
     fun execute(slug: String?, body: String?, currentUser: RegisteredUser): Either<Error, Comment> =
         throw NotImplementedError()
 
