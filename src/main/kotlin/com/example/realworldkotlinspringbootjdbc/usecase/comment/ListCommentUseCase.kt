@@ -40,30 +40,31 @@ class ListCommentUseCaseImpl(
             { return ListCommentUseCase.Error.InvalidSlug(it).left() },
             { it }
         )
-        return when (val listResult = commentRepository.list(validatedSlug)) {
-            /**
-             * コメントの取得 失敗
-             */
+
+        /**
+         * コメントの取得
+         * NotFoundArticleBySlug -> 早期リターン
+         */
+        val commentList = when (val listResult = commentRepository.list(validatedSlug)) {
             is Left -> when (val listError = listResult.value) {
-                is CommentRepository.ListError.NotFoundArticleBySlug -> ListCommentUseCase.Error.NotFound(
+                is CommentRepository.ListError.NotFoundArticleBySlug -> return ListCommentUseCase.Error.NotFound(
                     listError
                 ).left()
             }
-            /**
-             * コメントの取得 成功
-             */
-            is Right -> when (currentUser) {
-                /**
-                 * JWT 認証 失敗 or 未ログイン
-                 * TODO: QueryService で AuthorId に該当する User を取得する実装を追加。現状は listResult（List<Comment>）を返している
-                 */
-                is None -> listResult
-                /**
-                 * JWT 認証成功
-                 * TODO: QueryService で AuthorId に該当する User を取得する実装と AuthorId と CurrentUser の followings を取得する実装を追加。現状は listResult（List<Comment>）を返している
-                 */
-                is Some -> listResult
-            }
+
+            is Right -> listResult
+        }
+
+        /**
+         * currentUser の有無で、followings を分
+         * None -> JWT 認証失敗 or 未ログイン
+         * Some -> JWT 認証成功
+         */
+        return when (currentUser) {
+            // TODO: QueryService で AuthorId に該当する User を取得する実装を追加。現状は listResult（List<Comment>）を返している
+            is None -> commentList
+            // TODO: QueryService で AuthorId に該当する User を取得する実装と AuthorId と CurrentUser の followings を取得する実装を追加。現状は listResult（List<Comment>）を返している
+            is Some -> commentList
         }
     }
 }
