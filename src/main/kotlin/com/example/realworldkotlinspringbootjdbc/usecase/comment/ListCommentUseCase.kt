@@ -14,7 +14,19 @@ import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
+/**
+ * 作成済記事のコメント取得
+ *
+ * - ログイン済みでリクエストした場合、author との followings が表示される
+ */
 interface ListCommentUseCase {
+    /**
+     * 実行
+     *
+     * @param slug Slug
+     * @param currentUser リクエストユーザー or 未ログイン状態
+     * @return エラー or Slug に該当する作成済み記事の一覧
+     */
     fun execute(slug: String?, currentUser: Option<RegisteredUser> = None): Either<Error, List<Comment>> =
         throw NotImplementedError()
 
