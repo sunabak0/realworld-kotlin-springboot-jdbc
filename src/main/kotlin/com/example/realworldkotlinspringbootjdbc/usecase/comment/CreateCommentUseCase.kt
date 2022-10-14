@@ -15,7 +15,9 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface CreateCommentUseCase {
-    fun execute(slug: String?, body: String?, currentUser: RegisteredUser): Either<Error, Comment> = throw NotImplementedError()
+    fun execute(slug: String?, body: String?, currentUser: RegisteredUser): Either<Error, Comment> =
+        throw NotImplementedError()
+
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
         data class InvalidCommentBody(override val errors: List<MyError.ValidationError>) :
@@ -35,39 +37,39 @@ class CreateCommentUseCaseImpl(
         body: String?,
         currentUser: RegisteredUser
     ): Either<CreateCommentUseCase.Error, Comment> {
-        return when (val it = Slug.new(slug)) {
+        /**
+         * Slug のバリデーション
+         * Invalid -> 早期リターン
+         */
+        val validatedSlug = Slug.new(slug).fold(
+            { return CreateCommentUseCase.Error.InvalidSlug(it).left() },
+            { it }
+        )
+
+        return when (val commentBody = Body.new(body)) {
             /**
-             * Slug が不正
+             * CommentBody が不正
              */
-            is Invalid -> CreateCommentUseCase.Error.InvalidSlug(it.value).left()
+            is Invalid -> CreateCommentUseCase.Error.InvalidCommentBody(commentBody.value).left()
             /**
-             * Slug が適切
+             * CommentBody が適切
              */
-            is Valid -> when (val commentBody = Body.new(body)) {
+            is Valid -> when (
+                val createResult =
+                    commentRepository.create(validatedSlug, commentBody.value, currentUser.userId)
+            ) {
                 /**
-                 * CommentBody が不正
+                 * コメント登録 失敗
                  */
-                is Invalid -> CreateCommentUseCase.Error.InvalidCommentBody(commentBody.value).left()
-                /**
-                 * CommentBody が適切
-                 */
-                is Valid -> when (
-                    val createResult =
-                        commentRepository.create(it.value, commentBody.value, currentUser.userId)
-                ) {
-                    /**
-                     * コメント登録 失敗
-                     */
-                    is Left -> when (val createError = createResult.value) {
-                        is CommentRepository.CreateError.NotFoundArticleBySlug -> CreateCommentUseCase.Error.NotFound(
-                            createError
-                        ).left()
-                    }
-                    /**
-                     * コメント登録 成功
-                     */
-                    is Right -> createResult
+                is Left -> when (val createError = createResult.value) {
+                    is CommentRepository.CreateError.NotFoundArticleBySlug -> CreateCommentUseCase.Error.NotFound(
+                        createError
+                    ).left()
                 }
+                /**
+                 * コメント登録 成功
+                 */
+                is Right -> createResult
             }
         }
     }
