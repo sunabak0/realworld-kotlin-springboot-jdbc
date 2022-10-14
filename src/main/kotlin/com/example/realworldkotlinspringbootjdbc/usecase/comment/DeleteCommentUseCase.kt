@@ -15,7 +15,8 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface DeleteCommentUseCase {
-    fun execute(slug: String?, commentId: Int?, currentUser: RegisteredUser): Either<Error, Unit> = throw NotImplementedError()
+    fun execute(slug: String?, commentId: Int?, currentUser: RegisteredUser): Either<Error, Unit> =
+        throw NotImplementedError()
 
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
@@ -46,57 +47,57 @@ class DeleteCommentUseCaseImpl(
         commentId: Int?,
         currentUser: RegisteredUser
     ): Either<DeleteCommentUseCase.Error, Unit> {
-        return when (val slugResult = Slug.new(slug)) {
+        /**
+         * Slug のバリデーション
+         * Invalid -> 早期リターン
+         */
+        val validatedSlug = Slug.new(slug).fold(
+            { return DeleteCommentUseCase.Error.InvalidSlug(it).left() },
+            { it }
+        )
+
+        return when (val commentIdResult = CommentId.new(commentId)) {
             /**
-             * Slug が不正
+             * CommentId が不正
              */
-            is Invalid -> DeleteCommentUseCase.Error.InvalidSlug(slugResult.value).left()
+            is Invalid -> DeleteCommentUseCase.Error.InvalidCommentId(commentIdResult.value).left()
             /**
-             * Slug が適切
+             * CommentId が適切
              */
-            is Valid -> when (val commentIdResult = CommentId.new(commentId)) {
+            is Valid -> when (
+                val deleteResult =
+                    commentRepository.delete(validatedSlug, commentIdResult.value, currentUser.userId)
+            ) {
                 /**
-                 * CommentId が不正
+                 * コメント削除 失敗
                  */
-                is Invalid -> DeleteCommentUseCase.Error.InvalidCommentId(commentIdResult.value).left()
-                /**
-                 * CommentId が適切
-                 */
-                is Valid -> when (
-                    val deleteResult =
-                        commentRepository.delete(slugResult.value, commentIdResult.value, currentUser.userId)
-                ) {
+                is Left -> when (val error = deleteResult.value) {
                     /**
-                     * コメント削除 失敗
+                     * 原因: Slug に該当する記事が見つからなかった
                      */
-                    is Left -> when (val error = deleteResult.value) {
-                        /**
-                         * 原因: Slug に該当する記事が見つからなかった
-                         */
-                        is CommentRepository.DeleteError.NotFoundArticleBySlug -> DeleteCommentUseCase.Error.NotFoundArticleBySlug(
-                            error,
-                            slugResult.value,
-                        ).left()
-                        /**
-                         * 原因: CommentId に該当するコメントが見つからなかった
-                         */
-                        is CommentRepository.DeleteError.NotFoundCommentByCommentId -> DeleteCommentUseCase.Error.NotFoundCommentByCommentId(
-                            error,
-                            commentIdResult.value
-                        ).left()
-                        /**
-                         * 原因: 認可されていない（削除しようとしたが実行ユーザー（CurrentUserId）のものじゃなかった）
-                         */
-                        is CommentRepository.DeleteError.NotAuthorizedDeleteComment -> DeleteCommentUseCase.Error.NotAuthorizedDeleteComment(
-                            error,
-                            currentUser.userId
-                        ).left()
-                    }
+                    is CommentRepository.DeleteError.NotFoundArticleBySlug -> DeleteCommentUseCase.Error.NotFoundArticleBySlug(
+                        error,
+                        validatedSlug
+                    ).left()
                     /**
-                     * コメント削除 成功
+                     * 原因: CommentId に該当するコメントが見つからなかった
                      */
-                    is Right -> deleteResult
+                    is CommentRepository.DeleteError.NotFoundCommentByCommentId -> DeleteCommentUseCase.Error.NotFoundCommentByCommentId(
+                        error,
+                        commentIdResult.value
+                    ).left()
+                    /**
+                     * 原因: 認可されていない（削除しようとしたが実行ユーザー（CurrentUserId）のものじゃなかった）
+                     */
+                    is CommentRepository.DeleteError.NotAuthorizedDeleteComment -> DeleteCommentUseCase.Error.NotAuthorizedDeleteComment(
+                        error,
+                        currentUser.userId
+                    ).left()
                 }
+                /**
+                 * コメント削除 成功
+                 */
+                is Right -> deleteResult
             }
         }
     }
