@@ -251,6 +251,28 @@ paths:
       summary: Get current user
       description: Gets the currently logged-in user
       operationId: GetCurrentUser
+      #
+      # Operation Object: parameters
+      #
+      # 型
+      # - Parameter Object
+      # - or Reference Object
+      # URL
+      # - https://spec.openapis.org/oas/v3.0.1#operation-object
+      # 概要
+      # - パラメータのリスト
+      # Parameter Objectの詳細
+      # - https://spec.openapis.org/oas/v3.0.1#parameter-object
+      #
+      # 自前追加
+      #
+      parameters:
+        - name: Authorization
+          in: header
+          description: セッション用JWT
+          required: true
+          schema:
+            $ref: '#/components/securitySchemes/Token'
       responses:
         200:
           description: OK
@@ -1184,6 +1206,15 @@ components:
               type: array
               items:
                 type: string
+    #
+    # 自前追加
+    #
+    # '#/components/securitySchemes/Token' をschemeに設定した時
+    # Tokenモデルがないため、エラーになる
+    # TokenはStringでいいので定義する
+    #
+    Token:
+      type: string
   #
   # Components Object: securitySchemes
   #
