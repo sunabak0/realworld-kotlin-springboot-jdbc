@@ -11,6 +11,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Email
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import org.springframework.stereotype.Component
 
+@Deprecated("RealworldAuthenticationUseCaseを使うようにしてください")
 interface MyAuth {
     fun authorize(bearerToken: String?): Either<Unauthorized, RegisteredUser> = throw NotImplementedError()
 
@@ -37,6 +38,7 @@ interface MyAuth {
     }
 }
 
+@Deprecated("RealworldAuthenticationUseCaseを使うようにしてください")
 @Component
 class MyAuthImpl(
     val userRepository: UserRepository,

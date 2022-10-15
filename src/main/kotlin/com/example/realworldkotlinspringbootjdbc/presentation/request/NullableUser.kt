@@ -23,6 +23,8 @@ import com.fasterxml.jackson.module.kotlin.readValue
  * val user = NullableUser.from("""{"user":{"email":"dummy@example.com"}}""")
  * ```
  */
+
+@Deprecated("OpenAPIが生成したものを利用するようにしてください")
 @JsonIgnoreProperties(ignoreUnknown = true) // デシリアライズ時、利用していないkeyがあった時、それを無視する
 @JsonRootName(value = "user")
 data class NullableUser(

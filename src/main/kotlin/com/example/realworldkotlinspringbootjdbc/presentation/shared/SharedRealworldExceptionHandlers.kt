@@ -73,4 +73,16 @@ class SharedRealworldExceptionHandlers {
             GenericErrorModel(GenericErrorModelErrors(body = listOf("想定外のエラーが起きました"))),
             HttpStatus.valueOf(500)
         )
+
+    /**
+     * セッション認証時に失敗した時のエラーハンドリング
+     *
+     * @return 基本的に401(Response Bodyは{})
+     */
+    @ExceptionHandler(value = [RealworldAuthenticationUseCaseUnauthorizedException::class])
+    fun onRealworldAuthenticationUseCaseUnauthorizedException(): ResponseEntity<String> =
+        ResponseEntity(
+            "{}",
+            HttpStatus.valueOf(401)
+        )
 }

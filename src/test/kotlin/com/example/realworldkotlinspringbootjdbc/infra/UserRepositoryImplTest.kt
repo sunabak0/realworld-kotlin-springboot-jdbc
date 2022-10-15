@@ -313,8 +313,8 @@ class UserRepositoryImplTest {
                 override val userId: UserId get() = existedRegisteredUser.userId
                 override val email: Email get() = Email.newWithoutValidation("new+${existedRegisteredUser.email.value}")
                 override val username: Username get() = Username.newWithoutValidation("new+${existedRegisteredUser.username.value}")
-                override val bio: Bio get() = Bio.newWithoutValidation("new+${existedRegisteredUser.bio}")
-                override val image: Image get() = Image.newWithoutValidation("new+${existedRegisteredUser.image}")
+                override val bio: Bio get() = Bio.newWithoutValidation("new+${existedRegisteredUser.bio.value}")
+                override val image: Image get() = Image.newWithoutValidation("new+${existedRegisteredUser.image.value}")
                 override val updatedAt: Date get() = Date()
             }
 

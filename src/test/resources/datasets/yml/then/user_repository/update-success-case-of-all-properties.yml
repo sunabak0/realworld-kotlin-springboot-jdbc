@@ -3,38 +3,38 @@ profiles:
     user_id: 2
     bio: "Rubyを作った"
     image: ""
-    created_at: "2022-09-18 12:22:14.0"
-    updated_at: "2022-09-18 12:22:14.0"
+    created_at: "2022-10-15 16:22:43.0"
+    updated_at: "2022-10-15 16:22:43.0"
   - id: 3
     user_id: 3
     bio: "Rustを作った"
     image: ""
-    created_at: "2022-09-18 12:22:14.0"
-    updated_at: "2022-09-18 12:22:14.0"
+    created_at: "2022-10-15 16:22:43.0"
+    updated_at: "2022-10-15 16:22:43.0"
   - id: 1
     user_id: 1
-    bio: "new+BioImpl(value=Lisper)"
-    image: "new+ImageImpl(value=)"
-    created_at: "2022-09-18 12:22:14.0"
-    updated_at: "2022-09-18 12:22:14.111"
+    bio: "new+Lisper"
+    image: "new+"
+    created_at: "2022-10-15 16:22:43.0"
+    updated_at: "2022-10-15 16:22:43.863"
 
 users:
   - id: 2
     email: "matz@example.com"
     username: "松本行弘"
     password: "Passw0rd"
-    created_at: "2022-09-18 12:22:14.0"
-    updated_at: "2022-09-18 12:22:14.0"
+    created_at: "2022-10-15 16:22:43.0"
+    updated_at: "2022-10-15 16:22:43.0"
   - id: 3
     email: "graydon-hoare@example.com"
     username: "graydon-hoare"
     password: "Passw0rd"
-    created_at: "2022-09-18 12:22:14.0"
-    updated_at: "2022-09-18 12:22:14.0"
+    created_at: "2022-10-15 16:22:43.0"
+    updated_at: "2022-10-15 16:22:43.0"
   - id: 1
     email: "new+paul-graham@example.com"
     username: "new+paul-graham"
     password: "Passw0rd"
-    created_at: "2022-09-18 12:22:14.0"
-    updated_at: "2022-09-18 12:22:14.111"
+    created_at: "2022-10-15 16:22:43.0"
+    updated_at: "2022-10-15 16:22:43.863"
 
