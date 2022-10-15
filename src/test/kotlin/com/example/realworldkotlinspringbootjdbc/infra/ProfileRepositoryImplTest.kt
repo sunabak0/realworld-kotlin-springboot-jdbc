@@ -227,12 +227,6 @@ class ProfileRepositoryImplTest {
                 is Right -> assert(false)
             }
         }
-
-        @Test
-        @Disabled
-        fun `異常系-未ログイン、UnexpectedError が戻り値`() {
-            TODO()
-        }
     }
 
     @Nested
@@ -383,12 +377,6 @@ class ProfileRepositoryImplTest {
                 is Right -> assert(false)
             }
         }
-
-        @Test
-        @Disabled
-        fun `異常系、 UnexpectedError が戻り値`() {
-            TODO()
-        }
     }
 
     @Nested
@@ -536,12 +524,6 @@ class ProfileRepositoryImplTest {
                 is Left -> assertThat(actual.value).isEqualTo(expected)
                 is Right -> assert(false)
             }
-        }
-
-        @Test
-        @Disabled
-        fun `異常系 UnexpectedError が戻り値`() {
-            TODO()
         }
     }
 
