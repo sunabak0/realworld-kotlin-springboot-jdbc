@@ -6,8 +6,6 @@ import arrow.core.Either.Right
 import arrow.core.None
 import arrow.core.Option
 import arrow.core.Some
-import arrow.core.Validated.Invalid
-import arrow.core.Validated.Valid
 import arrow.core.left
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
 import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
@@ -16,7 +14,19 @@ import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
+/**
+ * 作成済記事のコメント取得
+ *
+ * - ログイン済みでリクエストした場合、author との followings が表示される
+ */
 interface ListCommentUseCase {
+    /**
+     * 実行
+     *
+     * @param slug Slug
+     * @param currentUser リクエストユーザー or 未ログイン状態
+     * @return エラー or Slug に該当する作成済み記事の一覧
+     */
     fun execute(slug: String?, currentUser: Option<RegisteredUser> = None): Either<Error, List<Comment>> =
         throw NotImplementedError()
 
@@ -34,42 +44,39 @@ class ListCommentUseCaseImpl(
         slug: String?,
         currentUser: Option<RegisteredUser>
     ): Either<ListCommentUseCase.Error, List<Comment>> {
-        return when (val it = Slug.new(slug)) {
-            /**
-             * Slug が不正
-             */
-            is Invalid -> ListCommentUseCase.Error.InvalidSlug(it.value).left()
-            /**
-             * Slug が適切
-             */
-            is Valid -> when (val listResult = commentRepository.list(it.value)) {
-                /**
-                 * コメントの取得 失敗
-                 */
-                is Left -> when (val listError = listResult.value) {
-                    /**
-                     * 原因: Slug に該当する記事が見つからなかった
-                     */
-                    is CommentRepository.ListError.NotFoundArticleBySlug -> ListCommentUseCase.Error.NotFound(
-                        listError
-                    ).left()
-                }
-                /**
-                 * コメントの取得 成功
-                 */
-                is Right -> when (currentUser) {
-                    /**
-                     * JWT 認証 失敗 or 未ログイン
-                     * TODO: QueryService で AuthorId に該当する User を取得する実装を追加。現状は listResult（List<Comment>）を返している
-                     */
-                    is None -> listResult
-                    /**
-                     * JWT 認証成功
-                     * TODO: QueryService で AuthorId に該当する User を取得する実装と AuthorId と CurrentUser の followings を取得する実装を追加。現状は listResult（List<Comment>）を返している
-                     */
-                    is Some -> listResult
-                }
+        /**
+         * Slug のバリデーション
+         * Invalid -> 早期リターン
+         */
+        val validatedSlug = Slug.new(slug).fold(
+            { return ListCommentUseCase.Error.InvalidSlug(it).left() },
+            { it }
+        )
+
+        /**
+         * コメントの取得
+         * NotFoundArticleBySlug -> 早期リターン
+         */
+        val commentList = when (val listResult = commentRepository.list(validatedSlug)) {
+            is Left -> when (val listError = listResult.value) {
+                is CommentRepository.ListError.NotFoundArticleBySlug -> return ListCommentUseCase.Error.NotFound(
+                    listError
+                ).left()
             }
+
+            is Right -> listResult
+        }
+
+        /**
+         * currentUser の有無で、followings を分
+         * None -> JWT 認証失敗 or 未ログイン
+         * Some -> JWT 認証成功
+         */
+        return when (currentUser) {
+            // TODO: QueryService で AuthorId に該当する User を取得する実装を追加。現状は listResult（List<Comment>）を返している
+            is None -> commentList
+            // TODO: QueryService で AuthorId に該当する User を取得する実装と AuthorId と CurrentUser の followings を取得する実装を追加。現状は listResult（List<Comment>）を返している
+            is Some -> commentList
         }
     }
 }
