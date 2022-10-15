@@ -297,6 +297,16 @@ paths:
       summary: Update current user
       description: Updated user information for current user
       operationId: UpdateCurrentUser
+      #
+      # 自前追加(TODO: 共通化できたらしたい)
+      #
+      parameters:
+        - name: Authorization
+          in: header
+          description: セッション用JWT
+          required: true
+          schema:
+            $ref: '#/components/securitySchemes/Token'
       requestBody:
         description: User details to update. At least **one** field is required.
         content:
