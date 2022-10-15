@@ -7,7 +7,7 @@ services:
   # PostgreSQL
   #
   realworld-pg:
-    image: postgres:14-bullseye
+    image: postgres:15-bullseye
     container_name: realworld-pg
     ports:
       - 5432:5432
