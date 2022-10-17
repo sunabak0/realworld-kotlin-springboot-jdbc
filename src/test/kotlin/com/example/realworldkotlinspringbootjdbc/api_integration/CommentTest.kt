@@ -1,5 +1,6 @@
 package com.example.realworldkotlinspringbootjdbc.api_integration
 
+import arrow.core.getOrHandle
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.example.realworldkotlinspringbootjdbc.api_integration.helper.DatetimeVerificationHelper
@@ -10,8 +11,10 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.infra.DbConnection
+import com.example.realworldkotlinspringbootjdbc.infra.helper.SeedData
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
+import com.example.realworldkotlinspringbootjdbc.util.MySessionJwtImpl
 import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
@@ -341,20 +344,9 @@ class CommentTest {
              * given:
              * - userId = 3, email = "graydon-hoare@example.com" の登録済ユーザーのログイン用 JWT を作成
              */
-            val registeredUser = RegisteredUser.newWithoutValidation(
-                userId = UserId(3),
-                email = Email.newWithoutValidation("graydon-hoare@example.com"),
-                username = Username.newWithoutValidation("graydon-hoare"),
-                bio = Bio.newWithoutValidation("Rustを作った"),
-                image = Image.newWithoutValidation("")
-            )
-            val session = MySession(userId = registeredUser.userId, email = registeredUser.email)
-            val token =
-                JWT.create()
-                    .withIssuer(MySessionJwt.ISSUER)
-                    .withClaim(MySessionJwt.USER_ID_KEY, session.userId.value)
-                    .withClaim(MySessionJwt.EMAIL_KEY, session.email.value)
-                    .sign(Algorithm.HMAC256("secret"))
+            val existedUser = SeedData.users().find { it.userId.value == 3 }!!
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
             val slug = "rust-vs-scala-vs-kotlin"
             val id = 1
 
@@ -363,9 +355,9 @@ class CommentTest {
              */
             val actual = mockMvc.perform(
                 MockMvcRequestBuilders
-                    .delete("/articles/$slug/comments/$id")
+                    .delete("/api/articles/$slug/comments/$id")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .header("Authorization", token)
+                    .header("Authorization", sessionToken)
             )
 
             /**
@@ -387,20 +379,9 @@ class CommentTest {
              * given:
              * - userId = 1, email = "paul-graham@example.com" の登録済ユーザーのログイン用 JWT を作成
              */
-            val registeredUser = RegisteredUser.newWithoutValidation(
-                userId = UserId(1),
-                email = Email.newWithoutValidation("paul-graham@example.com"),
-                username = Username.newWithoutValidation("paul-graham"),
-                bio = Bio.newWithoutValidation("Lisper"),
-                image = Image.newWithoutValidation("")
-            )
-            val session = MySession(userId = registeredUser.userId, email = registeredUser.email)
-            val token =
-                JWT.create()
-                    .withIssuer(MySessionJwt.ISSUER)
-                    .withClaim(MySessionJwt.USER_ID_KEY, session.userId.value)
-                    .withClaim(MySessionJwt.EMAIL_KEY, session.email.value)
-                    .sign(Algorithm.HMAC256("secret"))
+            val existedUser = SeedData.users().find { it.userId.value == 1 }!!
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
             val slug = "rust-vs-scala-vs-kotlin"
             val id = 1
 
@@ -409,9 +390,9 @@ class CommentTest {
              */
             val actual = mockMvc.perform(
                 MockMvcRequestBuilders
-                    .delete("/articles/$slug/comments/$id")
+                    .delete("/api/articles/$slug/comments/$id")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .header("Authorization", token)
+                    .header("Authorization", sessionToken)
             )
 
             /**
@@ -430,7 +411,7 @@ class CommentTest {
             JSONAssert.assertEquals(
                 expected,
                 actualResponseBody,
-                CustomComparator(JSONCompareMode.STRICT)
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
             )
         }
     }
