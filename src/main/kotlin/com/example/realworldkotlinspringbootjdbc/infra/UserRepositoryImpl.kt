@@ -16,6 +16,7 @@ import com.example.realworldkotlinspringbootjdbc.domain.user.Password
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.util.MyError
+import org.komapper.jdbc.JdbcDatabase
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
@@ -25,7 +26,10 @@ import java.util.Date
 typealias RegisteredWithPassword = Pair<RegisteredUser, Password>
 
 @Repository
-class UserRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTemplate) : UserRepository {
+class UserRepositoryImpl(
+    val namedParameterJdbcTemplate: NamedParameterJdbcTemplate,
+    val jdbcDatabase: JdbcDatabase,
+) : UserRepository {
     sealed interface Error : MyError {
         data class Unexpected(override val cause: Throwable) : Error, MyError.MyErrorWithThrowable
         data class NotFoundByEmail(val email: Email) : Error, MyError.Basic

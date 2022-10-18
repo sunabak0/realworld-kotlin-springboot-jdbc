@@ -2,6 +2,8 @@ package com.example.realworldkotlinspringbootjdbc.infra
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import org.komapper.dialect.postgresql.jdbc.PostgreSqlJdbcDialect
+import org.komapper.jdbc.JdbcDatabase
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import javax.sql.DataSource
@@ -20,6 +22,7 @@ object DbConnection {
         return HikariDataSource(hikariConfig)
     }
     val namedParameterJdbcTemplate = NamedParameterJdbcTemplate(dataSource())
+    val jdbcDatabase = JdbcDatabase(dataSource = dataSource(), dialect = PostgreSqlJdbcDialect())
 
     /**
      * DBのserial型の値を設定する
