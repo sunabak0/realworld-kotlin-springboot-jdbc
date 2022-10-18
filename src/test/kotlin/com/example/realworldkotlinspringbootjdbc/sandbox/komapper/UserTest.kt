@@ -5,7 +5,10 @@ import com.example.realworldkotlinspringbootjdbc.infra.entity.User
 import com.example.realworldkotlinspringbootjdbc.infra.entity._User
 import com.example.realworldkotlinspringbootjdbc.infra.entity.user
 import com.example.realworldkotlinspringbootjdbc.infra.helper.SeedData
+import com.github.database.rider.core.api.dataset.DataSet
+import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.komapper.core.dsl.Meta
 import org.komapper.core.dsl.QueryDsl
@@ -15,6 +18,9 @@ import org.komapper.dialect.postgresql.jdbc.PostgreSqlJdbcDialect
 import org.komapper.jdbc.JdbcDatabase
 
 class UserTest {
+    @BeforeEach
+    fun reset() = DbConnection.resetSequence()
+
     @Test
     fun `User一覧を取得のSQLを確認`() {
         /**
@@ -60,5 +66,40 @@ class UserTest {
         assertThat(actual.id).isEqualTo(firstUser.userId.value)
         assertThat(actual.email).isEqualTo(firstUser.email.value)
         assertThat(actual.username).isEqualTo(firstUser.username.value)
+    }
+
+    @Test
+    @DBRider
+    @DataSet(
+        value = [
+            "datasets/yml/given/empty-users.yml",
+        ]
+    )
+    fun `Userを1行Insertすると、Userエンティティを返す`() {
+        /**
+         * given:
+         */
+        val database = JdbcDatabase(
+            dataSource = DbConnection.dataSource(),
+            dialect = PostgreSqlJdbcDialect()
+        )
+        val user = User(
+            email = "test@example.com",
+            password = "p@ssw0rd",
+            username = "dummy-username"
+        )
+        val query = QueryDsl.insert(Meta.user)
+
+        /**
+         * when:
+         */
+        val actual: User = database.runQuery { query.single(user) }
+
+        /**
+         * then:
+         */
+        assertThat(actual.email).isEqualTo(user.email)
+        assertThat(actual.username).isEqualTo(user.username)
+        assertThat(actual.password).isEqualTo(user.password)
     }
 }
