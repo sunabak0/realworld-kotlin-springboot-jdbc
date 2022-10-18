@@ -10,6 +10,8 @@ import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import org.komapper.core.UniqueConstraintException
 import org.komapper.core.dsl.Meta
 import org.komapper.core.dsl.QueryDsl
 import org.komapper.core.dsl.query.dryRun
@@ -88,12 +90,12 @@ class UserTest {
             password = "p@ssw0rd",
             username = "dummy-username"
         )
-        val query = QueryDsl.insert(Meta.user)
+        val query = QueryDsl.insert(Meta.user).single(user)
 
         /**
          * when:
          */
-        val actual: User = database.runQuery { query.single(user) }
+        val actual: User = database.runQuery { query }
 
         /**
          * then:
@@ -101,5 +103,45 @@ class UserTest {
         assertThat(actual.email).isEqualTo(user.email)
         assertThat(actual.username).isEqualTo(user.username)
         assertThat(actual.password).isEqualTo(user.password)
+    }
+
+    @Test
+    @DBRider
+    @DataSet(
+        value = [
+            "datasets/yml/given/users.yml",
+        ]
+    )
+    fun `emailが重複した時の例外を確認`() {
+        /**
+         * given:
+         */
+        val database = JdbcDatabase(
+            dataSource = DbConnection.dataSource(),
+            dialect = PostgreSqlJdbcDialect()
+        )
+        val user = User(
+            email = SeedData.users().first().email.value,
+            password = "p@ssw0rd",
+            username = "dummy-username"
+        )
+        val query = QueryDsl.insert(Meta.user).single(user)
+
+        /**
+         * when:
+         */
+        val actual = assertThrows<UniqueConstraintException> {
+            database.runQuery { query }
+            Unit
+        }.message
+
+        /**
+         * then:
+         */
+        val expected = """
+            org.postgresql.util.PSQLException: ERROR: duplicate key value violates unique constraint "index_users_on_email"
+              詳細: Key (email)=(paul-graham@example.com) already exists.
+        """.trimIndent()
+        assertThat(actual).isEqualTo(expected)
     }
 }
