@@ -55,8 +55,34 @@ class UserRepositoryImplTest {
              * then:
              * - SQLが一致するか
              */
+            val expected = "select count(case when t0_.email = '$email' then 1 end) as \"email_cnt\", count(case when t0_.username = '$username' then 1 end) as \"username_cnt\" from users as t0_"
+            assertThat(actual).isEqualTo(expected)
+        }
+    }
+
+    class FindByEmailQuery {
+        @Property
+        fun `profilesをinner joinしたusersからemailで検索するSQLが生成される`(
+            @ForAll @From(supplier = EmailTest.EmailValidRange::class) email: String
+        ) {
+            /**
+             * given:
+             */
+
+            /**
+             * when:
+             * - 出来上がるSQLを出力
+             */
+            val actual = UserRepositoryImpl.findByEmailWithPasswordQuery(
+                email = Email.newWithoutValidation(email),
+            ).dryRun().sqlWithArgs
+
+            /**
+             * then:
+             * - SQLが一致するか
+             */
             val expected = """
-                select count(case when t0_.email = '$email' then 1 end) as "email_cnt", count(case when t0_.username = '$username' then 1 end) as "username_cnt" from users as t0_
+                select t0_.id, t0_.email, t0_.username, t0_.password, t1_.bio, t1_.image from users as t0_ inner join profiles as t1_ on (t1_.user_id = t0_.id and (t0_.email = '$email'))
             """.trimIndent()
             assertThat(actual).isEqualTo(expected)
         }
