@@ -382,6 +382,58 @@ class CommentTest {
             ignoreCols = ["id", "created_at", "updated_at"],
             orderBy = ["id"]
         )
+        fun `準正常系-id が不正だとバリデーションエラー（「コメント ID が不正です」）が発生する`() {
+            /**
+             * given:
+             * - userId = 1, email = "paul-graham@example.com" の登録済ユーザーのログイン用 JWT を作成
+             */
+            val existedUser = SeedData.users().find { it.userId.value == 1 }!!
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = "rust-vs-scala-vs-kotlin"
+            val id = -1 // id は 1 以上の整数
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .delete("/api/articles/$slug/comments/$id")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", sessionToken)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
+            val expectedResponseBody =
+                """
+                    {
+                        "errors": {
+                            "body": ["コメント ID が不正です"]
+                        }
+                    }
+                """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
+
+        @Test
+        @DataSet(value = ["datasets/yml/given/articles.yml", "datasets/yml/given/users.yml"])
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/articles.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
         fun `準正常系-slug に該当する作成済記事が存在し、コメント作成者が実行ユーザーじゃない場合、コメントの削除に失敗し、認可エラーが発生する`() {
             /**
              * given:
