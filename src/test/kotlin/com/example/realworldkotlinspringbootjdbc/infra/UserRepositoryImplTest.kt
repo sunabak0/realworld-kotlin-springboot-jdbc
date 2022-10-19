@@ -10,26 +10,62 @@ import com.example.realworldkotlinspringbootjdbc.domain.UpdatableRegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UserRepository
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
+import com.example.realworldkotlinspringbootjdbc.domain.user.EmailTest
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.Password
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
+import com.example.realworldkotlinspringbootjdbc.domain.user.UsernameTest
 import com.example.realworldkotlinspringbootjdbc.infra.helper.SeedData
 import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
+import net.jqwik.api.ForAll
+import net.jqwik.api.From
+import net.jqwik.api.Property
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.komapper.core.dsl.query.dryRun
 import java.util.Date
 
 class UserRepositoryImplTest {
+    class EmailAndUsernameMatchedCountQuery {
+        @Property
+        fun `emailとusernameのそれぞれで重複確認用SQLを生成する`(
+            @ForAll @From(supplier = EmailTest.EmailValidRange::class) email: String,
+            @ForAll @From(supplier = UsernameTest.UsernameValidRange::class) username: String,
+        ) {
+            /**
+             * given:
+             */
+
+            /**
+             * when:
+             * - 出来上がるSQLを出力
+             */
+            val actual = UserRepositoryImpl.emailAndUsernameMatchedCountQuery(
+                email = Email.newWithoutValidation(email),
+                username = Username.newWithoutValidation(username),
+            ).dryRun().sqlWithArgs
+
+            /**
+             * then:
+             * - SQLが一致するか
+             */
+            val expected = """
+                select count(case when t0_.email = '$email' then 1 end) as "email_cnt", count(case when t0_.username = '$username' then 1 end) as "username_cnt" from users as t0_
+            """.trimIndent()
+            assertThat(actual).isEqualTo(expected)
+        }
+    }
+
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     @DBRider
     class Register {
-        @BeforeAll
+        @BeforeEach
         fun reset() = DbConnection.resetSequence()
 
         @Test
@@ -41,7 +77,7 @@ class UserRepositoryImplTest {
         )
         // NOTE: @ExportDataSetはgivenの@DataSetが変更用に残しておく
         // @ExportDataSet(format = DataSetFormat.YML, outputName = "src/test/resources/datasets/yml/then/user_repository/register-success.yml", includeTables = ["users", "profiles", "followings"])
-        fun `成功-EmailとUsernameがまだ登録されていない未登録ユーザーは、登録できる`() {
+        fun `正常系-EmailとUsernameがまだ登録されていない未登録ユーザーは、登録できる`() {
             /**
              * given:
              */
@@ -72,7 +108,7 @@ class UserRepositoryImplTest {
             value = ["datasets/yml/given/users.yml"],
             ignoreCols = ["created_at", "updated_at"]
         )
-        fun `失敗-Emailが既に利用されていた場合、その旨のエラーが返り、登録できない`() {
+        fun `準正常系-Emailが既に利用されていた場合、その旨のエラーが返り、登録できない`() {
             /**
              * given:
              */
@@ -104,7 +140,7 @@ class UserRepositoryImplTest {
             value = ["datasets/yml/given/users.yml"],
             ignoreCols = ["created_at", "updated_at"]
         )
-        fun `失敗-Usernameが既に利用されていた場合、その旨のエラーが返り、登録できない`() {
+        fun `準正常系-Usernameが既に利用されていた場合、その旨のエラーが返り、登録できない`() {
             /**
              * given:
              */
