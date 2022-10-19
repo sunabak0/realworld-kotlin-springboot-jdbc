@@ -10,30 +10,88 @@ import com.example.realworldkotlinspringbootjdbc.domain.UpdatableRegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.UserRepository
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
+import com.example.realworldkotlinspringbootjdbc.domain.user.EmailTest
 import com.example.realworldkotlinspringbootjdbc.domain.user.Image
 import com.example.realworldkotlinspringbootjdbc.domain.user.Password
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Username
+import com.example.realworldkotlinspringbootjdbc.domain.user.UsernameTest
 import com.example.realworldkotlinspringbootjdbc.infra.helper.SeedData
 import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
+import net.jqwik.api.ForAll
+import net.jqwik.api.From
+import net.jqwik.api.Property
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.komapper.core.dsl.query.dryRun
 import java.util.Date
 
 class UserRepositoryImplTest {
-    @Tag("WithLocalDb")
+    class EmailAndUsernameMatchedCountQuery {
+        @Property
+        fun `emailとusernameのそれぞれで重複確認用SQLを生成する`(
+            @ForAll @From(supplier = EmailTest.EmailValidRange::class) email: String,
+            @ForAll @From(supplier = UsernameTest.UsernameValidRange::class) username: String,
+        ) {
+            /**
+             * given:
+             */
+
+            /**
+             * when:
+             * - 出来上がるSQLを出力
+             */
+            val actual = UserRepositoryImpl.emailAndUsernameMatchedCountQuery(
+                email = Email.newWithoutValidation(email),
+                username = Username.newWithoutValidation(username),
+            ).dryRun().sqlWithArgs
+
+            /**
+             * then:
+             * - SQLが一致するか
+             */
+            val expected = "select count(case when t0_.email = '$email' then 1 end) as \"email_cnt\", count(case when t0_.username = '$username' then 1 end) as \"username_cnt\" from users as t0_"
+            assertThat(actual).isEqualTo(expected)
+        }
+    }
+
+    class FindByEmailQuery {
+        @Property
+        fun `profilesをinner joinしたusersからemailで検索するSQLが生成される`(
+            @ForAll @From(supplier = EmailTest.EmailValidRange::class) email: String
+        ) {
+            /**
+             * given:
+             */
+
+            /**
+             * when:
+             * - 出来上がるSQLを出力
+             */
+            val actual = UserRepositoryImpl.findByEmailWithPasswordQuery(
+                email = Email.newWithoutValidation(email),
+            ).dryRun().sqlWithArgs
+
+            /**
+             * then:
+             * - SQLが一致するか
+             */
+            val expected = """
+                select t0_.id, t0_.email, t0_.username, t0_.password, t1_.bio, t1_.image from users as t0_ inner join profiles as t1_ on (t1_.user_id = t0_.id and (t0_.email = '$email'))
+            """.trimIndent()
+            assertThat(actual).isEqualTo(expected)
+        }
+    }
+
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     @DBRider
-    @DisplayName("ユーザー登録")
     class Register {
-        @BeforeAll
+        @BeforeEach
         fun reset() = DbConnection.resetSequence()
 
         @Test
@@ -45,19 +103,28 @@ class UserRepositoryImplTest {
         )
         // NOTE: @ExportDataSetはgivenの@DataSetが変更用に残しておく
         // @ExportDataSet(format = DataSetFormat.YML, outputName = "src/test/resources/datasets/yml/then/user_repository/register-success.yml", includeTables = ["users", "profiles", "followings"])
-        fun `成功-EmailとUsernameがまだ登録されていない未登録ユーザーは、登録できる`() {
-            // given:
-            val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+        fun `正常系-EmailとUsernameがまだ登録されていない未登録ユーザーは、登録できる`() {
+            /**
+             * given:
+             */
+            val userRepository = UserRepositoryImpl(
+                namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate,
+                jdbcDatabase = DbConnection.jdbcDatabase,
+            )
             val user = object : UnregisteredUser {
                 override val email: Email get() = Email.newWithoutValidation("unregistered@example.com")
                 override val password: Password get() = Password.newWithoutValidation("Passw0rd")
                 override val username: Username get() = Username.newWithoutValidation("unregistered-username")
             }
 
-            // when:
+            /**
+             * when:
+             */
             val actual = userRepository.register(user)
 
-            // then:
+            /**
+             * then:
+             */
             assertThat(actual.isRight()).isTrue
         }
 
@@ -67,19 +134,28 @@ class UserRepositoryImplTest {
             value = ["datasets/yml/given/users.yml"],
             ignoreCols = ["created_at", "updated_at"]
         )
-        fun `失敗-Emailが既に利用されていた場合、その旨のエラーが返り、登録できない`() {
-            // given:
-            val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+        fun `準正常系-Emailが既に利用されていた場合、その旨のエラーが返り、登録できない`() {
+            /**
+             * given:
+             */
+            val userRepository = UserRepositoryImpl(
+                namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate,
+                jdbcDatabase = DbConnection.jdbcDatabase,
+            )
             val user = object : UnregisteredUser {
                 override val email: Email get() = Email.newWithoutValidation("paul-graham@example.com")
                 override val password: Password get() = Password.newWithoutValidation("Passw0rd")
                 override val username: Username get() = Username.newWithoutValidation("non-used-username")
             }
 
-            // when:
+            /**
+             * when:
+             */
             val actual = userRepository.register(user)
 
-            // then:
+            /**
+             * then:
+             */
             val expected = UserRepository.RegisterError.AlreadyRegisteredEmail(user.email).left()
             assertThat(actual).isEqualTo(expected)
         }
@@ -90,9 +166,14 @@ class UserRepositoryImplTest {
             value = ["datasets/yml/given/users.yml"],
             ignoreCols = ["created_at", "updated_at"]
         )
-        fun `失敗-Usernameが既に利用されていた場合、その旨のエラーが返り、登録できない`() {
-            // given:
-            val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+        fun `準正常系-Usernameが既に利用されていた場合、その旨のエラーが返り、登録できない`() {
+            /**
+             * given:
+             */
+            val userRepository = UserRepositoryImpl(
+                namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate,
+                jdbcDatabase = DbConnection.jdbcDatabase,
+            )
             val user = object : UnregisteredUser {
                 override val email: Email get() = Email.newWithoutValidation("non-used-email@example.com")
                 override val password: Password get() = Password.newWithoutValidation("Passw0rd")
@@ -108,10 +189,8 @@ class UserRepositoryImplTest {
         }
     }
 
-    @Tag("WithLocalDb")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     @DBRider
-    @DisplayName("Emailから検索(パスワード付き)")
     class FindByEmailWithPassword {
         @BeforeAll
         fun reset() = DbConnection.resetSequence()
@@ -119,14 +198,23 @@ class UserRepositoryImplTest {
         @Test
         @DataSet("datasets/yml/given/users.yml")
         fun `成功-対象の登録済みユーザーが存在する場合、パスワード付きで登録済みユーザーが戻り値となる`() {
-            // given:
-            val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            /**
+             * given:
+             */
+            val userRepository = UserRepositoryImpl(
+                namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate,
+                jdbcDatabase = DbConnection.jdbcDatabase,
+            )
             val searchingEmail = Email.newWithoutValidation("paul-graham@example.com")
 
-            // when:
+            /**
+             * when:
+             */
             val actual = userRepository.findByEmailWithPassword(searchingEmail)
 
-            // then:
+            /**
+             * then:
+             */
             when (actual) {
                 is Left -> assert(false)
                 is Right -> {
@@ -140,23 +228,30 @@ class UserRepositoryImplTest {
         @Test
         @DataSet("datasets/yml/given/empty-users.yml")
         fun `失敗-対象の登録済みユーザーが存在しない場合、その旨のエラーが戻り値となる`() {
-            // given:
-            val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            /**
+             * given:
+             */
+            val userRepository = UserRepositoryImpl(
+                namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate,
+                jdbcDatabase = DbConnection.jdbcDatabase,
+            )
             val searchingEmail = Email.newWithoutValidation("notfound@example.com")
 
-            // when:
+            /**
+             * when:
+             */
             val actual = userRepository.findByEmailWithPassword(searchingEmail)
 
-            // then:
+            /**
+             * then:
+             */
             val expected = UserRepository.FindByEmailWithPasswordError.NotFound(searchingEmail).left()
             assertThat(actual).isEqualTo(expected)
         }
     }
 
-    @Tag("WithLocalDb")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     @DBRider
-    @DisplayName("UserIdから検索")
     class FindByUserId {
         @BeforeAll
         fun reset() = DbConnection.resetSequence()
@@ -164,14 +259,23 @@ class UserRepositoryImplTest {
         @Test
         @DataSet("datasets/yml/given/users.yml")
         fun `成功-対象の登録済みユーザーが存在する場合、登録済みユーザーが戻り値となる`() {
-            // given:
-            val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            /**
+             * given:
+             */
+            val userRepository = UserRepositoryImpl(
+                namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate,
+                jdbcDatabase = DbConnection.jdbcDatabase,
+            )
             val searchingUserId = UserId(1)
 
-            // when:
+            /**
+             * when:
+             */
             val actual = userRepository.findByUserId(searchingUserId)
 
-            // then:
+            /**
+             * then:
+             */
             val expected = RegisteredUser.newWithoutValidation(
                 UserId(1),
                 Email.newWithoutValidation("paul-graham@example.com"),
@@ -185,23 +289,30 @@ class UserRepositoryImplTest {
         @Test
         @DataSet("datasets/yml/given/empty-users.yml")
         fun `失敗-対象の登録済みユーザーが存在しない場合、その旨のエラーが戻り値となる`() {
-            // given:
-            val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            /**
+             * given:
+             */
+            val userRepository = UserRepositoryImpl(
+                namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate,
+                jdbcDatabase = DbConnection.jdbcDatabase,
+            )
             val searchingUserId = UserId(1)
 
-            // when:
+            /**
+             * when:
+             */
             val actual = userRepository.findByUserId(searchingUserId)
 
-            // then:
+            /**
+             * then:
+             */
             val expected = UserRepository.FindByUserIdError.NotFound(UserId(1)).left()
             assertThat(actual).isEqualTo(expected)
         }
     }
 
-    @Tag("WithLocalDb")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     @DBRider
-    @DisplayName("ユーザー情報更新")
     class Update {
         @BeforeEach
         fun reset() = DbConnection.resetSequence()
@@ -224,7 +335,10 @@ class UserRepositoryImplTest {
              * given:
              * - (存在する)emailだけ更新する更新可能な登録済みユーザー
              */
-            val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val userRepository = UserRepositoryImpl(
+                namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate,
+                jdbcDatabase = DbConnection.jdbcDatabase,
+            )
             val existedRegisteredUser = SeedData.users().minByOrNull { it.userId.value }!!
             val updatableRegisteredUser = object : UpdatableRegisteredUser {
                 override val userId: UserId get() = existedRegisteredUser.userId
@@ -266,7 +380,10 @@ class UserRepositoryImplTest {
              * given:
              * - (存在する)usernameだけ更新する更新可能な登録済みユーザー
              */
-            val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val userRepository = UserRepositoryImpl(
+                namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate,
+                jdbcDatabase = DbConnection.jdbcDatabase,
+            )
             val existedRegisteredUser = SeedData.users().minByOrNull { it.userId.value }!!
             val updatableRegisteredUser = object : UpdatableRegisteredUser {
                 override val userId: UserId get() = existedRegisteredUser.userId
@@ -307,7 +424,10 @@ class UserRepositoryImplTest {
              * given:
              * - (存在する)全て更新する更新可能な登録済みユーザー
              */
-            val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val userRepository = UserRepositoryImpl(
+                namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate,
+                jdbcDatabase = DbConnection.jdbcDatabase,
+            )
             val existedRegisteredUser = SeedData.users().minByOrNull { it.userId.value }!!
             val updatableRegisteredUser = object : UpdatableRegisteredUser {
                 override val userId: UserId get() = existedRegisteredUser.userId
@@ -341,7 +461,10 @@ class UserRepositoryImplTest {
              * given:
              * - emailだけ更新しようとしている更新可能な登録済みユーザー
              */
-            val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val userRepository = UserRepositoryImpl(
+                namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate,
+                jdbcDatabase = DbConnection.jdbcDatabase,
+            )
             val existedUsers = SeedData.users().sortedBy { it.userId.value }
             val alreadyUsedEmailUpdatableRegisteredUser = object : UpdatableRegisteredUser {
                 override val userId: UserId get() = existedUsers[0].userId
@@ -375,7 +498,10 @@ class UserRepositoryImplTest {
              * given:
              * - usernameだけ更新しようとしている更新可能な登録済みユーザー
              */
-            val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val userRepository = UserRepositoryImpl(
+                namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate,
+                jdbcDatabase = DbConnection.jdbcDatabase,
+            )
             val existedUsers = SeedData.users().sortedBy { it.userId.value }
             val alreadyUsedUsernameUpdatableRegisteredUser = object : UpdatableRegisteredUser {
                 override val userId: UserId get() = existedUsers[0].userId
@@ -402,12 +528,14 @@ class UserRepositoryImplTest {
         @DataSet("datasets/yml/given/empty-users.yml")
         @ExpectedDataSet(value = ["datasets/yml/given/empty-users.yml"])
         fun `準正常系-指定した登録済みユーザーが存在しない場合、その旨のエラーが戻り値となり、DBは更新されない`() {
-            // given: Usernameだけ変更なしの更新可能な登録済みユーザー
             /**
              * given:
              * - 存在しないユーザー
              */
-            val userRepository = UserRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
+            val userRepository = UserRepositoryImpl(
+                namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate,
+                jdbcDatabase = DbConnection.jdbcDatabase,
+            )
             val notExistedUpdatableRegisteredUser = object : UpdatableRegisteredUser {
                 override val userId: UserId get() = UserId(SeedData.users().size + 1)
                 override val email: Email get() = Email.newWithoutValidation("fake@example.com")

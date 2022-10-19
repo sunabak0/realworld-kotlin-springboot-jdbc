@@ -57,10 +57,11 @@
       ]
     },
     {
-      groupName: "org.jetbrains.kotlin.*",
+      groupName: "org.jetbrains.kotlin.*とksp",
       description: "一緒に上げないとCIが落ちる",
       matchPackagePrefixes: [
         "org.jetbrains.kotlin.",
+        "com.google.devtools.ksp",
       ]
     },
     {

@@ -6,7 +6,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.0"
     /**
      * 注意
-     * jvm と plugin.spring のバージョンは合わせること
+     * jvm と plugin.spring と ksp のバージョンは合わせること(例: 1.7.20)
      */
     kotlin("jvm") version "1.7.20"
     kotlin("plugin.spring") version "1.7.20"
@@ -81,11 +81,31 @@ plugins {
      * - 可能な限りプロダクトコードに依存しないようにする(生成したコードにプロダクトコードを依存させる)
      */
     id("org.openapi.generator") version "6.2.0"
+
+    /**
+     * com.google.devtools.ksp
+     *
+     * 公式ページ?
+     * - https://kotlinlang.org/docs/ksp-quickstart.html
+     * GitHub
+     * - https://github.com/google/ksp
+     * Main用途
+     * - Komapperがコードを自動生成するのに利用
+     * Sub用途
+     * - 無し
+     * 概要
+     * - アノテーションからコードを自動生成する仕組み(KAPT)のビルド速度向上版
+     *
+     * 注意
+     * - jvm と plugin.spring と ksp のバージョンは合わせること(例: 1.7.20)
+     */
+    id("com.google.devtools.ksp") version "1.7.20-1.0.7"
 }
 
 group = "com.example"
 version = "0.0.1-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_17
+
 
 repositories {
     mavenCentral()
@@ -288,6 +308,39 @@ dependencies {
      * [Spring-Boot-2.3ではjavax.validationを依存関係に追加しなければならない](https://qiita.com/tatetsujitomorrow/items/a397c311a95d66e4f955)
      */
     implementation("org.springframework.boot:spring-boot-starter-validation")
+
+    /**
+     * Komapper
+     *
+     * MavenCentral
+     * - https://mvnrepository.com/artifact/org.komapper/komapper-jdbc
+     * - https://mvnrepository.com/artifact/org.komapper/komapper-jdbc-postgresql
+     * - https://mvnrepository.com/artifact/org.komapper/komapper-dialect-postgresql-jdbc
+     * Main用途
+     * - ORM(Object/RDB mapper)
+     * Sub用途
+     * - 無し
+     * 概要
+     * - サーバーサイド用のKotlinのORM
+     *   - https://www.komapper.org/ja/docs/overview/
+     * - 日本人の方が作ってる(日本語のドキュメントサポートが嬉しい)
+     * - JDBCサポート
+     *
+     * build.gradle.ktsの中身は以下を参照
+     * - https://www.komapper.org/ja/docs/quickstart/#build-script
+     *
+     * ./gradlew kspKotlin で自動生成
+     */
+    platform("org.komapper:komapper-platform:1.4.0").let {
+        implementation(it)
+        ksp(it)
+    }
+    implementation("org.komapper:komapper-spring-boot-starter-jdbc")
+    runtimeOnly("org.komapper:komapper-jdbc-postgresql:0.10.0")
+    // JdbcDatabaseインスタンスを作成時、javax.sql.DataSourceを使うためにはDialectが必要(DataSourceでなくていいなら不要)
+    implementation("org.komapper:komapper-dialect-postgresql-jdbc:1.4.0")
+    // コンパイル時にコード生成を行うモジュール
+    ksp("org.komapper:komapper-processor")
 }
 
 tasks.withType<KotlinCompile> {
@@ -478,7 +531,9 @@ tasks.compileKotlin {
 }
 /**
  * OpenAPI Generatorによって生成されたコードをimportできるようにする
+ * Komapper経由のKspで生成されたコードをimportできるようにする
  */
 kotlin.sourceSets.main {
     kotlin.srcDir("$buildDir/openapi/server-code/src/main")
+    kotlin.srcDir("$buildDir/generated/ksp/main/kotlin")
 }
