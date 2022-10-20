@@ -4,6 +4,7 @@ import arrow.core.getOrHandle
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.example.realworldkotlinspringbootjdbc.api_integration.helper.DatetimeVerificationHelper
+import com.example.realworldkotlinspringbootjdbc.api_integration.helper.GenerateRandomHelper.getRandomString
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
 import com.example.realworldkotlinspringbootjdbc.domain.user.Email
@@ -191,32 +192,35 @@ class CommentTest {
         fun `準正常系-slug が無効な値の場合、NotFoundError が返される`() {
             /**
              * given:
-             * - null の場合
+             * - 32文字より大きい場合
              */
-            val pathParameter = ""
+            val pathParameter = getRandomString(33)
 
             /**
              * when:
              */
-            val actual = mockMvc.get("/api/articles/$pathParameter/comments") {
+            val response = mockMvc.get("/api/articles/$pathParameter/comments") {
                 contentType = MediaType.APPLICATION_JSON
-            }
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
 
             /**
              * then:
              * - ステータスコードが 404
              */
-            val expected =
+            val expectedStatus = HttpStatus.NOT_FOUND.value()
+            val expectedResponseBody =
                 """
                     {
                         "errors":{"body":["記事が見つかりませんでした"]}
                     }
                 """.trimIndent()
-            val actualResponseBody = actual.andExpect { status { isNotFound() } }.andReturn().response.contentAsString
+            assertThat(actualStatus).isEqualTo(expectedStatus)
             JSONAssert.assertEquals(
-                expected,
+                expectedResponseBody,
                 actualResponseBody,
-                CustomComparator(JSONCompareMode.STRICT)
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
             )
         }
     }
