@@ -36,7 +36,6 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 class CommentTest {
     @SpringBootTest
@@ -276,20 +275,23 @@ class CommentTest {
             /**
              * when:
              */
-            val actual = mockMvc.perform(
+            val response = mockMvc.perform(
                 MockMvcRequestBuilders
                     .post("/api/articles/$pathParameter/comments")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(rawRequestBody)
                     .header("Authorization", token)
-            )
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
 
             /**
              * then:
              * - ステータスコードが 200
              * - createdAt、updatedAt はメタデータなので比較しない
              */
-            val expected =
+            val expectedStatus = HttpStatus.OK.value()
+            val expectedResponseBody =
                 """
                     {
                       "Comment": {
@@ -301,11 +303,9 @@ class CommentTest {
                       }
                     }
                 """.trimIndent()
-            val actualResponseBody = actual
-                .andExpect(status().isOk)
-                .andReturn().response.contentAsString
+            assertThat(actualStatus).isEqualTo(expectedStatus)
             JSONAssert.assertEquals(
-                expected,
+                expectedResponseBody,
                 actualResponseBody,
                 CustomComparator(
                     JSONCompareMode.STRICT,
