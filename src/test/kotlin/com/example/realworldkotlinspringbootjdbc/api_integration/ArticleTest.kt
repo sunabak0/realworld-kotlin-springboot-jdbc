@@ -1519,4 +1519,239 @@ class ArticleTest {
             )
         }
     }
+
+    @SpringBootTest
+    @AutoConfigureMockMvc
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    class GetArticle {
+
+        @Autowired
+        lateinit var mockMvc: MockMvc
+
+        @BeforeEach
+        fun reset() = DbConnection.resetSequence()
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `正常系-存在するslugを指定した場合、作成済み記事の取得に成功する`() {
+            /**
+             * given:
+             * - 存在するslug
+             */
+            val slug = "functional-programming-kotlin"
+
+            /**
+             * when:
+             */
+            val response = mockMvc.get("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 200
+            val expectedResponseBody = """
+                {
+                   "article":{
+                      "title":"Functional programming kotlin",
+                      "slug":"functional-programming-kotlin",
+                      "body":"dummy-body",
+                      "createdAt": "2022-01-01T00:00:00.000Z",
+                      "updatedAt": "2022-01-01T00:00:00.000Z",
+                      "description":"dummy-description",
+                      "tagList":["kotlin"],
+                      "authorId":1,
+                      "favorited":false,
+                      "favoritesCount":1
+                   }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.NON_EXTENSIBLE,
+                    Customization("article.createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualCreatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("article.updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualUpdatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                )
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `正常系-ログイン済みの場合、作成済み記事に対してのお気に入り情報と著者に対してのフォロー情報がレスポンスボディに載る`() {
+            /**
+             * given:
+             * - user3
+             * - 存在するslug(article2)
+             */
+            val existedUser = SeedData.users().toList()[2]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = "functional-programming-kotlin"
+
+            /**
+             * when:
+             */
+            val response = mockMvc.get("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             *   - user3は
+             *     - article2をお気に入り済み
+             *     - article2の著者をフォロー済み
+             */
+            val expectedStatus = 200
+            val expectedResponseBody = """
+                {
+                   "article":{
+                      "title":"Functional programming kotlin",
+                      "slug":"functional-programming-kotlin",
+                      "body":"dummy-body",
+                      "createdAt": "2022-01-01T00:00:00.000Z",
+                      "updatedAt": "2022-01-01T00:00:00.000Z",
+                      "description":"dummy-description",
+                      "tagList":["kotlin"],
+                      "authorId":1,
+                      "favorited":true,
+                      "favoritesCount":1
+                   }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.NON_EXTENSIBLE,
+                    Customization("article.createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualCreatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("article.updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualUpdatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                )
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `準正常系-slugがバリデーションエラーを起こす場合、見つからなかった旨のエラーレスポンスが返る`() {
+            /**
+             * given:
+             * - バリデーションエラーを起こすslug
+             */
+            val slug = IntStream.range(0, 10).mapToObj { "長すぎるSlug" }.toList().joinToString()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.get("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 404
+            val expectedResponseBody = """
+                {"errors":{"body":["記事が見つかりませんでした"]}}
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `準正常系-存在しないslug指定した場合、見つからなかった旨のエラーレスポンスが返る`() {
+            /**
+             * given:
+             * - 存在しないslug
+             */
+            val slug = "not-existed-slug"
+
+            /**
+             * when:
+             */
+            val response = mockMvc.get("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 404
+            val expectedResponseBody = """
+                {"errors":{"body":["記事が見つかりませんでした"]}}
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
+    }
 }
