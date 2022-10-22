@@ -2,11 +2,13 @@ package com.example.realworldkotlinspringbootjdbc.api_integration
 
 import arrow.core.getOrHandle
 import com.example.realworldkotlinspringbootjdbc.api_integration.helper.DatetimeVerificationHelper
+import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.infra.DbConnection
 import com.example.realworldkotlinspringbootjdbc.infra.helper.SeedData
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwtImpl
 import com.github.database.rider.core.api.dataset.DataSet
+import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -22,7 +24,9 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.post
 import org.springframework.util.MultiValueMapAdapter
+import java.util.stream.IntStream
 
 class ArticleTest {
     @SpringBootTest
@@ -932,6 +936,209 @@ class ArticleTest {
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                     Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualUpdatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                )
+            )
+        }
+    }
+
+    @SpringBootTest
+    @AutoConfigureMockMvc
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    class CreateArticle {
+        @Autowired
+        lateinit var mockMvc: MockMvc
+
+        @BeforeAll
+        fun reset() = DbConnection.resetSequence()
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/article_repository/create-success-case-of-partially-duplicated-tag-list.yml"],
+            ignoreCols = ["id", "slug", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `正常系-記事の項目が全て有効な場合、記事の作成に成功する`() {
+            /**
+             * given:
+             */
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val requestBody = """
+                {
+                  "article": {
+                    "title": "Comparing JVM lang",
+                    "description": "JVM",
+                    "body": "",
+                    "tagList": ["kotlin", "clojure", "scala", "groovy"]
+                  }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.post("/articles") {
+                contentType = MediaType.APPLICATION_JSON
+                content = requestBody
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 200
+            val expectedResponseBody = """
+                {
+                   "article":{
+                      "title":"Comparing JVM lang",
+                      "slug":"毎回変わるので、dummy-slug",
+                      "body":"",
+                      "createdAt":"2022-01-01T00:00:00.000Z",
+                      "updatedAt":"2022-01-01T00:00:00.000Z",
+                      "description":"JVM",
+                      "tagList":[
+                         "kotlin",
+                         "clojure",
+                         "scala",
+                         "groovy"
+                      ],
+                      "authorId":1,
+                      "favorited":false,
+                      "favoritesCount":0
+                   }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.NON_EXTENSIBLE,
+                    Customization("article.slug") { actualSlug, expectedDummy ->
+                        Slug.new(actualSlug.toString()).isValid && expectedDummy == "毎回変わるので、dummy-slug"
+                    },
+                    Customization("article.createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualCreatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("article.updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualUpdatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                )
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/articles.yml"],
+            ignoreCols = ["created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-記事の項目にバリデーションエラーがある場合、記事の作成に失敗する`() {
+            /**
+             * given:
+             */
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val requestBody = """
+                {
+                  "article": {
+                    "title": "${IntStream.range(0, 10).mapToObj { "長すぎるタイトル" }.toList().joinToString()}",
+                    "description": "${IntStream.range(0, 70).mapToObj { "長すぎる概要" }.toList().joinToString()}",
+                    "body": "${IntStream.range(0, 200).mapToObj { "長すぎる内容" }.toList().joinToString()}",
+                    "tagList": ["too-long-too-long-tag"]
+                  }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.post("/articles") {
+                contentType = MediaType.APPLICATION_JSON
+                content = requestBody
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 422
+            val expectedResponseBody = """
+                {
+                   "errors":{
+                      "body":[
+                         {
+                            "title":"長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル",
+                            "key":"Title",
+                            "message":"titleは32文字以下にしてください。"
+                         },
+                         {
+                            "description":"長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要",
+                            "key":"Description",
+                            "message":"descriptionは64文字以下にしてください。"
+                         },
+                         {
+                            "body":"長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容",
+                            "key":"Body",
+                            "message":"body は1024文字以下にしてください。"
+                         },
+                         {
+                            "tag":"too-long-too-long-tag",
+                            "key":"Tag",
+                            "message":"tagは16文字以下にしてください。"
+                         }
+                      ]
+                   }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.NON_EXTENSIBLE,
+                    Customization("article.slug") { actualSlug, expectedDummy ->
+                        Slug.new(actualSlug.toString()).isValid && expectedDummy == "dummy-slug"
+                    },
+                    Customization("article.createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualCreatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("article.updatedAt") { actualUpdatedAt, expectedDummy ->
                         DatetimeVerificationHelper.expectIso8601UtcAndParsable(
                             actualUpdatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
