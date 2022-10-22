@@ -1,7 +1,11 @@
 package com.example.realworldkotlinspringbootjdbc.api_integration
 
+import arrow.core.getOrHandle
 import com.example.realworldkotlinspringbootjdbc.api_integration.helper.DatetimeVerificationHelper
 import com.example.realworldkotlinspringbootjdbc.infra.DbConnection
+import com.example.realworldkotlinspringbootjdbc.infra.helper.SeedData
+import com.example.realworldkotlinspringbootjdbc.util.MySession
+import com.example.realworldkotlinspringbootjdbc.util.MySessionJwtImpl
 import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
@@ -19,6 +23,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.util.MultiValueMapAdapter
 
 class ArticleTest {
@@ -689,6 +694,120 @@ class ArticleTest {
                 expectedResponseBody,
                 actualResponseBody,
                 CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `正常系-ログイン済みの場合、そのログイン済みユーザーから見た、作成済み記事に対してお気に入り情報と著者のフォロー情報がレスポンスに載る`() {
+            /**
+             * given:
+             * - SeedDataの1番目のユーザー(user2)
+             */
+            val existedUser = SeedData.users().toList()[1]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+
+            /**
+             * when:
+             * - フィルタパラメータは無し
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .get("/articles")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", sessionToken)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             *   - ログイン済みのユーザー観点からの作成済み記事のお気に入り情報が載っている
+             *   - ログイン済みのユーザー観点からの作成済み記事の著者のフォロー情報が載っている
+             * - user2
+             *   - フォロー
+             *     - user1: 未フォロー
+             *     - user3: フォロー済み
+             *   - お気に入り
+             *     - 記事1: お気に入り済み
+             *     - 記事2: お気に入りではない
+             *     - 記事3: お気に入り済み
+             */
+            val expectedStatus = 200
+            val expectedResponseBody = """
+                {
+                   "articlesCount": 3,
+                   "articles": [
+                      {
+                         "title": "Rust vs Scala vs Kotlin",
+                         "slug": "rust-vs-scala-vs-kotlin",
+                         "body": "dummy-body",
+                         "createdAt": "2022-01-01T00:00:00.000Z",
+                         "updatedAt": "2022-01-01T00:00:00.000Z",
+                         "description": "dummy-description",
+                         "tagList":[
+                            "rust",
+                            "scala",
+                            "kotlin"
+                         ],
+                         "authorId": 1,
+                         "favorited": true,
+                         "favoritesCount": 1
+                      },
+                      {
+                         "title": "Functional programming kotlin",
+                         "slug": "functional-programming-kotlin",
+                         "body": "dummy-body",
+                         "createdAt": "2022-01-01T00:00:00.000Z",
+                         "updatedAt": "2022-01-01T00:00:00.000Z",
+                         "description": "dummy-description",
+                         "tagList":[
+                            "kotlin"
+                         ],
+                         "authorId": 1,
+                         "favorited": false,
+                         "favoritesCount": 1
+                      },
+                      {
+                         "title": "TDD(Type Driven Development)",
+                         "slug": "tdd-type-driven-development",
+                         "body": "dummy-body",
+                         "createdAt": "2022-01-01T00:00:00.000Z",
+                         "updatedAt": "2022-01-01T00:00:00.000Z",
+                         "description": "dummy-description",
+                         "tagList": [],
+                         "authorId": 2,
+                         "favorited": true,
+                         "favoritesCount": 2
+                      }
+                   ]
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.NON_EXTENSIBLE,
+                    Customization("articles[*].createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualCreatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualUpdatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                )
             )
         }
     }

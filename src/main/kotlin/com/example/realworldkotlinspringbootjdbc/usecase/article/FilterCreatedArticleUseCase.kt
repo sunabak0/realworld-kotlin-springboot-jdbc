@@ -119,7 +119,7 @@ class FilterCreatedArticleUseCaseImpl(
              * 特定の他ユーザーがお気に入りしているフィルタ 無し
              * - 全ての作成済み記事
              */
-            None -> when (val list = articleRepository.all()) {
+            None -> when (val list = articleRepository.all(currentUser.map { it.userId })) {
                 is Left -> TODO("allの具体的なエラーが無いため、現在この分岐に入らない想定")
                 is Right -> list.value.toSet()
             }
