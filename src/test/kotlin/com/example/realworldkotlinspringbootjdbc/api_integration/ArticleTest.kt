@@ -12,6 +12,7 @@ import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.skyscreamer.jsonassert.Customization
@@ -1752,6 +1753,36 @@ class ArticleTest {
                 actualResponseBody,
                 CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
             )
+        }
+    }
+
+    @SpringBootTest
+    @AutoConfigureMockMvc
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    class DeleteArticle {
+        @Disabled
+        @Test
+        fun `正常系-自分が著者である記事のSlugを指定した場合、その作成済み記事を削除する`() {
+            TODO()
+        }
+
+        @Disabled
+        @Test
+        fun `準正常系-自分が著者ではない記事のSlugを指定した場合、その作成済み記事は削除できない`() {
+            TODO()
+        }
+
+        @Disabled
+        @Test
+        fun `準正常系-存在しないSlugを指定した場合、その作成済み記事は見つからなかった旨のエラーレスポンスが返る`() {
+            TODO()
+        }
+
+        @Disabled
+        @Test
+        fun `準正常系-バリデーションエラーが起こるSlugを指定した場合、その作成済み記事は見つからなかった旨のエラーレスポンスが返る`() {
+            TODO()
         }
     }
 }
