@@ -6,7 +6,6 @@ import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -355,7 +354,6 @@ class ArticleTest {
             )
         }
 
-        @Disabled
         @Test
         @DataSet(
             value = [
@@ -364,11 +362,82 @@ class ArticleTest {
                 "datasets/yml/given/articles.yml",
             ]
         )
-        fun `正常系-limitに余裕があっても、最大limit分だけ取得する`() {
-            TODO()
+        fun `正常系-limitに余裕があっても、引っかかった数からoffset値が適用されただけ取得する`() {
+            /**
+             * given:
+             * - offsetは1
+             * - offsetが0の場合でも、余裕があるlimit(記事は全部で3つ)
+             */
+            val offset = 1
+            val limit = 100
+
+            /**
+             * when:
+             */
+            val response = mockMvc.get("/articles?offset=$offset&limit=$limit").andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             *   - 引っかかるのはoffset値を適用した2つのみ(limitに余裕があっても、3つ返したりはしない)
+             */
+            val expectedStatus = 200
+            val expectedResponseBody = """
+                {
+                   "articlesCount": 3,
+                   "articles":[
+                      {
+                         "title": "Functional programming kotlin",
+                         "slug": "functional-programming-kotlin",
+                         "body": "dummy-body",
+                         "createdAt": "2022-01-01T00:00:00.000Z",
+                         "updatedAt": "2022-01-01T00:00:00.000Z",
+                         "description": "dummy-description",
+                         "tagList": [
+                            "kotlin"
+                         ],
+                         "authorId": 1,
+                         "favorited": false,
+                         "favoritesCount": 1
+                      },
+                      {
+                         "title": "TDD(Type Driven Development)",
+                         "slug": "tdd-type-driven-development",
+                         "body": "dummy-body",
+                         "createdAt": "2022-01-01T00:00:00.000Z",
+                         "updatedAt": "2022-01-01T00:00:00.000Z",
+                         "description": "dummy-description",
+                         "tagList": [],
+                         "authorId": 2,
+                         "favorited": false,
+                         "favoritesCount": 2
+                      }
+                   ]
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.NON_EXTENSIBLE,
+                    Customization("articles[*].createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualCreatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualUpdatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                )
+            )
         }
 
-        @Disabled
         @Test
         @DataSet(
             value = [
@@ -378,7 +447,64 @@ class ArticleTest {
             ]
         )
         fun `正常系-フィルタ結果から、0番目から数えてoffset番目から最大limit分だけ取得する`() {
-            TODO()
+            /**
+             * given:
+             */
+            val offset = 1
+            val limit = 1
+
+            /**
+             * when:
+             */
+            val response = mockMvc.get("/articles?offset=$offset&limit=$limit").andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 200
+            val expectedResponseBody = """
+                {
+                   "articlesCount": 3,
+                   "articles":[
+                      {
+                         "title": "Functional programming kotlin",
+                         "slug": "functional-programming-kotlin",
+                         "body": "dummy-body",
+                         "createdAt": "2022-01-01T00:00:00.000Z",
+                         "updatedAt": "2022-01-01T00:00:00.000Z",
+                         "description": "dummy-description",
+                         "tagList": [
+                            "kotlin"
+                         ],
+                         "authorId": 1,
+                         "favorited": false,
+                         "favoritesCount": 1
+                      }
+                   ]
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.NON_EXTENSIBLE,
+                    Customization("articles[*].createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualCreatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualUpdatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                )
+            )
         }
     }
 }
