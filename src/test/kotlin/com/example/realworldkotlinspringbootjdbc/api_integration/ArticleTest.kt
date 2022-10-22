@@ -1147,4 +1147,376 @@ class ArticleTest {
             )
         }
     }
+
+    @SpringBootTest
+    @AutoConfigureMockMvc
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    class GetArticlesFeed {
+
+        @Autowired
+        lateinit var mockMvc: MockMvc
+
+        @BeforeEach
+        fun reset() = DbConnection.resetSequence()
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `正常系-ログイン済みの場合、フォロー済みのユーザーの最新作成済み記事の取得に成功する`() {
+            /**
+             * given:
+             * - user3
+             */
+            val existedUser = SeedData.users().toList()[2]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+
+            /**
+             * when:
+             */
+            val response = mockMvc.get("/articles/feed") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 200
+            val expectedResponseBody = """
+                {
+                   "articlesCount":2,
+                   "articles":[
+                      {
+                         "title":"Functional programming kotlin",
+                         "slug":"functional-programming-kotlin",
+                         "body":"dummy-body",
+                         "createdAt": "2022-01-01T00:00:00.000Z",
+                         "updatedAt": "2022-01-01T00:00:00.000Z",
+                         "description":"dummy-description",
+                         "tagList":[
+                            "kotlin"
+                         ],
+                         "authorId":1,
+                         "favorited":true,
+                         "favoritesCount":1
+                      },
+                      {
+                         "title":"TDD(Type Driven Development)",
+                         "slug":"tdd-type-driven-development",
+                         "body":"dummy-body",
+                         "createdAt": "2022-01-01T00:00:00.000Z",
+                         "updatedAt": "2022-01-01T00:00:00.000Z",
+                         "description":"dummy-description",
+                         "tagList":[],
+                         "authorId":2,
+                         "favorited":false,
+                         "favoritesCount":2
+                      }
+                   ]
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.NON_EXTENSIBLE,
+                    Customization("articles[*].createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualCreatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualUpdatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                )
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `正常系-limitを指定した場合、1度に取得する最大数はlimitまでになる`() {
+            /**
+             * given:
+             * - limitに1を指定する
+             */
+            val existedUser = SeedData.users().toList()[2]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val queryParameters = mapOf(
+                "limit" to listOf("1")
+            )
+
+            /**
+             * when:
+             */
+            val response = mockMvc.get("/articles/feed") {
+                contentType = MediaType.APPLICATION_JSON
+                params = MultiValueMapAdapter(queryParameters)
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 200
+            val expectedResponseBody = """
+                {
+                   "articlesCount":2,
+                   "articles":[
+                      {
+                         "title":"Functional programming kotlin",
+                         "slug":"functional-programming-kotlin",
+                         "body":"dummy-body",
+                         "createdAt": "2022-01-01T00:00:00.000Z",
+                         "updatedAt": "2022-01-01T00:00:00.000Z",
+                         "description":"dummy-description",
+                         "tagList":[
+                            "kotlin"
+                         ],
+                         "authorId":1,
+                         "favorited":true,
+                         "favoritesCount":1
+                      }
+                   ]
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.NON_EXTENSIBLE,
+                    Customization("articles[*].createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualCreatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualUpdatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                )
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `正常系-offsetを指定した場合、0から数えてoffeset個めから取得する`() {
+            /**
+             * given:
+             * - offsetに1を指定する
+             */
+            val existedUser = SeedData.users().toList()[2]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val queryParameters = mapOf(
+                "offset" to listOf("1")
+            )
+
+            /**
+             * when:
+             */
+            val response = mockMvc.get("/articles/feed") {
+                contentType = MediaType.APPLICATION_JSON
+                params = MultiValueMapAdapter(queryParameters)
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 200
+            val expectedResponseBody = """
+                {
+                   "articlesCount":2,
+                   "articles":[
+                      {
+                         "title":"TDD(Type Driven Development)",
+                         "slug":"tdd-type-driven-development",
+                         "body":"dummy-body",
+                         "createdAt": "2022-01-01T00:00:00.000Z",
+                         "updatedAt": "2022-01-01T00:00:00.000Z",
+                         "description":"dummy-description",
+                         "tagList":[],
+                         "authorId":2,
+                         "favorited":false,
+                         "favoritesCount":2
+                      }
+                   ]
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.NON_EXTENSIBLE,
+                    Customization("articles[*].createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualCreatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualUpdatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                )
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `準常系-パラメータがバリデーションエラーを起こす場合、feed取得に失敗する`() {
+            /**
+             * given:
+             * - offsetは負の値
+             * - limitは負の値
+             */
+            val existedUser = SeedData.users().toList()[2]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val queryParameters = mapOf(
+                "offset" to listOf("-1"),
+                "limit" to listOf("100000")
+            )
+
+            /**
+             * when:
+             */
+            val response = mockMvc.get("/articles/feed") {
+                contentType = MediaType.APPLICATION_JSON
+                params = MultiValueMapAdapter(queryParameters)
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 422
+            val expectedResponseBody = """
+                {
+                   "errors":{
+                      "body":[
+                         {
+                            "value":100000,
+                            "key":"LimitError",
+                            "message":"100以下である必要があります"
+                         },
+                         {
+                            "value":-1,
+                            "key":"LimitError",
+                            "message":"0以上である必要があります"
+                         }
+                      ]
+                   }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `準正常系-Offset値が取得後の作成済み記事の数を超えている場合、feed取得に失敗する`() {
+            /**
+             * given:
+             * - 取得後の作成済み記事の数を超えたoffset値
+             */
+            val existedUser = SeedData.users().toList()[2]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val queryParameters = mapOf(
+                "offset" to listOf("100"),
+            )
+
+            /**
+             * when:
+             */
+            val response = mockMvc.get("/articles/feed") {
+                contentType = MediaType.APPLICATION_JSON
+                params = MultiValueMapAdapter(queryParameters)
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 422
+            val expectedResponseBody = """
+                {
+                   "errors":{
+                      "body":[
+                         "offset値が作成済み記事の数を超えています(offset=100, articlesCount=2)"
+                      ]
+                   }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
+    }
 }
