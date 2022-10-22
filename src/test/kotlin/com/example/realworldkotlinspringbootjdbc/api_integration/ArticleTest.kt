@@ -29,7 +29,7 @@ class ArticleTest {
     @AutoConfigureMockMvc
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     @DBRider
-    class Filter {
+    class GetArticles {
 
         @Autowired
         lateinit var mockMvc: MockMvc
