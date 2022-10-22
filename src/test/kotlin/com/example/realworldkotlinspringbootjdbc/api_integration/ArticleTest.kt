@@ -10,7 +10,6 @@ import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.skyscreamer.jsonassert.Customization
@@ -30,7 +29,6 @@ class ArticleTest {
     @AutoConfigureMockMvc
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     @DBRider
-    @Tag("ApiIntegration")
     class Filter {
 
         @Autowired
