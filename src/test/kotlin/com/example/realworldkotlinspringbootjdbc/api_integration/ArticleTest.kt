@@ -362,6 +362,91 @@ class ArticleTest {
                 "datasets/yml/given/articles.yml",
             ]
         )
+        fun `正常系-著者名に存在しないユーザー名を指定した場合、1つもひっかからない`() {
+            /**
+             * given:
+             * - 存在しないユーザー名
+             */
+            val authorUsername = "not-existed-username"
+
+            /**
+             * when:
+             */
+            val response = mockMvc.get("/articles?author=$authorUsername").andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 200
+            val expectedResponseBody = """
+                {
+                   "articlesCount": 0,
+                   "articles": []
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `正常系-どっちかだけにしかひっかからないフィルタパラメータを指定した場合、(ANDフィルタなので)1つもひっかからない`() {
+            /**
+             * given:
+             * - 存在しないユーザー名
+             */
+            val authorUsername = "松本行弘"
+            val tag = "lisp"
+
+            /**
+             * when:
+             */
+            val response = mockMvc.get("/articles?author=$authorUsername&tag=$tag").andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 200
+            val expectedResponseBody = """
+                {
+                   "articlesCount": 0,
+                   "articles": []
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
         fun `正常系-limitに余裕があっても、引っかかった数からoffset値が適用されただけ取得する`() {
             /**
              * given:
@@ -504,6 +589,106 @@ class ArticleTest {
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                 )
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `準正常系-バリデーションエラーを起こすようなフィルタパラメータだった場合、フィルタに失敗する`() {
+            /**
+             * given:
+             * - 負の値であるoffset
+             * - 数値に変換できないlimit
+             */
+            val invalidOffset = -1
+            val invalidLimit = "数値に変換できない"
+
+            /**
+             * when:
+             */
+            val response = mockMvc.get("/articles?offset=$invalidOffset&limit=$invalidLimit").andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 422
+            val expectedResponseBody = """
+                {
+                   "errors":{
+                      "body":[
+                         {
+                            "value": "数値に変換できない",
+                            "key": "LimitError",
+                            "message": "数値に変換できる数字にしてください"
+                         },
+                         {
+                            "value": -1,
+                            "key": "LimitError",
+                            "message": "0以上である必要があります"
+                         }
+                      ]
+                   }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        fun `準正常系-Offset値がフィルタ後の作成済み記事の数を超えている場合、フィルタに失敗する`() {
+            /**
+             * given:
+             */
+            val overedOffset = 100
+
+            /**
+             * when:
+             */
+            val response = mockMvc.get("/articles?offset=$overedOffset").andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = 422
+            val expectedResponseBody = """
+                {
+                   "errors": {
+                      "body": [
+                        "offset値がフィルタした結果の作成済み記事の数を超えています(offset=100, articlesCount=3)"
+                      ]
+                   }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
             )
         }
     }
