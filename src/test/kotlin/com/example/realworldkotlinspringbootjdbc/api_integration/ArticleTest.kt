@@ -11,7 +11,7 @@ import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.skyscreamer.jsonassert.Customization
@@ -38,7 +38,7 @@ class ArticleTest {
         @Autowired
         lateinit var mockMvc: MockMvc
 
-        @BeforeAll
+        @BeforeEach
         fun reset() = DbConnection.resetSequence()
 
         @Test
@@ -953,7 +953,7 @@ class ArticleTest {
         @Autowired
         lateinit var mockMvc: MockMvc
 
-        @BeforeAll
+        @BeforeEach
         fun reset() = DbConnection.resetSequence()
 
         @Test
