@@ -1409,11 +1409,11 @@ class ArticleTest {
                 "datasets/yml/given/articles.yml",
             ]
         )
-        fun `準常系-パラメータがバリデーションエラーを起こす場合、feed取得に失敗する`() {
+        fun `準正常系-パラメータがバリデーションエラーを起こす場合、feed取得に失敗する`() {
             /**
              * given:
              * - offsetは負の値
-             * - limitは負の値
+             * - 大きすぎるlimit
              */
             val existedUser = SeedData.users().toList()[2]
             val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
