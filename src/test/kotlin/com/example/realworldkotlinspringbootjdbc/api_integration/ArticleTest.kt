@@ -12,7 +12,6 @@ import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.skyscreamer.jsonassert.Customization
@@ -1923,10 +1922,66 @@ class ArticleTest {
             )
         }
 
-        @Disabled
         @Test
-        fun `準正常系-バリデーションエラーが起こるSlugを指定した場合、その作成済み記事は見つからなかった旨のエラーレスポンスが返る`() {
-            TODO()
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-バリデーションエラーが起こるSlugを指定した場合、その旨のエラーレスポンスが返る`() {
+            /**
+             * given:
+             * - 存在する登録済みユーザー
+             * - バリデーションエラーが起こるslug
+             */
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = IntStream.range(0, 10).mapToObj { "長すぎるslug" }.toList().joinToString()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.delete("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             */
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
+            val expectedResponseBody = """
+                {
+                  "errors":{
+                    "body":[
+                      {
+                        "slug": "長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug",
+                        "key":"Slug",
+                        "message":"slugは32文字以下にしてください。"
+                      }
+                    ]
+                  }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
         }
     }
 }
