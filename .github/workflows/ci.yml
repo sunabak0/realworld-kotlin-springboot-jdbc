@@ -37,6 +37,14 @@ on:
 #   - JacocoレポートをCodeClimateに送る
 
 #
+# codecov/codecov-action
+#
+# URL
+#   - https://github.com/codecov/codecov-action
+# 概要
+#   - JacocoレポートをCodecovに送る
+
+#
 # actions/upload-pages-artifact
 # actions/deploy-pages@v1
 #
@@ -97,6 +105,11 @@ jobs:
         run: make test
         env:
           TZ: Asia/Tokyo
+      - name: '【mainブランチ】 テストカバレッジレポートをCodecovに送る'
+        if: github.ref == 'refs/heads/main'
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
       - name: テスト結果レポートをGitHub Actionsの上部に公開
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
