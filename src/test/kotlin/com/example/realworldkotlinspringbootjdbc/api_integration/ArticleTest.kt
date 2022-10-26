@@ -22,8 +22,10 @@ import org.skyscreamer.jsonassert.comparator.CustomComparator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.util.MultiValueMapAdapter
@@ -1761,10 +1763,60 @@ class ArticleTest {
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     @DBRider
     class DeleteArticle {
-        @Disabled
+
+        @Autowired
+        lateinit var mockMvc: MockMvc
+
+        @BeforeEach
+        fun reset() = DbConnection.resetSequence()
+
         @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/api_integration/delete-success.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        // NOTE: @ExportDataSetはgivenの@DataSetが変更された時用に残しておく
+        // @ExportDataSet(
+        //    format = DataSetFormat.YML,
+        //    outputName = "src/test/resources/datasets/yml/then/api_integration/delete-success.yml",
+        //    includeTables = ["articles", "tags", "article_tags", "favorites", "article_comments"]
+        // )
         fun `正常系-自分が著者である記事のSlugを指定した場合、その作成済み記事を削除する`() {
-            TODO()
+            /**
+             * given:
+             * - 存在する著者
+             * - 著者が書いた作成済み記事のslug
+             */
+            val author = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(author.userId, author.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = "rust-vs-scala-vs-kotlin"
+
+            /**
+             * when:
+             */
+            val response = mockMvc.delete("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             */
+            val expectedStatus = HttpStatus.OK.value()
+            val expectedResponseBody = ""
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            assertThat(actualResponseBody).isEqualTo(expectedResponseBody)
         }
 
         @Disabled
