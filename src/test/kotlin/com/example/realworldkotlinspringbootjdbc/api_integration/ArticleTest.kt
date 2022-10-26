@@ -12,7 +12,6 @@ import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.skyscreamer.jsonassert.Customization
@@ -22,8 +21,10 @@ import org.skyscreamer.jsonassert.comparator.CustomComparator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.util.MultiValueMapAdapter
@@ -1761,28 +1762,226 @@ class ArticleTest {
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     @DBRider
     class DeleteArticle {
-        @Disabled
+
+        @Autowired
+        lateinit var mockMvc: MockMvc
+
+        @BeforeEach
+        fun reset() = DbConnection.resetSequence()
+
         @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/api_integration/delete-success.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        // NOTE: @ExportDataSetはgivenの@DataSetが変更された時用に残しておく
+        // @ExportDataSet(
+        //    format = DataSetFormat.YML,
+        //    outputName = "src/test/resources/datasets/yml/then/api_integration/delete-success.yml",
+        //    includeTables = ["articles", "tags", "article_tags", "favorites", "article_comments"]
+        // )
         fun `正常系-自分が著者である記事のSlugを指定した場合、その作成済み記事を削除する`() {
-            TODO()
+            /**
+             * given:
+             * - 存在する著者
+             * - 著者が書いた作成済み記事のslug
+             */
+            val author = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(author.userId, author.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = "rust-vs-scala-vs-kotlin"
+
+            /**
+             * when:
+             */
+            val response = mockMvc.delete("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             */
+            val expectedStatus = HttpStatus.OK.value()
+            val expectedResponseBody = ""
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            assertThat(actualResponseBody).isEqualTo(expectedResponseBody)
         }
 
-        @Disabled
         @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
         fun `準正常系-自分が著者ではない記事のSlugを指定した場合、その作成済み記事は削除できない`() {
-            TODO()
+            /**
+             * given:
+             * - 著者ではない存在する登録済みユーザー
+             * - 登録済み記事のslug
+             */
+            val author = SeedData.users().toList()[1]
+            val sessionToken = MySessionJwtImpl.encode(MySession(author.userId, author.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = "rust-vs-scala-vs-kotlin"
+
+            /**
+             * when:
+             */
+            val response = mockMvc.delete("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             */
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
+            val expectedResponseBody = """
+                {"errors":{"body":["削除する権限がありません"]}}
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
         }
 
-        @Disabled
         @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
         fun `準正常系-存在しないSlugを指定した場合、その作成済み記事は見つからなかった旨のエラーレスポンスが返る`() {
-            TODO()
+            /**
+             * given:
+             * - 存在する登録済みユーザー
+             * - 存在しないslug
+             */
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = "not-existed-slug"
+
+            /**
+             * when:
+             */
+            val response = mockMvc.delete("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             */
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
+            val expectedResponseBody = """
+                {"errors":{"body":["記事が見つかりませんでした"]}}
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
         }
 
-        @Disabled
         @Test
-        fun `準正常系-バリデーションエラーが起こるSlugを指定した場合、その作成済み記事は見つからなかった旨のエラーレスポンスが返る`() {
-            TODO()
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-バリデーションエラーが起こるSlugを指定した場合、その旨のエラーレスポンスが返る`() {
+            /**
+             * given:
+             * - 存在する登録済みユーザー
+             * - バリデーションエラーが起こるslug
+             */
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = IntStream.range(0, 10).mapToObj { "長すぎるslug" }.toList().joinToString()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.delete("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             */
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
+            val expectedResponseBody = """
+                {
+                  "errors":{
+                    "body":[
+                      {
+                        "slug": "長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug",
+                        "key":"Slug",
+                        "message":"slugは32文字以下にしてください。"
+                      }
+                    ]
+                  }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
         }
     }
 }
