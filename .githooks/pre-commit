@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+
+#
+# githook pre-commit
+#
+# 概要
+# - git commit の直前に実行されるscript
+#
+
 echo "Running detekt check..."
 OUTPUT="/tmp/detekt-$(date +%s)"
 make lint > $OUTPUT
