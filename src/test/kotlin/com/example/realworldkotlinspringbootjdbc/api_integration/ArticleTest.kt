@@ -1819,10 +1819,56 @@ class ArticleTest {
             assertThat(actualResponseBody).isEqualTo(expectedResponseBody)
         }
 
-        @Disabled
         @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
         fun `準正常系-自分が著者ではない記事のSlugを指定した場合、その作成済み記事は削除できない`() {
-            TODO()
+            /**
+             * given:
+             * - 著者ではない存在する登録済みユーザー
+             * - 登録済み記事のslug
+             */
+            val author = SeedData.users().toList()[1]
+            val sessionToken = MySessionJwtImpl.encode(MySession(author.userId, author.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = "rust-vs-scala-vs-kotlin"
+
+            /**
+             * when:
+             */
+            val response = mockMvc.delete("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             */
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
+            val expectedResponseBody = """
+                {"errors":{"body":["削除する権限がありません"]}}
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
         }
 
         @Disabled
