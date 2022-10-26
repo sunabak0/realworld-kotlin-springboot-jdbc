@@ -7,6 +7,10 @@
 
 ## 開発
 
+```bash
+git config --local core.hooksPath .githooks
+```
+
 ```
 make
 ```
