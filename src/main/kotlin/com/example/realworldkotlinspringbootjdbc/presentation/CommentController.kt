@@ -96,7 +96,8 @@ class CommentController(
         }
     }
 
-    @PostMapping("/articles/{slug}/comments")
+    // @PostMapping("/articles/{slug}/comments")
+    @PostMapping("/articles/{slug}/comments-old")
     fun create(
         @RequestHeader("Authorization") rawAuthorizationHeader: String?,
         @PathVariable("slug") slug: String?,

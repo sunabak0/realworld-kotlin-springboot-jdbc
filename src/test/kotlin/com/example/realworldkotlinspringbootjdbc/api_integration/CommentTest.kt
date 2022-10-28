@@ -277,7 +277,7 @@ class CommentTest {
              */
             val response = mockMvc.perform(
                 MockMvcRequestBuilders
-                    .post("/api/articles/$pathParameter/comments")
+                    .post("/api/articles/$pathParameter/comments-old")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(rawRequestBody)
                     .header("Authorization", token)
