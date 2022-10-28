@@ -1984,4 +1984,17 @@ class ArticleTest {
             )
         }
     }
+
+    @SpringBootTest
+    @AutoConfigureMockMvc
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    class UpdateArticle {
+
+        @Autowired
+        lateinit var mockMvc: MockMvc
+
+        @BeforeEach
+        fun reset() = DbConnection.resetSequence()
+    }
 }
