@@ -2308,5 +2308,68 @@ class ArticleTest {
                 CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
             )
         }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-自分が著者でない場合、作成済み記事の更新に失敗する`() {
+            /**
+             * given:
+             * - 著者ではない登録済みユーザー
+             * - 登録済み記事のslug
+             * - 更新内容が記述されたリクエストボディ(json)(これはバリデーションエラーは起きない)
+             */
+            val existedUser = SeedData.users().toList()[1]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = "rust-vs-scala-vs-kotlin"
+            val requestBody = """
+                {
+                  "article": {
+                    "title": "プログラマーが知るべき97のこと",
+                    "body": "93. エラーを無視するな",
+                    "description": "エッセイ集"
+                  }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.put("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+                content = requestBody
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             */
+            val expectedStatus = HttpStatus.FORBIDDEN.value()
+            val expectedResponseBody = """
+                {"errors":{"body":["削除する権限がありません"]}}
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
     }
 }
