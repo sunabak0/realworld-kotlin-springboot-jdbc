@@ -2162,5 +2162,88 @@ class ArticleTest {
                 CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
             )
         }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-更新予定の項目にバリデーションエラーがあった場合、その旨のエラーが返る`() {
+            /**
+             * given:
+             * - 存在する登録済みユーザー
+             * - ユーザーが著者である作成済み記事のslug
+             * - バリデーションエラーが起きる更新内容(json)
+             */
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = "rust-vs-scala-vs-kotlin"
+            val requestBody = """
+                {
+                   "article": {
+                      "title": "${IntStream.range(0, 10).mapToObj { "長すぎるタイトル" }.toList().joinToString()}",
+                      "description": "${IntStream.range(0, 70).mapToObj { "長すぎる概要" }.toList().joinToString()}",
+                      "body": "${IntStream.range(0, 200).mapToObj { "長すぎる内容" }.toList().joinToString()}"
+                   }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.put("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+                content = requestBody
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             */
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
+            val expectedResponseBody = """
+                {
+                   "errors":{
+                      "body":[
+                         {
+                            "title":"長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル",
+                            "key":"Title",
+                            "message":"titleは32文字以下にしてください。"
+                         },
+                         {
+                            "description":"長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要",
+                            "key":"Description",
+                            "message":"descriptionは64文字以下にしてください。"
+                         },
+                         {
+                            "body":"長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容",
+                            "key":"Body",
+                            "message":"body は1024文字以下にしてください。"
+                         }
+                      ]
+                   }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
     }
 }
