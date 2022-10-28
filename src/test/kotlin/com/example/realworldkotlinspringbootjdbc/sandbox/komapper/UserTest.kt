@@ -45,6 +45,12 @@ class UserTest {
     }
 
     @Test
+    @DBRider
+    @DataSet(
+        value = [
+            "datasets/yml/given/users.yml",
+        ]
+    )
     fun `User一覧を取得する`() {
         /**
          * given:
