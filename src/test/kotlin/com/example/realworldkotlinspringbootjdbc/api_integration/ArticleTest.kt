@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.put
 import org.springframework.util.MultiValueMapAdapter
 import java.util.stream.IntStream
 
@@ -1996,5 +1997,97 @@ class ArticleTest {
 
         @BeforeEach
         fun reset() = DbConnection.resetSequence()
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/then/article_repository/update-success.yml"
+            ],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `正常系-自分が著者である作成済み記事は、バリデーションが通れば更新に成功する`() {
+            /**
+             * given:
+             * - 存在する登録済みユーザー
+             * - ユーザーが著者である作成済み記事のslug
+             * - 更新内容が記述されたリクエストボディ(json)
+             */
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = "rust-vs-scala-vs-kotlin"
+            val requestBody = """
+                {
+                  "article": {
+                    "title": "プログラマーが知るべき97のこと",
+                    "body": "93. エラーを無視するな",
+                    "description": "エッセイ集"
+                  }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.put("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+                content = requestBody
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             */
+            val expectedStatus = HttpStatus.OK.value()
+            val expectedResponseBody = """
+                {
+                  "article":{
+                    "title":"プログラマーが知るべき97のこと",
+                    "slug":"rust-vs-scala-vs-kotlin",
+                    "body":"93. エラーを無視するな",
+                    "createdAt": "2022-01-01T00:00:00.000Z",
+                    "updatedAt": "2022-01-01T00:00:00.000Z",
+                    "description":"エッセイ集",
+                    "tagList":[
+                      "rust",
+                      "scala",
+                      "kotlin"
+                    ],
+                    "authorId":1,
+                    "favorited":false,
+                    "favoritesCount":1
+                  }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.NON_EXTENSIBLE,
+                    Customization("article.createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualCreatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("article.updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualUpdatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                )
+            )
+        }
     }
 }
