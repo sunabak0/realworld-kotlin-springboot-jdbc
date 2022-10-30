@@ -4,20 +4,24 @@ import arrow.core.Either.Left
 import arrow.core.Either.Right
 import arrow.core.Some
 import arrow.core.none
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.controller.CommentsApi
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModel
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModelErrors
 import com.example.realworldkotlinspringbootjdbc.presentation.request.NullableComment
-import com.example.realworldkotlinspringbootjdbc.presentation.request.NullableCommentId
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Comment
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
+import com.example.realworldkotlinspringbootjdbc.presentation.shared.RealworldAuthenticationUseCaseUnauthorizedException
 import com.example.realworldkotlinspringbootjdbc.usecase.comment.CreateCommentUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.comment.DeleteCommentUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.comment.ListCommentUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.shared.RealworldAuthenticationUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -28,10 +32,11 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class CommentController(
     val myAuth: MyAuth,
+    val realworldAuthenticationUseCase: RealworldAuthenticationUseCase,
     val listCommentUseCase: ListCommentUseCase,
     val createCommentUseCase: CreateCommentUseCase,
     val deleteCommentUseCase: DeleteCommentUseCase
-) {
+) : CommentsApi {
     @GetMapping("/articles/{slug}/comments")
     fun list(
         @RequestHeader("Authorization") rawAuthorizationHeader: String?,
@@ -91,7 +96,8 @@ class CommentController(
         }
     }
 
-    @PostMapping("/articles/{slug}/comments")
+    // @PostMapping("/articles/{slug}/comments")
+    @PostMapping("/articles/{slug}/comments-old")
     fun create(
         @RequestHeader("Authorization") rawAuthorizationHeader: String?,
         @PathVariable("slug") slug: String?,
@@ -147,74 +153,61 @@ class CommentController(
         }
     }
 
-    @DeleteMapping("/articles/{slug}/comments/{id}")
-    fun delete(
-        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
-        @PathVariable("slug") slug: String?,
-        @PathVariable("id") commentId: String?
-    ): ResponseEntity<String> {
-        return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
-            /**
-             * JWT 認証 失敗
-             */
-            is Left -> AuthorizationError.handle()
-            /**
-             * JWT 認証 成功
-             */
-            is Right -> {
-                when (
-                    val result =
-                        deleteCommentUseCase.execute(slug, NullableCommentId.from(commentId), authorizeResult.value)
-                ) {
-                    /**
-                     * コメントの削除に失敗
-                     */
-                    is Left -> when (val useCaseError = result.value) {
-                        /**
-                         * 原因: Slug がバリデーションエラー
-                         */
-                        is DeleteCommentUseCase.Error.InvalidSlug -> ResponseEntity(
-                            serializeMyErrorListForResponseBody(useCaseError.errors),
-                            HttpStatus.valueOf(422)
-                        )
-                        /**
-                         * 原因: CommentId がバリデーションエラー
-                         */
-                        is DeleteCommentUseCase.Error.InvalidCommentId -> ResponseEntity(
-                            serializeMyErrorListForResponseBody(useCaseError.errors),
-                            HttpStatus.valueOf(422)
-                        )
-                        /**
-                         * 原因: 記事が見つからなかった
-                         */
-                        is DeleteCommentUseCase.Error.NotFoundArticleBySlug -> ResponseEntity(
-                            serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                            HttpStatus.valueOf(404)
-                        )
-                        /**
-                         * 原因: CommentId に該当するコメントがなかった
-                         */
-                        is DeleteCommentUseCase.Error.NotFoundCommentByCommentId -> ResponseEntity(
-                            serializeUnexpectedErrorForResponseBody("コメントが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                            HttpStatus.valueOf(404)
-                        )
-                        /**
-                         * 原因: 認可されていない（削除しようとしたが実行ユーザー（CurrentUserId）のものじゃなかった）
-                         */
-                        is DeleteCommentUseCase.Error.NotAuthorizedDeleteComment -> ResponseEntity(
-                            serializeUnexpectedErrorForResponseBody("コメントの削除が許可されていません"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                            HttpStatus.valueOf(401)
-                        )
-                    }
-                    /**
-                     * コメントの削除に成功
-                     */
-                    is Right -> ResponseEntity(
-                        "",
-                        HttpStatus.valueOf(200)
-                    )
-                }
-            }
-        }
+    override fun deleteArticleComment(authorization: String, slug: String, id: Int): ResponseEntity<Unit> {
+        val currentUser = realworldAuthenticationUseCase.execute(authorization).fold(
+            { throw RealworldAuthenticationUseCaseUnauthorizedException(it) },
+            { it }
+        )
+
+        deleteCommentUseCase.execute(slug, id, currentUser).fold(
+            { throw DeleteCommentUseCaseErrorException(it) },
+            {}
+        )
+
+        return ResponseEntity(
+            HttpStatus.OK
+        )
     }
+
+    data class DeleteCommentUseCaseErrorException(val error: DeleteCommentUseCase.Error) : Exception()
+
+    @ExceptionHandler(value = [DeleteCommentUseCaseErrorException::class])
+    fun onDeleteCommentUseCaseErrorException(e: DeleteCommentUseCaseErrorException): ResponseEntity<GenericErrorModel> =
+        when (e.error) {
+            /**
+             * 原因: CommentId がバリデーションエラー
+             */
+            is DeleteCommentUseCase.Error.InvalidCommentId -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = listOf("コメント ID が不正です"))),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+            /**
+             * 原因: Slug がバリデーションエラー
+             */
+            is DeleteCommentUseCase.Error.InvalidSlug -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = listOf("Slug が不正です"))),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+            /**
+             * 原因: 認可されていない（削除しようとしたが実行ユーザー（CurrentUserId）のものじゃなかった）
+             */
+            is DeleteCommentUseCase.Error.NotAuthorizedDeleteComment -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = listOf("コメントの削除が許可されていません"))),
+                HttpStatus.UNAUTHORIZED
+            )
+            /**
+             * 原因: 記事が見つからなかった
+             */
+            is DeleteCommentUseCase.Error.NotFoundArticleBySlug -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = listOf("記事が見つかりませんでした"))),
+                HttpStatus.NOT_FOUND
+            )
+            /**
+             * 原因: CommentId に該当するコメントがなかった
+             */
+            is DeleteCommentUseCase.Error.NotFoundCommentByCommentId -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = listOf("コメントが見つかりませんでした"))),
+                HttpStatus.NOT_FOUND
+            )
+        }
 }
