@@ -8,8 +8,8 @@ import org.assertj.core.api.Assertions.assertThat
 class GenerateRandomHelperTest {
     class GetRandomString {
         @Property
-        fun `正常系-生成された文字列が英大文字小文字数字`(
-            @ForAll @IntRange(min = 0, max = 100) randomInt: Int
+        fun `正常系-指定した長さの文字種別が英大文字小文字数字である文字列が生成される`(
+            @ForAll @IntRange(min = 0, max = 100) length: Int
         ) {
             /**
              * given:
@@ -18,12 +18,12 @@ class GenerateRandomHelperTest {
             /**
              * when:
              */
-            val actual = GenerateRandomHelper.getRandomString(randomInt)
+            val actual = GenerateRandomHelper.getRandomString(length)
 
             /**
              * then:
              */
-            val expectedPattern = "^[a-zA-Z0-9]{$randomInt}$"
+            val expectedPattern = "^[a-zA-Z0-9]{$length}$"
             assertThat(actual).matches(expectedPattern)
         }
     }
