@@ -1,20 +1,11 @@
 package com.example.realworldkotlinspringbootjdbc.api_integration
 
 import arrow.core.getOrHandle
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
 import com.example.realworldkotlinspringbootjdbc.api_integration.helper.DatetimeVerificationHelper
 import com.example.realworldkotlinspringbootjdbc.api_integration.helper.GenerateRandomHelper.getRandomString
-import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
-import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
-import com.example.realworldkotlinspringbootjdbc.domain.user.Email
-import com.example.realworldkotlinspringbootjdbc.domain.user.Image
-import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
-import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.infra.DbConnection
 import com.example.realworldkotlinspringbootjdbc.infra.helper.SeedData
 import com.example.realworldkotlinspringbootjdbc.util.MySession
-import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwtImpl
 import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.core.api.dataset.ExpectedDataSet
@@ -36,6 +27,8 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+import java.time.OffsetDateTime
+import java.util.stream.IntStream
 
 class CommentTest {
     @SpringBootTest
@@ -247,22 +240,13 @@ class CommentTest {
         fun `正常系-slug に該当する作成済記事が存在し、コメントの作成に成功する`() {
             /**
              * given:
-             * - userId = 1、email = "paul-graham@example.com" の登録済ユーザーのログイン用 JWT を作成する
+             * - 有効なセッション情報のToken(JWT)
+             * - 有効なパスパラメータ（Slug）
+             * - 有効なリクエストボディ
              */
-            val registeredUser = RegisteredUser.newWithoutValidation(
-                userId = UserId(1),
-                email = Email.newWithoutValidation("paul-graham@example.com"),
-                username = Username.newWithoutValidation("paul-graham"),
-                bio = Bio.newWithoutValidation("Rustを作った"),
-                image = Image.newWithoutValidation("")
-            )
-            val session = MySession(userId = registeredUser.userId, email = registeredUser.email)
-            val token =
-                JWT.create()
-                    .withIssuer(MySessionJwt.ISSUER)
-                    .withClaim(MySessionJwt.USER_ID_KEY, session.userId.value)
-                    .withClaim(MySessionJwt.EMAIL_KEY, session.email.value)
-                    .sign(Algorithm.HMAC256("secret"))
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
             val pathParameter = "functional-programming-kotlin"
             val rawRequestBody = """
                 {
@@ -280,7 +264,7 @@ class CommentTest {
                     .post("/api/articles/$pathParameter/comments-old")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(rawRequestBody)
-                    .header("Authorization", token)
+                    .header("Authorization", sessionToken)
             ).andReturn().response
             val actualStatus = response.status
             val actualResponseBody = response.contentAsString
@@ -304,18 +288,24 @@ class CommentTest {
                     }
                 """.trimIndent()
             assertThat(actualStatus).isEqualTo(expectedStatus)
+            fun expectIso8601UtcAndParsable(o: Any): Boolean {
+                assertThat(o.toString())
+                    .`as`("YYYY-MM-DDTHH:mm:ss.SSSXXX(ISO8601形式)で、TimeZoneはUTCである")
+                    .matches("([0-9]{4})-([0-9]{2})-([0-9]{2}T([0-9]{2}):([0-9]{2}):([0-9]{2})Z)")
+                return runCatching { OffsetDateTime.parse(o.toString()) }.isSuccess
+            }
             JSONAssert.assertEquals(
                 expectedResponseBody,
                 actualResponseBody,
                 CustomComparator(
                     JSONCompareMode.STRICT,
-                    Customization("Comment.createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                    Customization("comment.createdAt") { actualCreatedAt, expectedDummy ->
+                        expectIso8601UtcAndParsable(
                             actualCreatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
-                    Customization("Comment.updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                    Customization("comment.updatedAt") { actualUpdatedAt, expectedDummy ->
+                        expectIso8601UtcAndParsable(
                             actualUpdatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
