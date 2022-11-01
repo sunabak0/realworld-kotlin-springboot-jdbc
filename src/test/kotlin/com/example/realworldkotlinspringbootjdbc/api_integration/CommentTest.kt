@@ -261,7 +261,7 @@ class CommentTest {
              */
             val response = mockMvc.perform(
                 MockMvcRequestBuilders
-                    .post("/api/articles/$pathParameter/comments-old")
+                    .post("/api/articles/$pathParameter/comments")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(rawRequestBody)
                     .header("Authorization", sessionToken)
@@ -278,12 +278,17 @@ class CommentTest {
             val expectedResponseBody =
                 """
                     {
-                      "Comment": {
+                      "comment": {
                         "id": 10001,
                         "body": "created-dummy-body-1",
-                        "createdAt": "2022-01-01T00:00:00.000Z",
-                        "updatedAt": "2022-01-01T00:00:00.000Z",
-                        "authorId": 1
+                        "createdAt": "2022-01-01T00:00:00Z",
+                        "updatedAt": "2022-01-01T00:00:00Z",
+                        "author": {
+                          "username": "paul-graham",
+                          "bio": "Lisper",
+                          "image": "",
+                          "following": false
+                        }
                       }
                     }
                 """.trimIndent()
@@ -302,12 +307,12 @@ class CommentTest {
                     Customization("comment.createdAt") { actualCreatedAt, expectedDummy ->
                         expectIso8601UtcAndParsable(
                             actualCreatedAt
-                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                        ) && expectedDummy == "2022-01-01T00:00:00Z"
                     },
                     Customization("comment.updatedAt") { actualUpdatedAt, expectedDummy ->
                         expectIso8601UtcAndParsable(
                             actualUpdatedAt
-                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                        ) && expectedDummy == "2022-01-01T00:00:00Z"
                     },
                 )
             )
