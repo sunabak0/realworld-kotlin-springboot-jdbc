@@ -1,0 +1,33 @@
+#
+# Codecov用の設定
+#
+# - github actionsで利用している
+# - Codecovにレポートを送らなくなったら消してよい
+#
+
+#
+# ignore
+#
+# 解析対象に入れないファイル
+#
+ignore:
+  #
+  # SpringBootを起動させるためのファイル
+  #
+  - com/example/realworldkotlinspringbootjdbc/RealworldKotlinSpringbootJdbcApplication.kt
+
+  #
+  # OpenAPI Generatorが自動生成するファイルのimport時のpackage path
+  #
+  # - build.gradle.ktsにて記述
+  #
+  - com/example/realworldkotlinspringbootjdbc/openapi/generated/*
+
+  #
+  # Komapperが自動生成するパッケージpath
+  #
+  # - KomapperEntityで定義したファイルのpackage pathと同じ場所に作られる
+  # - そのまま指定してしまうと定義したEntityも無視される
+  # - 自動生成されるファイルは"_"始まりなので、それだけを指定する
+  #
+  - com/example/realworldkotlinspringbootjdbc/infra/_*.kt
