@@ -428,6 +428,63 @@ class CommentTest {
                 JSONCompareMode.NON_EXTENSIBLE,
             )
         }
+
+        @Test
+        fun `準正常系-Slug が不正な場合バリデーションエラー`() {
+            /**
+             * given:
+             * - 有効なセッション情報のToken(JWT)
+             * - 有効でないパスパラメータ（Slug）
+             * - 有効なリクエストボディ
+             */
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val pathParameter = IntStream.range(0, 100).mapToObj { "long-slug" }.toList().joinToString()
+            val rawRequestBody = """
+                {
+                    "comment": {
+                        "body": "created-dummy-body-1"
+                    }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .post("/api/articles/$pathParameter/comments")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(rawRequestBody)
+                    .header("Authorization", sessionToken)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
+            val expectedResponseBody =
+                """
+                    {
+                        "errors": {
+                            "body": [
+                                "slug が不正です"
+                            ]
+                        } 
+                    }
+                """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                JSONCompareMode.NON_EXTENSIBLE,
+            )
+        }
     }
 
     @SpringBootTest
