@@ -289,8 +289,8 @@ dependencies {
      * - OpenAPI Generatorで作成されるコードがimportしている
      * - 基本的にプロダクションコードでは使わない想定
      */
-    compileOnly("io.swagger.core.v3:swagger-annotations:2.2.4")
-    compileOnly("io.swagger.core.v3:swagger-models:2.2.4")
+    compileOnly("io.swagger.core.v3:swagger-annotations:2.2.6")
+    compileOnly("io.swagger.core.v3:swagger-models:2.2.6")
     compileOnly("jakarta.annotation:jakarta.annotation-api:2.1.1")
 
     /**
