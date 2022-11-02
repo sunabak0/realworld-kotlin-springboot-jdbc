@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.put
 import org.springframework.util.MultiValueMapAdapter
 import java.util.stream.IntStream
 
@@ -1975,6 +1976,393 @@ class ArticleTest {
                     ]
                   }
                 }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
+    }
+
+    @SpringBootTest
+    @AutoConfigureMockMvc
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    class UpdateArticle {
+
+        @Autowired
+        lateinit var mockMvc: MockMvc
+
+        @BeforeEach
+        fun reset() = DbConnection.resetSequence()
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/then/article_repository/update-success.yml"
+            ],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `正常系-自分が著者である作成済み記事は、バリデーションが通れば更新に成功する`() {
+            /**
+             * given:
+             * - 存在する登録済みユーザー
+             * - ユーザーが著者である作成済み記事のslug
+             * - 更新内容が記述されたリクエストボディ(json)
+             */
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = "rust-vs-scala-vs-kotlin"
+            val requestBody = """
+                {
+                  "article": {
+                    "title": "プログラマーが知るべき97のこと",
+                    "body": "93. エラーを無視するな",
+                    "description": "エッセイ集"
+                  }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.put("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+                content = requestBody
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             */
+            val expectedStatus = HttpStatus.OK.value()
+            val expectedResponseBody = """
+                {
+                  "article":{
+                    "title":"プログラマーが知るべき97のこと",
+                    "slug":"rust-vs-scala-vs-kotlin",
+                    "body":"93. エラーを無視するな",
+                    "createdAt": "2022-01-01T00:00:00.000Z",
+                    "updatedAt": "2022-01-01T00:00:00.000Z",
+                    "description":"エッセイ集",
+                    "tagList":[
+                      "rust",
+                      "scala",
+                      "kotlin"
+                    ],
+                    "authorId":1,
+                    "favorited":false,
+                    "favoritesCount":1
+                  }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.NON_EXTENSIBLE,
+                    Customization("article.createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualCreatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("article.updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                            actualUpdatedAt
+                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                )
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-slugとしてのバリデーションが通らない場合、その旨のエラーが返る`() {
+            /**
+             * given:
+             * - 存在する登録済みユーザー
+             * - バリデーションエラーが起こるslug
+             * - 更新内容が記述されたリクエストボディ(json)(これはバリデーションエラーは起きない)
+             */
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = IntStream.range(0, 10).mapToObj { "長すぎるslug" }.toList().joinToString()
+            val requestBody = """
+                {
+                  "article": {
+                    "title": "プログラマーが知るべき97のこと",
+                    "body": "93. エラーを無視するな",
+                    "description": "エッセイ集"
+                  }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.put("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+                content = requestBody
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             */
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
+            val expectedResponseBody = """
+                {
+                  "errors":{
+                    "body":[
+                      {
+                        "slug":"長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug",
+                        "key":"Slug",
+                        "message":"slugは32文字以下にしてください。"
+                      }
+                    ]
+                  }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-更新予定の項目にバリデーションエラーがあった場合、その旨のエラーが返る`() {
+            /**
+             * given:
+             * - 存在する登録済みユーザー
+             * - ユーザーが著者である作成済み記事のslug
+             * - バリデーションエラーが起きる更新内容(json)
+             */
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = "rust-vs-scala-vs-kotlin"
+            val requestBody = """
+                {
+                   "article": {
+                      "title": "${IntStream.range(0, 10).mapToObj { "長すぎるタイトル" }.toList().joinToString()}",
+                      "description": "${IntStream.range(0, 70).mapToObj { "長すぎる概要" }.toList().joinToString()}",
+                      "body": "${IntStream.range(0, 200).mapToObj { "長すぎる内容" }.toList().joinToString()}"
+                   }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.put("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+                content = requestBody
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             */
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
+            val expectedResponseBody = """
+                {
+                   "errors":{
+                      "body":[
+                         {
+                            "title":"長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル",
+                            "key":"Title",
+                            "message":"titleは32文字以下にしてください。"
+                         },
+                         {
+                            "description":"長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要",
+                            "key":"Description",
+                            "message":"descriptionは64文字以下にしてください。"
+                         },
+                         {
+                            "body":"長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容",
+                            "key":"Body",
+                            "message":"body は1024文字以下にしてください。"
+                         }
+                      ]
+                   }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-存在しない記事を指定した場合、その旨のエラーが返る`() {
+            /**
+             * given:
+             * - 存在する登録済みユーザー
+             * - 存在しないslug
+             * - 更新内容が記述されたリクエストボディ(json)(これはバリデーションエラーは起きない)
+             */
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = "not-existed-user"
+            val requestBody = """
+                {
+                  "article": {
+                    "title": "プログラマーが知るべき97のこと",
+                    "body": "93. エラーを無視するな",
+                    "description": "エッセイ集"
+                  }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.put("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+                content = requestBody
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             */
+            val expectedStatus = HttpStatus.NOT_FOUND.value()
+            val expectedResponseBody = """
+                {"errors":{"body":["記事が見つかりません　"]}}
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = [
+                "datasets/yml/given/tags.yml",
+                "datasets/yml/given/articles.yml",
+            ],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-自分が著者でない場合、作成済み記事の更新に失敗する`() {
+            /**
+             * given:
+             * - 著者ではない登録済みユーザー
+             * - 登録済み記事のslug
+             * - 更新内容が記述されたリクエストボディ(json)(これはバリデーションエラーは起きない)
+             */
+            val existedUser = SeedData.users().toList()[1]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = "rust-vs-scala-vs-kotlin"
+            val requestBody = """
+                {
+                  "article": {
+                    "title": "プログラマーが知るべき97のこと",
+                    "body": "93. エラーを無視するな",
+                    "description": "エッセイ集"
+                  }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.put("/articles/$slug") {
+                contentType = MediaType.APPLICATION_JSON
+                content = requestBody
+                header("Authorization", sessionToken)
+            }.andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             */
+            val expectedStatus = HttpStatus.FORBIDDEN.value()
+            val expectedResponseBody = """
+                {"errors":{"body":["削除する権限がありません"]}}
             """.trimIndent()
             assertThat(actualStatus).isEqualTo(expectedStatus)
             JSONAssert.assertEquals(
