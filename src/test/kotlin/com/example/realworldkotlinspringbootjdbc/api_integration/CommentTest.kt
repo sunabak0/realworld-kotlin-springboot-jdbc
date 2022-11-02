@@ -317,6 +317,62 @@ class CommentTest {
                 )
             )
         }
+
+        @Test
+        @DataSet(value = ["datasets/yml/given/users.yml"])
+        fun `準正常系-slug に該当する作成済記事が存在しない場合、記事が見つからない`() {
+            /**
+             * given:
+             * - userId = 1、email = "paul-graham@example.com" の登録済ユーザーのログイン用 JWT を作成する
+             */
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val pathParameter = "dummy-slug"
+            val rawRequestBody = """
+                {
+                    "comment": {
+                        "body": "created-dummy-body-1"
+                    }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .post("/api/articles/$pathParameter/comments")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(rawRequestBody)
+                    .header("Authorization", sessionToken)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = HttpStatus.NOT_FOUND.value()
+            val expectedResponseBody =
+                """
+                    {
+                        "errors": {
+                            "body": [
+                                "記事が見つかりませんでした"
+                            ]
+                        } 
+                    }
+                """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                JSONCompareMode.NON_EXTENSIBLE,
+            )
+        }
     }
 
     @SpringBootTest
