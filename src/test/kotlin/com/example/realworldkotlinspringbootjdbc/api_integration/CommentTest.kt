@@ -53,7 +53,6 @@ class CommentTest {
             /**
              * given:
              */
-            val sessionToken = ""
             val slug = "rust-vs-scala-vs-kotlin"
 
             /**
@@ -63,7 +62,6 @@ class CommentTest {
                 MockMvcRequestBuilders
                     .get("/api/articles/$slug/comments")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .header("Authorization", sessionToken)
             ).andReturn().response
             val actualStatus = response.status
             val actualResponseBody = response.contentAsString
@@ -74,6 +72,7 @@ class CommentTest {
              * - レスポンスボディが一致する
              */
             val expectedStatus = HttpStatus.OK.value()
+            // TODO: UseCase の実装が終わるまで、一時的に author object を dummy データに設定
             val expectedResponseBody =
                 """
                     {
@@ -83,21 +82,36 @@ class CommentTest {
                           "body": "dummy-comment-body-01",
                           "createdAt": "2022-01-01T00:00:00.000Z",
                           "updatedAt": "2022-01-01T00:00:00.000Z",
-                          "authorId": 3
+                          "author": {
+                            "username": "dummy-username",
+                            "bio": "dummy-bio",
+                            image: "dummy-image",
+                            following: false
+                          }
                         },
                         {
                           "id": 3,
                           "body": "dummy-comment-body-03",
                           "createdAt": "2022-01-01T00:00:00.000Z",
                           "updatedAt": "2022-01-01T00:00:00.000Z",
-                          "authorId": 2
+                          "author": {
+                            "username": "dummy-username",
+                            "bio": "dummy-bio",
+                            image: "dummy-image",
+                            following: false
+                          }
                         },
                         {
                           "id": 5,
                           "body": "dummy-comment-body-02",
                           "createdAt": "2022-01-01T00:00:00.000Z",
                           "updatedAt": "2022-01-01T00:00:00.000Z",
-                          "authorId": 3
+                          "author": {
+                            "username": "dummy-username",
+                            "bio": "dummy-bio",
+                            image: "dummy-image",
+                            following: false
+                          }
                         }
                       ]
                     }

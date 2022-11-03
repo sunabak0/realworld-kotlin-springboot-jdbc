@@ -651,6 +651,13 @@ paths:
       description: Get the comments for an article. Auth is optional
       operationId: GetArticleComments
       parameters:
+        # 自前追加
+        - name: Authorization
+          in: header
+          description: セッション用JWT
+          required: false
+          schema:
+            $ref: '#/components/securitySchemes/Token'
         - name: slug
           in: path
           description: Slug of the article that you want to get comments for

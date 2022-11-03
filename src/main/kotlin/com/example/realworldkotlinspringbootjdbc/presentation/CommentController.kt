@@ -1,30 +1,25 @@
 package com.example.realworldkotlinspringbootjdbc.presentation
 
-import arrow.core.Either.Left
-import arrow.core.Either.Right
 import arrow.core.Some
 import arrow.core.none
+import arrow.core.toOption
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.controller.CommentsApi
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Comment
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModel
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModelErrors
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.MultipleCommentsResponse
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.NewCommentRequest
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Profile
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.SingleCommentResponse
-import com.example.realworldkotlinspringbootjdbc.presentation.response.Comment
-import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.RealworldAuthenticationUseCaseUnauthorizedException
 import com.example.realworldkotlinspringbootjdbc.usecase.comment.CreateCommentUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.comment.DeleteCommentUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.comment.ListCommentUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.shared.RealworldAuthenticationUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
 import java.time.ZoneOffset
 
@@ -36,64 +31,75 @@ class CommentController(
     val createCommentUseCase: CreateCommentUseCase,
     val deleteCommentUseCase: DeleteCommentUseCase
 ) : CommentsApi {
-    @GetMapping("/articles/{slug}/comments")
-    fun list(
-        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
-        @PathVariable("slug") slug: String?
-    ): ResponseEntity<String> {
-        val optionalCurrentUser = myAuth.authorize(rawAuthorizationHeader).fold(
+    override fun getArticleComments(slug: String, authorization: String?): ResponseEntity<MultipleCommentsResponse> {
+        val currentUser = authorization.toOption().fold(
             { none() },
-            { Some(it) }
+            {
+                realworldAuthenticationUseCase.execute(it).fold(
+                    { none() },
+                    { result -> Some(result) }
+                )
+            }
         )
-        return when (
-            val useCaseResult = listCommentUseCase.execute(slug, optionalCurrentUser)
-        ) {
-            /**
-             * コメント取得に失敗
-             */
-            is Left -> when (useCaseResult.value) {
-                /**
-                 * 原因: バリデーションエラー
-                 */
-                is ListCommentUseCase.Error.InvalidSlug -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                    HttpStatus.valueOf(404)
-                )
-                /**
-                 * 原因: 記事が見つからなかった
-                 */
-                is ListCommentUseCase.Error.NotFound -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                    HttpStatus.valueOf(404)
-                )
-            }
-            /**
-             * コメント取得に成功
-             * TODO authorId ではなく、author を戻すように修正する
-             */
-            is Right -> {
-                val comments =
-                    useCaseResult.value.map {
-                        Comment(
-                            it.id.value,
-                            it.body.value,
-                            it.createdAt,
-                            it.updatedAt,
-                            it.authorId.value,
-                        )
-                    }
 
-                ResponseEntity(
-                    ObjectMapper().writeValueAsString(
-                        mapOf(
-                            "comments" to comments,
+        val commentWithAuthors = listCommentUseCase.execute(slug, currentUser).fold(
+            { throw TODO() },
+            { it }
+        )
+
+        // TODO: UseCase の実装が終わるまで、一時的に author object を dummy データに設定
+        return ResponseEntity(
+            MultipleCommentsResponse(
+                commentWithAuthors.map {
+                    Comment(
+                        id = it.id.value,
+                        createdAt = it.createdAt.toInstant().atOffset(ZoneOffset.UTC),
+                        updatedAt = it.updatedAt.toInstant().atOffset(ZoneOffset.UTC),
+                        body = it.body.value,
+                        Profile(
+                            username = "dummy-username",
+                            bio = "dummy-bio",
+                            image = "dummy-image",
+                            following = false
                         )
-                    ),
-                    HttpStatus.valueOf(200)
-                )
-            }
-        }
+                    )
+                }
+            ),
+            HttpStatus.OK
+        )
     }
+    // override fun getArticleComments(authorization: String, slug: String): ResponseEntity<MultipleCommentsResponse> {
+    //     val currentUser = realworldAuthenticationUseCase.execute(authorization).fold(
+    //         { none() },
+    //         { Some(it) }
+    //     )
+    //
+    //     val createdArticleWithAuthors = listCommentUseCase.execute(slug, currentUser).fold(
+    //         { throw TODO() },
+    //         { it }
+    //     )
+    //
+    //     // TODO: UseCase の実装が終わるまで、一時的に author object を dummy データに設定
+    //     return ResponseEntity(
+    //         MultipleCommentsResponse(
+    //             createdArticleWithAuthors.map {
+    //                 Comment(
+    //                     id = it.id.value,
+    //                     createdAt = it.createdAt.toInstant().atOffset(ZoneOffset.UTC),
+    //                     updatedAt = it.updatedAt.toInstant().atOffset(ZoneOffset.UTC),
+    //                     body = it.body.value,
+    //                     Profile(
+    //                         username = "dummy-username",
+    //                         bio = "dummy-bio",
+    //                         image = "dummy-image",
+    //                         following = false
+    //                     )
+    //                 )
+    //             }
+    //         ),
+    //         HttpStatus.OK
+    //     )
+    // }
 
     override fun createArticleComment(
         authorization: String,
