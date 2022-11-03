@@ -27,7 +27,6 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-import java.time.OffsetDateTime
 import java.util.stream.IntStream
 
 class CommentTest {
@@ -293,24 +292,18 @@ class CommentTest {
                     }
                 """.trimIndent()
             assertThat(actualStatus).isEqualTo(expectedStatus)
-            fun expectIso8601UtcAndParsable(o: Any): Boolean {
-                assertThat(o.toString())
-                    .`as`("YYYY-MM-DDTHH:mm:ss.SSSXXX(ISO8601形式)で、TimeZoneはUTCである")
-                    .matches("([0-9]{4})-([0-9]{2})-([0-9]{2}T([0-9]{2}):([0-9]{2}):([0-9]{2})Z)")
-                return runCatching { OffsetDateTime.parse(o.toString()) }.isSuccess
-            }
             JSONAssert.assertEquals(
                 expectedResponseBody,
                 actualResponseBody,
                 CustomComparator(
                     JSONCompareMode.STRICT,
                     Customization("comment.createdAt") { actualCreatedAt, expectedDummy ->
-                        expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualCreatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00Z"
                     },
                     Customization("comment.updatedAt") { actualUpdatedAt, expectedDummy ->
-                        expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualUpdatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00Z"
                     },

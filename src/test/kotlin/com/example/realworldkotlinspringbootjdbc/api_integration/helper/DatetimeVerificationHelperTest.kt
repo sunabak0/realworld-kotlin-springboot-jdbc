@@ -32,5 +32,29 @@ class DatetimeVerificationHelperTest {
              */
             assertThat(actual).isTrue
         }
+
+        @Property
+        fun `正常系-ミリ秒なしの ISO8601 かつ UTC の場合 true が戻り値`(
+            @ForAll @OffsetRange(
+                min = "Z",
+                max = "Z"
+            ) offsetDateTime: OffsetDateTime
+        ) {
+            /**
+             * given:
+             * - ISO8601 にフォーマット
+             */
+            val formatted = offsetDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"))
+
+            /**
+             * when:
+             */
+            val actual = DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(formatted)
+
+            /**
+             * then:
+             */
+            assertThat(actual).isTrue
+        }
     }
 }
