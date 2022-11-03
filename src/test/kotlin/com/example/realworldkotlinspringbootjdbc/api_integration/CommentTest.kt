@@ -53,21 +53,28 @@ class CommentTest {
             /**
              * given:
              */
-            val pathParameter = "rust-vs-scala-vs-kotlin"
+            val sessionToken = ""
+            val slug = "rust-vs-scala-vs-kotlin"
 
             /**
              * when:
              */
-            val actual = mockMvc.get("/api/articles/$pathParameter/comments") {
-                contentType = MediaType.APPLICATION_JSON
-            }
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .get("/api/articles/$slug/comments")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", sessionToken)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
 
             /**
              * then:
-             * - ステータスコードが 200
-             * - 作成日時と更新日時以外を比較する
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
              */
-            val expected =
+            val expectedStatus = HttpStatus.OK.value()
+            val expectedResponseBody =
                 """
                     {
                       "comments": [
@@ -95,17 +102,17 @@ class CommentTest {
                       ]
                     }
                 """.trimIndent()
-            val actualResponseBody = actual.andExpect { status { isOk() } }.andReturn().response.contentAsString
+            assertThat(actualStatus).isEqualTo(expectedStatus)
             JSONAssert.assertEquals(
-                expected,
+                expectedResponseBody,
                 actualResponseBody,
                 CustomComparator(
                     JSONCompareMode.STRICT,
                     Customization("*.createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(actualCreatedAt) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(actualCreatedAt) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                     Customization("*.updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(actualUpdatedAt) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(actualUpdatedAt) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                 )
             )
