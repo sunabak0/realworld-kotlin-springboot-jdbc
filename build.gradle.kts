@@ -99,7 +99,7 @@ plugins {
      * 注意
      * - jvm と plugin.spring と ksp のバージョンは合わせること(例: 1.7.20)
      */
-    id("com.google.devtools.ksp") version "1.7.20-1.0.7"
+    id("com.google.devtools.ksp") version "1.7.20-1.0.8"
 }
 
 group = "com.example"
