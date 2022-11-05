@@ -4,6 +4,17 @@
 # - github actionsで利用している
 # - Codecovにレポートを送らなくなったら消してよい
 #
+codecov:
+  #
+  # Squash and Merge戦略だと必要そう
+  #
+  # Unable to determine a parent commit to compare against in base branch after Squash and Merge
+  # - https://community.codecov.com/t/unable-to-determine-a-parent-commit-to-compare-against-in-base-branch-after-squash-and-merge/2480/15
+  #
+  # Coverage Offsets
+  # - https://docs.codecov.com/docs/comparing-commits
+  #
+  allow_coverage_offsets: true
 
 #
 # ignore
