@@ -106,7 +106,7 @@ jobs:
         run: make test.full
         env:
           TZ: Asia/Tokyo
-      - name: '【mainブランチ】 テストカバレッジレポートをCodecovに送る'
+      - name: '【debugブランチ】 テストカバレッジレポートをCodecovに送る'
         #if: github.ref == 'refs/heads/main'
         uses: codecov/codecov-action@v3
         with:
