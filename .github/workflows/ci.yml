@@ -102,11 +102,12 @@ jobs:
           TZ: Asia/Tokyo
       - name: '【mainブランチ以外】 make test'
         if: github.ref != 'refs/heads/main'
-        run: make test
+        #run: make test
+        run: make test.full
         env:
           TZ: Asia/Tokyo
-      - name: '【mainブランチ】 テストカバレッジレポートをCodecovに送る'
-        if: github.ref == 'refs/heads/main'
+      - name: '【debugブランチ】 テストカバレッジレポートをCodecovに送る'
+        #if: github.ref == 'refs/heads/main'
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
