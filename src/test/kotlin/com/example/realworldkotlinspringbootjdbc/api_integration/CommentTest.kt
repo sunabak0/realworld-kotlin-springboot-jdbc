@@ -270,8 +270,8 @@ class CommentTest {
 
             /**
              * then:
-             * - ステータスコードが 200
-             * - createdAt、updatedAt はメタデータなので比較しない
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
              */
             val expectedStatus = HttpStatus.OK.value()
             val expectedResponseBody =
@@ -316,7 +316,9 @@ class CommentTest {
         fun `準正常系-slug に該当する作成済記事が存在しない場合、記事が見つからない`() {
             /**
              * given:
-             * - userId = 1、email = "paul-graham@example.com" の登録済ユーザーのログイン用 JWT を作成する
+             * - 有効なセッション情報のToken(JWT)
+             * - 有効なパスパラメータだが、存在しない Slug
+             * - 有効なリクエストボディ
              */
             val existedUser = SeedData.users().first()
             val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
@@ -371,7 +373,9 @@ class CommentTest {
         fun `準正常系-作成するコメントが適切でない場合バリデーションエラー`() {
             /**
              * given:
-             * - userId = 1、email = "paul-graham@example.com" の登録済ユーザーのログイン用 JWT を作成する
+             * - 有効なセッション情報のToken(JWT)
+             * - 有効なパスパラメータ（Slug）
+             * - 有効でないリクエストボディ
              */
             val existedUser = SeedData.users().first()
             val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
