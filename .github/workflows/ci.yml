@@ -106,8 +106,8 @@ jobs:
         run: make test.full
         env:
           TZ: Asia/Tokyo
-      - name: '【debugブランチ】 テストカバレッジレポートをCodecovに送る'
-        #if: github.ref == 'refs/heads/main'
+      - name: '【squash-and-merge-testブランチ】 テストカバレッジレポートをCodecovに送る'
+        if: github.ref == 'refs/heads/squash-and-merge-test'
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
