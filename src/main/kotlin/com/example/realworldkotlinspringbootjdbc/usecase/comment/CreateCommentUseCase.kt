@@ -4,11 +4,13 @@ import arrow.core.Either
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import arrow.core.left
-import com.example.realworldkotlinspringbootjdbc.domain.Comment
+import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
+import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
 import com.example.realworldkotlinspringbootjdbc.domain.comment.Body
+import com.example.realworldkotlinspringbootjdbc.usecase.shared_model.CommentWithAuthor
 import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
@@ -24,7 +26,7 @@ interface CreateCommentUseCase {
      * @param currentUser リクエストしたユーザー
      * @return エラー or 作成済み記事のコメント
      */
-    fun execute(slug: String?, body: String?, currentUser: RegisteredUser): Either<Error, Comment> =
+    fun execute(slug: String?, body: String?, currentUser: RegisteredUser): Either<Error, CommentWithAuthor> =
         throw NotImplementedError()
 
     sealed interface Error : MyError {
@@ -45,7 +47,7 @@ class CreateCommentUseCaseImpl(
         slug: String?,
         body: String?,
         currentUser: RegisteredUser
-    ): Either<CreateCommentUseCase.Error, Comment> {
+    ): Either<CreateCommentUseCase.Error, CommentWithAuthor> {
         /**
          * Slug のバリデーション
          * Invalid -> 早期リターン
@@ -77,7 +79,16 @@ class CreateCommentUseCaseImpl(
             /**
              * コメント登録 成功
              */
-            is Right -> createResult
+            is Right -> CommentWithAuthor(
+                createResult.value,
+                OtherUser.newWithoutValidation(
+                    userId = currentUser.userId,
+                    username = currentUser.username,
+                    bio = currentUser.bio,
+                    image = currentUser.image,
+                    following = false
+                )
+            ).right()
         }
     }
 }

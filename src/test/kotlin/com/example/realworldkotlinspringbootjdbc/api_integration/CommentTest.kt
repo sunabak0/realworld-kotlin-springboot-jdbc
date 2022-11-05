@@ -1,20 +1,11 @@
 package com.example.realworldkotlinspringbootjdbc.api_integration
 
 import arrow.core.getOrHandle
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
 import com.example.realworldkotlinspringbootjdbc.api_integration.helper.DatetimeVerificationHelper
 import com.example.realworldkotlinspringbootjdbc.api_integration.helper.GenerateRandomHelper.getRandomString
-import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
-import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
-import com.example.realworldkotlinspringbootjdbc.domain.user.Email
-import com.example.realworldkotlinspringbootjdbc.domain.user.Image
-import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
-import com.example.realworldkotlinspringbootjdbc.domain.user.Username
 import com.example.realworldkotlinspringbootjdbc.infra.DbConnection
 import com.example.realworldkotlinspringbootjdbc.infra.helper.SeedData
 import com.example.realworldkotlinspringbootjdbc.util.MySession
-import com.example.realworldkotlinspringbootjdbc.util.MySessionJwt
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwtImpl
 import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.core.api.dataset.ExpectedDataSet
@@ -36,6 +27,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+import java.util.stream.IntStream
 
 class CommentTest {
     @SpringBootTest
@@ -247,22 +239,13 @@ class CommentTest {
         fun `正常系-slug に該当する作成済記事が存在し、コメントの作成に成功する`() {
             /**
              * given:
-             * - userId = 1、email = "paul-graham@example.com" の登録済ユーザーのログイン用 JWT を作成する
+             * - 有効なセッション情報のToken(JWT)
+             * - 有効なパスパラメータ（Slug）
+             * - 有効なリクエストボディ
              */
-            val registeredUser = RegisteredUser.newWithoutValidation(
-                userId = UserId(1),
-                email = Email.newWithoutValidation("paul-graham@example.com"),
-                username = Username.newWithoutValidation("paul-graham"),
-                bio = Bio.newWithoutValidation("Rustを作った"),
-                image = Image.newWithoutValidation("")
-            )
-            val session = MySession(userId = registeredUser.userId, email = registeredUser.email)
-            val token =
-                JWT.create()
-                    .withIssuer(MySessionJwt.ISSUER)
-                    .withClaim(MySessionJwt.USER_ID_KEY, session.userId.value)
-                    .withClaim(MySessionJwt.EMAIL_KEY, session.email.value)
-                    .sign(Algorithm.HMAC256("secret"))
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
             val pathParameter = "functional-programming-kotlin"
             val rawRequestBody = """
                 {
@@ -277,29 +260,34 @@ class CommentTest {
              */
             val response = mockMvc.perform(
                 MockMvcRequestBuilders
-                    .post("/api/articles/$pathParameter/comments-old")
+                    .post("/api/articles/$pathParameter/comments")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(rawRequestBody)
-                    .header("Authorization", token)
+                    .header("Authorization", sessionToken)
             ).andReturn().response
             val actualStatus = response.status
             val actualResponseBody = response.contentAsString
 
             /**
              * then:
-             * - ステータスコードが 200
-             * - createdAt、updatedAt はメタデータなので比較しない
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
              */
             val expectedStatus = HttpStatus.OK.value()
             val expectedResponseBody =
                 """
                     {
-                      "Comment": {
+                      "comment": {
                         "id": 10001,
                         "body": "created-dummy-body-1",
-                        "createdAt": "2022-01-01T00:00:00.000Z",
-                        "updatedAt": "2022-01-01T00:00:00.000Z",
-                        "authorId": 1
+                        "createdAt": "2022-01-01T00:00:00Z",
+                        "updatedAt": "2022-01-01T00:00:00Z",
+                        "author": {
+                          "username": "paul-graham",
+                          "bio": "Lisper",
+                          "image": "",
+                          "following": false
+                        }
                       }
                     }
                 """.trimIndent()
@@ -309,17 +297,189 @@ class CommentTest {
                 actualResponseBody,
                 CustomComparator(
                     JSONCompareMode.STRICT,
-                    Customization("Comment.createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                    Customization("comment.createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualCreatedAt
-                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                        ) && expectedDummy == "2022-01-01T00:00:00Z"
                     },
-                    Customization("Comment.updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                    Customization("comment.updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualUpdatedAt
-                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                        ) && expectedDummy == "2022-01-01T00:00:00Z"
                     },
                 )
+            )
+        }
+
+        @Test
+        @DataSet(value = ["datasets/yml/given/users.yml"])
+        fun `準正常系-slug に該当する作成済記事が存在しない場合、記事が見つからない`() {
+            /**
+             * given:
+             * - 有効なセッション情報のToken(JWT)
+             * - 有効なパスパラメータだが、存在しない Slug
+             * - 有効なリクエストボディ
+             */
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val pathParameter = "dummy-slug"
+            val rawRequestBody = """
+                {
+                    "comment": {
+                        "body": "created-dummy-body-1"
+                    }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .post("/api/articles/$pathParameter/comments")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(rawRequestBody)
+                    .header("Authorization", sessionToken)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = HttpStatus.NOT_FOUND.value()
+            val expectedResponseBody =
+                """
+                    {
+                        "errors": {
+                            "body": [
+                                "記事が見つかりませんでした"
+                            ]
+                        } 
+                    }
+                """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                JSONCompareMode.NON_EXTENSIBLE,
+            )
+        }
+
+        @Test
+        fun `準正常系-作成するコメントが適切でない場合バリデーションエラー`() {
+            /**
+             * given:
+             * - 有効なセッション情報のToken(JWT)
+             * - 有効なパスパラメータ（Slug）
+             * - 有効でないリクエストボディ
+             */
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val pathParameter = "dummy-slug"
+            val rawRequestBody = """
+                {
+                    "comment": {
+                        "body": "${IntStream.range(0, 1000).mapToObj { "長すぎるBody" }.toList().joinToString()}"
+                    }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .post("/api/articles/$pathParameter/comments")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(rawRequestBody)
+                    .header("Authorization", sessionToken)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
+            val expectedResponseBody =
+                """
+                    {
+                        "errors": {
+                            "body": [
+                                "bodyは1024文字以下にしてください。"
+                            ]
+                        } 
+                    }
+                """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                JSONCompareMode.NON_EXTENSIBLE,
+            )
+        }
+
+        @Test
+        fun `準正常系-Slug が不正な場合バリデーションエラー`() {
+            /**
+             * given:
+             * - 有効なセッション情報のToken(JWT)
+             * - 有効でないパスパラメータ（Slug）
+             * - 有効なリクエストボディ
+             */
+            val existedUser = SeedData.users().first()
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val pathParameter = IntStream.range(0, 100).mapToObj { "long-slug" }.toList().joinToString()
+            val rawRequestBody = """
+                {
+                    "comment": {
+                        "body": "created-dummy-body-1"
+                    }
+                }
+            """.trimIndent()
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .post("/api/articles/$pathParameter/comments")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(rawRequestBody)
+                    .header("Authorization", sessionToken)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
+            val expectedResponseBody =
+                """
+                    {
+                        "errors": {
+                            "body": [
+                                "slug が不正です"
+                            ]
+                        } 
+                    }
+                """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                JSONCompareMode.NON_EXTENSIBLE,
             )
         }
     }

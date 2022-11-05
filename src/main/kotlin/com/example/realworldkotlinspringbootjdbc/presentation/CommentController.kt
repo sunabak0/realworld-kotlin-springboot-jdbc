@@ -7,11 +7,11 @@ import arrow.core.none
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.controller.CommentsApi
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModel
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModelErrors
-import com.example.realworldkotlinspringbootjdbc.presentation.request.NullableComment
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.NewCommentRequest
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Profile
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.SingleCommentResponse
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Comment
-import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
-import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.RealworldAuthenticationUseCaseUnauthorizedException
 import com.example.realworldkotlinspringbootjdbc.usecase.comment.CreateCommentUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.comment.DeleteCommentUseCase
@@ -24,10 +24,9 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
+import java.time.ZoneOffset
 
 @RestController
 class CommentController(
@@ -96,62 +95,67 @@ class CommentController(
         }
     }
 
-    // @PostMapping("/articles/{slug}/comments")
-    @PostMapping("/articles/{slug}/comments-old")
-    fun create(
-        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
-        @PathVariable("slug") slug: String?,
-        @RequestBody rawRequestBody: String?
-    ): ResponseEntity<String> {
-        return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
-            /**
-             * JWT 認証 失敗
-             */
-            is Left -> AuthorizationError.handle()
-            /**
-             * JWT 認証 成功
-             */
-            is Right -> {
-                val comment = NullableComment.from(rawRequestBody)
-                when (val createdComment = createCommentUseCase.execute(slug, comment.body, authorizeResult.value)) {
-                    /**
-                     * コメントの登録に失敗
-                     */
-                    is Left -> when (val useCaseError = createdComment.value) {
-                        /***
-                         * 原因: Slug がバリデーションエラー
-                         */
-                        is CreateCommentUseCase.Error.InvalidSlug -> ResponseEntity(
-                            serializeMyErrorListForResponseBody(useCaseError.errors),
-                            HttpStatus.valueOf(422)
-                        )
-                        /***
-                         * 原因: CommentBody がバリデーションエラー
-                         */
-                        is CreateCommentUseCase.Error.InvalidCommentBody -> ResponseEntity(
-                            serializeMyErrorListForResponseBody(useCaseError.errors),
-                            HttpStatus.valueOf(422)
-                        )
-                        /**
-                         * 原因: 記事が見つかりませんでした
-                         */
-                        is CreateCommentUseCase.Error.NotFound -> ResponseEntity(
-                            serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                            HttpStatus.valueOf(404)
-                        )
-                    }
-                    /**
-                     * コメントの登録に成功
-                     * TODO authorId ではなく、author を戻すように修正する
-                     */
-                    is Right -> ResponseEntity(
-                        Comment.from(createdComment.value).serializeWithRootName(),
-                        HttpStatus.valueOf(200)
+    override fun createArticleComment(
+        authorization: String,
+        slug: String,
+        comment: NewCommentRequest
+    ): ResponseEntity<SingleCommentResponse> {
+        val currenUser = realworldAuthenticationUseCase.execute(authorization).fold(
+            { throw RealworldAuthenticationUseCaseUnauthorizedException(it) },
+            { it }
+        )
+
+        val commentWithOtherUser = createCommentUseCase.execute(slug, comment.comment.body, currenUser).fold(
+            { throw CreateCommentUseCaseErrorException(it) },
+            { it }
+        )
+
+        return ResponseEntity(
+            SingleCommentResponse(
+                com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Comment(
+                    id = commentWithOtherUser.comment.id.value,
+                    createdAt = commentWithOtherUser.comment.createdAt.toInstant().atOffset(ZoneOffset.UTC),
+                    updatedAt = commentWithOtherUser.comment.updatedAt.toInstant().atOffset(ZoneOffset.UTC),
+                    body = commentWithOtherUser.comment.body.value,
+                    Profile(
+                        username = commentWithOtherUser.author.username.value,
+                        bio = commentWithOtherUser.author.bio.value,
+                        image = commentWithOtherUser.author.image.value,
+                        following = commentWithOtherUser.author.following
                     )
-                }
-            }
-        }
+                )
+            ),
+            HttpStatus.OK
+        )
     }
+
+    data class CreateCommentUseCaseErrorException(val error: CreateCommentUseCase.Error) : Exception()
+
+    @ExceptionHandler(value = [CreateCommentUseCaseErrorException::class])
+    fun onCreateCommentUseCaseErrorException(e: CreateCommentUseCaseErrorException): ResponseEntity<GenericErrorModel> =
+        when (val error = e.error) {
+            /**
+             * 原因: CommentBody がバリデーションエラー
+             */
+            is CreateCommentUseCase.Error.InvalidCommentBody -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = error.errors.map { it.message })),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+            /**
+             * 原因: Slug がバリデーションエラー
+             */
+            is CreateCommentUseCase.Error.InvalidSlug -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = listOf("slug が不正です"))),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+            /**
+             * 原因: 記事が見つかりませんでした
+             */
+            is CreateCommentUseCase.Error.NotFound -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = listOf("記事が見つかりませんでした"))),
+                HttpStatus.NOT_FOUND
+            )
+        }
 
     override fun deleteArticleComment(authorization: String, slug: String, id: Int): ResponseEntity<Unit> {
         val currentUser = realworldAuthenticationUseCase.execute(authorization).fold(
