@@ -6,10 +6,9 @@ import arrow.core.Either.Right
 import arrow.core.None
 import arrow.core.Option
 import arrow.core.Some
-import arrow.core.Validated.Invalid
-import arrow.core.Validated.Valid
 import arrow.core.left
 import arrow.core.right
+import arrow.core.toOption
 import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
@@ -38,61 +37,63 @@ class ShowProfileUseCaseImpl(
         username: String?,
         currentUser: Option<RegisteredUser>
     ): Either<ShowProfileUseCase.Error, OtherUser> {
-        return when (val it = Username.new(username)) {
+        /**
+         * Username のバリデーション
+         * Invalid -> 早期リターン
+         */
+        val validatedUsername = Username.new(username).fold(
+            { return ShowProfileUseCase.Error.InvalidUsername(it).left() },
+            { it }
+        )
+        return when (currentUser) {
             /**
-             * Username が不正
+             * JWT 認証 失敗 or 未ログイン
              */
-            is Invalid -> ShowProfileUseCase.Error.InvalidUsername(it.value).left()
-            /**
-             * Username が適切
-             */
-            is Valid -> when (currentUser) {
+            is None -> when (val showProfileResult = profileRepository.show(validatedUsername)) {
                 /**
-                 * JWT 認証 失敗 or 未ログイン
+                 * プロフィール取得失敗
                  */
-                is None -> when (val showProfileResult = profileRepository.show(it.value)) {
-                    /**
-                     * プロフィール取得失敗
-                     */
-                    is Left -> when (val error = showProfileResult.value) {
-                        is ProfileRepository.ShowWithoutAuthorizedError.NotFoundProfileByUsername -> ShowProfileUseCase.Error.NotFound(
-                            error
-                        ).left()
-                    }
-                    /**
-                     * プロフィール取得成功
-                     */
-                    is Right -> OtherUser.newWithoutValidation(
-                        showProfileResult.value.userId,
-                        showProfileResult.value.username,
-                        showProfileResult.value.bio,
-                        showProfileResult.value.image,
-                        showProfileResult.value.following,
-                    ).right()
+                is Left -> when (val error = showProfileResult.value) {
+                    is ProfileRepository.ShowError.NotFoundProfileByUsername -> ShowProfileUseCase.Error.NotFound(
+                        error
+                    ).left()
                 }
                 /**
-                 * JWT 認証成功
+                 * プロフィール取得成功
                  */
-                is Some -> when (val showProfileResult = profileRepository.show(it.value, currentUser.value.userId)) {
-                    /**
-                     * プロフィール取得失敗
-                     */
-                    is Left -> when (val error = showProfileResult.value) {
-                        is ProfileRepository.ShowError.NotFoundProfileByUsername -> ShowProfileUseCase.Error.NotFound(
-                            error
-                        ).left()
-                    }
-                    /**
-                     * プロフィール取得成功
-                     */
-                    is Right -> OtherUser.newWithoutValidation(
-                        showProfileResult.value.userId,
-                        showProfileResult.value.username,
-                        showProfileResult.value.bio,
-                        showProfileResult.value.image,
-                        showProfileResult.value.following,
-                    ).right()
+                is Right -> OtherUser.newWithoutValidation(
+                    showProfileResult.value.userId,
+                    showProfileResult.value.username,
+                    showProfileResult.value.bio,
+                    showProfileResult.value.image,
+                    showProfileResult.value.following,
+                ).right()
+            }
+            /**
+             * JWT 認証成功
+             */
+            is Some -> when (
+                val showProfileResult =
+                    profileRepository.show(validatedUsername, currentUser.value.userId.toOption())
+            ) {
+                /**
+                 * プロフィール取得失敗
+                 */
+                is Left -> when (val error = showProfileResult.value) {
+                    is ProfileRepository.ShowError.NotFoundProfileByUsername -> ShowProfileUseCase.Error.NotFound(
+                        error
+                    ).left()
                 }
+                /**
+                 * プロフィール取得成功
+                 */
+                is Right -> OtherUser.newWithoutValidation(
+                    showProfileResult.value.userId,
+                    showProfileResult.value.username,
+                    showProfileResult.value.bio,
+                    showProfileResult.value.image,
+                    showProfileResult.value.following,
+                ).right()
             }
         }
     }
