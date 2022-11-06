@@ -72,13 +72,16 @@ class CommentController(
 
     @ExceptionHandler(value = [ListCommentUseCaseErrorException::class])
     fun onListCommentUseCaseErrorException(e: ListCommentUseCaseErrorException): ResponseEntity<GenericErrorModel> =
-        when (val error = e.error) {
+        when (e.error) {
             is ListCommentUseCase.Error.InvalidSlug -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = listOf("slug が不正です"))),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+
+            is ListCommentUseCase.Error.NotFound -> ResponseEntity(
                 GenericErrorModel(GenericErrorModelErrors(body = listOf("記事が見つかりませんでした"))),
                 HttpStatus.NOT_FOUND
             )
-
-            is ListCommentUseCase.Error.NotFound -> TODO()
         }
 
     // override fun getArticleComments(authorization: String, slug: String): ResponseEntity<MultipleCommentsResponse> {

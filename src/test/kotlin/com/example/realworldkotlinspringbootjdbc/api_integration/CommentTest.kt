@@ -303,31 +303,33 @@ class CommentTest {
         }
 
         @Test
-        fun `準正常系-slug が無効な値の場合、NotFoundError が返される`() {
+        fun `準正常系-slug が無効な値の場合、「"slug が不正です"」が返される`() {
             /**
              * given:
-             * - 32文字より大きい場合
+             * - 有効でない slug（32文字より大きい）
              */
             val pathParameter = getRandomString(33)
 
             /**
              * when:
              */
-            val response = mockMvc.get("/api/articles/$pathParameter/comments") {
-                contentType = MediaType.APPLICATION_JSON
-            }.andReturn().response
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .get("/api/articles/$pathParameter/comments")
+                    .contentType(MediaType.APPLICATION_JSON)
+            ).andReturn().response
             val actualStatus = response.status
             val actualResponseBody = response.contentAsString
 
             /**
              * then:
-             * - ステータスコードが 404
+             * - ステータスコードが一致する
              */
-            val expectedStatus = HttpStatus.NOT_FOUND.value()
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
             val expectedResponseBody =
                 """
                     {
-                        "errors":{"body":["記事が見つかりませんでした"]}
+                        "errors":{"body":["slug が不正です"]}
                     }
                 """.trimIndent()
             assertThat(actualStatus).isEqualTo(expectedStatus)
