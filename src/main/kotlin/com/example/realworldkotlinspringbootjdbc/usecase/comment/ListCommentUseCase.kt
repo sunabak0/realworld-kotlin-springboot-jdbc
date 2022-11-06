@@ -5,7 +5,6 @@ import arrow.core.Either.Left
 import arrow.core.Either.Right
 import arrow.core.None
 import arrow.core.Option
-import arrow.core.Some
 import arrow.core.left
 import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
@@ -69,16 +68,13 @@ class ListCommentUseCaseImpl(
 
         /**
          * currentUser の有無で、followings を分
-         * None -> JWT 認証失敗 or 未ログイン
-         * Some -> JWT 認証成功
          */
-        return when (currentUser) {
-            is None -> when (val commentWithAuthorResult = commentWithAuthorsQueryModel.fetchList(commentList.value)) {
-                is Left -> throw UnsupportedOperationException("現在この分岐に入ることは無い")
-                is Right -> commentWithAuthorResult
-            }
-            // TODO: QueryModel に 「AuthorId に該当する Author を取得した Comment」を実装する
-            is Some -> TODO()
+        return when (
+            val commentWithAuthorResult =
+                commentWithAuthorsQueryModel.fetchList(commentList.value, currentUser)
+        ) {
+            is Left -> throw UnsupportedOperationException("現在この分岐に入ることは無い")
+            is Right -> commentWithAuthorResult
         }
     }
 }

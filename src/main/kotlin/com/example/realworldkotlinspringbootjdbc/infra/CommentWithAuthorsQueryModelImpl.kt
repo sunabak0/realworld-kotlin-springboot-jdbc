@@ -1,9 +1,13 @@
 package com.example.realworldkotlinspringbootjdbc.infra
 
 import arrow.core.Either
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.Comment
 import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
+import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.comment.Body
 import com.example.realworldkotlinspringbootjdbc.domain.comment.CommentId
 import com.example.realworldkotlinspringbootjdbc.domain.user.Bio
@@ -20,8 +24,13 @@ import java.text.SimpleDateFormat
 @Repository
 class CommentWithAuthorsQueryModelImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTemplate) :
     CommentWithAuthorsQueryModel {
-    override fun fetchList(comments: List<Comment>): Either<CommentWithAuthorsQueryModel.FetchListError, List<CommentWithAuthor>> {
-        val selectCommentWithAuthorSql = """
+    override fun fetchList(
+        comments: List<Comment>,
+        currentUser: Option<RegisteredUser>
+    ): Either<CommentWithAuthorsQueryModel.FetchListError, List<CommentWithAuthor>> {
+        return when (currentUser) {
+            is None -> {
+                val selectCommentWithAuthorSql = """
                 WITH other_users AS (
                     SELECT
                         users.id AS id
@@ -58,28 +67,32 @@ class CommentWithAuthorsQueryModelImpl(val namedParameterJdbcTemplate: NamedPara
                 ORDER BY 
                     ac.id
                 ;
-        """.trimIndent()
-        val commentWithAuthors = namedParameterJdbcTemplate.queryForList(
-            selectCommentWithAuthorSql,
-            MapSqlParameterSource().addValue("comment_ids", comments.map { it.id.value }.toSet())
-        ).map {
-            CommentWithAuthor(
-                Comment.newWithoutValidation(
-                    id = CommentId.newWithoutValidation(it["comment_id"].toString().toInt()),
-                    body = Body.newWithoutValidation(it["body"].toString()),
-                    createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
-                    updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
-                    authorId = UserId(it["author_id"].toString().toInt()),
-                ),
-                OtherUser.newWithoutValidation(
-                    userId = UserId(it["user_id"].toString().toInt()),
-                    username = Username.newWithoutValidation(it["username"].toString()),
-                    bio = Bio.newWithoutValidation(it["bio"].toString()),
-                    image = Image.newWithoutValidation(it["image"].toString()),
-                    following = false
-                )
-            )
+                """.trimIndent()
+                val commentWithAuthors = namedParameterJdbcTemplate.queryForList(
+                    selectCommentWithAuthorSql,
+                    MapSqlParameterSource().addValue("comment_ids", comments.map { it.id.value }.toSet())
+                ).map {
+                    CommentWithAuthor(
+                        Comment.newWithoutValidation(
+                            id = CommentId.newWithoutValidation(it["comment_id"].toString().toInt()),
+                            body = Body.newWithoutValidation(it["body"].toString()),
+                            createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
+                            updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
+                            authorId = UserId(it["author_id"].toString().toInt()),
+                        ),
+                        OtherUser.newWithoutValidation(
+                            userId = UserId(it["user_id"].toString().toInt()),
+                            username = Username.newWithoutValidation(it["username"].toString()),
+                            bio = Bio.newWithoutValidation(it["bio"].toString()),
+                            image = Image.newWithoutValidation(it["image"].toString()),
+                            following = false
+                        )
+                    )
+                }
+                commentWithAuthors.right()
+            }
+
+            is Some -> TODO()
         }
-        return commentWithAuthors.right()
     }
 }
