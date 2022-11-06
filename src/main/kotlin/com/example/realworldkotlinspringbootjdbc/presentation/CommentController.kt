@@ -16,7 +16,6 @@ import com.example.realworldkotlinspringbootjdbc.usecase.comment.CreateCommentUs
 import com.example.realworldkotlinspringbootjdbc.usecase.comment.DeleteCommentUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.comment.ListCommentUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.shared.RealworldAuthenticationUseCase
-import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -25,7 +24,6 @@ import java.time.ZoneOffset
 
 @RestController
 class CommentController(
-    val myAuth: MyAuth,
     val realworldAuthenticationUseCase: RealworldAuthenticationUseCase,
     val listCommentUseCase: ListCommentUseCase,
     val createCommentUseCase: CreateCommentUseCase,
@@ -84,39 +82,6 @@ class CommentController(
             )
         }
 
-    // override fun getArticleComments(authorization: String, slug: String): ResponseEntity<MultipleCommentsResponse> {
-    //     val currentUser = realworldAuthenticationUseCase.execute(authorization).fold(
-    //         { none() },
-    //         { Some(it) }
-    //     )
-    //
-    //     val createdArticleWithAuthors = listCommentUseCase.execute(slug, currentUser).fold(
-    //         { throw TODO() },
-    //         { it }
-    //     )
-    //
-    //     // TODO: UseCase の実装が終わるまで、一時的に author object を dummy データに設定
-    //     return ResponseEntity(
-    //         MultipleCommentsResponse(
-    //             createdArticleWithAuthors.map {
-    //                 Comment(
-    //                     id = it.id.value,
-    //                     createdAt = it.createdAt.toInstant().atOffset(ZoneOffset.UTC),
-    //                     updatedAt = it.updatedAt.toInstant().atOffset(ZoneOffset.UTC),
-    //                     body = it.body.value,
-    //                     Profile(
-    //                         username = "dummy-username",
-    //                         bio = "dummy-bio",
-    //                         image = "dummy-image",
-    //                         following = false
-    //                     )
-    //                 )
-    //             }
-    //         ),
-    //         HttpStatus.OK
-    //     )
-    // }
-
     override fun createArticleComment(
         authorization: String,
         slug: String,
@@ -134,7 +99,7 @@ class CommentController(
 
         return ResponseEntity(
             SingleCommentResponse(
-                com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Comment(
+                Comment(
                     id = commentWithOtherUser.comment.id.value,
                     createdAt = commentWithOtherUser.comment.createdAt.toInstant().atOffset(ZoneOffset.UTC),
                     updatedAt = commentWithOtherUser.comment.updatedAt.toInstant().atOffset(ZoneOffset.UTC),
