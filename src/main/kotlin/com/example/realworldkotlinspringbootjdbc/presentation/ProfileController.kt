@@ -6,6 +6,8 @@ import arrow.core.Some
 import arrow.core.none
 import arrow.core.toOption
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.controller.ProfileApi
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModel
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModelErrors
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.ProfileResponse
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Profile
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
@@ -18,6 +20,7 @@ import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
@@ -49,7 +52,7 @@ class ProfileController(
         )
 
         val showProfileUseCaseResult = showProfileUseCase.execute(username, currentUser).fold(
-            { throw TODO() },
+            { throw ShowProfileUseCaseErrorException(it) },
             { it }
         )
 
@@ -65,6 +68,24 @@ class ProfileController(
             HttpStatus.OK
         )
     }
+
+    data class ShowProfileUseCaseErrorException(val error: ShowProfileUseCase.Error) : Exception()
+
+    @ExceptionHandler(value = [ShowProfileUseCaseErrorException::class])
+    fun onShowProfileUseCaseErrorException(e: ShowProfileUseCaseErrorException): ResponseEntity<GenericErrorModel> =
+        when (val error = e.error) {
+            /**
+             * Username が不正だった場合
+             */
+            is ShowProfileUseCase.Error.InvalidUsername -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = error.errors.map { it.message })),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+            /**
+             * Username に該当する登録済ユーザーが見つからなかった場合
+             */
+            is ShowProfileUseCase.Error.NotFound -> TODO()
+        }
 
     // @GetMapping("/profiles/{username}")
     // fun showProfile(
