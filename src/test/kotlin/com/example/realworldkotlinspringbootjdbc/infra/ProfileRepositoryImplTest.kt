@@ -3,6 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.infra
 import arrow.core.Either
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import arrow.core.None
 import arrow.core.Option
 import arrow.core.left
 import arrow.core.none
@@ -104,7 +105,10 @@ class ProfileRepositoryImplTest {
                 Image.newWithoutValidation("dummy-image"),
                 following = true
             )
-            when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2))) {
+            when (
+                val actual =
+                    profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2).toOption())
+            ) {
                 is Left -> assert(false)
                 is Right -> assertThat(actual.value).isEqualTo(expected)
             }
@@ -145,7 +149,10 @@ class ProfileRepositoryImplTest {
                 Image.newWithoutValidation("dummy-image"),
                 following = false
             )
-            when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2))) {
+            when (
+                val actual =
+                    profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2).toOption())
+            ) {
                 is Left -> assert(false)
                 is Right -> assertThat(actual.value).isEqualTo(expected)
             }
@@ -156,9 +163,12 @@ class ProfileRepositoryImplTest {
             val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
 
             val expected = ProfileRepository.ShowError.NotFoundProfileByUsername(
-                Username.newWithoutValidation("dummy-username"), UserId(2)
+                Username.newWithoutValidation("dummy-username"), UserId(2).toOption()
             )
-            when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2))) {
+            when (
+                val actual =
+                    profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2).toOption())
+            ) {
                 is Left -> assertThat(actual.value).isEqualTo(expected)
                 is Right -> assert(false)
             }
@@ -219,8 +229,8 @@ class ProfileRepositoryImplTest {
         fun `異常系-未ログイン、NotFoundProfileByUsername が戻り値`() {
             val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
 
-            val expected = ProfileRepository.ShowWithoutAuthorizedError.NotFoundProfileByUsername(
-                Username.newWithoutValidation("dummy-username"),
+            val expected = ProfileRepository.ShowError.NotFoundProfileByUsername(
+                Username.newWithoutValidation("dummy-username"), None
             )
             when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"))) {
                 is Left -> assertThat(actual.value).isEqualTo(expected)

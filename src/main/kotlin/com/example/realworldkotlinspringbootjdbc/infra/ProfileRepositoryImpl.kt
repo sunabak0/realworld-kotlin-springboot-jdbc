@@ -18,92 +18,100 @@ import org.springframework.stereotype.Repository
 
 @Repository
 class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTemplate) : ProfileRepository {
-    override fun show(username: Username, currentUserId: UserId): Either<ProfileRepository.ShowError, OtherUser> {
-        val sql = """
-            SELECT
-                users.id
-                , users.username
-                , profiles.bio
-                , profiles.image
-                , CASE WHEN followings.id IS NOT NULL THEN 1 ELSE 0 END AS following_flg
-            FROM
-                users
-            JOIN
-                profiles
-            ON
-                users.id = profiles.user_id
-                AND users.username = :username
-            LEFT OUTER JOIN
-                followings
-            ON
-                followings.following_id = users.id
-                AND followings.follower_id = :current_user_id
-            ;
-        """.trimIndent()
-        val sqlParams = MapSqlParameterSource().addValue("username", username.value)
-            .addValue("current_user_id", currentUserId.value)
-        val profileFromDb = try {
-            namedParameterJdbcTemplate.queryForList(sql, sqlParams)
-        } catch (e: Throwable) {
-            return ProfileRepository.ShowError.NotFoundProfileByUsername(username, currentUserId).left()
+    override fun show(
+        username: Username,
+        currentUserId: Option<UserId>
+    ): Either<ProfileRepository.ShowError, OtherUser> {
+        when (currentUserId) {
+            /**
+             * 未ログインのとき
+             */
+            is None -> {
+                val profileFromDb = namedParameterJdbcTemplate.queryForList(
+                    """
+                        SELECT
+                            users.id
+                            , users.username
+                            , profiles.bio
+                            , profiles.image
+                            , 0 AS following_flg
+                        FROM
+                            users
+                        JOIN
+                            profiles
+                        ON
+                            users.id = profiles.user_id
+                            AND users.username = :username
+                        ;
+                    """.trimIndent(),
+                    MapSqlParameterSource().addValue("username", username.value)
+                )
+
+                /**
+                 * user が存在しなかった時 NotFoundError
+                 */
+                if (profileFromDb.isEmpty()) {
+                    return ProfileRepository.ShowError.NotFoundProfileByUsername(username, None).left()
+                }
+                val it = profileFromDb.first()
+
+                return OtherUser.newWithoutValidation(
+                    UserId(it["id"].toString().toInt()),
+                    Username.newWithoutValidation(it["username"].toString()),
+                    Bio.newWithoutValidation(it["bio"].toString()),
+                    Image.newWithoutValidation(it["image"].toString()),
+                    it["following_flg"].toString() == "1"
+                ).right()
+            }
+
+            /**
+             * ログイン済のとき
+             */
+            is Some -> {
+                val profileFromDb = namedParameterJdbcTemplate.queryForList(
+                    """
+                        SELECT
+                            users.id
+                            , users.username
+                            , profiles.bio
+                            , profiles.image
+                            , CASE WHEN followings.id IS NOT NULL THEN 1 ELSE 0 END AS following_flg
+                        FROM
+                            users
+                        JOIN
+                            profiles
+                        ON
+                            users.id = profiles.user_id
+                            AND users.username = :username
+                        LEFT OUTER JOIN
+                            followings
+                        ON
+                            followings.following_id = users.id
+                            AND followings.follower_id = :current_user_id
+                        ;
+                    """.trimIndent(),
+                    MapSqlParameterSource()
+                        .addValue("username", username.value)
+                        .addValue("current_user_id", currentUserId.value.value)
+                )
+
+                /**
+                 * user が存在しなかった時 NotFoundError
+                 */
+                if (profileFromDb.isEmpty()) {
+                    return ProfileRepository.ShowError.NotFoundProfileByUsername(username, currentUserId).left()
+                }
+                val it = profileFromDb.first()
+
+                return OtherUser.newWithoutValidation(
+                    UserId(it["id"].toString().toInt()),
+                    Username.newWithoutValidation(it["username"].toString()),
+                    Bio.newWithoutValidation(it["bio"].toString()),
+                    Image.newWithoutValidation(it["image"].toString()),
+                    it["following_flg"].toString() == "1"
+                ).right()
+            }
         }
-
-        /**
-         * user が存在しなかった時 NotFoundError
-         */
-        if (profileFromDb.isEmpty()) {
-            return ProfileRepository.ShowError.NotFoundProfileByUsername(username, currentUserId).left()
-        }
-        val it = profileFromDb.first()
-
-        return try {
-            OtherUser.newWithoutValidation(
-                UserId(it["id"].toString().toInt()),
-                Username.newWithoutValidation(it["username"].toString()),
-                Bio.newWithoutValidation(it["bio"].toString()),
-                Image.newWithoutValidation(it["image"].toString()),
-                it["following_flg"].toString() == "1"
-            ).right()
-        } catch (e: Throwable) {
-            ProfileRepository.ShowError.NotFoundProfileByUsername(username, currentUserId).left()
-        }
-    }
-
-    override fun show(username: Username): Either<ProfileRepository.ShowWithoutAuthorizedError, OtherUser> {
-        val sql = """
-                SELECT
-                    users.id
-                    , users.username
-                    , profiles.bio
-                    , profiles.image
-                    , 0 AS following_flg
-                FROM
-                    users
-                JOIN
-                    profiles
-                ON
-                    users.id = profiles.user_id
-                    AND users.username = :username
-                ;
-        """.trimIndent()
-        val sqlParams = MapSqlParameterSource().addValue("username", username.value)
-        val profileFromDb = namedParameterJdbcTemplate.queryForList(sql, sqlParams)
-
-        /**
-         * user が存在しなかった時 NotFoundError
-         */
-        if (profileFromDb.isEmpty()) {
-            return ProfileRepository.ShowWithoutAuthorizedError.NotFoundProfileByUsername(username).left()
-        }
-        val it = profileFromDb.first()
-
-        return OtherUser.newWithoutValidation(
-            UserId(it["id"].toString().toInt()),
-            Username.newWithoutValidation(it["username"].toString()),
-            Bio.newWithoutValidation(it["bio"].toString()),
-            Image.newWithoutValidation(it["image"].toString()),
-            it["following_flg"].toString() == "1"
-        ).right()
     }
 
     override fun follow(username: Username, currentUserId: UserId): Either<ProfileRepository.FollowError, OtherUser> {
