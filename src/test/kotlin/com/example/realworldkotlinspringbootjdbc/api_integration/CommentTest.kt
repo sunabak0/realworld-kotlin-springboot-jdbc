@@ -269,30 +269,36 @@ class CommentTest {
             /**
              * given:
              */
-            val pathParameter = "fake"
+            val slug = "fake"
 
             /**
              * when:
              */
-            val actual = mockMvc.get("/api/articles/$pathParameter/comments") {
-                contentType = MediaType.APPLICATION_JSON
-            }
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .get("/api/articles/$slug/comments")
+                    .contentType(MediaType.APPLICATION_JSON)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
 
             /**
              * then:
-             * - ステータスコードが 404
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
              */
-            val expected =
+            val expectedStatus = HttpStatus.NOT_FOUND.value()
+            val expectedResponseBody =
                 """
                     {
                         "errors":{"body":["記事が見つかりませんでした"]}
                     }
                 """.trimIndent()
-            val actualResponseBody = actual.andExpect { status { isNotFound() } }.andReturn().response.contentAsString
+            assertThat(actualStatus).isEqualTo(expectedStatus)
             JSONAssert.assertEquals(
-                expected,
+                expectedResponseBody,
                 actualResponseBody,
-                CustomComparator(JSONCompareMode.STRICT)
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
             )
         }
 

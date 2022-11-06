@@ -43,7 +43,7 @@ class CommentController(
         )
 
         val commentWithAuthors = listCommentUseCase.execute(slug, currentUser).fold(
-            { throw TODO() },
+            { throw ListCommentUseCaseErrorException(it) },
             { it }
         )
 
@@ -67,6 +67,20 @@ class CommentController(
             HttpStatus.OK
         )
     }
+
+    data class ListCommentUseCaseErrorException(val error: ListCommentUseCase.Error) : Exception()
+
+    @ExceptionHandler(value = [ListCommentUseCaseErrorException::class])
+    fun onListCommentUseCaseErrorException(e: ListCommentUseCaseErrorException): ResponseEntity<GenericErrorModel> =
+        when (val error = e.error) {
+            is ListCommentUseCase.Error.InvalidSlug -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = listOf("記事が見つかりませんでした"))),
+                HttpStatus.NOT_FOUND
+            )
+
+            is ListCommentUseCase.Error.NotFound -> TODO()
+        }
+
     // override fun getArticleComments(authorization: String, slug: String): ResponseEntity<MultipleCommentsResponse> {
     //     val currentUser = realworldAuthenticationUseCase.execute(authorization).fold(
     //         { none() },
