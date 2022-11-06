@@ -21,7 +21,6 @@ import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Nested
@@ -29,9 +28,7 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.TestInstance
-import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import java.text.SimpleDateFormat
 import java.util.stream.Stream
 
@@ -172,20 +169,6 @@ class ProfileRepositoryImplTest {
                 is Left -> assertThat(actual.value).isEqualTo(expected)
                 is Right -> assert(false)
             }
-        }
-
-        @Test
-        @Disabled
-        fun `異常系-ログイン済み、UnexpectedError が戻り値`() {
-            val throwDatabaseAccessException = object : NamedParameterJdbcTemplate(DbConnection.dataSource()) {
-                override fun queryForList(
-                    sql: String,
-                    paramMap: MutableMap<String, *>
-                ): MutableList<MutableMap<String, Any>> {
-                    throw object : DataAccessException("message") {}
-                }
-            }
-            val profileRepository = ProfileRepositoryImpl(throwDatabaseAccessException)
         }
 
         @Test
