@@ -29,47 +29,49 @@ class CommentWithAuthorsQueryModelImpl(val namedParameterJdbcTemplate: NamedPara
         currentUser: Option<RegisteredUser>
     ): Either<CommentWithAuthorsQueryModel.FetchListError, List<CommentWithAuthor>> {
         return when (currentUser) {
+            /**
+             * 未ログインのとき
+             */
             is None -> {
-                val selectCommentWithAuthorSql = """
-                WITH other_users AS (
-                    SELECT
-                        users.id AS id
-                        , users.username AS username
-                        , profiles.bio AS bio
-                        , profiles.image AS image
-                        , 0 AS following_flg
-                    FROM
-                        users
-                        JOIN
-                            profiles
-                        ON
-                            profiles.user_id = users.id
-                )
-                SELECT
-                    ac.id AS comment_id
-                    , ac.body AS body
-                    , ac.created_at AS created_at
-                    , ac.updated_at AS updated_at
-                    , ac.author_id AS author_id
-                    , ou.id AS user_id
-                    , ou.username AS username
-                    , ou.bio AS bio
-                    , ou.image AS image
-                    , ou.following_flg AS following_flg
-                FROM
-                    article_comments ac
-                    JOIN
-                        other_users ou
-                    ON
-                        ac.author_id = ou.id
-                WHERE
-                    ac.id IN (:comment_ids)
-                ORDER BY 
-                    ac.id
-                ;
-                """.trimIndent()
                 val commentWithAuthors = namedParameterJdbcTemplate.queryForList(
-                    selectCommentWithAuthorSql,
+                    """
+                        WITH other_users AS (
+                            SELECT
+                                users.id AS id
+                                , users.username AS username
+                                , profiles.bio AS bio
+                                , profiles.image AS image
+                                , 0 AS following_flg
+                            FROM
+                                users
+                                JOIN
+                                    profiles
+                                ON
+                                    profiles.user_id = users.id
+                        )
+                        SELECT
+                            ac.id AS comment_id
+                            , ac.body AS body
+                            , ac.created_at AS created_at
+                            , ac.updated_at AS updated_at
+                            , ac.author_id AS author_id
+                            , ou.id AS user_id
+                            , ou.username AS username
+                            , ou.bio AS bio
+                            , ou.image AS image
+                            , ou.following_flg AS following_flg
+                        FROM
+                            article_comments ac
+                            JOIN
+                                other_users ou
+                            ON
+                                ac.author_id = ou.id
+                        WHERE
+                            ac.id IN (:comment_ids)
+                        ORDER BY 
+                            ac.id
+                        ;
+                    """.trimIndent(),
                     MapSqlParameterSource().addValue("comment_ids", comments.map { it.id.value }.toSet())
                 ).map {
                     CommentWithAuthor(
@@ -91,8 +93,77 @@ class CommentWithAuthorsQueryModelImpl(val namedParameterJdbcTemplate: NamedPara
                 }
                 commentWithAuthors.right()
             }
-
-            is Some -> TODO()
+            /**
+             * ログイン済のとき
+             */
+            is Some -> {
+                val commentWithAuthors = namedParameterJdbcTemplate.queryForList(
+                    """
+                        WITH other_users AS (
+                            SELECT
+                                users.id AS id
+                                , users.username AS username
+                                , profiles.bio AS bio
+                                , profiles.image AS image
+                                , CASE WHEN followings.id IS NOT NULL THEN 1 ELSE 0 END AS following_flg
+                            FROM
+                                users
+                                JOIN
+                                    profiles
+                                ON
+                                    profiles.user_id = users.id
+                                LEFT OUTER JOIN
+                                    followings
+                                ON
+                                    followings.following_id = users.id
+                                    AND followings.follower_id = :curren_user_id
+                        )
+                        SELECT
+                            ac.id AS comment_id
+                            , ac.body AS body
+                            , ac.created_at AS created_at
+                            , ac.updated_at AS updated_at
+                            , ac.author_id AS author_id
+                            , ou.id AS user_id
+                            , ou.username AS username
+                            , ou.bio AS bio
+                            , ou.image AS image
+                            , ou.following_flg AS following_flg
+                        FROM
+                            article_comments ac
+                            JOIN
+                                other_users ou
+                            ON
+                                ac.author_id = ou.id
+                        WHERE
+                            ac.id IN (:comment_ids)
+                        ORDER BY 
+                            ac.id
+                        ;
+                    """.trimIndent(),
+                    MapSqlParameterSource()
+                        .addValue("comment_ids", comments.map { it.id.value }.toSet())
+                        .addValue("curren_user_id", currentUser.value.userId.value)
+                ).map {
+                    CommentWithAuthor(
+                        Comment.newWithoutValidation(
+                            id = CommentId.newWithoutValidation(it["comment_id"].toString().toInt()),
+                            body = Body.newWithoutValidation(it["body"].toString()),
+                            createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
+                            updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
+                            authorId = UserId(it["author_id"].toString().toInt()),
+                        ),
+                        OtherUser.newWithoutValidation(
+                            userId = UserId(it["user_id"].toString().toInt()),
+                            username = Username.newWithoutValidation(it["username"].toString()),
+                            bio = Bio.newWithoutValidation(it["bio"].toString()),
+                            image = Image.newWithoutValidation(it["image"].toString()),
+                            following = it["following_flg"].toString() == "1"
+                        )
+                    )
+                }
+                commentWithAuthors.right()
+            }
         }
     }
 }
