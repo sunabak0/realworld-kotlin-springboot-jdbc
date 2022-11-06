@@ -46,7 +46,8 @@ class CommentTest {
         @Test
         @DataSet(
             value = [
-                "datasets/yml/given/articles.yml"
+                "datasets/yml/given/articles.yml",
+                "datasets/yml/given/users.yml"
             ]
         )
         fun `正常系-slug で指定した作成済記事のコメントが存在する場合全て取得される`() {
@@ -72,7 +73,6 @@ class CommentTest {
              * - レスポンスボディが一致する
              */
             val expectedStatus = HttpStatus.OK.value()
-            // TODO: UseCase の実装が終わるまで、一時的に author object を dummy データに設定
             val expectedResponseBody =
                 """
                     {
@@ -83,9 +83,9 @@ class CommentTest {
                           "createdAt": "2022-01-01T00:00:00.000Z",
                           "updatedAt": "2022-01-01T00:00:00.000Z",
                           "author": {
-                            "username": "dummy-username",
-                            "bio": "dummy-bio",
-                            image: "dummy-image",
+                            "username": "graydon-hoare",
+                            "bio": "Rustを作った",
+                            image: "",
                             following: false
                           }
                         },
@@ -95,9 +95,9 @@ class CommentTest {
                           "createdAt": "2022-01-01T00:00:00.000Z",
                           "updatedAt": "2022-01-01T00:00:00.000Z",
                           "author": {
-                            "username": "dummy-username",
-                            "bio": "dummy-bio",
-                            image: "dummy-image",
+                            "username": "松本行弘",
+                            "bio": "Rubyを作った",
+                            image: "",
                             following: false
                           }
                         },
@@ -107,9 +107,9 @@ class CommentTest {
                           "createdAt": "2022-01-01T00:00:00.000Z",
                           "updatedAt": "2022-01-01T00:00:00.000Z",
                           "author": {
-                            "username": "dummy-username",
-                            "bio": "dummy-bio",
-                            image: "dummy-image",
+                            "username": "graydon-hoare",
+                            "bio": "Rustを作った",
+                            image: "",
                             following: false
                           }
                         }

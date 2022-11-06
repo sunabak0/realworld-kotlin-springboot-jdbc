@@ -47,20 +47,19 @@ class CommentController(
             { it }
         )
 
-        // TODO: UseCase の実装が終わるまで、一時的に author object を dummy データに設定
         return ResponseEntity(
             MultipleCommentsResponse(
                 commentWithAuthors.map {
                     Comment(
-                        id = it.id.value,
-                        createdAt = it.createdAt.toInstant().atOffset(ZoneOffset.UTC),
-                        updatedAt = it.updatedAt.toInstant().atOffset(ZoneOffset.UTC),
-                        body = it.body.value,
+                        id = it.comment.id.value,
+                        createdAt = it.comment.createdAt.toInstant().atOffset(ZoneOffset.UTC),
+                        updatedAt = it.comment.updatedAt.toInstant().atOffset(ZoneOffset.UTC),
+                        body = it.comment.body.value,
                         Profile(
-                            username = "dummy-username",
-                            bio = "dummy-bio",
-                            image = "dummy-image",
-                            following = false
+                            username = it.author.username.value,
+                            bio = it.author.bio.value,
+                            image = it.author.image.value,
+                            following = it.author.following
                         )
                     )
                 }
