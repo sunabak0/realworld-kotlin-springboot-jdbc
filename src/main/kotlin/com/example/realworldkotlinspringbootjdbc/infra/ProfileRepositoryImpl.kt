@@ -22,12 +22,12 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
         username: Username,
         currentUserId: Option<UserId>
     ): Either<ProfileRepository.ShowError, OtherUser> {
-        when (currentUserId) {
+        val profileFromDb = when (currentUserId) {
             /**
              * 未ログインのとき
              */
             is None -> {
-                val profileFromDb = namedParameterJdbcTemplate.queryForList(
+                namedParameterJdbcTemplate.queryForList(
                     """
                         SELECT
                             users.id
@@ -46,29 +46,13 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                     """.trimIndent(),
                     MapSqlParameterSource().addValue("username", username.value)
                 )
-
-                /**
-                 * user が存在しなかった時 NotFoundError
-                 */
-                if (profileFromDb.isEmpty()) {
-                    return ProfileRepository.ShowError.NotFoundProfileByUsername(username, None).left()
-                }
-                val it = profileFromDb.first()
-
-                return OtherUser.newWithoutValidation(
-                    UserId(it["id"].toString().toInt()),
-                    Username.newWithoutValidation(it["username"].toString()),
-                    Bio.newWithoutValidation(it["bio"].toString()),
-                    Image.newWithoutValidation(it["image"].toString()),
-                    it["following_flg"].toString() == "1"
-                ).right()
             }
 
             /**
              * ログイン済のとき
              */
             is Some -> {
-                val profileFromDb = namedParameterJdbcTemplate.queryForList(
+                namedParameterJdbcTemplate.queryForList(
                     """
                         SELECT
                             users.id
@@ -94,24 +78,23 @@ class ProfileRepositoryImpl(val namedParameterJdbcTemplate: NamedParameterJdbcTe
                         .addValue("username", username.value)
                         .addValue("current_user_id", currentUserId.value.value)
                 )
-
-                /**
-                 * user が存在しなかった時 NotFoundError
-                 */
-                if (profileFromDb.isEmpty()) {
-                    return ProfileRepository.ShowError.NotFoundProfileByUsername(username, currentUserId).left()
-                }
-                val it = profileFromDb.first()
-
-                return OtherUser.newWithoutValidation(
-                    UserId(it["id"].toString().toInt()),
-                    Username.newWithoutValidation(it["username"].toString()),
-                    Bio.newWithoutValidation(it["bio"].toString()),
-                    Image.newWithoutValidation(it["image"].toString()),
-                    it["following_flg"].toString() == "1"
-                ).right()
             }
         }
+        /**
+         * user が存在しなかった時 NotFoundError
+         */
+        if (profileFromDb.isEmpty()) {
+            return ProfileRepository.ShowError.NotFoundProfileByUsername(username, currentUserId).left()
+        }
+        val it = profileFromDb.first()
+
+        return OtherUser.newWithoutValidation(
+            UserId(it["id"].toString().toInt()),
+            Username.newWithoutValidation(it["username"].toString()),
+            Bio.newWithoutValidation(it["bio"].toString()),
+            Image.newWithoutValidation(it["image"].toString()),
+            it["following_flg"].toString() == "1"
+        ).right()
     }
 
     override fun follow(username: Username, currentUserId: UserId): Either<ProfileRepository.FollowError, OtherUser> {
