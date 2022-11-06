@@ -54,8 +54,10 @@ class ShowProfileUseCaseImpl(
                     /**
                      * プロフィール取得失敗
                      */
-                    is Left -> when (showProfileResult.value) {
-                        is ProfileRepository.ShowWithoutAuthorizedError.NotFoundProfileByUsername -> throw NotImplementedError()
+                    is Left -> when (val error = showProfileResult.value) {
+                        is ProfileRepository.ShowWithoutAuthorizedError.NotFoundProfileByUsername -> ShowProfileUseCase.Error.NotFound(
+                            error
+                        ).left()
                     }
                     /**
                      * プロフィール取得成功
@@ -75,8 +77,10 @@ class ShowProfileUseCaseImpl(
                     /**
                      * プロフィール取得失敗
                      */
-                    is Left -> when (showProfileResult.value) {
-                        is ProfileRepository.ShowError.NotFoundProfileByUsername -> throw NotImplementedError()
+                    is Left -> when (val error = showProfileResult.value) {
+                        is ProfileRepository.ShowError.NotFoundProfileByUsername -> ShowProfileUseCase.Error.NotFound(
+                            error
+                        ).left()
                     }
                     /**
                      * プロフィール取得成功
