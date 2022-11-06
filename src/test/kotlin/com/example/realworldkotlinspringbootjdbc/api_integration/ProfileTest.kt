@@ -1,6 +1,10 @@
 package com.example.realworldkotlinspringbootjdbc.api_integration
 
+import arrow.core.getOrHandle
 import com.example.realworldkotlinspringbootjdbc.infra.DbConnection
+import com.example.realworldkotlinspringbootjdbc.infra.helper.SeedData
+import com.example.realworldkotlinspringbootjdbc.util.MySession
+import com.example.realworldkotlinspringbootjdbc.util.MySessionJwtImpl
 import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.junit5.api.DBRider
 import net.bytebuddy.utility.RandomString
@@ -68,6 +72,60 @@ class ProfileTest {
                         "bio": "Lisper",
                         "image": "",
                         "following": false
+                      }
+                    }
+                """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                JSONCompareMode.STRICT
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml"
+            ]
+        )
+        fun `正常系-ログイン済で、username で指定した登録済ユーザーが存在する場合、Profile を取得できる。フォロイーの場合、following=trueになる`() {
+            /**
+             * given:
+             * - 登録済ユーザーが存在する username
+             * - username をフォロイーにもつユーザー
+             */
+            val username = "paul-graham"
+            val existedUser = SeedData.users().filter { it.userId.value == 2 }[0]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .get("/api/profiles/$username")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", sessionToken)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = HttpStatus.OK.value()
+            val expectedResponseBody =
+                """
+                    {
+                      "profile": {
+                        "username": "paul-graham",
+                        "bio": "Lisper",
+                        "image": "",
+                        "following": true
                       }
                     }
                 """.trimIndent()
