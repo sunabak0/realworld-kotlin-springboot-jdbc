@@ -160,5 +160,46 @@ class ProfileTest {
                 JSONCompareMode.NON_EXTENSIBLE
             )
         }
+
+        @Test
+        fun `準正常系-Username に該当するユーザーが見つからなかった場合、「プロフィールが見つかりませんでした」が返される`() {
+            /**
+             * given:
+             * - 有効な Username
+             */
+            val username = "dummy-username"
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .get("/api/profiles/$username")
+                    .contentType(MediaType.APPLICATION_JSON)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = HttpStatus.NOT_FOUND.value()
+            val expectedResponseBody =
+                """
+                    {
+                      "errors": {
+                        "body": ["プロフィールが見つかりませんでした"]
+                      }
+                    }
+                """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                JSONCompareMode.NON_EXTENSIBLE
+            )
+        }
     }
 }

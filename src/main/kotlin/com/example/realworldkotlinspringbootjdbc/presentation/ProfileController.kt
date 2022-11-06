@@ -84,7 +84,10 @@ class ProfileController(
             /**
              * Username に該当する登録済ユーザーが見つからなかった場合
              */
-            is ShowProfileUseCase.Error.NotFound -> TODO()
+            is ShowProfileUseCase.Error.NotFound -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = listOf("プロフィールが見つかりませんでした"))),
+                HttpStatus.NOT_FOUND
+            )
         }
 
     // @GetMapping("/profiles/{username}")
