@@ -546,4 +546,70 @@ class ProfileTest {
             )
         }
     }
+
+    @SpringBootTest
+    @AutoConfigureMockMvc
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    class UnfollowUserByUsername {
+        @Autowired
+        lateinit var mockMvc: MockMvc
+
+        @BeforeAll
+        fun reset() = DbConnection.resetSequence()
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml"
+            ]
+        )
+        fun `正常系-username で指定したユーザーが存在し、フォロー済の場合、Profile が戻り値で following=false`() {
+            /**
+             * given:
+             * - 登録済ユーザーが存在する username
+             * - username がフォロイーである、登録済ユーザーの sessionToken
+             */
+            val username = "paul-graham"
+            val existedUser = SeedData.users().filter { it.userId.value == 3 }[0]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .delete("/api/profiles/$username/follow")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", sessionToken)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = HttpStatus.OK.value()
+            val expectedResponseBody =
+                """
+                    {
+                      "profile": {
+                        "username": "paul-graham",
+                        "bio": "Lisper",
+                        "image": "",
+                        "following": false
+                      }
+                    }
+                """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                JSONCompareMode.STRICT
+            )
+        }
+    }
 }

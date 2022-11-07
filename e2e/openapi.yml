@@ -415,6 +415,13 @@ paths:
       description: Unfollow a user by username
       operationId: UnfollowUserByUsername
       parameters:
+        # 自前追加
+        - name: Authorization
+          in: header
+          description: セッション用JWT
+          required: true
+          schema:
+            $ref: '#/components/securitySchemes/Token'
         - name: username
           in: path
           description: Username of the profile you want to unfollow
