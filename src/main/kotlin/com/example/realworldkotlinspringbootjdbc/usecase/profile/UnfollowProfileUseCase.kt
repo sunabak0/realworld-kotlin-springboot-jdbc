@@ -1,8 +1,6 @@
 package com.example.realworldkotlinspringbootjdbc.usecase.profile
 
 import arrow.core.Either
-import arrow.core.Either.Left
-import arrow.core.Either.Right
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
@@ -40,29 +38,23 @@ class UnfollowProfileUseCaseImpl(
             { it }
         )
 
-        return when (val unfollowResult = profileRepository.unfollow(validatedUsername, currentUser.userId)) {
-            /**
-             * アンフォロー 失敗
-             */
-            is Left -> when (val error = unfollowResult.value) {
-                /**
-                 * 原因: プロフィールが見つからなかった
-                 */
-                is ProfileRepository.UnfollowError.NotFoundProfileByUsername -> UnfollowProfileUseCase.Error.NotFound(
-                    error
-                ).left()
-            }
+        val unfollowResult = profileRepository.unfollow(validatedUsername, currentUser.userId).fold(
+            {
+                return when (val error = it) {
+                    is ProfileRepository.UnfollowError.NotFoundProfileByUsername -> UnfollowProfileUseCase.Error.NotFound(
+                        error
+                    ).left()
+                }
+            },
+            { it }
+        )
 
-            /**
-             * アンフォロー 成功
-             */
-            is Right -> OtherUser.newWithoutValidation(
-                unfollowResult.value.userId,
-                unfollowResult.value.username,
-                unfollowResult.value.bio,
-                unfollowResult.value.image,
-                unfollowResult.value.following,
-            ).right()
-        }
+        return OtherUser.newWithoutValidation(
+            unfollowResult.userId,
+            unfollowResult.username,
+            unfollowResult.bio,
+            unfollowResult.image,
+            unfollowResult.following,
+        ).right()
     }
 }
