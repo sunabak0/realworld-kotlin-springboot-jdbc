@@ -140,7 +140,7 @@ class ProfileController(
         )
 
         val unfollowProfileResult = unfollowProfileUseCase.execute(username, currentUser).fold(
-            { throw TODO() },
+            { throw UnfollowProfileUseCaseErrorException(it) },
             { it }
         )
         return ResponseEntity(
@@ -155,6 +155,22 @@ class ProfileController(
             HttpStatus.OK
         )
     }
+
+    data class UnfollowProfileUseCaseErrorException(val error: UnfollowProfileUseCase.Error) : Exception()
+
+    @ExceptionHandler(value = [UnfollowProfileUseCaseErrorException::class])
+    fun onUnfollowProfileUseCaseErrorException(e: UnfollowProfileUseCaseErrorException): ResponseEntity<GenericErrorModel> =
+        when (val error = e.error) {
+            /**
+             * Username が不正だった場合
+             */
+            is UnfollowProfileUseCase.Error.InvalidUsername -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = error.errors.map { it.message })),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+
+            is UnfollowProfileUseCase.Error.NotFound -> TODO()
+        }
 
     // @DeleteMapping("/profiles/{username}/follow")
     // fun unfollow(
