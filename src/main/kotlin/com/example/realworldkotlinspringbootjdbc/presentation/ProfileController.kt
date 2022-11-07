@@ -100,7 +100,7 @@ class ProfileController(
         )
 
         val followProfileResult = followProfileUseCase.execute(username, currentUser).fold(
-            { TODO() },
+            { throw FollowProfileUseCaseErrorException(it) },
             { it }
         )
         return ResponseEntity(
@@ -115,6 +115,25 @@ class ProfileController(
             HttpStatus.OK
         )
     }
+
+    data class FollowProfileUseCaseErrorException(val error: FollowProfileUseCase.Error) : Exception()
+
+    @ExceptionHandler(value = [FollowProfileUseCaseErrorException::class])
+    fun onFollowProfileUseCaseErrorException(e: FollowProfileUseCaseErrorException): ResponseEntity<GenericErrorModel> =
+        when (val error = e.error) {
+            /**
+             * Username が不正だった場合
+             */
+            is FollowProfileUseCase.Error.InvalidUsername -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = error.errors.map { it.message })),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+
+            /**
+             * Username に該当する登録済ユーザーが見つからなかった場合
+             */
+            is FollowProfileUseCase.Error.NotFound -> TODO()
+        }
 
     // @PostMapping("/profiles/{username}/follow")
     // fun follow(
