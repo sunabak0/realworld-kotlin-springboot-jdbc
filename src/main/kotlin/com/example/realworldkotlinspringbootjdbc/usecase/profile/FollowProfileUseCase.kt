@@ -44,11 +44,13 @@ class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) :
                 /**
                  * フォロー 失敗
                  */
-                is Left -> when (followResult.value) {
+                is Left -> when (val error = followResult.value) {
                     /**
                      * 原因: プロフィールが見つからなかった
                      */
-                    is ProfileRepository.FollowError.NotFoundProfileByUsername -> throw NotImplementedError()
+                    is ProfileRepository.FollowError.NotFoundProfileByUsername -> FollowProfileUseCase.Error.NotFound(
+                        error
+                    ).left()
                 }
                 /**
                  * フォロー 成功
