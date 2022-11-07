@@ -3,8 +3,6 @@ package com.example.realworldkotlinspringbootjdbc.usecase.profile
 import arrow.core.Either
 import arrow.core.Either.Left
 import arrow.core.Either.Right
-import arrow.core.Validated.Invalid
-import arrow.core.Validated.Valid
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
@@ -32,37 +30,37 @@ class FollowProfileUseCaseImpl(val profileRepository: ProfileRepository) :
         username: String?,
         currentUser: RegisteredUser
     ): Either<FollowProfileUseCase.Error, OtherUser> {
-        return when (val it = Username.new(username)) {
+        /**
+         * Username のバリデーション
+         * Invalid -> 早期リターン
+         */
+        val validatedUsername = Username.new(username).fold(
+            { return FollowProfileUseCase.Error.InvalidUsername(it).left() },
+            { it }
+        )
+
+        return when (val followResult = profileRepository.follow(validatedUsername, currentUser.userId)) {
             /**
-             * Username が不正
+             * フォロー 失敗
              */
-            is Invalid -> FollowProfileUseCase.Error.InvalidUsername(it.value).left()
-            /**
-             * Username が適切
-             */
-            is Valid -> when (val followResult = profileRepository.follow(it.value, currentUser.userId)) {
+            is Left -> when (val error = followResult.value) {
                 /**
-                 * フォロー 失敗
+                 * 原因: プロフィールが見つからなかった
                  */
-                is Left -> when (val error = followResult.value) {
-                    /**
-                     * 原因: プロフィールが見つからなかった
-                     */
-                    is ProfileRepository.FollowError.NotFoundProfileByUsername -> FollowProfileUseCase.Error.NotFound(
-                        error
-                    ).left()
-                }
-                /**
-                 * フォロー 成功
-                 */
-                is Right -> OtherUser.newWithoutValidation(
-                    followResult.value.userId,
-                    followResult.value.username,
-                    followResult.value.bio,
-                    followResult.value.image,
-                    followResult.value.following
-                ).right()
+                is ProfileRepository.FollowError.NotFoundProfileByUsername -> FollowProfileUseCase.Error.NotFound(
+                    error
+                ).left()
             }
+            /**
+             * フォロー 成功
+             */
+            is Right -> OtherUser.newWithoutValidation(
+                followResult.value.userId,
+                followResult.value.username,
+                followResult.value.bio,
+                followResult.value.image,
+                followResult.value.following
+            ).right()
         }
     }
 }
