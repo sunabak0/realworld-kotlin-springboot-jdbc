@@ -138,53 +138,6 @@ class ProfileController(
             )
         }
 
-    // @PostMapping("/profiles/{username}/follow")
-    // fun follow(
-    //     @RequestHeader("Authorization") rawAuthorizationHeader: String?,
-    //     @PathParam("username") username: String?
-    // ): ResponseEntity<String> {
-    //     return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
-    //         /**
-    //          * JWT 認証 失敗
-    //          */
-    //         is Left -> AuthorizationError.handle()
-    //         /**
-    //          * JWT 認証 成功
-    //          */
-    //         is Right -> when (
-    //             val followedProfile =
-    //                 followProfileUseCase.execute(username, authorizeResult.value)
-    //         ) {
-    //             /**
-    //              * プロフィールのフォローに失敗
-    //              */
-    //             is Left -> when (@Suppress("UnusedPrivateMember") val useCaseError = followedProfile.value) {
-    //                 /**
-    //                  * 原因: Username が不正
-    //                  */
-    //                 is FollowProfileUseCase.Error.InvalidUsername -> ResponseEntity(
-    //                     serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-    //                     HttpStatus.valueOf(404)
-    //                 )
-    //                 /**
-    //                  * 原因: Profile が見つからなかった
-    //                  */
-    //                 is FollowProfileUseCase.Error.NotFound -> ResponseEntity(
-    //                     serializeUnexpectedErrorForResponseBody("プロフィールが見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-    //                     HttpStatus.valueOf(404)
-    //                 )
-    //             }
-    //             /**
-    //              * プロフィールのフォローに成功
-    //              */
-    //             is Right -> ResponseEntity(
-    //                 Profile.from(followedProfile.value).serializeWithRootName(),
-    //                 HttpStatus.valueOf(200)
-    //             )
-    //         }
-    //     }
-    // }
-
     @DeleteMapping("/profiles/{username}/follow")
     fun unfollow(
         @RequestHeader("Authorization") rawAuthorizationHeader: String?,
