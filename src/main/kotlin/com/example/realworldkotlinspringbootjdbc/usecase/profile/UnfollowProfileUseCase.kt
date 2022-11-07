@@ -45,11 +45,13 @@ class UnfollowProfileUseCaseImpl(
                 /**
                  * アンフォロー 失敗
                  */
-                is Left -> when (unfollowResult.value) {
+                is Left -> when (val error = unfollowResult.value) {
                     /**
                      * 原因: プロフィールが見つからなかった
                      */
-                    is ProfileRepository.UnfollowError.NotFoundProfileByUsername -> throw NotImplementedError()
+                    is ProfileRepository.UnfollowError.NotFoundProfileByUsername -> UnfollowProfileUseCase.Error.NotFound(
+                        error
+                    ).left()
                 }
                 /**
                  * アンフォロー 成功

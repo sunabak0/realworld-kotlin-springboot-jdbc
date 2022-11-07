@@ -169,7 +169,10 @@ class ProfileController(
                 HttpStatus.UNPROCESSABLE_ENTITY
             )
 
-            is UnfollowProfileUseCase.Error.NotFound -> TODO()
+            is UnfollowProfileUseCase.Error.NotFound -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = listOf("プロフィールが見つかりませんでした"))),
+                HttpStatus.NOT_FOUND
+            )
         }
 
     // @DeleteMapping("/profiles/{username}/follow")
