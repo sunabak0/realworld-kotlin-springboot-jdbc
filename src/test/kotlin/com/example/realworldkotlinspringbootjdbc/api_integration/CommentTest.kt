@@ -46,28 +46,35 @@ class CommentTest {
         @Test
         @DataSet(
             value = [
-                "datasets/yml/given/articles.yml"
+                "datasets/yml/given/articles.yml",
+                "datasets/yml/given/users.yml"
             ]
         )
-        fun `正常系-slug で指定した作成済記事のコメントが存在する場合全て取得される`() {
+        fun `正常系-未ログインで、slug で指定した作成済記事のコメントが存在する場合全て取得される`() {
             /**
              * given:
+             * - 作成済記事が存在する slug
              */
-            val pathParameter = "rust-vs-scala-vs-kotlin"
+            val slug = "rust-vs-scala-vs-kotlin"
 
             /**
              * when:
              */
-            val actual = mockMvc.get("/api/articles/$pathParameter/comments") {
-                contentType = MediaType.APPLICATION_JSON
-            }
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .get("/api/articles/$slug/comments")
+                    .contentType(MediaType.APPLICATION_JSON)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
 
             /**
              * then:
-             * - ステータスコードが 200
-             * - 作成日時と更新日時以外を比較する
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
              */
-            val expected =
+            val expectedStatus = HttpStatus.OK.value()
+            val expectedResponseBody =
                 """
                     {
                       "comments": [
@@ -76,36 +83,146 @@ class CommentTest {
                           "body": "dummy-comment-body-01",
                           "createdAt": "2022-01-01T00:00:00.000Z",
                           "updatedAt": "2022-01-01T00:00:00.000Z",
-                          "authorId": 3
+                          "author": {
+                            "username": "graydon-hoare",
+                            "bio": "Rustを作った",
+                            image: "",
+                            following: false
+                          }
                         },
                         {
                           "id": 3,
                           "body": "dummy-comment-body-03",
                           "createdAt": "2022-01-01T00:00:00.000Z",
                           "updatedAt": "2022-01-01T00:00:00.000Z",
-                          "authorId": 2
+                          "author": {
+                            "username": "松本行弘",
+                            "bio": "Rubyを作った",
+                            image: "",
+                            following: false
+                          }
                         },
                         {
                           "id": 5,
                           "body": "dummy-comment-body-02",
                           "createdAt": "2022-01-01T00:00:00.000Z",
                           "updatedAt": "2022-01-01T00:00:00.000Z",
-                          "authorId": 3
+                          "author": {
+                            "username": "graydon-hoare",
+                            "bio": "Rustを作った",
+                            image: "",
+                            following: false
+                          }
                         }
                       ]
                     }
                 """.trimIndent()
-            val actualResponseBody = actual.andExpect { status { isOk() } }.andReturn().response.contentAsString
+            assertThat(actualStatus).isEqualTo(expectedStatus)
             JSONAssert.assertEquals(
-                expected,
+                expectedResponseBody,
                 actualResponseBody,
                 CustomComparator(
                     JSONCompareMode.STRICT,
                     Customization("*.createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(actualCreatedAt) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(actualCreatedAt) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                     Customization("*.updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(actualUpdatedAt) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(actualUpdatedAt) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                )
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+                "datasets/yml/given/users.yml"
+            ]
+        )
+        fun `正常系-ログイン状態で、slug で指定した作成済記事のコメントが存在する場合、コメントが全て取得され、author がフォロイーの場合、following キーのバリューが true になる`() {
+            /**
+             * given:
+             * - フォロイーが存在するユーザー（userId = 3）の sessionToken
+             * - 作成済記事が存在する slug
+             */
+            val existedUser = SeedData.users().filter { it.userId.value == 3 }[0]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+            val slug = "rust-vs-scala-vs-kotlin"
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .get("/api/articles/$slug/comments")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", sessionToken)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = HttpStatus.OK.value()
+            val expectedResponseBody =
+                """
+                    {
+                      "comments": [
+                        {
+                          "id": 1,
+                          "body": "dummy-comment-body-01",
+                          "createdAt": "2022-01-01T00:00:00.000Z",
+                          "updatedAt": "2022-01-01T00:00:00.000Z",
+                          "author": {
+                            "username": "graydon-hoare",
+                            "bio": "Rustを作った",
+                            image: "",
+                            following: false
+                          }
+                        },
+                        {
+                          "id": 3,
+                          "body": "dummy-comment-body-03",
+                          "createdAt": "2022-01-01T00:00:00.000Z",
+                          "updatedAt": "2022-01-01T00:00:00.000Z",
+                          "author": {
+                            "username": "松本行弘",
+                            "bio": "Rubyを作った",
+                            image: "",
+                            following: true
+                          }
+                        },
+                        {
+                          "id": 5,
+                          "body": "dummy-comment-body-02",
+                          "createdAt": "2022-01-01T00:00:00.000Z",
+                          "updatedAt": "2022-01-01T00:00:00.000Z",
+                          "author": {
+                            "username": "graydon-hoare",
+                            "bio": "Rustを作った",
+                            image: "",
+                            following: false
+                          }
+                        }
+                      ]
+                    }
+                """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.STRICT,
+                    Customization("*.createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(actualCreatedAt) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("*.updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(actualUpdatedAt) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                 )
             )
@@ -152,59 +269,67 @@ class CommentTest {
             /**
              * given:
              */
-            val pathParameter = "fake"
+            val slug = "fake"
 
             /**
              * when:
              */
-            val actual = mockMvc.get("/api/articles/$pathParameter/comments") {
-                contentType = MediaType.APPLICATION_JSON
-            }
-
-            /**
-             * then:
-             * - ステータスコードが 404
-             */
-            val expected =
-                """
-                    {
-                        "errors":{"body":["記事が見つかりませんでした"]}
-                    }
-                """.trimIndent()
-            val actualResponseBody = actual.andExpect { status { isNotFound() } }.andReturn().response.contentAsString
-            JSONAssert.assertEquals(
-                expected,
-                actualResponseBody,
-                CustomComparator(JSONCompareMode.STRICT)
-            )
-        }
-
-        @Test
-        fun `準正常系-slug が無効な値の場合、NotFoundError が返される`() {
-            /**
-             * given:
-             * - 32文字より大きい場合
-             */
-            val pathParameter = getRandomString(33)
-
-            /**
-             * when:
-             */
-            val response = mockMvc.get("/api/articles/$pathParameter/comments") {
-                contentType = MediaType.APPLICATION_JSON
-            }.andReturn().response
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .get("/api/articles/$slug/comments")
+                    .contentType(MediaType.APPLICATION_JSON)
+            ).andReturn().response
             val actualStatus = response.status
             val actualResponseBody = response.contentAsString
 
             /**
              * then:
-             * - ステータスコードが 404
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
              */
             val expectedStatus = HttpStatus.NOT_FOUND.value()
             val expectedResponseBody =
                 """
                     {
                         "errors":{"body":["記事が見つかりませんでした"]}
+                    }
+                """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
+            )
+        }
+
+        @Test
+        fun `準正常系-slug が無効な値の場合、「"slug が不正です"」が返される`() {
+            /**
+             * given:
+             * - 有効でない slug（32文字より大きい）
+             */
+            val pathParameter = getRandomString(33)
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .get("/api/articles/$pathParameter/comments")
+                    .contentType(MediaType.APPLICATION_JSON)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             */
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
+            val expectedResponseBody =
+                """
+                    {
+                        "errors":{"body":["slug が不正です"]}
                     }
                 """.trimIndent()
             assertThat(actualStatus).isEqualTo(expectedStatus)
