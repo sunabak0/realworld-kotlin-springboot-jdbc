@@ -5,9 +5,7 @@ import arrow.core.Either.Left
 import arrow.core.Either.Right
 import arrow.core.None
 import arrow.core.Option
-import arrow.core.Some
 import arrow.core.left
-import com.example.realworldkotlinspringbootjdbc.domain.Comment
 import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
@@ -27,7 +25,7 @@ interface ListCommentUseCase {
      * @param currentUser リクエストユーザー or 未ログイン状態
      * @return エラー or Slug に該当する作成済み記事の一覧
      */
-    fun execute(slug: String?, currentUser: Option<RegisteredUser> = None): Either<Error, List<Comment>> =
+    fun execute(slug: String, currentUser: Option<RegisteredUser> = None): Either<Error, List<CommentWithAuthor>> =
         throw NotImplementedError()
 
     sealed interface Error : MyError {
@@ -38,12 +36,13 @@ interface ListCommentUseCase {
 
 @Service
 class ListCommentUseCaseImpl(
-    val commentRepository: CommentRepository
+    val commentRepository: CommentRepository,
+    val commentWithAuthorsQueryModel: CommentWithAuthorsQueryModel
 ) : ListCommentUseCase {
     override fun execute(
-        slug: String?,
+        slug: String,
         currentUser: Option<RegisteredUser>
-    ): Either<ListCommentUseCase.Error, List<Comment>> {
+    ): Either<ListCommentUseCase.Error, List<CommentWithAuthor>> {
         /**
          * Slug のバリデーション
          * Invalid -> 早期リターン
@@ -68,15 +67,14 @@ class ListCommentUseCaseImpl(
         }
 
         /**
-         * currentUser の有無で、followings を分
-         * None -> JWT 認証失敗 or 未ログイン
-         * Some -> JWT 認証成功
+         * comment の author を QueryModel で取得
          */
-        return when (currentUser) {
-            // TODO: QueryService で AuthorId に該当する User を取得する実装を追加。現状は listResult（List<Comment>）を返している
-            is None -> commentList
-            // TODO: QueryService で AuthorId に該当する User を取得する実装と AuthorId と CurrentUser の followings を取得する実装を追加。現状は listResult（List<Comment>）を返している
-            is Some -> commentList
+        return when (
+            val commentWithAuthorResult =
+                commentWithAuthorsQueryModel.fetchList(commentList.value, currentUser)
+        ) {
+            is Left -> throw UnsupportedOperationException("現在この分岐に入ることは無い")
+            is Right -> commentWithAuthorResult
         }
     }
 }
