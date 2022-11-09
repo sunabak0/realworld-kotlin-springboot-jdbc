@@ -25,7 +25,7 @@ interface ListCommentUseCase {
      * @param currentUser リクエストユーザー or 未ログイン状態
      * @return エラー or Slug に該当する作成済み記事の一覧
      */
-    fun execute(slug: String?, currentUser: Option<RegisteredUser> = None): Either<Error, List<CommentWithAuthor>> =
+    fun execute(slug: String, currentUser: Option<RegisteredUser> = None): Either<Error, List<CommentWithAuthor>> =
         throw NotImplementedError()
 
     sealed interface Error : MyError {
@@ -40,7 +40,7 @@ class ListCommentUseCaseImpl(
     val commentWithAuthorsQueryModel: CommentWithAuthorsQueryModel
 ) : ListCommentUseCase {
     override fun execute(
-        slug: String?,
+        slug: String,
         currentUser: Option<RegisteredUser>
     ): Either<ListCommentUseCase.Error, List<CommentWithAuthor>> {
         /**
