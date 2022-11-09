@@ -36,12 +36,17 @@ class CommentWithAuthorsQueryModelImpl(val namedParameterJdbcTemplate: NamedPara
             false -> {}
         }
 
-        return when (currentUser) {
+        /**
+         * ログイン状態によって、author の following の関係を取得するか分岐
+         * - 未ログイン -> author.following = 0（未フォロー）固定
+         * - ログイン済 -> author.following = 0（未フォロー）または 1（フォロー）
+         */
+        val commentWithAuthorsFromDb = when (currentUser) {
             /**
              * 未ログインのとき
              */
             is None -> {
-                val commentWithAuthors = namedParameterJdbcTemplate.queryForList(
+                namedParameterJdbcTemplate.queryForList(
                     """
                         WITH other_users AS (
                             SELECT
@@ -81,31 +86,13 @@ class CommentWithAuthorsQueryModelImpl(val namedParameterJdbcTemplate: NamedPara
                         ;
                     """.trimIndent(),
                     MapSqlParameterSource().addValue("comment_ids", comments.map { it.id.value }.toSet())
-                ).map {
-                    CommentWithAuthor(
-                        Comment.newWithoutValidation(
-                            id = CommentId.newWithoutValidation(it["comment_id"].toString().toInt()),
-                            body = Body.newWithoutValidation(it["body"].toString()),
-                            createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
-                            updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
-                            authorId = UserId(it["author_id"].toString().toInt()),
-                        ),
-                        OtherUser.newWithoutValidation(
-                            userId = UserId(it["user_id"].toString().toInt()),
-                            username = Username.newWithoutValidation(it["username"].toString()),
-                            bio = Bio.newWithoutValidation(it["bio"].toString()),
-                            image = Image.newWithoutValidation(it["image"].toString()),
-                            following = false
-                        )
-                    )
-                }
-                commentWithAuthors.right()
+                )
             }
             /**
              * ログイン済のとき
              */
             is Some -> {
-                val commentWithAuthors = namedParameterJdbcTemplate.queryForList(
+                namedParameterJdbcTemplate.queryForList(
                     """
                         WITH other_users AS (
                             SELECT
@@ -152,26 +139,29 @@ class CommentWithAuthorsQueryModelImpl(val namedParameterJdbcTemplate: NamedPara
                     MapSqlParameterSource()
                         .addValue("comment_ids", comments.map { it.id.value }.toSet())
                         .addValue("curren_user_id", currentUser.value.userId.value)
-                ).map {
-                    CommentWithAuthor(
-                        Comment.newWithoutValidation(
-                            id = CommentId.newWithoutValidation(it["comment_id"].toString().toInt()),
-                            body = Body.newWithoutValidation(it["body"].toString()),
-                            createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
-                            updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
-                            authorId = UserId(it["author_id"].toString().toInt()),
-                        ),
-                        OtherUser.newWithoutValidation(
-                            userId = UserId(it["user_id"].toString().toInt()),
-                            username = Username.newWithoutValidation(it["username"].toString()),
-                            bio = Bio.newWithoutValidation(it["bio"].toString()),
-                            image = Image.newWithoutValidation(it["image"].toString()),
-                            following = it["following_flg"].toString() == "1"
-                        )
-                    )
-                }
-                commentWithAuthors.right()
+                )
             }
         }
+
+        val commentWithAuthors = commentWithAuthorsFromDb.map {
+            CommentWithAuthor(
+                Comment.newWithoutValidation(
+                    id = CommentId.newWithoutValidation(it["comment_id"].toString().toInt()),
+                    body = Body.newWithoutValidation(it["body"].toString()),
+                    createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["created_at"].toString()),
+                    updatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(it["updated_at"].toString()),
+                    authorId = UserId(it["author_id"].toString().toInt()),
+                ),
+                OtherUser.newWithoutValidation(
+                    userId = UserId(it["user_id"].toString().toInt()),
+                    username = Username.newWithoutValidation(it["username"].toString()),
+                    bio = Bio.newWithoutValidation(it["bio"].toString()),
+                    image = Image.newWithoutValidation(it["image"].toString()),
+                    following = it["following_flg"].toString() == "1"
+                )
+            )
+        }
+
+        return commentWithAuthors.right()
     }
 }
