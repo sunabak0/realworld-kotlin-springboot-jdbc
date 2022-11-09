@@ -8,8 +8,8 @@ plugins {
      * 注意
      * jvm と plugin.spring と ksp のバージョンは合わせること(例: 1.7.20)
      */
-    kotlin("jvm") version "1.7.20"
-    kotlin("plugin.spring") version "1.7.20"
+    kotlin("jvm") version "1.7.21"
+    kotlin("plugin.spring") version "1.7.21"
 
     /**
      * detekt
