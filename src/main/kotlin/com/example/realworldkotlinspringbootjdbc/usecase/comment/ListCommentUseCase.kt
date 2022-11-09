@@ -6,7 +6,6 @@ import arrow.core.Either.Right
 import arrow.core.None
 import arrow.core.Option
 import arrow.core.left
-import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.CommentRepository
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
 import com.example.realworldkotlinspringbootjdbc.domain.article.Slug
@@ -68,15 +67,7 @@ class ListCommentUseCaseImpl(
         }
 
         /**
-         * 作成済記事のコメントが 0 件だった場合、早期 return
-         */
-        when (commentList.value.isEmpty()) {
-            true -> return listOf<CommentWithAuthor>().right()
-            false -> {}
-        }
-
-        /**
-         * currentUser の有無で、followings を分
+         * comment の author を QueryModel で取得
          */
         return when (
             val commentWithAuthorResult =

@@ -288,5 +288,29 @@ class CommentWithAuthorsQueryModelImplTest {
                 }
             }
         }
+
+        @Test
+        fun `正常系-コメント 0 件の場合、空のリストが戻り値`() {
+            /**
+             * given:
+             * - 空のリスト
+             */
+            val commentWithAuthorsQueryModel = CommentWithAuthorsQueryModelImpl(namedParameterJdbcTemplate)
+            val comments = listOf<Comment>()
+
+            /**
+             * when:
+             */
+            val actual = commentWithAuthorsQueryModel.fetchList(comments)
+
+            /**
+             * then:
+             */
+            val expected = listOf<CommentWithAuthor>()
+            when (actual) {
+                is Either.Left -> assert(false)
+                is Either.Right -> assertThat(actual.value).isEqualTo(expected)
+            }
+        }
     }
 }

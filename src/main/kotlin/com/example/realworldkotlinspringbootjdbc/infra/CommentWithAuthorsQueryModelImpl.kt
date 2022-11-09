@@ -28,6 +28,14 @@ class CommentWithAuthorsQueryModelImpl(val namedParameterJdbcTemplate: NamedPara
         comments: List<Comment>,
         currentUser: Option<RegisteredUser>
     ): Either<CommentWithAuthorsQueryModel.FetchListError, List<CommentWithAuthor>> {
+        /**
+         * 作成済記事のコメントが 0 件だった場合、早期リターン
+         */
+        when (comments.isEmpty()) {
+            true -> return listOf<CommentWithAuthor>().right()
+            false -> {}
+        }
+
         return when (currentUser) {
             /**
              * 未ログインのとき
