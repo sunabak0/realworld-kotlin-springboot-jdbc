@@ -4,6 +4,7 @@ import arrow.core.Either.Left
 import arrow.core.Either.Right
 import arrow.core.Some
 import arrow.core.none
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.controller.ArticlesApi
 import com.example.realworldkotlinspringbootjdbc.presentation.request.NullableArticle
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Articles
@@ -39,7 +40,7 @@ class ArticleController(
     val deleteArticle: DeleteCreatedArticleUseCase,
     val updateArticle: UpdateCreatedArticleUseCase,
     val feed: FeedUseCase,
-) {
+) : ArticlesApi {
 
     /**
      *

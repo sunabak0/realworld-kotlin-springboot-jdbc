@@ -63,7 +63,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -152,7 +152,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -239,7 +239,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -331,7 +331,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -410,7 +410,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -487,7 +487,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -535,7 +535,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -584,7 +584,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -671,7 +671,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -747,7 +747,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -805,7 +805,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -855,7 +855,7 @@ class ArticleTest {
              * when:
              * - フィルタパラメータは無し
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", sessionToken)
             }.andReturn().response
@@ -993,7 +993,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.post("/articles") {
+            val response = mockMvc.post("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 content = requestBody
                 header("Authorization", sessionToken)
@@ -1085,7 +1085,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.post("/articles") {
+            val response = mockMvc.post("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 content = requestBody
                 header("Authorization", sessionToken)
@@ -1183,7 +1183,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/feed") {
+            val response = mockMvc.get("/api/articles/feed") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", sessionToken)
             }.andReturn().response
@@ -1272,7 +1272,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/feed") {
+            val response = mockMvc.get("/api/articles/feed") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
                 header("Authorization", sessionToken)
@@ -1350,7 +1350,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/feed") {
+            val response = mockMvc.get("/api/articles/feed") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
                 header("Authorization", sessionToken)
@@ -1428,7 +1428,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/feed") {
+            val response = mockMvc.get("/api/articles/feed") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
                 header("Authorization", sessionToken)
@@ -1491,7 +1491,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/feed") {
+            val response = mockMvc.get("/api/articles/feed") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
                 header("Authorization", sessionToken)
@@ -1553,7 +1553,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/$slug") {
+            val response = mockMvc.get("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
             }.andReturn().response
             val actualStatus = response.status
@@ -1623,7 +1623,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/$slug") {
+            val response = mockMvc.get("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", sessionToken)
             }.andReturn().response
@@ -1693,7 +1693,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/$slug") {
+            val response = mockMvc.get("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
             }.andReturn().response
             val actualStatus = response.status
@@ -1734,7 +1734,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/$slug") {
+            val response = mockMvc.get("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
             }.andReturn().response
             val actualStatus = response.status
@@ -1803,7 +1803,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.delete("/articles/$slug") {
+            val response = mockMvc.delete("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", sessionToken)
             }.andReturn().response
@@ -1849,7 +1849,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.delete("/articles/$slug") {
+            val response = mockMvc.delete("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", sessionToken)
             }.andReturn().response
@@ -1901,7 +1901,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.delete("/articles/$slug") {
+            val response = mockMvc.delete("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", sessionToken)
             }.andReturn().response
@@ -1953,7 +1953,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.delete("/articles/$slug") {
+            val response = mockMvc.delete("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", sessionToken)
             }.andReturn().response
@@ -2038,7 +2038,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.put("/articles/$slug") {
+            val response = mockMvc.put("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 content = requestBody
                 header("Authorization", sessionToken)
@@ -2130,7 +2130,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.put("/articles/$slug") {
+            val response = mockMvc.put("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 content = requestBody
                 header("Authorization", sessionToken)
@@ -2203,7 +2203,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.put("/articles/$slug") {
+            val response = mockMvc.put("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 content = requestBody
                 header("Authorization", sessionToken)
@@ -2286,7 +2286,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.put("/articles/$slug") {
+            val response = mockMvc.put("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 content = requestBody
                 header("Authorization", sessionToken)
@@ -2349,7 +2349,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.put("/articles/$slug") {
+            val response = mockMvc.put("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 content = requestBody
                 header("Authorization", sessionToken)
