@@ -17,7 +17,7 @@ interface FavoriteUseCase {
     fun execute(slug: String?, currentUser: RegisteredUser): Either<Error, CreatedArticle> = throw NotImplementedError()
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
-        data class NotFoundArticleBySlug(override val cause: MyError, val slug: Slug) :
+        data class NotFound(override val cause: MyError) :
             Error,
             MyError.MyErrorWithMyError
     }
@@ -40,11 +40,13 @@ class FavoriteUseCaseImpl(
                 /**
                  * お気に入り追加 失敗
                  */
-                is Left -> when (favoriteResult.value) {
+                is Left -> when (val favoriteError = favoriteResult.value) {
                     /**
                      * 原因: 作成済記事が見つからなかった
                      */
-                    is ArticleRepository.FavoriteError.NotFoundCreatedArticleBySlug -> throw NotImplementedError()
+                    is ArticleRepository.FavoriteError.NotFoundCreatedArticleBySlug -> FavoriteUseCase.Error.NotFound(
+                        favoriteError
+                    ).left()
                 }
                 /**
                  * お気に入り追加 成功

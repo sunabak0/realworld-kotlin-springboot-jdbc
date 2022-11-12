@@ -84,7 +84,10 @@ class FavoriteController(
             /**
              * 原因: 記事が見つからなかった
              */
-            is FavoriteUseCase.Error.NotFoundArticleBySlug -> TODO()
+            is FavoriteUseCase.Error.NotFound -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = listOf("記事が見つかりませんでした"))),
+                HttpStatus.NOT_FOUND
+            )
         }
     // TODO: 以下の項目を実装したら削除
     //  - CreatedArticleWithAuthor を取得するクエリモデルが実装
