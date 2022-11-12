@@ -6,6 +6,7 @@ import com.example.realworldkotlinspringbootjdbc.infra.helper.SeedData
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwtImpl
 import com.github.database.rider.core.api.dataset.DataSet
+import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
 import net.bytebuddy.utility.RandomString
 import org.assertj.core.api.Assertions.assertThat
@@ -332,6 +333,11 @@ class ProfileTest {
             value = [
                 "datasets/yml/given/users.yml"
             ]
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/users.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
         )
         fun `正常系-username で指定したユーザーが存在し、フォロー済の場合、フォロー済のままである`() {
             /**
