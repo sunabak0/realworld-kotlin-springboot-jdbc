@@ -3,6 +3,7 @@ package com.example.realworldkotlinspringbootjdbc.infra
 import arrow.core.Either
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import arrow.core.None
 import arrow.core.Option
 import arrow.core.left
 import arrow.core.none
@@ -20,7 +21,6 @@ import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Nested
@@ -28,9 +28,7 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.TestInstance
-import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import java.text.SimpleDateFormat
 import java.util.stream.Stream
 
@@ -104,7 +102,10 @@ class ProfileRepositoryImplTest {
                 Image.newWithoutValidation("dummy-image"),
                 following = true
             )
-            when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2))) {
+            when (
+                val actual =
+                    profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2).toOption())
+            ) {
                 is Left -> assert(false)
                 is Right -> assertThat(actual.value).isEqualTo(expected)
             }
@@ -145,7 +146,10 @@ class ProfileRepositoryImplTest {
                 Image.newWithoutValidation("dummy-image"),
                 following = false
             )
-            when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2))) {
+            when (
+                val actual =
+                    profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2).toOption())
+            ) {
                 is Left -> assert(false)
                 is Right -> assertThat(actual.value).isEqualTo(expected)
             }
@@ -156,26 +160,15 @@ class ProfileRepositoryImplTest {
             val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
 
             val expected = ProfileRepository.ShowError.NotFoundProfileByUsername(
-                Username.newWithoutValidation("dummy-username"), UserId(2)
+                Username.newWithoutValidation("dummy-username"), UserId(2).toOption()
             )
-            when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2))) {
+            when (
+                val actual =
+                    profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2).toOption())
+            ) {
                 is Left -> assertThat(actual.value).isEqualTo(expected)
                 is Right -> assert(false)
             }
-        }
-
-        @Test
-        @Disabled
-        fun `異常系-ログイン済み、UnexpectedError が戻り値`() {
-            val throwDatabaseAccessException = object : NamedParameterJdbcTemplate(DbConnection.dataSource()) {
-                override fun queryForList(
-                    sql: String,
-                    paramMap: MutableMap<String, *>
-                ): MutableList<MutableMap<String, Any>> {
-                    throw object : DataAccessException("message") {}
-                }
-            }
-            val profileRepository = ProfileRepositoryImpl(throwDatabaseAccessException)
         }
 
         @Test
@@ -219,8 +212,8 @@ class ProfileRepositoryImplTest {
         fun `異常系-未ログイン、NotFoundProfileByUsername が戻り値`() {
             val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
 
-            val expected = ProfileRepository.ShowWithoutAuthorizedError.NotFoundProfileByUsername(
-                Username.newWithoutValidation("dummy-username"),
+            val expected = ProfileRepository.ShowError.NotFoundProfileByUsername(
+                Username.newWithoutValidation("dummy-username"), None
             )
             when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"))) {
                 is Left -> assertThat(actual.value).isEqualTo(expected)

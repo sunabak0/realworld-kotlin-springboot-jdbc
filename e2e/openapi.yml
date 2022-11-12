@@ -341,6 +341,12 @@ paths:
       description: Get a profile of a user of the system. Auth is optional
       operationId: GetProfileByUsername
       parameters:
+        - name: Authorization
+          in: header
+          description: セッション用JWT
+          required: false
+          schema:
+            $ref: '#/components/securitySchemes/Token'
         - name: username
           in: path
           description: Username of the profile to get

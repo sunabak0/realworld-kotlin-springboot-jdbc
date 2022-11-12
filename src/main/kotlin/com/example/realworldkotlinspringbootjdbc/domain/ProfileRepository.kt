@@ -1,6 +1,7 @@
 package com.example.realworldkotlinspringbootjdbc.domain
 
 import arrow.core.Either
+import arrow.core.None
 import arrow.core.Option
 import arrow.core.none
 import com.example.realworldkotlinspringbootjdbc.domain.user.UserId
@@ -12,14 +13,19 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
  *
  */
 interface ProfileRepository {
-    fun show(username: Username): Either<ShowWithoutAuthorizedError, OtherUser> = throw NotImplementedError()
-    sealed interface ShowWithoutAuthorizedError : MyError {
-        data class NotFoundProfileByUsername(val username: Username) : ShowWithoutAuthorizedError, MyError.Basic
-    }
+    /**
+     * 登録済ユーザーのプロフィール取得 by username
+     *
+     * ログイン済かどうかで、フォロイーフォロワーの関係かどうか算出する
+     * @param username
+     * @param currentUserId ログイン済ユーザー ID、未ログインのとき None
+     * @return
+     */
+    fun show(username: Username, currentUserId: Option<UserId> = None): Either<ShowError, OtherUser> =
+        throw NotImplementedError()
 
-    fun show(username: Username, currentUserId: UserId): Either<ShowError, OtherUser> = throw NotImplementedError()
     sealed interface ShowError : MyError {
-        data class NotFoundProfileByUsername(val username: Username, val currentUserId: UserId) :
+        data class NotFoundProfileByUsername(val username: Username, val userId: Option<UserId>) :
             ShowError,
             MyError.Basic
     }
