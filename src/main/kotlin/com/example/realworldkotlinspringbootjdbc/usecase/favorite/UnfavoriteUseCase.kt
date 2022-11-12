@@ -3,8 +3,6 @@ package com.example.realworldkotlinspringbootjdbc.usecase.favorite
 import arrow.core.Either
 import arrow.core.Either.Left
 import arrow.core.Either.Right
-import arrow.core.Invalid
-import arrow.core.Valid
 import arrow.core.left
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
 import com.example.realworldkotlinspringbootjdbc.domain.CreatedArticle
@@ -28,31 +26,31 @@ class UnfavoriteUseCaseImpl(
     val articleRepository: ArticleRepository
 ) : UnfavoriteUseCase {
     override fun execute(slug: String?, currentUser: RegisteredUser): Either<UnfavoriteUseCase.Error, CreatedArticle> {
-        return when (val it = Slug.new(slug)) {
+        /**
+         * Slug のバリデーション
+         * Invalid -> 早期 return
+         */
+        val validatedSlug = Slug.new(slug).fold(
+            { return UnfavoriteUseCase.Error.InvalidSlug(it).left() },
+            { it }
+        )
+
+        return when (val unfavoriteResult = articleRepository.unfavorite(validatedSlug, currentUser.userId)) {
             /**
-             * Slug が不正
+             * お気に入り登録解除 失敗
              */
-            is Invalid -> UnfavoriteUseCase.Error.InvalidSlug(it.value).left()
-            /**
-             * Slug が適切
-             */
-            is Valid -> when (val unfavoriteResult = articleRepository.unfavorite(it.value, currentUser.userId)) {
+            is Left -> when (val error = unfavoriteResult.value) {
                 /**
-                 * お気に入り登録解除 失敗
+                 * 原因: 作成済記事が見つからなかった
                  */
-                is Left -> when (val error = unfavoriteResult.value) {
-                    /**
-                     * 原因: 作成済記事が見つからなかった
-                     */
-                    is ArticleRepository.UnfavoriteError.NotFoundCreatedArticleBySlug -> UnfavoriteUseCase.Error.NotFound(
-                        error
-                    ).left()
-                }
-                /**
-                 * お気に入り登録解除 成功
-                 */
-                is Right -> unfavoriteResult
+                is ArticleRepository.UnfavoriteError.NotFoundCreatedArticleBySlug -> UnfavoriteUseCase.Error.NotFound(
+                    error
+                ).left()
             }
+            /**
+             * お気に入り登録解除 成功
+             */
+            is Right -> unfavoriteResult
         }
     }
 }
