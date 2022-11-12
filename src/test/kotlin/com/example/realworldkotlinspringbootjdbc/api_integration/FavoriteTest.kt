@@ -7,6 +7,7 @@ import com.example.realworldkotlinspringbootjdbc.infra.helper.SeedData
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwtImpl
 import com.github.database.rider.core.api.dataset.DataSet
+import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -98,6 +99,90 @@ class FavoriteTest {
                         ],
                         "favorited":true,
                         "favoritesCount":2,
+                        "author": {
+                            username: "dummy-username",
+                            bio: "dummy-bio",
+                            image: "dummy-image",
+                            following: false
+                        }
+                     }
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(
+                    JSONCompareMode.STRICT,
+                    Customization("*.createdAt") { actualCreatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(actualCreatedAt) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                    Customization("*.updatedAt") { actualUpdatedAt, expectedDummy ->
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(actualUpdatedAt) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                    },
+                )
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/articles.yml",
+                "datasets/yml/given/users.yml",
+                "datasets/yml/given/tags.yml",
+            ]
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/articles.yml", "datasets/yml/given/tags.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `正常系-お気に入り登録済の作成済記事の slug を指定した場合も、favorited=trueの作成済記事が戻り値`() {
+            /**
+             * given:
+             * - 作成済記事が存在する slug
+             * - 作成済記事をお気に入り登録済のユーザー（userId = 2）の sessionToken
+             */
+            val slug = "rust-vs-scala-vs-kotlin"
+            val existedUser = SeedData.users().filter { it.userId.value == 2 }[0]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .post("/api/articles/$slug/favorite")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", sessionToken)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = HttpStatus.OK.value()
+            val expectedResponseBody = """
+                {
+                  "article":
+                     {
+                        "title":"Rust vs Scala vs Kotlin",
+                        "slug":"rust-vs-scala-vs-kotlin",
+                        "body":"dummy-body",
+                        "createdAt": "2022-01-01T00:00:00.000Z",
+                        "updatedAt": "2022-01-01T00:00:00.000Z",
+                        "description":"dummy-description",
+                        "tagList": [
+                            "rust",
+                            "scala",
+                            "kotlin"
+                        ],
+                        "favorited":true,
+                        "favoritesCount":1,
                         "author": {
                             username: "dummy-username",
                             bio: "dummy-bio",
