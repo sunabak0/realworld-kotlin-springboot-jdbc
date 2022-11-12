@@ -9,6 +9,7 @@ import arrow.core.none
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.controller.ArticlesApi
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModel
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModelErrors
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.MultipleArticlesResponse
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.NewArticleRequest
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Profile
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.SingleArticleResponse
@@ -17,7 +18,6 @@ import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Articles
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
-import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.RealworldAuthenticationUseCaseUnauthorizedException
 import com.example.realworldkotlinspringbootjdbc.usecase.article.CreateArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.DeleteCreatedArticleUseCase
@@ -194,89 +194,69 @@ class ArticleController(
             )
         }
 
-    /**
-     * フォローしているユーザーの最新記事を取得
-     *
-     * - 認証: 必須
-     * - クエリパラメータで制限可能
-     *
-     * @param rawRequestBody
-     * @return
-     */
-    @GetMapping("/articles/feed")
-    fun feed(
-        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
-        @RequestParam(name = "limit", required = false) limit: String? = null,
-        @RequestParam(name = "offset", required = false) offset: String? = null,
-    ): ResponseEntity<String> {
-        val currentUser = when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
-            /**
-             * 認証: 失敗
-             */
-            is Left -> return AuthorizationError.handle()
-            /**
-             * 認証: 成功
-             */
-            is Right -> authorizeResult.value
-        }
+    override fun getArticlesFeed(
+        authorization: String,
+        limit: Int,
+        offset: Int
+    ): ResponseEntity<MultipleArticlesResponse> {
+        val currentUser = realworldAuthenticationUseCase.execute(authorization)
+            .getOrHandle { throw RealworldAuthenticationUseCaseUnauthorizedException(it) }
 
-        return when (
-            val useCaseResult = feed.execute(
-                currentUser = currentUser,
-                limit = limit,
-                offset = offset,
+        val feedCreatedArticles = feed.execute(
+            currentUser = currentUser,
+            limit = limit.toString(),
+            offset = offset.toString(),
+        ).getOrHandle { throw FeedUseCaseErrorException(it) }
+
+        return ResponseEntity(
+            MultipleArticlesResponse(
+                articles = feedCreatedArticles.articles.map {
+                    com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Article(
+                        slug = it.article.slug.value,
+                        title = it.article.title.value,
+                        description = it.article.description.value,
+                        body = it.article.body.value,
+                        tagList = it.article.tagList.map { tag -> tag.value }.toList(),
+                        createdAt = it.article.createdAt.toInstant().atOffset(ZoneOffset.UTC),
+                        updatedAt = it.article.updatedAt.toInstant().atOffset(ZoneOffset.UTC),
+                        favorited = it.article.favorited,
+                        favoritesCount = it.article.favoritesCount,
+                        author = Profile(
+                            username = it.author.username.value,
+                            bio = it.author.bio.value,
+                            image = it.author.image.value,
+                            following = it.author.following,
+                        )
+                    )
+                }.toList(),
+                articlesCount = feedCreatedArticles.articlesCount,
+            ),
+            HttpStatus.OK
+        )
+    }
+
+    data class FeedUseCaseErrorException(val error: FeedUseCase.Error) : Exception()
+
+    @ExceptionHandler(value = [FeedUseCaseErrorException::class])
+    fun onFeedUseCaseErrorException(e: FeedUseCaseErrorException): ResponseEntity<GenericErrorModel> =
+        when (val errorContents = e.error) {
+            is FeedUseCase.Error.FeedParameterValidationErrors -> ResponseEntity(
+                GenericErrorModel(errors = GenericErrorModelErrors(body = errorContents.errors.map { it.message }.toList())),
+                HttpStatus.UNPROCESSABLE_ENTITY
             )
-        ) {
-            /**
-             * ユースケース: 失敗
-             */
-            is Left -> when (val error = useCaseResult.value) {
-                /**
-                 * 原因: フィードパラメータのバリデーションエラー
-                 */
-                is FeedUseCase.Error.FeedParameterValidationErrors -> ResponseEntity(
-                    serializeMyErrorListForResponseBody(error.errors),
-                    HttpStatus.valueOf(422)
-                )
-                /**
-                 * 原因: Offset値が総記事数を超えている
-                 */
-                is FeedUseCase.Error.OffsetOverCreatedArticlesCountError -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody(
-                        """
-                            offset値が作成済み記事の数を超えています(offset=${error.feedParameters.offset}, articlesCount=${error.articlesCount})
-                        """.trimIndent()
-                    ), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                    HttpStatus.valueOf(422)
-                )
-            }
-            /**
-             * ユースケース: 成功
-             */
-            is Right -> ResponseEntity(
-                ObjectMapper().writeValueAsString(
-                    Articles(
-                        articlesCount = useCaseResult.value.articlesCount,
-                        articles = useCaseResult.value.articles.map {
-                            Article(
-                                title = it.article.title.value,
-                                slug = it.article.slug.value,
-                                body = it.article.body.value,
-                                createdAt = it.article.createdAt,
-                                updatedAt = it.article.updatedAt,
-                                description = it.article.description.value,
-                                tagList = it.article.tagList.map { tag -> tag.value },
-                                authorId = it.author.userId.value,
-                                favorited = it.article.favorited,
-                                favoritesCount = it.article.favoritesCount,
-                            )
-                        }
+            is FeedUseCase.Error.OffsetOverCreatedArticlesCountError -> ResponseEntity(
+                GenericErrorModel(
+                    errors = GenericErrorModelErrors(
+                        body = listOf(
+                            """
+                        offset値が作成済み記事の数を超えています(offset=${errorContents.feedParameters.offset}, articlesCount=${errorContents.articlesCount})
+                            """.trimIndent()
+                        )
                     )
                 ),
-                HttpStatus.valueOf(200)
+                HttpStatus.UNPROCESSABLE_ENTITY
             )
         }
-    }
 
     @GetMapping("/articles/{slug}")
     fun show(
