@@ -63,7 +63,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -152,7 +152,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -239,7 +239,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -331,7 +331,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -410,7 +410,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -487,7 +487,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -535,7 +535,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -584,7 +584,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -671,7 +671,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -747,7 +747,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -805,7 +805,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
             }.andReturn().response
@@ -855,7 +855,7 @@ class ArticleTest {
              * when:
              * - フィルタパラメータは無し
              */
-            val response = mockMvc.get("/articles") {
+            val response = mockMvc.get("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", sessionToken)
             }.andReturn().response
@@ -993,7 +993,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.post("/articles") {
+            val response = mockMvc.post("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 content = requestBody
                 header("Authorization", sessionToken)
@@ -1006,7 +1006,7 @@ class ArticleTest {
              * - ステータスコードが一致する
              * - レスポンスボディが一致する
              */
-            val expectedStatus = 200
+            val expectedStatus = 201
             val expectedResponseBody = """
                 {
                    "article":{
@@ -1022,9 +1022,14 @@ class ArticleTest {
                          "scala",
                          "groovy"
                       ],
-                      "authorId":1,
                       "favorited":false,
-                      "favoritesCount":0
+                      "favoritesCount":0,
+                      "author":{
+                         "username":"paul-graham",
+                         "bio":"Lisper",
+                         "image":"",
+                         "following":false
+                      }
                    }
                 }
             """.trimIndent()
@@ -1085,7 +1090,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.post("/articles") {
+            val response = mockMvc.post("/api/articles") {
                 contentType = MediaType.APPLICATION_JSON
                 content = requestBody
                 header("Authorization", sessionToken)
@@ -1101,52 +1106,21 @@ class ArticleTest {
             val expectedStatus = 422
             val expectedResponseBody = """
                 {
-                   "errors":{
-                      "body":[
-                         {
-                            "title":"長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル",
-                            "key":"Title",
-                            "message":"titleは32文字以下にしてください。"
-                         },
-                         {
-                            "description":"長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要",
-                            "key":"Description",
-                            "message":"descriptionは64文字以下にしてください。"
-                         },
-                         {
-                            "body":"長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容",
-                            "key":"Body",
-                            "message":"body は1024文字以下にしてください。"
-                         },
-                         {
-                            "tag":"too-long-too-long-tag",
-                            "key":"Tag",
-                            "message":"tagは16文字以下にしてください。"
-                         }
-                      ]
-                   }
+                  "errors":{
+                    "body":[
+                      "titleは32文字以下にしてください。",
+                      "descriptionは64文字以下にしてください。",
+                      "body は1024文字以下にしてください。",
+                      "tagは16文字以下にしてください。"
+                    ]
+                  }
                 }
             """.trimIndent()
             assertThat(actualStatus).isEqualTo(expectedStatus)
             JSONAssert.assertEquals(
                 expectedResponseBody,
                 actualResponseBody,
-                CustomComparator(
-                    JSONCompareMode.NON_EXTENSIBLE,
-                    Customization("article.slug") { actualSlug, expectedDummy ->
-                        Slug.new(actualSlug.toString()).isValid && expectedDummy == "dummy-slug"
-                    },
-                    Customization("article.createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
-                            actualCreatedAt
-                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
-                    },
-                    Customization("article.updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
-                            actualUpdatedAt
-                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
-                    },
-                )
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
             )
         }
     }
@@ -1183,7 +1157,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/feed") {
+            val response = mockMvc.get("/api/articles/feed") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", sessionToken)
             }.andReturn().response
@@ -1272,7 +1246,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/feed") {
+            val response = mockMvc.get("/api/articles/feed") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
                 header("Authorization", sessionToken)
@@ -1350,7 +1324,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/feed") {
+            val response = mockMvc.get("/api/articles/feed") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
                 header("Authorization", sessionToken)
@@ -1428,7 +1402,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/feed") {
+            val response = mockMvc.get("/api/articles/feed") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
                 header("Authorization", sessionToken)
@@ -1491,7 +1465,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/feed") {
+            val response = mockMvc.get("/api/articles/feed") {
                 contentType = MediaType.APPLICATION_JSON
                 params = MultiValueMapAdapter(queryParameters)
                 header("Authorization", sessionToken)
@@ -1553,7 +1527,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/$slug") {
+            val response = mockMvc.get("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
             }.andReturn().response
             val actualStatus = response.status
@@ -1623,7 +1597,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/$slug") {
+            val response = mockMvc.get("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", sessionToken)
             }.andReturn().response
@@ -1693,7 +1667,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/$slug") {
+            val response = mockMvc.get("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
             }.andReturn().response
             val actualStatus = response.status
@@ -1734,7 +1708,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.get("/articles/$slug") {
+            val response = mockMvc.get("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
             }.andReturn().response
             val actualStatus = response.status
@@ -1803,7 +1777,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.delete("/articles/$slug") {
+            val response = mockMvc.delete("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", sessionToken)
             }.andReturn().response
@@ -1849,7 +1823,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.delete("/articles/$slug") {
+            val response = mockMvc.delete("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", sessionToken)
             }.andReturn().response
@@ -1901,7 +1875,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.delete("/articles/$slug") {
+            val response = mockMvc.delete("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", sessionToken)
             }.andReturn().response
@@ -1953,7 +1927,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.delete("/articles/$slug") {
+            val response = mockMvc.delete("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", sessionToken)
             }.andReturn().response
@@ -2038,7 +2012,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.put("/articles/$slug") {
+            val response = mockMvc.put("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 content = requestBody
                 header("Authorization", sessionToken)
@@ -2056,7 +2030,7 @@ class ArticleTest {
                     "title":"プログラマーが知るべき97のこと",
                     "slug":"rust-vs-scala-vs-kotlin",
                     "body":"93. エラーを無視するな",
-                    "createdAt": "2022-01-01T00:00:00.000Z",
+                    "createdAt": "2022-01-01T00:00:00Z",
                     "updatedAt": "2022-01-01T00:00:00.000Z",
                     "description":"エッセイ集",
                     "tagList":[
@@ -2064,9 +2038,14 @@ class ArticleTest {
                       "scala",
                       "kotlin"
                     ],
-                    "authorId":1,
                     "favorited":false,
-                    "favoritesCount":1
+                    "favoritesCount":1,
+                    "author":{
+                        "username":"paul-graham",
+                        "bio":"Lisper",
+                        "image":"",
+                        "following":false
+                    }
                   }
                 }
             """.trimIndent()
@@ -2077,9 +2056,9 @@ class ArticleTest {
                 CustomComparator(
                     JSONCompareMode.NON_EXTENSIBLE,
                     Customization("article.createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualCreatedAt
-                        ) && expectedDummy == "2022-01-01T00:00:00.000Z"
+                        ) && expectedDummy == "2022-01-01T00:00:00Z"
                     },
                     Customization("article.updatedAt") { actualUpdatedAt, expectedDummy ->
                         DatetimeVerificationHelper.expectIso8601UtcAndParsable(
@@ -2130,7 +2109,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.put("/articles/$slug") {
+            val response = mockMvc.put("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 content = requestBody
                 header("Authorization", sessionToken)
@@ -2146,11 +2125,7 @@ class ArticleTest {
                 {
                   "errors":{
                     "body":[
-                      {
-                        "slug":"長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug",
-                        "key":"Slug",
-                        "message":"slugは32文字以下にしてください。"
-                      }
+                      "slugは32文字以下にしてください。"
                     ]
                   }
                 }
@@ -2203,7 +2178,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.put("/articles/$slug") {
+            val response = mockMvc.put("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 content = requestBody
                 header("Authorization", sessionToken)
@@ -2219,21 +2194,9 @@ class ArticleTest {
                 {
                    "errors":{
                       "body":[
-                         {
-                            "title":"長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル, 長すぎるタイトル",
-                            "key":"Title",
-                            "message":"titleは32文字以下にしてください。"
-                         },
-                         {
-                            "description":"長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要, 長すぎる概要",
-                            "key":"Description",
-                            "message":"descriptionは64文字以下にしてください。"
-                         },
-                         {
-                            "body":"長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容, 長すぎる内容",
-                            "key":"Body",
-                            "message":"body は1024文字以下にしてください。"
-                         }
+                         "titleは32文字以下にしてください。",
+                         "descriptionは64文字以下にしてください。",
+                         "body は1024文字以下にしてください。"
                       ]
                    }
                 }
@@ -2286,7 +2249,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.put("/articles/$slug") {
+            val response = mockMvc.put("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 content = requestBody
                 header("Authorization", sessionToken)
@@ -2299,7 +2262,7 @@ class ArticleTest {
              */
             val expectedStatus = HttpStatus.NOT_FOUND.value()
             val expectedResponseBody = """
-                {"errors":{"body":["記事が見つかりません　"]}}
+                {"errors":{"body":["記事が見つかりません"]}}
             """.trimIndent()
             assertThat(actualStatus).isEqualTo(expectedStatus)
             JSONAssert.assertEquals(
@@ -2349,7 +2312,7 @@ class ArticleTest {
             /**
              * when:
              */
-            val response = mockMvc.put("/articles/$slug") {
+            val response = mockMvc.put("/api/articles/$slug") {
                 contentType = MediaType.APPLICATION_JSON
                 content = requestBody
                 header("Authorization", sessionToken)

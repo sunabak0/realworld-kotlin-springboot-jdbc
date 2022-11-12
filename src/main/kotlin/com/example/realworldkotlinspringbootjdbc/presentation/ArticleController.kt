@@ -3,43 +3,52 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import arrow.core.Some
+import arrow.core.getOrHandle
 import arrow.core.none
-import com.example.realworldkotlinspringbootjdbc.presentation.request.NullableArticle
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.controller.ArticlesApi
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModel
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModelErrors
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.NewArticleRequest
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Profile
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.SingleArticleResponse
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.UpdateArticleRequest
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Articles
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
+import com.example.realworldkotlinspringbootjdbc.presentation.shared.RealworldAuthenticationUseCaseUnauthorizedException
 import com.example.realworldkotlinspringbootjdbc.usecase.article.CreateArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.DeleteCreatedArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.FeedUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.FilterCreatedArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.ShowArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.UpdateCreatedArticleUseCase
+import com.example.realworldkotlinspringbootjdbc.usecase.shared.RealworldAuthenticationUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.time.ZoneOffset
 
 @RestController
 class ArticleController(
     val myAuth: MyAuth,
+    val realworldAuthenticationUseCase: RealworldAuthenticationUseCase,
     val showArticle: ShowArticleUseCase,
     val filterCreatedArticle: FilterCreatedArticleUseCase,
     val createArticle: CreateArticleUseCase,
     val deleteArticle: DeleteCreatedArticleUseCase,
     val updateArticle: UpdateCreatedArticleUseCase,
     val feed: FeedUseCase,
-) {
+) : ArticlesApi {
 
     /**
      *
@@ -135,56 +144,55 @@ class ArticleController(
         }
     }
 
-    @PostMapping("/articles")
-    fun create(
-        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
-        @RequestBody rawRequestBody: String?,
-    ): ResponseEntity<String> {
-        return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
-            /**
-             * JWT 認証 失敗
-             */
-            is Left -> AuthorizationError.handle()
+    override fun createArticle(
+        authorization: String,
+        article: NewArticleRequest
+    ): ResponseEntity<SingleArticleResponse> {
+        val currentUser = realworldAuthenticationUseCase.execute(authorization)
+            .getOrHandle { throw RealworldAuthenticationUseCaseUnauthorizedException(it) }
 
-            /**
-             * JWT 認証 成功
-             */
-            is Right -> {
-                val article = NullableArticle.from(rawRequestBody)
-                when (
-                    val createdArticleWithAuthor = createArticle.execute(
-                        authorizeResult.value,
-                        article.title,
-                        article.description,
-                        article.body,
-                        article.tagList
+        val createdArticleWithAuthor = createArticle.execute(
+            currentUser = currentUser,
+            title = article.article.title,
+            description = article.article.description,
+            body = article.article.body,
+            tagList = article.article.tagList,
+        ).getOrHandle { throw CreateArticleUseCaseErrorException(it) }
+
+        return ResponseEntity(
+            SingleArticleResponse(
+                article = com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Article(
+                    slug = createdArticleWithAuthor.article.slug.value,
+                    title = createdArticleWithAuthor.article.title.value,
+                    description = createdArticleWithAuthor.article.description.value,
+                    body = createdArticleWithAuthor.article.body.value,
+                    tagList = createdArticleWithAuthor.article.tagList.map { it.value }.toList(),
+                    createdAt = createdArticleWithAuthor.article.createdAt.toInstant().atOffset(ZoneOffset.UTC),
+                    updatedAt = createdArticleWithAuthor.article.updatedAt.toInstant().atOffset(ZoneOffset.UTC),
+                    favorited = createdArticleWithAuthor.article.favorited,
+                    favoritesCount = createdArticleWithAuthor.article.favoritesCount,
+                    author = Profile(
+                        username = createdArticleWithAuthor.author.username.value,
+                        bio = createdArticleWithAuthor.author.bio.value,
+                        image = createdArticleWithAuthor.author.image.value,
+                        following = createdArticleWithAuthor.author.following,
                     )
-                ) {
-                    /**
-                     * 記事作成 失敗
-                     */
-                    is Left -> when (val useCaseError = createdArticleWithAuthor.value) {
-                        /**
-                         * 原因: バリデーションエラー
-                         */
-                        is CreateArticleUseCase.Error.InvalidArticle -> ResponseEntity(
-                            serializeMyErrorListForResponseBody(useCaseError.errors),
-                            HttpStatus.valueOf(422)
-                        )
-                    }
-                    /**
-                     * 記事作成 成功
-                     */
-                    is Right -> {
-                        ResponseEntity(
-                            Article.from(createdArticleWithAuthor.value).serializeWithRootName(),
-                            HttpStatus.valueOf(200),
-                        )
-                    }
-                }
-            }
-        }
+                )
+            ),
+            HttpStatus.CREATED
+        )
     }
+
+    data class CreateArticleUseCaseErrorException(val error: CreateArticleUseCase.Error) : Exception()
+
+    @ExceptionHandler(value = [CreateArticleUseCaseErrorException::class])
+    fun onCreateArticleUseCaseErrorException(e: CreateArticleUseCaseErrorException): ResponseEntity<GenericErrorModel> =
+        when (val errorContents = e.error) {
+            is CreateArticleUseCase.Error.InvalidArticle -> ResponseEntity(
+                GenericErrorModel(errors = GenericErrorModelErrors(body = errorContents.errors.map { it.message }.toList())),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+        }
 
     /**
      * フォローしているユーザーの最新記事を取得
@@ -361,76 +369,68 @@ class ArticleController(
         }
     }
 
-    @PutMapping("/articles/{slug}")
-    fun update(
-        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
-        @PathVariable("slug") slug: String?,
-        @RequestBody rawRequestBody: String?,
-    ): ResponseEntity<String> {
-        val author = when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
-            /**
-             * 認証: 失敗
-             */
-            is Left -> return AuthorizationError.handle()
-            /**
-             * 認証: 成功
-             */
-            is Right -> authorizeResult.value
-        }
+    override fun updateArticle(
+        authorization: String,
+        slug: String,
+        article: UpdateArticleRequest
+    ): ResponseEntity<SingleArticleResponse> {
+        val currentUser = realworldAuthenticationUseCase.execute(authorization)
+            .getOrHandle { throw RealworldAuthenticationUseCaseUnauthorizedException(it) }
 
-        val article = NullableArticle.from(rawRequestBody)
+        val updatedArticleWithAuthor = updateArticle.execute(
+            requestedUser = currentUser,
+            slug = slug,
+            title = article.article.title,
+            description = article.article.description,
+            body = article.article.body
+        ).getOrHandle { throw UpdateCreatedArticleUseCaseErrorException(it) }
 
-        return when (
-            val updateArticleResult = updateArticle.execute(
-                requestedUser = author,
-                slug = slug,
-                title = article.title,
-                description = article.description,
-                body = article.body,
-            )
-        ) {
-            /**
-             * 作成済み記事の更新: 失敗　
-             */
-            is Left -> when (val error = updateArticleResult.value) {
-                /**
-                 * 原因: 記事のバリデーションエラー
-                 */
-                is UpdateCreatedArticleUseCase.Error.InvalidArticle -> ResponseEntity(
-                    serializeMyErrorListForResponseBody(error.errors),
-                    HttpStatus.valueOf(422)
+        return ResponseEntity(
+            SingleArticleResponse(
+                article = com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Article(
+                    slug = updatedArticleWithAuthor.article.slug.value,
+                    title = updatedArticleWithAuthor.article.title.value,
+                    description = updatedArticleWithAuthor.article.description.value,
+                    body = updatedArticleWithAuthor.article.body.value,
+                    tagList = updatedArticleWithAuthor.article.tagList.map { it.value }.toList(),
+                    createdAt = updatedArticleWithAuthor.article.createdAt.toInstant().atOffset(ZoneOffset.UTC),
+                    updatedAt = updatedArticleWithAuthor.article.updatedAt.toInstant().atOffset(ZoneOffset.UTC),
+                    favorited = updatedArticleWithAuthor.article.favorited,
+                    favoritesCount = updatedArticleWithAuthor.article.favoritesCount,
+                    author = Profile(
+                        username = updatedArticleWithAuthor.author.username.value,
+                        bio = updatedArticleWithAuthor.author.bio.value,
+                        image = updatedArticleWithAuthor.author.image.value,
+                        following = updatedArticleWithAuthor.author.following,
+                    )
                 )
-                /**
-                 * 原因: Slugのバリデーションエラー
-                 */
-                is UpdateCreatedArticleUseCase.Error.InvalidSlug -> ResponseEntity(
-                    serializeMyErrorListForResponseBody(error.errors),
-                    HttpStatus.valueOf(422)
-                )
-                /**
-                 * 原因: 更新をしようとしたユーザーが著者ではなかった
-                 */
-                is UpdateCreatedArticleUseCase.Error.NotAuthor -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody("削除する権限がありません"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                    HttpStatus.valueOf(403)
-                )
-                /**
-                 * 原因: 記事が見つからなかった
-                 */
-                is UpdateCreatedArticleUseCase.Error.NotFoundArticle -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody("記事が見つかりません　"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                    HttpStatus.valueOf(404)
-                )
-            }
-            /**
-             * 作成済み記事の更新: 成功
-             */
-            is Right -> ResponseEntity(
-                Article.from(updateArticleResult.value).serializeWithRootName(),
-                HttpStatus.valueOf(200)
-            )
-        }
+            ),
+            HttpStatus.OK
+        )
     }
+
+    data class UpdateCreatedArticleUseCaseErrorException(val error: UpdateCreatedArticleUseCase.Error) : Exception()
+
+    @ExceptionHandler(value = [UpdateCreatedArticleUseCaseErrorException::class])
+    fun onUpdateCreatedArticleUseCaseErrorException(e: UpdateCreatedArticleUseCaseErrorException): ResponseEntity<GenericErrorModel> =
+        when (val errorContents = e.error) {
+            is UpdateCreatedArticleUseCase.Error.InvalidArticle -> ResponseEntity(
+                GenericErrorModel(errors = GenericErrorModelErrors(body = errorContents.errors.map { it.message }.toList())),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+            is UpdateCreatedArticleUseCase.Error.InvalidSlug -> ResponseEntity(
+                GenericErrorModel(errors = GenericErrorModelErrors(body = errorContents.errors.map { it.message }.toList())),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+            is UpdateCreatedArticleUseCase.Error.NotAuthor -> ResponseEntity(
+                GenericErrorModel(errors = GenericErrorModelErrors(body = listOf("削除する権限がありません"))),
+                HttpStatus.FORBIDDEN
+            )
+            is UpdateCreatedArticleUseCase.Error.NotFoundArticle -> ResponseEntity(
+                GenericErrorModel(errors = GenericErrorModelErrors(body = listOf("記事が見つかりません"))),
+                HttpStatus.NOT_FOUND
+            )
+        }
 
     @DeleteMapping("/articles/{slug}")
     fun delete(
