@@ -35,7 +35,7 @@ class FavoriteUseCaseImpl(
             { it }
         )
 
-        return when (val favoriteResult = articleRepository.favorite(validatedSlug, currentUser.userId)) {
+        val favoriteResult = when (val favoriteResult = articleRepository.favorite(validatedSlug, currentUser.userId)) {
             /**
              * お気に入り追加 失敗
              */
@@ -43,7 +43,7 @@ class FavoriteUseCaseImpl(
                 /**
                  * 原因: 作成済記事が見つからなかった
                  */
-                is ArticleRepository.FavoriteError.NotFoundCreatedArticleBySlug -> FavoriteUseCase.Error.NotFound(
+                is ArticleRepository.FavoriteError.NotFoundCreatedArticleBySlug -> return FavoriteUseCase.Error.NotFound(
                     favoriteError
                 ).left()
             }
@@ -52,5 +52,7 @@ class FavoriteUseCaseImpl(
              */
             is Right -> favoriteResult
         }
+
+        return favoriteResult
     }
 }
