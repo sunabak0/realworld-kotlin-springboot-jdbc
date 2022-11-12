@@ -17,7 +17,7 @@ interface UnfavoriteUseCase {
     fun execute(slug: String?, currentUser: RegisteredUser): Either<Error, CreatedArticle> = throw NotImplementedError()
     sealed interface Error : MyError {
         data class InvalidSlug(override val errors: List<MyError.ValidationError>) : Error, MyError.ValidationErrors
-        data class NotFoundArticleBySlug(override val cause: MyError, val slug: Slug) :
+        data class NotFound(override val cause: MyError) :
             Error,
             MyError.MyErrorWithMyError
     }
@@ -40,11 +40,13 @@ class UnfavoriteUseCaseImpl(
                 /**
                  * お気に入り登録解除 失敗
                  */
-                is Left -> when (unfavoriteResult.value) {
+                is Left -> when (val error = unfavoriteResult.value) {
                     /**
                      * 原因: 作成済記事が見つからなかった
                      */
-                    is ArticleRepository.UnfavoriteError.NotFoundCreatedArticleBySlug -> throw NotImplementedError()
+                    is ArticleRepository.UnfavoriteError.NotFoundCreatedArticleBySlug -> UnfavoriteUseCase.Error.NotFound(
+                        error
+                    ).left()
                 }
                 /**
                  * お気に入り登録解除 成功

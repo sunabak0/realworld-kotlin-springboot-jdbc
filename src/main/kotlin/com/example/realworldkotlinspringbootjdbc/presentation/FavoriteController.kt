@@ -129,7 +129,10 @@ class FavoriteController(
             /**
              * 原因: 記事が見つからなかった
              */
-            is UnfavoriteUseCase.Error.NotFoundArticleBySlug -> TODO()
+            is UnfavoriteUseCase.Error.NotFound -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = listOf("記事が見つかりませんでした"))),
+                HttpStatus.NOT_FOUND
+            )
         }
     //
     // - レスポンスのauthorId
