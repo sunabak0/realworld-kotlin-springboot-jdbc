@@ -278,7 +278,7 @@ class ProfileTest {
                 "datasets/yml/given/users.yml"
             ]
         )
-        fun `正常系-username で指定したユーザーが存在し、未フォローの場合、Profile が戻り値で following=true`() {
+        fun `正常系-username で指定したユーザーが存在し、まだフォローしていない場合、フォローする`() {
             /**
              * given:
              * - 登録済ユーザーが存在する username
@@ -305,6 +305,7 @@ class ProfileTest {
              * then:
              * - ステータスコードが一致する
              * - レスポンスボディが一致する
+             *   - following = true である
              */
             val expectedStatus = HttpStatus.OK.value()
             val expectedResponseBody =
@@ -332,7 +333,7 @@ class ProfileTest {
                 "datasets/yml/given/users.yml"
             ]
         )
-        fun `正常系-username で指定したユーザーが存在し、フォロー済の場合、Profile が戻り値で following=true`() {
+        fun `正常系-username で指定したユーザーが存在し、フォロー済の場合、フォロー済のままである`() {
             /**
              * given:
              * - 登録済ユーザーが存在する username
@@ -359,6 +360,7 @@ class ProfileTest {
              * then:
              * - ステータスコードが一致する
              * - レスポンスボディが一致する
+             *   - following = true である
              */
             val expectedStatus = HttpStatus.OK.value()
             val expectedResponseBody =
