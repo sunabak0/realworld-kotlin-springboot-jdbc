@@ -389,6 +389,11 @@ class ProfileTest {
         }
 
         @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml"
+            ]
+        )
         fun `準正常系-Username が短すぎる場合、「ユーザー名は4文字以上にしてください」が返される`() {
             /**
              * given:
@@ -435,6 +440,11 @@ class ProfileTest {
         }
 
         @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml"
+            ]
+        )
         fun `準正常系-Username が長すぎる場合、「ユーザー名は32文字以下にしてください」が返される`() {
             /**
              * given:
@@ -481,6 +491,11 @@ class ProfileTest {
         }
 
         @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml"
+            ]
+        )
         fun `準正常系-Username に該当するユーザーが見つからなかった場合、「プロフィールが見つかりませんでした」が返される`() {
             /**
              * given:
