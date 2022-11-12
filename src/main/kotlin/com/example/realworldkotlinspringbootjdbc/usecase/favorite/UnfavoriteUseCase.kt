@@ -35,22 +35,28 @@ class UnfavoriteUseCaseImpl(
             { it }
         )
 
-        return when (val unfavoriteResult = articleRepository.unfavorite(validatedSlug, currentUser.userId)) {
-            /**
-             * お気に入り登録解除 失敗
-             */
-            is Left -> when (val error = unfavoriteResult.value) {
+        /**
+         * お気に入り登録解除
+         */
+        val unfavoriteResult =
+            when (val unfavoriteResult = articleRepository.unfavorite(validatedSlug, currentUser.userId)) {
                 /**
-                 * 原因: 作成済記事が見つからなかった
+                 * お気に入り登録解除 失敗
                  */
-                is ArticleRepository.UnfavoriteError.NotFoundCreatedArticleBySlug -> UnfavoriteUseCase.Error.NotFound(
-                    error
-                ).left()
+                is Left -> return when (val error = unfavoriteResult.value) {
+                    /**
+                     * 原因: 作成済記事が見つからなかった
+                     */
+                    is ArticleRepository.UnfavoriteError.NotFoundCreatedArticleBySlug -> UnfavoriteUseCase.Error.NotFound(
+                        error
+                    ).left()
+                }
+                /**
+                 * お気に入り登録解除 成功
+                 */
+                is Right -> unfavoriteResult
             }
-            /**
-             * お気に入り登録解除 成功
-             */
-            is Right -> unfavoriteResult
-        }
+
+        return unfavoriteResult
     }
 }
