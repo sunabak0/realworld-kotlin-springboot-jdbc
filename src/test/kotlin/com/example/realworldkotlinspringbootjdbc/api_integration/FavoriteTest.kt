@@ -2,6 +2,7 @@ package com.example.realworldkotlinspringbootjdbc.api_integration
 
 import arrow.core.getOrHandle
 import com.example.realworldkotlinspringbootjdbc.api_integration.helper.DatetimeVerificationHelper
+import com.example.realworldkotlinspringbootjdbc.api_integration.helper.GenerateRandomHelper.getRandomString
 import com.example.realworldkotlinspringbootjdbc.infra.DbConnection
 import com.example.realworldkotlinspringbootjdbc.infra.helper.SeedData
 import com.example.realworldkotlinspringbootjdbc.util.MySession
@@ -205,6 +206,49 @@ class FavoriteTest {
                         DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(actualUpdatedAt) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                 )
+            )
+        }
+
+        @Test
+        fun `準正常系-slug が無効な値の場合、「"slug が不正です"」が返される`() {
+            /**
+             * given:
+             * - 有効でない slug（32文字より大きい）
+             * - 作成済記事をお気に入り登録済のユーザー（userId = 2）の sessionToken
+             */
+            val slug = getRandomString(33)
+            val existedUser = SeedData.users().filter { it.userId.value == 2 }[0]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .post("/api/articles/$slug/favorite")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", sessionToken)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
+            val expectedResponseBody = """
+                {
+                    "errors":{"body":["slug が不正です"]}
+                }
+            """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                CustomComparator(JSONCompareMode.NON_EXTENSIBLE)
             )
         }
     }

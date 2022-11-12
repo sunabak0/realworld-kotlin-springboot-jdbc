@@ -3,6 +3,8 @@ package com.example.realworldkotlinspringbootjdbc.presentation
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.controller.FavoritesApi
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModel
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModelErrors
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Profile
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.SingleArticleResponse
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
@@ -18,6 +20,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
@@ -38,7 +41,7 @@ class FavoriteController(
         )
 
         val favoritedArticle = favoriteUseCase.execute(slug, currentUser).fold(
-            { throw TODO() },
+            { throw FavoriteArticleUseCaseErrorException(it) },
             { it }
         )
 
@@ -65,6 +68,24 @@ class FavoriteController(
             HttpStatus.OK
         )
     }
+
+    data class FavoriteArticleUseCaseErrorException(val error: FavoriteUseCase.Error) : Exception()
+
+    @ExceptionHandler(value = [FavoriteArticleUseCaseErrorException::class])
+    fun onFavoriteArticleUseCaseErrorException(e: FavoriteArticleUseCaseErrorException): ResponseEntity<GenericErrorModel> =
+        when (e.error) {
+            /**
+             * 原因: Slug がバリデーションエラー
+             */
+            is FavoriteUseCase.Error.InvalidSlug -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = listOf("slug が不正です"))),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+            /**
+             * 原因: 記事が見つからなかった
+             */
+            is FavoriteUseCase.Error.NotFoundArticleBySlug -> TODO()
+        }
     // TODO: 以下の項目を実装したら削除
     //  - CreatedArticleWithAuthor を取得するクエリモデルが実装
     //  - 準正常系を実装
