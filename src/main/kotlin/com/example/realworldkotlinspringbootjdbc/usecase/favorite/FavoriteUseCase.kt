@@ -14,7 +14,7 @@ import com.example.realworldkotlinspringbootjdbc.util.MyError
 import org.springframework.stereotype.Service
 
 interface FavoriteUseCase {
-    fun execute(slug: String?, currentUser: RegisteredUser): Either<Error, CreatedArticleWithAuthor> =
+    fun execute(slug: String, currentUser: RegisteredUser): Either<Error, CreatedArticleWithAuthor> =
         throw NotImplementedError()
 
     sealed interface Error : MyError {
@@ -31,7 +31,7 @@ class FavoriteUseCaseImpl(
     val profileRepository: ProfileRepository
 ) : FavoriteUseCase {
     override fun execute(
-        slug: String?,
+        slug: String,
         currentUser: RegisteredUser
     ): Either<FavoriteUseCase.Error, CreatedArticleWithAuthor> {
         /**
