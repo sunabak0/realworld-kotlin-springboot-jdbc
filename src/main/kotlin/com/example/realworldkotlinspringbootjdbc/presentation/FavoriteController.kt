@@ -48,20 +48,20 @@ class FavoriteController(
         return ResponseEntity(
             SingleArticleResponse(
                 com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Article(
-                    slug = favoritedArticle.slug.value,
-                    title = favoritedArticle.title.value,
-                    description = favoritedArticle.description.value,
-                    body = favoritedArticle.body.value,
-                    tagList = favoritedArticle.tagList.map { it.value },
-                    createdAt = favoritedArticle.createdAt.toInstant().atOffset(ZoneOffset.UTC),
-                    updatedAt = favoritedArticle.updatedAt.toInstant().atOffset(ZoneOffset.UTC),
-                    favorited = favoritedArticle.favorited,
-                    favoritesCount = favoritedArticle.favoritesCount,
+                    slug = favoritedArticle.article.slug.value,
+                    title = favoritedArticle.article.title.value,
+                    description = favoritedArticle.article.description.value,
+                    body = favoritedArticle.article.body.value,
+                    tagList = favoritedArticle.article.tagList.map { it.value },
+                    createdAt = favoritedArticle.article.createdAt.toInstant().atOffset(ZoneOffset.UTC),
+                    updatedAt = favoritedArticle.article.updatedAt.toInstant().atOffset(ZoneOffset.UTC),
+                    favorited = favoritedArticle.article.favorited,
+                    favoritesCount = favoritedArticle.article.favoritesCount,
                     author = Profile(
-                        username = "dummy-username",
-                        bio = "dummy-bio",
-                        image = "dummy-image",
-                        following = false
+                        username = favoritedArticle.author.username.value,
+                        bio = favoritedArticle.author.bio.value,
+                        image = favoritedArticle.author.image.value,
+                        following = favoritedArticle.author.following
                     )
                 )
             ),
@@ -89,69 +89,6 @@ class FavoriteController(
                 HttpStatus.NOT_FOUND
             )
         }
-    // TODO: 以下の項目を実装したら削除
-    //  - CreatedArticleWithAuthor を取得するクエリモデルが実装
-    //  - 準正常系を実装
-    // @PostMapping("/articles/{slug}/favorite")
-    // fun favorite(
-    //     @RequestHeader("Authorization") rawAuthorizationHeader: String?,
-    //     @PathVariable("slug") slug: String?
-    // ): ResponseEntity<String> {
-    //     return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
-    //         /**
-    //          * JWT 認証 失敗
-    //          */
-    //         is Left -> AuthorizationError.handle()
-    //         /**
-    //          * JWT 認証 成功
-    //          */
-    //         is Right -> {
-    //             when (val favoritedArticle = favoriteUseCase.execute(slug, authorizeResult.value)) {
-    //                 /**
-    //                  * お気に入り登録 失敗
-    //                  */
-    //                 is Left -> when (favoritedArticle.value) {
-    //                     /**
-    //                      * 原因: Slug がバリデーションエラー
-    //                      */
-    //                     is FavoriteUseCase.Error.InvalidSlug -> ResponseEntity(
-    //                         serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-    //                         HttpStatus.valueOf(404)
-    //                     )
-    //                     /**
-    //                      * 原因: 記事が見つからなかった
-    //                      */
-    //                     is FavoriteUseCase.Error.NotFoundArticleBySlug -> ResponseEntity(
-    //                         serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-    //                         HttpStatus.valueOf(404)
-    //                     )
-    //                 }
-    //                 /**
-    //                  * お気に入り登録 成功
-    //                  */
-    //                 is Right -> {
-    //                     val article = Article(
-    //                         favoritedArticle.value.title.value,
-    //                         favoritedArticle.value.slug.value,
-    //                         favoritedArticle.value.body.value,
-    //                         favoritedArticle.value.createdAt,
-    //                         favoritedArticle.value.updatedAt,
-    //                         favoritedArticle.value.description.value,
-    //                         favoritedArticle.value.tagList.map { tag -> tag.value },
-    //                         // TODO: authorId を author に変更
-    //                         favoritedArticle.value.authorId.value,
-    //                         favoritedArticle.value.favorited,
-    //                         favoritedArticle.value.favoritesCount
-    //                     )
-    //                     return ResponseEntity(
-    //                         ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
-    //                         HttpStatus.valueOf(200),
-    //                     )
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
 
     @DeleteMapping("/articles/{slug}/favorite")
     fun unfavorite(

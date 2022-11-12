@@ -101,10 +101,10 @@ class FavoriteTest {
                         "favorited":true,
                         "favoritesCount":2,
                         "author": {
-                            username: "dummy-username",
-                            bio: "dummy-bio",
-                            image: "dummy-image",
-                            following: false
+                            username: "paul-graham",
+                            bio: "Lisper",
+                            image: "",
+                            following: true
                         }
                      }
                 }
@@ -185,10 +185,10 @@ class FavoriteTest {
                         "favorited":true,
                         "favoritesCount":1,
                         "author": {
-                            username: "dummy-username",
-                            bio: "dummy-bio",
-                            image: "dummy-image",
-                            following: false
+                            username: "paul-graham",
+                            bio: "Lisper",
+                            image: "",
+                            following: true
                         }
                      }
                 }
