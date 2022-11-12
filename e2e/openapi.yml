@@ -523,6 +523,14 @@ paths:
       summary: Create an article
       description: Create an article. Auth is required
       operationId: CreateArticle
+      # 自前追加
+      parameters:
+        - name: Authorization
+          in: header
+          description: セッション用JWT
+          required: true
+          schema:
+            $ref: '#/components/securitySchemes/Token'
       requestBody:
         description: Article to create
         content:
