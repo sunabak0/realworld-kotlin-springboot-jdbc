@@ -258,6 +258,11 @@ class FavoriteTest {
         }
 
         @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml",
+            ]
+        )
         fun `準正常系-slug に該当する作成済記事がない場合、「"記事が見つかりませんでした"」が返される`() {
             /**
              * given:
