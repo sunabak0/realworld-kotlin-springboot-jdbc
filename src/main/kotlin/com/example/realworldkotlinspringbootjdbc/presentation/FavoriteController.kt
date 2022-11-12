@@ -93,20 +93,20 @@ class FavoriteController(
         return ResponseEntity(
             SingleArticleResponse(
                 com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Article(
-                    slug = unfavoriteUseCaseResult.slug.value,
-                    title = unfavoriteUseCaseResult.title.value,
-                    description = unfavoriteUseCaseResult.description.value,
-                    body = unfavoriteUseCaseResult.body.value,
-                    tagList = unfavoriteUseCaseResult.tagList.map { it.value },
-                    createdAt = unfavoriteUseCaseResult.createdAt.toInstant().atOffset(ZoneOffset.UTC),
-                    updatedAt = unfavoriteUseCaseResult.updatedAt.toInstant().atOffset(ZoneOffset.UTC),
-                    favorited = unfavoriteUseCaseResult.favorited,
-                    favoritesCount = unfavoriteUseCaseResult.favoritesCount,
+                    slug = unfavoriteUseCaseResult.article.slug.value,
+                    title = unfavoriteUseCaseResult.article.title.value,
+                    description = unfavoriteUseCaseResult.article.description.value,
+                    body = unfavoriteUseCaseResult.article.body.value,
+                    tagList = unfavoriteUseCaseResult.article.tagList.map { it.value },
+                    createdAt = unfavoriteUseCaseResult.article.createdAt.toInstant().atOffset(ZoneOffset.UTC),
+                    updatedAt = unfavoriteUseCaseResult.article.updatedAt.toInstant().atOffset(ZoneOffset.UTC),
+                    favorited = unfavoriteUseCaseResult.article.favorited,
+                    favoritesCount = unfavoriteUseCaseResult.article.favoritesCount,
                     author = Profile(
-                        username = "dummy-username",
-                        bio = "dummy-bio",
-                        image = "dummy-image",
-                        following = false
+                        username = unfavoriteUseCaseResult.author.username.value,
+                        bio = unfavoriteUseCaseResult.author.bio.value,
+                        image = unfavoriteUseCaseResult.author.image.value,
+                        following = unfavoriteUseCaseResult.author.following
                     )
                 )
             ),

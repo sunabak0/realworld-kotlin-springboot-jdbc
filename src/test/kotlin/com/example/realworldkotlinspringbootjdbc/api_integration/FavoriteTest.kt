@@ -379,10 +379,10 @@ class FavoriteTest {
                         "favorited":false,
                         "favoritesCount":0,
                         "author": {
-                            username: "dummy-username",
-                            bio: "dummy-bio",
-                            image: "dummy-image",
-                            following: false
+                            username: "paul-graham",
+                            bio: "Lisper",
+                            image: "",
+                            following: true
                         }
                      }
                 }
@@ -467,10 +467,10 @@ class FavoriteTest {
                         "favorited":false,
                         "favoritesCount":1,
                         "author": {
-                            username: "dummy-username",
-                            bio: "dummy-bio",
-                            image: "dummy-image",
-                            following: false
+                            username: "paul-graham",
+                            bio: "Lisper",
+                            image: "",
+                            following: true
                         }
                      }
                 }
