@@ -4,6 +4,7 @@ import arrow.core.Either.Left
 import arrow.core.Either.Right
 import arrow.core.Some
 import arrow.core.getOrHandle
+import arrow.core.handleError
 import arrow.core.none
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.controller.ArticlesApi
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModel
@@ -29,7 +30,6 @@ import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -432,59 +432,34 @@ class ArticleController(
             )
         }
 
-    @DeleteMapping("/articles/{slug}")
-    fun delete(
-        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
-        @PathVariable("slug") slug: String?
-    ): ResponseEntity<String> {
-        val author = when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
-            /**
-             * 認証: 失敗
-             */
-            is Left -> return AuthorizationError.handle()
-            /**
-             * 認証: 成功
-             */
-            is Right -> authorizeResult.value
-        }
+    override fun deleteArticle(authorization: String, slug: String): ResponseEntity<Unit> {
+        val currentUser = realworldAuthenticationUseCase.execute(authorization)
+            .getOrHandle { throw RealworldAuthenticationUseCaseUnauthorizedException(it) }
 
-        return when (
-            val deleteResult = deleteArticle.execute(
-                slug = slug,
-                author = author
-            )
-        ) {
-            /**
-             * 削除: 失敗
-             */
-            is Left -> when (val error = deleteResult.value) {
-                /**
-                 * 原因: 著者ではなかった
-                 */
-                is DeleteCreatedArticleUseCase.Error.NotAuthor -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody("削除する権限がありません"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                    HttpStatus.valueOf(422)
-                )
-                /**
-                 * 原因: 削除したい作成済み記事が見つからなかった
-                 */
-                is DeleteCreatedArticleUseCase.Error.NotFoundArticle -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                    HttpStatus.valueOf(422)
-                )
-                /**
-                 * 原因: バリデーションエラー
-                 */
-                is DeleteCreatedArticleUseCase.Error.ValidationError -> ResponseEntity(
-                    serializeMyErrorListForResponseBody(error.errors),
-                    HttpStatus.valueOf(422)
-                )
-            }
+        deleteArticle.execute(
+            author = currentUser,
+            slug = slug,
+        ).handleError { throw DeleteCreatedArticleUseCaseErrorException(it) }
 
-            /**
-             * 削除: 成功
-             */
-            is Right -> ResponseEntity("", HttpStatus.valueOf(200))
-        }
+        return ResponseEntity(Unit, HttpStatus.OK)
     }
+
+    data class DeleteCreatedArticleUseCaseErrorException(val error: DeleteCreatedArticleUseCase.Error) : Exception()
+
+    @ExceptionHandler(value = [DeleteCreatedArticleUseCaseErrorException::class])
+    fun onDeleteCreatedArticleUseCaseErrorException(e: DeleteCreatedArticleUseCaseErrorException): ResponseEntity<GenericErrorModel> =
+        when (val errorContents = e.error) {
+            is DeleteCreatedArticleUseCase.Error.NotAuthor -> ResponseEntity(
+                GenericErrorModel(errors = GenericErrorModelErrors(body = listOf("削除する権限がありません"))),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+            is DeleteCreatedArticleUseCase.Error.NotFoundArticle -> ResponseEntity(
+                GenericErrorModel(errors = GenericErrorModelErrors(body = listOf("記事が見つかりませんでした"))),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+            is DeleteCreatedArticleUseCase.Error.ValidationError -> ResponseEntity(
+                GenericErrorModel(errors = GenericErrorModelErrors(body = errorContents.errors.map { it.message }.toList())),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+        }
 }

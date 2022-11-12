@@ -1788,7 +1788,7 @@ class ArticleTest {
              * then:
              */
             val expectedStatus = HttpStatus.OK.value()
-            val expectedResponseBody = ""
+            val expectedResponseBody = "{}"
             assertThat(actualStatus).isEqualTo(expectedStatus)
             assertThat(actualResponseBody).isEqualTo(expectedResponseBody)
         }
@@ -1942,11 +1942,7 @@ class ArticleTest {
                 {
                   "errors":{
                     "body":[
-                      {
-                        "slug": "長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug, 長すぎるslug",
-                        "key":"Slug",
-                        "message":"slugは32文字以下にしてください。"
-                      }
+                      "slugは32文字以下にしてください。"
                     ]
                   }
                 }
