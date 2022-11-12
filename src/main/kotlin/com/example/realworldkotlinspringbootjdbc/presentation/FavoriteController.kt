@@ -5,7 +5,6 @@ import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Generic
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModelErrors
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Profile
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.SingleArticleResponse
-import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.RealworldAuthenticationUseCaseUnauthorizedException
 import com.example.realworldkotlinspringbootjdbc.usecase.favorite.FavoriteUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.favorite.UnfavoriteUseCase
@@ -87,7 +86,7 @@ class FavoriteController(
         )
 
         val unfavoriteUseCaseResult = unfavoriteUseCase.execute(slug, currentUser).fold(
-            { TODO() },
+            { throw UnfavoriteUseCaseErrorException(it) },
             { it }
         )
 
@@ -114,6 +113,24 @@ class FavoriteController(
             HttpStatus.OK
         )
     }
+
+    data class UnfavoriteUseCaseErrorException(val error: UnfavoriteUseCase.Error) : Exception()
+
+    @ExceptionHandler(value = [UnfavoriteUseCaseErrorException::class])
+    fun onUnfavoriteUseCaseErrorException(e: UnfavoriteUseCaseErrorException): ResponseEntity<GenericErrorModel> =
+        when (e.error) {
+            /**
+             * 原因: Slug がバリデーションエラー
+             */
+            is UnfavoriteUseCase.Error.InvalidSlug -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = listOf("slug が不正です"))),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+            /**
+             * 原因: 記事が見つからなかった
+             */
+            is UnfavoriteUseCase.Error.NotFoundArticleBySlug -> TODO()
+        }
     //
     // - レスポンスのauthorId
     /**
