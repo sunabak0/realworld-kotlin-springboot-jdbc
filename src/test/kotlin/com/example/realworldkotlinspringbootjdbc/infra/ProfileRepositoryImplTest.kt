@@ -420,6 +420,51 @@ class ProfileRepositoryImplTest {
                 }
             }
         }
+
+        @Test
+        @DataSet(value = ["datasets/yml/given/users.yml"])
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/users.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `正常系-username で指定したユーザーが存在し、未フォローの場合、未フォローのままである`() {
+            /**
+             * given:
+             * - ProfileRepository
+             * - 存在する username
+             * - 存在する username をフォローしていない、UserId
+             */
+            val profileRepositoryImpl = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val username = Username.newWithoutValidation("松本行弘")
+            val currentUserId = UserId(1)
+
+            /**
+             * when:
+             */
+            val actual = profileRepositoryImpl.unfollow(username = username, currentUserId = currentUserId)
+
+            /**
+             * then:
+             * - following = false（未フォロー）
+             */
+            val expected = OtherUser.newWithoutValidation(
+                userId = UserId(2),
+                username = Username.newWithoutValidation("松本行弘"),
+                bio = Bio.newWithoutValidation("Rubyを作った"),
+                image = Image.newWithoutValidation(""),
+                following = false
+            )
+            when (actual) {
+                is Left -> assert(false)
+                is Right -> {
+                    assertThat(actual.value.userId).isEqualTo(expected.userId)
+                    assertThat(actual.value.username).isEqualTo(expected.username)
+                    assertThat(actual.value.bio).isEqualTo(expected.bio)
+                    assertThat(actual.value.following).isEqualTo(expected.following)
+                }
+            }
+        }
     }
 
     @Nested
@@ -430,45 +475,6 @@ class ProfileRepositoryImplTest {
         @AfterAll
         fun reset() {
             resetDb()
-        }
-
-        @Test
-        fun `未フォロー、戻り値が OtherUser-followingsテーブルに変化なし`() {
-            fun localPrepare() {
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-
-                val insertUserSql =
-                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                val insertUserSqlParams =
-                    MapSqlParameterSource().addValue("id", 1).addValue("email", "dummy@example.com")
-                        .addValue("username", "dummy-username").addValue("password", "Passw0rd")
-                        .addValue("created_at", date).addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertUserSql, insertUserSqlParams)
-
-                val insertProfileSql =
-                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                val insertProfileSqlParams =
-                    MapSqlParameterSource().addValue("id", 1).addValue("user_id", 1).addValue("bio", "dummy-bio")
-                        .addValue("image", "dummy-image").addValue("created_at", date).addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams)
-            }
-            localPrepare()
-
-            /**
-             * 戻り値が未フォローの OtherUser であることを確認
-             */
-            val expectedProfile = OtherUser.newWithoutValidation(
-                UserId(1),
-                Username.newWithoutValidation("dummy-username"),
-                Bio.newWithoutValidation("dummy-bio"),
-                Image.newWithoutValidation("dummy-image"),
-                following = false
-            )
-            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
-            when (val actual = profileRepository.unfollow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
-                is Left -> assert(false)
-                is Right -> assertThat(actual.value).isEqualTo(expectedProfile)
-            }
         }
 
         @Test
