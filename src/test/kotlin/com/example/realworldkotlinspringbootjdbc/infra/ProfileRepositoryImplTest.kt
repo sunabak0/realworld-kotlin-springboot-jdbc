@@ -20,9 +20,7 @@ import com.github.database.rider.core.api.dataset.DataSet
 import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
@@ -31,27 +29,11 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.TestInstance
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import java.util.stream.Stream
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Tag("WithLocalDb")
 class ProfileRepositoryImplTest {
-    companion object {
-        val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
-        fun resetDb() {
-            val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
-            val sql = """
-                DELETE FROM users;
-                DELETE FROM profiles;
-                DELETE FROM followings;
-            """.trimIndent()
-            namedParameterJdbcTemplate.update(sql, MapSqlParameterSource())
-        }
-    }
-
-    private val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
-
     @Tag("WithLocalDb")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     @DBRider
@@ -224,17 +206,6 @@ class ProfileRepositoryImplTest {
                 is Left -> assertThat(actual.value).isEqualTo(expected)
                 is Right -> assert(false)
             }
-        }
-    }
-
-    @Nested
-    @Tag("WithLocalDb")
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-    class `Show(プロフィールを表示)` {
-        @BeforeEach
-        @AfterAll
-        fun reset() {
-            resetDb()
         }
     }
 
