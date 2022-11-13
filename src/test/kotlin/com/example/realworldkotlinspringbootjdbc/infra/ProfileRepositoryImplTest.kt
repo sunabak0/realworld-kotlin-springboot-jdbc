@@ -53,6 +53,51 @@ class ProfileRepositoryImplTest {
 
     private val namedParameterJdbcTemplate = DbConnection.namedParameterJdbcTemplate
 
+    @Tag("WithLocalDb")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    @DisplayName("Show(プロフィールを表示)")
+    class Show {
+        @BeforeAll
+        fun reset() = DbConnection.resetSequence()
+
+        @Test
+        @DataSet(value = ["datasets/yml/given/users.yml"])
+        fun `正常系-未ログインで、username で指定した登録済ユーザーが存在する場合、Profile を取得できる`() {
+            /**
+             * given:
+             */
+            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val username = Username.newWithoutValidation("paul-graham")
+
+            /**
+             * when:
+             */
+            val actual = profileRepository.show(username = username)
+
+            /**
+             * then:
+             * - following = false（必ず未フォロー）
+             */
+            val expected = OtherUser.newWithoutValidation(
+                userId = UserId(1),
+                username = Username.newWithoutValidation("paul-graham"),
+                bio = Bio.newWithoutValidation("Lisper"),
+                image = Image.newWithoutValidation(""),
+                following = false
+            )
+            when (actual) {
+                is Left -> assert(false)
+                is Right -> {
+                    assertThat(actual.value.userId).isEqualTo(expected.userId)
+                    assertThat(actual.value.username).isEqualTo(expected.username)
+                    assertThat(actual.value.bio).isEqualTo(expected.bio)
+                    assertThat(actual.value.following).isEqualTo(expected.following)
+                }
+            }
+        }
+    }
+
     @Nested
     @Tag("WithLocalDb")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -171,43 +216,6 @@ class ProfileRepositoryImplTest {
             ) {
                 is Left -> assertThat(actual.value).isEqualTo(expected)
                 is Right -> assert(false)
-            }
-        }
-
-        @Test
-        fun `正常系-未ログイン、OtherUser が戻り値`() {
-            fun localPrepare() {
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-
-                val insertUserSql =
-                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                val insertUserSqlParams =
-                    MapSqlParameterSource().addValue("id", 1).addValue("email", "dummy@example.com")
-                        .addValue("username", "dummy-username").addValue("password", "Passw0rd")
-                        .addValue("created_at", date).addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertUserSql, insertUserSqlParams)
-
-                val insertProfileSql =
-                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                val insertProfileSqlParams =
-                    MapSqlParameterSource().addValue("id", 1).addValue("user_id", 1).addValue("bio", "dummy-bio")
-                        .addValue("image", "dummy-image").addValue("created_at", date).addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams)
-            }
-            localPrepare()
-
-            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
-
-            val expected = OtherUser.newWithoutValidation(
-                UserId(1),
-                Username.newWithoutValidation("dummy-username"),
-                Bio.newWithoutValidation("dummy-bio"),
-                Image.newWithoutValidation("dummy-image"),
-                following = false
-            )
-            when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"))) {
-                is Left -> assert(false)
-                is Right -> assertThat(actual.value).isEqualTo(expected)
             }
         }
 
