@@ -623,7 +623,12 @@ class ProfileTest {
                 "datasets/yml/given/users.yml"
             ]
         )
-        fun `正常系-username で指定したユーザーが存在し、未フォローの場合、Profile が戻り値で following=false`() {
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/users.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `正常系-username で指定したユーザーが存在し、すでに未フォローの場合、未フォローのままである`() {
             /**
              * given:
              * - 登録済ユーザーが存在する username
@@ -650,6 +655,7 @@ class ProfileTest {
              * then:
              * - ステータスコードが一致する
              * - レスポンスボディが一致する
+             *   - following = false
              */
             val expectedStatus = HttpStatus.OK.value()
             val expectedResponseBody =
