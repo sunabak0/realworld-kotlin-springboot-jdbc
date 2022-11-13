@@ -279,6 +279,11 @@ class ProfileTest {
                 "datasets/yml/given/users.yml"
             ]
         )
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/profile_repository/follow-success.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
         fun `正常系-username で指定したユーザーが存在し、まだフォローしていない場合、フォローする`() {
             /**
              * given:
