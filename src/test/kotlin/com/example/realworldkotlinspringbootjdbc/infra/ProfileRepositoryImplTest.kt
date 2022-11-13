@@ -96,6 +96,43 @@ class ProfileRepositoryImplTest {
                 }
             }
         }
+
+        @Test
+        @DataSet(value = ["datasets/yml/given/users.yml"])
+        fun `正常系-ログイン済で、username で指定した登録済ユーザーが存在し、フォロー済の場合、フォロー状態の Profileを取得できる`() {
+            /**
+             * given:
+             */
+            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val username = Username.newWithoutValidation("paul-graham")
+            val currentUserId = UserId(2)
+
+            /**
+             * when:
+             */
+            val actual = profileRepository.show(username = username, currentUserId = currentUserId.toOption())
+
+            /**
+             * then:
+             * - following = true
+             */
+            val expected = OtherUser.newWithoutValidation(
+                userId = UserId(1),
+                username = Username.newWithoutValidation("paul-graham"),
+                bio = Bio.newWithoutValidation("Lisper"),
+                image = Image.newWithoutValidation(""),
+                following = true
+            )
+            when (actual) {
+                is Left -> assert(false)
+                is Right -> {
+                    assertThat(actual.value.userId).isEqualTo(expected.userId)
+                    assertThat(actual.value.username).isEqualTo(expected.username)
+                    assertThat(actual.value.bio).isEqualTo(expected.bio)
+                    assertThat(actual.value.following).isEqualTo(expected.following)
+                }
+            }
+        }
     }
 
     @Nested
@@ -106,57 +143,6 @@ class ProfileRepositoryImplTest {
         @AfterAll
         fun reset() {
             resetDb()
-        }
-
-        @Test
-        fun `正常系-ログイン済み-フォロー済、 OtherUser が戻り値`() {
-            fun localPrepare() {
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-
-                val insertUserSql =
-                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                val insertUserSqlParams =
-                    MapSqlParameterSource().addValue("id", 1).addValue("email", "dummy@example.com")
-                        .addValue("username", "dummy-username").addValue("password", "Passw0rd")
-                        .addValue("created_at", date).addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertUserSql, insertUserSqlParams)
-
-                val insertProfileSql =
-                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                val insertProfileSqlParams1 =
-                    MapSqlParameterSource().addValue("id", 1).addValue("user_id", 1).addValue("bio", "dummy-bio")
-                        .addValue("image", "dummy-image").addValue("created_at", date).addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams1)
-                val insertProfileSqlParams2 =
-                    MapSqlParameterSource().addValue("id", 2).addValue("user_id", 2).addValue("bio", "dummy-bio")
-                        .addValue("image", "dummy-image").addValue("created_at", date).addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams2)
-
-                val insertFollowingsSql =
-                    "INSERT INTO followings(id, following_id, follower_id, created_at) VALUES (:id, :following_id, :follower_id, :created_at);"
-                val insertFollowingsSqlParams =
-                    MapSqlParameterSource().addValue("id", 1).addValue("following_id", 1).addValue("follower_id", 2)
-                        .addValue("created_at", date)
-                namedParameterJdbcTemplate.update(insertFollowingsSql, insertFollowingsSqlParams)
-            }
-            localPrepare()
-
-            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
-
-            val expected = OtherUser.newWithoutValidation(
-                UserId(1),
-                Username.newWithoutValidation("dummy-username"),
-                Bio.newWithoutValidation("dummy-bio"),
-                Image.newWithoutValidation("dummy-image"),
-                following = true
-            )
-            when (
-                val actual =
-                    profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2).toOption())
-            ) {
-                is Left -> assert(false)
-                is Right -> assertThat(actual.value).isEqualTo(expected)
-            }
         }
 
         @Test
