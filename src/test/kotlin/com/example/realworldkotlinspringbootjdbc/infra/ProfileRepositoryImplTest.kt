@@ -171,6 +171,60 @@ class ProfileRepositoryImplTest {
                 }
             }
         }
+
+        @Test
+        @DataSet(value = ["datasets/yml/given/users.yml"])
+        fun `準正常系-ログイン済で、username で指定した登録済ユーザーが存在しない場合、NotFoundProfileByUsername が戻り値`() {
+            /**
+             * given:
+             * - 存在しない username
+             * - ユーザー ID
+             */
+            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val username = Username.newWithoutValidation("dummy-username")
+            val currentUserId = UserId(1)
+
+            /**
+             * when:
+             */
+            val actual = profileRepository.show(username = username, currentUserId = currentUserId.toOption())
+
+            /**
+             * then:
+             */
+            val expected = ProfileRepository.ShowError.NotFoundProfileByUsername(
+                username, currentUserId.toOption()
+            )
+            when (actual) {
+                is Left -> assertThat(actual.value).isEqualTo(expected)
+                is Right -> assert(false)
+            }
+        }
+
+        @Test
+        @DataSet(value = ["datasets/yml/given/users.yml"])
+        fun `準正常系-未ログインで、username で指定した登録済ユーザーが存在しない場合、NotFoundProfileByUsername が戻り値`() {
+            /**
+             * given:
+             * - 存在しない username
+             */
+            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val username = Username.newWithoutValidation("dummy-username")
+
+            /**
+             * when:
+             */
+            val actual = profileRepository.show(username = username)
+
+            /**
+             * then:
+             */
+            val expected = ProfileRepository.ShowError.NotFoundProfileByUsername(username, None)
+            when (actual) {
+                is Left -> assertThat(actual.value).isEqualTo(expected)
+                is Right -> assert(false)
+            }
+        }
     }
 
     @Nested
@@ -181,35 +235,6 @@ class ProfileRepositoryImplTest {
         @AfterAll
         fun reset() {
             resetDb()
-        }
-
-        @Test
-        fun `異常系-ログイン済み、NotFoundProfileByUsername が戻り値`() {
-            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
-
-            val expected = ProfileRepository.ShowError.NotFoundProfileByUsername(
-                Username.newWithoutValidation("dummy-username"), UserId(2).toOption()
-            )
-            when (
-                val actual =
-                    profileRepository.show(Username.newWithoutValidation("dummy-username"), UserId(2).toOption())
-            ) {
-                is Left -> assertThat(actual.value).isEqualTo(expected)
-                is Right -> assert(false)
-            }
-        }
-
-        @Test
-        fun `異常系-未ログイン、NotFoundProfileByUsername が戻り値`() {
-            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
-
-            val expected = ProfileRepository.ShowError.NotFoundProfileByUsername(
-                Username.newWithoutValidation("dummy-username"), None
-            )
-            when (val actual = profileRepository.show(Username.newWithoutValidation("dummy-username"))) {
-                is Left -> assertThat(actual.value).isEqualTo(expected)
-                is Right -> assert(false)
-            }
         }
     }
 
