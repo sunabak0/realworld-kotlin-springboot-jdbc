@@ -564,7 +564,12 @@ class ProfileTest {
                 "datasets/yml/given/users.yml"
             ]
         )
-        fun `正常系-username で指定したユーザーが存在し、フォロー済の場合、Profile が戻り値で following=false`() {
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/profile_repository/unfollow-success.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `正常系-username で指定したユーザーが存在し、フォロー済の場合、未フォローにする`() {
             /**
              * given:
              * - 登録済ユーザーが存在する username
