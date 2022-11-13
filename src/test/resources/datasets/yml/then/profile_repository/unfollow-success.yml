@@ -1,0 +1,50 @@
+followings:
+  - id: 1
+    following_id: 1
+    follower_id: 2
+    created_at: "2022-11-13 10:09:58.0"
+  - id: 3
+    following_id: 2
+    follower_id: 3
+    created_at: "2022-11-13 10:09:58.0"
+
+profiles:
+  - id: 1
+    user_id: 1
+    bio: "Lisper"
+    image: ""
+    created_at: "2022-11-13 10:09:58.0"
+    updated_at: "2022-11-13 10:09:58.0"
+  - id: 2
+    user_id: 2
+    bio: "Rubyを作った"
+    image: ""
+    created_at: "2022-11-13 10:09:58.0"
+    updated_at: "2022-11-13 10:09:58.0"
+  - id: 3
+    user_id: 3
+    bio: "Rustを作った"
+    image: ""
+    created_at: "2022-11-13 10:09:58.0"
+    updated_at: "2022-11-13 10:09:58.0"
+
+users:
+  - id: 1
+    email: "paul-graham@example.com"
+    username: "paul-graham"
+    password: "Passw0rd"
+    created_at: "2022-11-13 10:09:58.0"
+    updated_at: "2022-11-13 10:09:58.0"
+  - id: 2
+    email: "matz@example.com"
+    username: "松本行弘"
+    password: "Passw0rd"
+    created_at: "2022-11-13 10:09:58.0"
+    updated_at: "2022-11-13 10:09:58.0"
+  - id: 3
+    email: "graydon-hoare@example.com"
+    username: "graydon-hoare"
+    password: "Passw0rd"
+    created_at: "2022-11-13 10:09:58.0"
+    updated_at: "2022-11-13 10:09:58.0"
+
