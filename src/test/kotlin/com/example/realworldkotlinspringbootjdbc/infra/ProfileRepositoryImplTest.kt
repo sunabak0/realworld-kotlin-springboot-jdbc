@@ -66,7 +66,7 @@ class ProfileRepositoryImplTest {
             /**
              * given:
              */
-            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val profileRepository = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val username = Username.newWithoutValidation("paul-graham")
 
             /**
@@ -102,7 +102,7 @@ class ProfileRepositoryImplTest {
             /**
              * given:
              */
-            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val profileRepository = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val username = Username.newWithoutValidation("paul-graham")
             val currentUserId = UserId(2)
 
@@ -141,7 +141,7 @@ class ProfileRepositoryImplTest {
              * - 存在する username
              * - username をフォローしていないユーザー ID
              */
-            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val profileRepository = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val username = Username.newWithoutValidation("graydon-hoare")
             val currentUserId = UserId(1)
 
@@ -180,7 +180,7 @@ class ProfileRepositoryImplTest {
              * - 存在しない username
              * - ユーザー ID
              */
-            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val profileRepository = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val username = Username.newWithoutValidation("dummy-username")
             val currentUserId = UserId(1)
 
@@ -208,7 +208,7 @@ class ProfileRepositoryImplTest {
              * given:
              * - 存在しない username
              */
-            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val profileRepository = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val username = Username.newWithoutValidation("dummy-username")
 
             /**
@@ -266,7 +266,7 @@ class ProfileRepositoryImplTest {
              * - 存在する username
              * - 存在する username をフォローしていない、UserId
              */
-            val profileRepositoryImpl = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val profileRepositoryImpl = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val username = Username.newWithoutValidation("松本行弘")
             val currentUserId = UserId(1)
 
@@ -310,7 +310,7 @@ class ProfileRepositoryImplTest {
              * - 存在する username
              * - 存在する username をフォローしている、UserId
              */
-            val profileRepositoryImpl = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val profileRepositoryImpl = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val username = Username.newWithoutValidation("paul-graham")
             val currentUserId = UserId(3)
 
@@ -354,7 +354,7 @@ class ProfileRepositoryImplTest {
              * - 存在する username
              * - 有効な UserId （存在しない UserId でもエラーが発生しない）
              */
-            val profileRepositoryImpl = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val profileRepositoryImpl = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val username = Username.newWithoutValidation("dummy-username")
             val currentUserId = UserId(3)
 
@@ -404,7 +404,7 @@ class ProfileRepositoryImplTest {
              * - 存在する username
              * - 存在する username をフォローしていない、UserId
              */
-            val profileRepositoryImpl = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val profileRepositoryImpl = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val username = Username.newWithoutValidation("paul-graham")
             val currentUserId = UserId(3)
 
@@ -448,7 +448,7 @@ class ProfileRepositoryImplTest {
              * - 存在する username
              * - 存在する username をフォローしていない、UserId
              */
-            val profileRepositoryImpl = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val profileRepositoryImpl = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val username = Username.newWithoutValidation("松本行弘")
             val currentUserId = UserId(1)
 
@@ -493,7 +493,7 @@ class ProfileRepositoryImplTest {
              * - 存在する username
              * - 有効な UserId （存在しない UserId でもエラーが発生しない）
              */
-            val profileRepositoryImpl = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val profileRepositoryImpl = ProfileRepositoryImpl(DbConnection.namedParameterJdbcTemplate)
             val username = Username.newWithoutValidation("dummy-username")
             val currentUserId = UserId(3)
 
