@@ -326,27 +326,37 @@ class ProfileRepositoryImplTest {
                 }
             }
         }
-    }
-
-    @Nested
-    @Tag("WithLocalDb")
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-    class `Follow(他ユーザーをフォロー)` {
-        @BeforeEach
-        @AfterAll
-        fun reset() {
-            resetDb()
-        }
 
         @Test
-        fun `異常系、 戻り値が NotFoundProfileByUsername`() {
-            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+        @DataSet(value = ["datasets/yml/given/users.yml"])
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/users.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-username に該当するユーザーが存在しない場合、戻り値が NotFoundProfileByUsername`() {
+            /**
+             * given:
+             * - ProfileRepository
+             * - 存在する username
+             * - 有効な UserId （存在しない UserId でもエラーが発生しない）
+             */
+            val profileRepositoryImpl = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val username = Username.newWithoutValidation("dummy-username")
+            val currentUserId = UserId(3)
 
+            /**
+             * when:
+             */
+            val actual = profileRepositoryImpl.follow(username = username, currentUserId = currentUserId)
+
+            /**
+             * then:
+             */
             val expected = ProfileRepository.FollowError.NotFoundProfileByUsername(
-                Username.newWithoutValidation("dummy-username"), UserId(2)
+                Username.newWithoutValidation("dummy-username"), UserId(3)
             )
-
-            when (val actual = profileRepository.follow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
+            when (actual) {
                 is Left -> assertThat(actual.value).isEqualTo(expected)
                 is Right -> assert(false)
             }
