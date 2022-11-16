@@ -3,8 +3,10 @@ package com.example.realworldkotlinspringbootjdbc.usecase.favorite
 import arrow.core.Either
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import arrow.core.getOrHandle
 import arrow.core.left
 import arrow.core.right
+import arrow.core.toOption
 import com.example.realworldkotlinspringbootjdbc.domain.ArticleRepository
 import com.example.realworldkotlinspringbootjdbc.domain.ProfileRepository
 import com.example.realworldkotlinspringbootjdbc.domain.RegisteredUser
@@ -62,20 +64,19 @@ class FavoriteUseCaseImpl(
         }
 
         /**
-         * フォローしている登録済みユーザー郡
-         * エラー -> ありえない
+         * author を取得
+         * 必ず 1 件見つかるため、first を指定している
          */
-        val followedUsers = profileRepository.filterFollowedByUser(currentUser.userId).fold(
-            { throw UnsupportedOperationException("現在この分岐に入ることは無い") },
-            { it }
-        )
+        val author =
+            profileRepository.filterByUserIds(setOf(favoriteResult.value.authorId), currentUser.userId.toOption())
+                .getOrHandle { throw UnsupportedOperationException("現在この分岐に入ることは無い") }.first()
 
         /**
          * author を followedUsers から取得
          */
         return CreatedArticleWithAuthor(
             article = favoriteResult.value,
-            author = followedUsers.find { user -> user.userId == favoriteResult.value.authorId }!!
+            author = author
         ).right()
     }
 }
