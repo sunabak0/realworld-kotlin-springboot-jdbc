@@ -6,6 +6,7 @@ import com.example.realworldkotlinspringbootjdbc.infra.helper.SeedData
 import com.example.realworldkotlinspringbootjdbc.util.MySession
 import com.example.realworldkotlinspringbootjdbc.util.MySessionJwtImpl
 import com.github.database.rider.core.api.dataset.DataSet
+import com.github.database.rider.core.api.dataset.ExpectedDataSet
 import com.github.database.rider.junit5.api.DBRider
 import net.bytebuddy.utility.RandomString
 import org.assertj.core.api.Assertions.assertThat
@@ -234,6 +235,291 @@ class ProfileTest {
                 MockMvcRequestBuilders
                     .get("/api/profiles/$username")
                     .contentType(MediaType.APPLICATION_JSON)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = HttpStatus.NOT_FOUND.value()
+            val expectedResponseBody =
+                """
+                    {
+                      "errors": {
+                        "body": ["プロフィールが見つかりませんでした"]
+                      }
+                    }
+                """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                JSONCompareMode.NON_EXTENSIBLE
+            )
+        }
+    }
+
+    @SpringBootTest
+    @AutoConfigureMockMvc
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @DBRider
+    class FollowUserByUsername {
+        @Autowired
+        lateinit var mockMvc: MockMvc
+
+        @BeforeAll
+        fun reset() = DbConnection.resetSequence()
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml"
+            ]
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/profile_repository/follow-success.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `正常系-username で指定したユーザーが存在し、まだフォローしていない場合、フォローする`() {
+            /**
+             * given:
+             * - 登録済ユーザーが存在する username
+             * - username がフォロイーでない、登録済ユーザーの sessionToken
+             */
+            val username = "松本行弘"
+            val existedUser = SeedData.users().filter { it.userId.value == 1 }[0]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .post("/api/profiles/$username/follow")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", sessionToken)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             *   - following = true である
+             */
+            val expectedStatus = HttpStatus.OK.value()
+            val expectedResponseBody =
+                """
+                    {
+                      "profile": {
+                        "username": "松本行弘",
+                        "bio": "Rubyを作った",
+                        "image": "",
+                        "following": true
+                      }
+                    }
+                """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                JSONCompareMode.STRICT
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml"
+            ]
+        )
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/users.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `正常系-username で指定したユーザーが存在し、フォロー済の場合、フォロー済のままである`() {
+            /**
+             * given:
+             * - 登録済ユーザーが存在する username
+             * - username がフォロイーである、登録済ユーザーの sessionToken
+             */
+            val username = "paul-graham"
+            val existedUser = SeedData.users().filter { it.userId.value == 3 }[0]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .post("/api/profiles/$username/follow")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", sessionToken)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             *   - following = true である
+             */
+            val expectedStatus = HttpStatus.OK.value()
+            val expectedResponseBody =
+                """
+                    {
+                      "profile": {
+                        "username": "paul-graham",
+                        "bio": "Lisper",
+                        "image": "",
+                        "following": true
+                      }
+                    }
+                """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                JSONCompareMode.STRICT
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml"
+            ]
+        )
+        fun `準正常系-Username が短すぎる場合、「ユーザー名は4文字以上にしてください」が返される`() {
+            /**
+             * given:
+             * - 有効でない Username（短すぎる）
+             * - 登録済ユーザーの sessionToken
+             */
+            val username = "aaa"
+            val existedUser = SeedData.users().filter { it.userId.value == 3 }[0]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .post("/api/profiles/$username/follow")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", sessionToken)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
+            val expectedResponseBody =
+                """
+                    {
+                      "errors": {
+                        "body": ["ユーザー名は4文字以上にしてください。"]
+                      }
+                    }
+                """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                JSONCompareMode.NON_EXTENSIBLE
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml"
+            ]
+        )
+        fun `準正常系-Username が長すぎる場合、「ユーザー名は32文字以下にしてください」が返される`() {
+            /**
+             * given:
+             * - 有効でない Username（長すぎる）
+             * - 登録済ユーザーの sessionToken
+             */
+            val username = RandomString(33)
+            val existedUser = SeedData.users().filter { it.userId.value == 3 }[0]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .post("/api/profiles/$username/follow")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", sessionToken)
+            ).andReturn().response
+            val actualStatus = response.status
+            val actualResponseBody = response.contentAsString
+
+            /**
+             * then:
+             * - ステータスコードが一致する
+             * - レスポンスボディが一致する
+             */
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
+            val expectedResponseBody =
+                """
+                    {
+                      "errors": {
+                        "body": ["ユーザー名は32文字以下にしてください。"]
+                      }
+                    }
+                """.trimIndent()
+            assertThat(actualStatus).isEqualTo(expectedStatus)
+            JSONAssert.assertEquals(
+                expectedResponseBody,
+                actualResponseBody,
+                JSONCompareMode.NON_EXTENSIBLE
+            )
+        }
+
+        @Test
+        @DataSet(
+            value = [
+                "datasets/yml/given/users.yml"
+            ]
+        )
+        fun `準正常系-Username に該当するユーザーが見つからなかった場合、「プロフィールが見つかりませんでした」が返される`() {
+            /**
+             * given:
+             * - 有効だが登録済ユーザー存在しない Username
+             * - 登録済ユーザーの sessionToken
+             */
+            val username = "dummy-username"
+            val existedUser = SeedData.users().filter { it.userId.value == 3 }[0]
+            val sessionToken = MySessionJwtImpl.encode(MySession(existedUser.userId, existedUser.email))
+                .getOrHandle { throw UnsupportedOperationException("セッションからJWTへの変換に失敗しました(前提条件であるため、元の実装を見直してください)") }
+
+            /**
+             * when:
+             */
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders
+                    .post("/api/profiles/$username/follow")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", sessionToken)
             ).andReturn().response
             val actualStatus = response.status
             val actualResponseBody = response.contentAsString
