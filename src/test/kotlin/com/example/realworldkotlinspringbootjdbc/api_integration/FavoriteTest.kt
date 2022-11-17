@@ -33,11 +33,9 @@ class FavoriteTest {
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     @DBRider
     @Tag("ApiIntegration")
-    class CreateArticleFavorite {
-
-        @Autowired
-        lateinit var mockMvc: MockMvc
-
+    class CreateArticleFavorite(
+        @Autowired val mockMvc: MockMvc
+    ) {
         @BeforeAll
         fun reset() = DbConnection.resetSequence()
 
@@ -311,11 +309,9 @@ class FavoriteTest {
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     @DBRider
     @Tag("ApiIntegration")
-    class DeleteArticleFavorite {
-
-        @Autowired
-        lateinit var mockMvc: MockMvc
-
+    class DeleteArticleFavorite(
+        @Autowired val mockMvc: MockMvc
+    ) {
         @BeforeAll
         fun reset() = DbConnection.resetSequence()
 
