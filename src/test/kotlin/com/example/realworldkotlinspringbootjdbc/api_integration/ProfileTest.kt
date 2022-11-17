@@ -266,10 +266,9 @@ class ProfileTest {
     @AutoConfigureMockMvc
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     @DBRider
-    class FollowUserByUsername {
-        @Autowired
-        lateinit var mockMvc: MockMvc
-
+    class FollowUserByUsername(
+        @Autowired val mockMvc: MockMvc
+    ) {
         @BeforeAll
         fun reset() = DbConnection.resetSequence()
 
@@ -551,10 +550,9 @@ class ProfileTest {
     @AutoConfigureMockMvc
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     @DBRider
-    class UnfollowUserByUsername {
-        @Autowired
-        lateinit var mockMvc: MockMvc
-
+    class UnfollowUserByUsername(
+        @Autowired val mockMvc: MockMvc
+    ) {
         @BeforeAll
         fun reset() = DbConnection.resetSequence()
 
