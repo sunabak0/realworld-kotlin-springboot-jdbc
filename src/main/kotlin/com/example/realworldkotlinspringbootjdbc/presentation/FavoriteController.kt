@@ -1,35 +1,23 @@
 package com.example.realworldkotlinspringbootjdbc.presentation
 
-import arrow.core.Either.Left
-import arrow.core.Either.Right
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.controller.FavoritesApi
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Article
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModel
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModelErrors
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Profile
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.SingleArticleResponse
-import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
-import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
-import com.example.realworldkotlinspringbootjdbc.presentation.shared.AuthorizationError
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.RealworldAuthenticationUseCaseUnauthorizedException
 import com.example.realworldkotlinspringbootjdbc.usecase.favorite.FavoriteUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.favorite.UnfavoriteUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.shared.RealworldAuthenticationUseCase
-import com.example.realworldkotlinspringbootjdbc.util.MyAuth
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.ExceptionHandler
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
-import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 
 @RestController
 class FavoriteController(
-    val myAuth: MyAuth,
     val realworldAuthenticationUseCase: RealworldAuthenticationUseCase,
     val favoriteUseCase: FavoriteUseCase,
     val unfavoriteUseCase: UnfavoriteUseCase,
@@ -47,7 +35,7 @@ class FavoriteController(
 
         return ResponseEntity(
             SingleArticleResponse(
-                com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Article(
+                Article(
                     slug = favoritedArticle.article.slug.value,
                     title = favoritedArticle.article.title.value,
                     description = favoritedArticle.article.description.value,
@@ -90,76 +78,59 @@ class FavoriteController(
             )
         }
 
-    @DeleteMapping("/articles/{slug}/favorite")
-    fun unfavorite(
-        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
-        @PathVariable("slug") slug: String?
-    ): ResponseEntity<String> {
-        val article = Article(
-            "hoge-title",
-            "hoge-slug",
-            "hoge-body",
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00"),
-            "hoge-description",
-            listOf("dragons", "training"),
-            1,
-            false,
-            0,
+    override fun deleteArticleFavorite(authorization: String, slug: String): ResponseEntity<SingleArticleResponse> {
+        val currentUser = realworldAuthenticationUseCase.execute(authorization).fold(
+            { throw RealworldAuthenticationUseCaseUnauthorizedException(it) },
+            { it }
         )
-        return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
-            /**
-             * JWT 認証 失敗
-             */
-            is Left -> AuthorizationError.handle()
-            /**
-             * JWT 認証 成功
-             */
-            is Right -> {
-                when (val unfavoritedArticle = unfavoriteUseCase.execute(slug, authorizeResult.value)) {
-                    /**
-                     * お気に入り解除 失敗
-                     */
-                    is Left -> when (unfavoritedArticle.value) {
-                        /**
-                         * 原因: Slug が不正
-                         */
-                        is UnfavoriteUseCase.Error.InvalidSlug -> ResponseEntity(
-                            serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                            HttpStatus.valueOf(404)
-                        )
-                        /**
-                         * 原因: 記事が見つからなかった
-                         */
-                        is UnfavoriteUseCase.Error.NotFoundArticleBySlug -> ResponseEntity(
-                            serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                            HttpStatus.valueOf(404)
-                        )
-                    }
-                    /**
-                     * お気に入り解除 成功
-                     */
-                    is Right -> {
-                        val article = Article(
-                            unfavoritedArticle.value.title.value,
-                            unfavoritedArticle.value.slug.value,
-                            unfavoritedArticle.value.body.value,
-                            unfavoritedArticle.value.createdAt,
-                            unfavoritedArticle.value.updatedAt,
-                            unfavoritedArticle.value.description.value,
-                            unfavoritedArticle.value.tagList.map { tag -> tag.value },
-                            // TODO: authorId を author に変更
-                            unfavoritedArticle.value.authorId.value,
-                            unfavoritedArticle.value.favorited,
-                            unfavoritedArticle.value.favoritesCount
-                        )
-                        return ResponseEntity(
-                            ObjectMapper().enable(SerializationFeature.WRAP_ROOT_VALUE).writeValueAsString(article),
-                            HttpStatus.valueOf(200),
-                        )
-                    }
-                }
-            }
-        }
+
+        val unfavoriteUseCaseResult = unfavoriteUseCase.execute(slug, currentUser).fold(
+            { throw UnfavoriteUseCaseErrorException(it) },
+            { it }
+        )
+
+        return ResponseEntity(
+            SingleArticleResponse(
+                Article(
+                    slug = unfavoriteUseCaseResult.article.slug.value,
+                    title = unfavoriteUseCaseResult.article.title.value,
+                    description = unfavoriteUseCaseResult.article.description.value,
+                    body = unfavoriteUseCaseResult.article.body.value,
+                    tagList = unfavoriteUseCaseResult.article.tagList.map { it.value },
+                    createdAt = unfavoriteUseCaseResult.article.createdAt.toInstant().atOffset(ZoneOffset.UTC),
+                    updatedAt = unfavoriteUseCaseResult.article.updatedAt.toInstant().atOffset(ZoneOffset.UTC),
+                    favorited = unfavoriteUseCaseResult.article.favorited,
+                    favoritesCount = unfavoriteUseCaseResult.article.favoritesCount,
+                    author = Profile(
+                        username = unfavoriteUseCaseResult.author.username.value,
+                        bio = unfavoriteUseCaseResult.author.bio.value,
+                        image = unfavoriteUseCaseResult.author.image.value,
+                        following = unfavoriteUseCaseResult.author.following
+                    )
+                )
+            ),
+            HttpStatus.OK
+        )
     }
+
+    data class UnfavoriteUseCaseErrorException(val error: UnfavoriteUseCase.Error) : Exception()
+
+    @ExceptionHandler(value = [UnfavoriteUseCaseErrorException::class])
+    fun onUnfavoriteUseCaseErrorException(e: UnfavoriteUseCaseErrorException): ResponseEntity<GenericErrorModel> =
+        when (e.error) {
+            /**
+             * 原因: Slug がバリデーションエラー
+             */
+            is UnfavoriteUseCase.Error.InvalidSlug -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = listOf("slug が不正です"))),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+            /**
+             * 原因: 記事が見つからなかった
+             */
+            is UnfavoriteUseCase.Error.NotFound -> ResponseEntity(
+                GenericErrorModel(GenericErrorModelErrors(body = listOf("記事が見つかりませんでした"))),
+                HttpStatus.NOT_FOUND
+            )
+        }
 }
