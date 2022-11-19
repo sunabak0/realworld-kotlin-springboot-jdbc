@@ -1,10 +1,6 @@
 package com.example.realworldkotlinspringbootjdbc.usecase.profile
 
 import arrow.core.Either
-import arrow.core.Either.Left
-import arrow.core.Either.Right
-import arrow.core.Validated.Invalid
-import arrow.core.Validated.Valid
 import arrow.core.left
 import arrow.core.right
 import com.example.realworldkotlinspringbootjdbc.domain.OtherUser
@@ -33,35 +29,32 @@ class UnfollowProfileUseCaseImpl(
         username: String?,
         currentUser: RegisteredUser
     ): Either<UnfollowProfileUseCase.Error, OtherUser> {
-        return when (val it = Username.new(username)) {
-            /**
-             * Username が不正
-             */
-            is Invalid -> UnfollowProfileUseCase.Error.InvalidUsername(it.value).left()
-            /**
-             * Username が適切
-             */
-            is Valid -> when (val unfollowResult = profileRepository.unfollow(it.value, currentUser.userId)) {
-                /**
-                 * アンフォロー 失敗
-                 */
-                is Left -> when (unfollowResult.value) {
-                    /**
-                     * 原因: プロフィールが見つからなかった
-                     */
-                    is ProfileRepository.UnfollowError.NotFoundProfileByUsername -> throw NotImplementedError()
+        /**
+         * Username のバリデーション
+         * Invalid -> 早期 return
+         */
+        val validatedUsername = Username.new(username).fold(
+            { return UnfollowProfileUseCase.Error.InvalidUsername(it).left() },
+            { it }
+        )
+
+        val unfollowResult = profileRepository.unfollow(validatedUsername, currentUser.userId).fold(
+            {
+                return when (val error = it) {
+                    is ProfileRepository.UnfollowError.NotFoundProfileByUsername -> UnfollowProfileUseCase.Error.NotFound(
+                        error
+                    ).left()
                 }
-                /**
-                 * アンフォロー 成功
-                 */
-                is Right -> OtherUser.newWithoutValidation(
-                    unfollowResult.value.userId,
-                    unfollowResult.value.username,
-                    unfollowResult.value.bio,
-                    unfollowResult.value.image,
-                    unfollowResult.value.following,
-                ).right()
-            }
-        }
+            },
+            { it }
+        )
+
+        return OtherUser.newWithoutValidation(
+            unfollowResult.userId,
+            unfollowResult.username,
+            unfollowResult.bio,
+            unfollowResult.image,
+            unfollowResult.following,
+        ).right()
     }
 }

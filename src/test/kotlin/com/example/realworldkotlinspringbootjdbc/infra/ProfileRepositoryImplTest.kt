@@ -363,148 +363,139 @@ class ProfileRepositoryImplTest {
         }
     }
 
-    @Nested
     @Tag("WithLocalDb")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-    class `Unfollow(他ユーザーをアンフォロー)` {
-        @BeforeEach
-        @AfterAll
-        fun reset() {
-            resetDb()
-        }
+    @DBRider
+    @DisplayName("Unfollow（他ユーザーをアンフォロー）")
+    class Unfollow {
+        @BeforeAll
+        fun reset() = DbConnection.resetSequence()
 
         @Test
-        fun `正常系-フォロー済、 戻り値が OtherUser-followings テーブルから削除される`() {
-            fun localPrepare() {
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-
-                val insertUserSql =
-                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                val insertUserSqlParams =
-                    MapSqlParameterSource().addValue("id", 1).addValue("email", "dummy@example.com")
-                        .addValue("username", "dummy-username").addValue("password", "Passw0rd")
-                        .addValue("created_at", date).addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertUserSql, insertUserSqlParams)
-
-                val insertProfileSql =
-                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                val insertProfileSqlParams1 =
-                    MapSqlParameterSource().addValue("id", 1).addValue("user_id", 1).addValue("bio", "dummy-bio")
-                        .addValue("image", "dummy-image").addValue("created_at", date).addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams1)
-                val insertProfileSqlParams2 =
-                    MapSqlParameterSource().addValue("id", 2).addValue("user_id", 2).addValue("bio", "dummy-bio")
-                        .addValue("image", "dummy-image").addValue("created_at", date).addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams2)
-
-                /**
-                 * followings テーブルにすでにフォロー済のレコードを追加
-                 */
-                val insertFollowingsFollowerSql =
-                    "INSERT INTO followings(id, following_id, follower_id, created_at) VALUES (:id, :following_id, :follower_id, :created_at);"
-                val insertFollowingsFollowerSqlParams =
-                    MapSqlParameterSource().addValue("id", 1).addValue("following_id", 1).addValue("follower_id", 2)
-                        .addValue("created_at", date)
-                namedParameterJdbcTemplate.update(insertFollowingsFollowerSql, insertFollowingsFollowerSqlParams)
-                /**
-                 * 他の follower_id が削除されないか確認のため他のフォロワーを追加
-                 */
-                val insertFollowingsOtherFollowerSqlParams =
-                    MapSqlParameterSource().addValue("id", 2).addValue("following_id", 1).addValue("follower_id", 3)
-                        .addValue("created_at", date)
-                namedParameterJdbcTemplate.update(insertFollowingsFollowerSql, insertFollowingsOtherFollowerSqlParams)
-            }
-            localPrepare()
-            val confirmFollowingsSql =
-                "SELECT COUNT(*) AS CNT FROM followings WHERE follower_id = :current_user_id AND following_id = :user_id"
-            val confirmFollowingsParam = MapSqlParameterSource().addValue("user_id", 1).addValue("current_user_id", 2)
+        @DataSet(value = ["datasets/yml/given/users.yml"])
+        @ExpectedDataSet(
+            value = ["datasets/yml/then/profile_repository/unfollow-success.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        // NOTE: @ExportDataSetはgivenの@DataSetが変更された時用に残しておく
+        // @ExportDataSet(
+        //     format = DataSetFormat.YML,
+        //     outputName = "src/test/resources/datasets/yml/then/profile_repository/unfollow-success.yml",
+        //     includeTables = ["followings", "profiles", "users"]
+        // )
+        fun `正常系-username で指定したユーザーが存在し、フォロー済の場合、未フォローになる`() {
+            /**
+             * given:
+             * - ProfileRepository
+             * - 存在する username
+             * - 存在する username をフォローしていない、UserId
+             */
+            val profileRepositoryImpl = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val username = Username.newWithoutValidation("paul-graham")
+            val currentUserId = UserId(3)
 
             /**
-             * 実行前に1件存在していることを確認
+             * when:
              */
-            val beforeResult = namedParameterJdbcTemplate.queryForList(confirmFollowingsSql, confirmFollowingsParam)
-            assertThat(beforeResult[0]["CNT"]).isEqualTo(1L)
+            val actual = profileRepositoryImpl.unfollow(username = username, currentUserId = currentUserId)
 
             /**
-             * 戻り値が未フォローの OtherUser であることを確認
+             * then:
              */
-            val expectedProfile = OtherUser.newWithoutValidation(
-                UserId(1),
-                Username.newWithoutValidation("dummy-username"),
-                Bio.newWithoutValidation("dummy-bio"),
-                Image.newWithoutValidation("dummy-image"),
+            val expected = OtherUser.newWithoutValidation(
+                userId = UserId(1),
+                username = Username.newWithoutValidation("paul-graham"),
+                bio = Bio.newWithoutValidation("Lisper"),
+                image = Image.newWithoutValidation(""),
                 following = false
             )
-            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
-            when (val actual = profileRepository.unfollow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
+            when (actual) {
                 is Left -> assert(false)
-                is Right -> assertThat(actual.value).isEqualTo(expectedProfile)
+                is Right -> {
+                    assertThat(actual.value.userId).isEqualTo(expected.userId)
+                    assertThat(actual.value.username).isEqualTo(expected.username)
+                    assertThat(actual.value.bio).isEqualTo(expected.bio)
+                    assertThat(actual.value.following).isEqualTo(expected.following)
+                }
             }
-
-            /**
-             * 実行後に削除されていることを確認
-             */
-            val afterResult = namedParameterJdbcTemplate.queryForList(confirmFollowingsSql, confirmFollowingsParam)
-            assertThat(afterResult[0]["CNT"]).isEqualTo(0L)
-
-            /**
-             * 余分な行が削除されていないか確認。オリジナル 2 行 -> 実行後 1 行
-             */
-            val confirmAllFollowingsSql = "SELECT COUNT(*) AS CNT FROM followings WHERE following_id = :user_id"
-            val confirmAllFollowingsParam = MapSqlParameterSource().addValue("user_id", 1)
-            val confirmAllFollowingsResult =
-                namedParameterJdbcTemplate.queryForList(confirmAllFollowingsSql, confirmAllFollowingsParam)
-            assertThat(confirmAllFollowingsResult[0]["CNT"]).isEqualTo(1L)
         }
 
         @Test
-        fun `未フォロー、戻り値が OtherUser-followingsテーブルに変化なし`() {
-            fun localPrepare() {
-                val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse("2022-01-01T00:00:00+09:00")
-
-                val insertUserSql =
-                    "INSERT INTO users(id, email, username, password, created_at, updated_at) VALUES (:id, :email, :username, :password, :created_at, :updated_at);"
-                val insertUserSqlParams =
-                    MapSqlParameterSource().addValue("id", 1).addValue("email", "dummy@example.com")
-                        .addValue("username", "dummy-username").addValue("password", "Passw0rd")
-                        .addValue("created_at", date).addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertUserSql, insertUserSqlParams)
-
-                val insertProfileSql =
-                    "INSERT INTO profiles(id, user_id, bio, image, created_at, updated_at) VALUES (:id, :user_id, :bio, :image, :created_at, :updated_at);"
-                val insertProfileSqlParams =
-                    MapSqlParameterSource().addValue("id", 1).addValue("user_id", 1).addValue("bio", "dummy-bio")
-                        .addValue("image", "dummy-image").addValue("created_at", date).addValue("updated_at", date)
-                namedParameterJdbcTemplate.update(insertProfileSql, insertProfileSqlParams)
-            }
-            localPrepare()
+        @DataSet(value = ["datasets/yml/given/users.yml"])
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/users.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `正常系-username で指定したユーザーが存在し、未フォローの場合、未フォローのままである`() {
+            /**
+             * given:
+             * - ProfileRepository
+             * - 存在する username
+             * - 存在する username をフォローしていない、UserId
+             */
+            val profileRepositoryImpl = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val username = Username.newWithoutValidation("松本行弘")
+            val currentUserId = UserId(1)
 
             /**
-             * 戻り値が未フォローの OtherUser であることを確認
+             * when:
              */
-            val expectedProfile = OtherUser.newWithoutValidation(
-                UserId(1),
-                Username.newWithoutValidation("dummy-username"),
-                Bio.newWithoutValidation("dummy-bio"),
-                Image.newWithoutValidation("dummy-image"),
+            val actual = profileRepositoryImpl.unfollow(username = username, currentUserId = currentUserId)
+
+            /**
+             * then:
+             * - following = false（未フォロー）
+             */
+            val expected = OtherUser.newWithoutValidation(
+                userId = UserId(2),
+                username = Username.newWithoutValidation("松本行弘"),
+                bio = Bio.newWithoutValidation("Rubyを作った"),
+                image = Image.newWithoutValidation(""),
                 following = false
             )
-            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
-            when (val actual = profileRepository.unfollow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
+            when (actual) {
                 is Left -> assert(false)
-                is Right -> assertThat(actual.value).isEqualTo(expectedProfile)
+                is Right -> {
+                    assertThat(actual.value.userId).isEqualTo(expected.userId)
+                    assertThat(actual.value.username).isEqualTo(expected.username)
+                    assertThat(actual.value.bio).isEqualTo(expected.bio)
+                    assertThat(actual.value.following).isEqualTo(expected.following)
+                }
             }
         }
 
         @Test
-        fun `異常系 NotFoundProfileByUsername が戻り値`() {
-            val profileRepository = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+        @DataSet(value = ["datasets/yml/given/users.yml"])
+        @ExpectedDataSet(
+            value = ["datasets/yml/given/users.yml"],
+            ignoreCols = ["id", "created_at", "updated_at"],
+            orderBy = ["id"]
+        )
+        fun `準正常系-username に該当するユーザーが存在しない場合、戻り値が NotFoundProfileByUsername`() {
+            /**
+             * given:
+             * - ProfileRepository
+             * - 存在する username
+             * - 有効な UserId （存在しない UserId でもエラーが発生しない）
+             */
+            val profileRepositoryImpl = ProfileRepositoryImpl(namedParameterJdbcTemplate)
+            val username = Username.newWithoutValidation("dummy-username")
+            val currentUserId = UserId(3)
 
+            /**
+             * when:
+             */
+            val actual = profileRepositoryImpl.unfollow(username = username, currentUserId = currentUserId)
+
+            /**
+             * then:
+             */
             val expected = ProfileRepository.UnfollowError.NotFoundProfileByUsername(
-                Username.newWithoutValidation("dummy-username"), UserId(2)
+                Username.newWithoutValidation("dummy-username"), UserId(3)
             )
-
-            when (val actual = profileRepository.unfollow(Username.newWithoutValidation("dummy-username"), UserId(2))) {
+            when (actual) {
                 is Left -> assertThat(actual.value).isEqualTo(expected)
                 is Right -> assert(false)
             }
