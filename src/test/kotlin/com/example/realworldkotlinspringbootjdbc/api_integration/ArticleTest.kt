@@ -1169,7 +1169,7 @@ class ArticleTest {
              * - ステータスコードが一致する
              * - レスポンスボディが一致する
              */
-            val expectedStatus = 200
+            val expectedStatus = HttpStatus.OK.value()
             val expectedResponseBody = """
                 {
                    "articlesCount":2,
@@ -1184,9 +1184,14 @@ class ArticleTest {
                          "tagList":[
                             "kotlin"
                          ],
-                         "authorId":1,
                          "favorited":true,
-                         "favoritesCount":1
+                         "favoritesCount":1,
+                         "author":{
+                            "username":"paul-graham",
+                            "bio":"Lisper",
+                            "image":"",
+                            "following":true
+                         }
                       },
                       {
                          "title":"TDD(Type Driven Development)",
@@ -1196,9 +1201,14 @@ class ArticleTest {
                          "updatedAt": "2022-01-01T00:00:00.000Z",
                          "description":"dummy-description",
                          "tagList":[],
-                         "authorId":2,
                          "favorited":false,
-                         "favoritesCount":2
+                         "favoritesCount":2,
+                         "author":{
+                            "username":"松本行弘",
+                            "bio":"Rubyを作った",
+                            "image":"",
+                            "following":true
+                         }
                       }
                    ]
                 }
@@ -1210,12 +1220,12 @@ class ArticleTest {
                 CustomComparator(
                     JSONCompareMode.NON_EXTENSIBLE,
                     Customization("articles[*].createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualCreatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                     Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualUpdatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
@@ -1259,7 +1269,7 @@ class ArticleTest {
              * - ステータスコードが一致する
              * - レスポンスボディが一致する
              */
-            val expectedStatus = 200
+            val expectedStatus = HttpStatus.OK.value()
             val expectedResponseBody = """
                 {
                    "articlesCount":2,
@@ -1274,9 +1284,14 @@ class ArticleTest {
                          "tagList":[
                             "kotlin"
                          ],
-                         "authorId":1,
                          "favorited":true,
-                         "favoritesCount":1
+                         "favoritesCount":1,
+                         "author":{
+                            "username":"paul-graham",
+                            "bio":"Lisper",
+                            "image":"",
+                            "following":true
+                         }
                       }
                    ]
                 }
@@ -1288,12 +1303,12 @@ class ArticleTest {
                 CustomComparator(
                     JSONCompareMode.NON_EXTENSIBLE,
                     Customization("articles[*].createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualCreatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                     Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualUpdatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
@@ -1337,7 +1352,7 @@ class ArticleTest {
              * - ステータスコードが一致する
              * - レスポンスボディが一致する
              */
-            val expectedStatus = 200
+            val expectedStatus = HttpStatus.OK.value()
             val expectedResponseBody = """
                 {
                    "articlesCount":2,
@@ -1350,9 +1365,14 @@ class ArticleTest {
                          "updatedAt": "2022-01-01T00:00:00.000Z",
                          "description":"dummy-description",
                          "tagList":[],
-                         "authorId":2,
                          "favorited":false,
-                         "favoritesCount":2
+                         "favoritesCount":2,
+                         "author":{
+                            "username":"松本行弘",
+                            "bio":"Rubyを作った",
+                            "image":"",
+                            "following":true
+                         }
                       }
                    ]
                 }
@@ -1364,12 +1384,12 @@ class ArticleTest {
                 CustomComparator(
                     JSONCompareMode.NON_EXTENSIBLE,
                     Customization("articles[*].createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualCreatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                     Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualUpdatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
@@ -1415,21 +1435,13 @@ class ArticleTest {
              * - ステータスコードが一致する
              * - レスポンスボディが一致する
              */
-            val expectedStatus = 422
+            val expectedStatus = HttpStatus.UNPROCESSABLE_ENTITY.value()
             val expectedResponseBody = """
                 {
                    "errors":{
                       "body":[
-                         {
-                            "value":100000,
-                            "key":"LimitError",
-                            "message":"100以下である必要があります"
-                         },
-                         {
-                            "value":-1,
-                            "key":"LimitError",
-                            "message":"0以上である必要があります"
-                         }
+                         "100以下である必要があります",
+                         "0以上である必要があります"
                       ]
                    }
                 }
