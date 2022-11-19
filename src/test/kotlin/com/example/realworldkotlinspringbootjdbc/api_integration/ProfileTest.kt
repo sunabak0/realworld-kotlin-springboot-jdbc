@@ -28,10 +28,9 @@ class ProfileTest {
     @AutoConfigureMockMvc
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     @DBRider
-    class GetProfileByUsername {
-        @Autowired
-        lateinit var mockMvc: MockMvc
-
+    class GetProfileByUsername(
+        @Autowired val mockMvc: MockMvc
+    ) {
         @BeforeAll
         fun reset() = DbConnection.resetSequence()
 
