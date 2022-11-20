@@ -15,9 +15,21 @@ on:
 #
 
 #
+# reviewdog/action-yamllint
+#
+# URL
+#   - https://github.com/reviewdog/action-yamllint
+# 概要
+#   - yamllintの結果をreviewdogで指摘させる
+#
+
+#
 # detektの結果をreviewdogに食わせて、指摘箇所にコメントをするようにする
 #
 jobs:
+  #
+  # Kotlinのlint(detekt)
+  #
   detekt-and-reviewdog:
     runs-on: ubuntu-latest
     steps:
@@ -40,3 +52,22 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: cat build/reports/detekt/detekt.xml | reviewdog -f=checkstyle -reporter=github-pr-review
+
+  #
+  # YAMLのlint(yamllint)
+  #
+  yamllint-and-reviewdog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v3
+      - name: reviewdogのセットアップ
+        uses: reviewdog/action-setup@v1
+        with:
+          reviewdog_version: latest
+      - name: yamllint
+        uses: reviewdog/action-yamllint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          filter_mode: diff_context # 差分のみ
