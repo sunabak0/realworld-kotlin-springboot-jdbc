@@ -70,4 +70,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
-          filter_mode: diff_context # 差分のみ
+          filter_mode: diff_context  # 差分のみ(default: added)
+          fail_on_error: true  # errorが出たら落ちる(default: false)
