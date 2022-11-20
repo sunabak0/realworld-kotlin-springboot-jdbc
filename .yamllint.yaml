@@ -10,8 +10,8 @@ extends: default
 
 rules:
   line-length:
-    max: 80
-    level: warning  # default: error
+    max: 120  # default: 80
+    level: error
 
 #
 # 無視するPATH

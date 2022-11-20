@@ -1,6 +1,20 @@
+#
+# Lint系をReviewdogに指摘してもらう
+#
+# タイミング
+# - PullRequest時
+#
+---
+
 name: PR用 Lint Reviewdog
 
-on:
+#
+# 'on' にしている理由
+# yamllintで怒られるため
+#
+# 参考: https://github.com/adrienverge/yamllint/issues/430
+#
+'on':
   pull_request:
 
 #
@@ -71,4 +85,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
           filter_mode: diff_context  # 差分のみ(default: added)
-          fail_on_error: true  # errorが出たら落ちる(default: false)
+          fail_on_error: 'true'  # errorが出たら落ちる(default: 'false')
