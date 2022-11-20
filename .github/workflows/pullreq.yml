@@ -1,0 +1,42 @@
+name: PR用 Lint Reviewdog
+
+on:
+  pull_request:
+
+#
+# reviewdog/action-setup
+#
+# URL
+#   - https://github.com/reviewdog/action-setup
+# 概要
+#   - reviewdogをセットアップする
+#   - 実際に動いているのはこれ
+#     - https://github.com/reviewdog/action-setup/blob/master/install.sh
+#
+
+#
+# detektの結果をreviewdogに食わせて、指摘箇所にコメントをするようにする
+#
+jobs:
+  detekt-and-reviewdog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v3
+      - name: Javaの環境をセットアップ
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+      - name: reviewdogのセットアップ
+        uses: reviewdog/action-setup@v1
+        with:
+          reviewdog_version: latest
+      - name: make lint
+        run: make lint
+      - name: reviewdog 実行
+        if: always()
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: cat build/reports/detekt/detekt.xml | reviewdog -f=checkstyle -reporter=github-pr-review
