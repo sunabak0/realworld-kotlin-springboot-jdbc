@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 
 /**
  * 共通の例外ハンドラー
@@ -28,6 +29,28 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
  */
 @RestControllerAdvice
 class SharedRealworldExceptionHandlers {
+    /**
+     * RequestParamの型変換に失敗した場合のエラーハンドリング
+     *
+     *  - クエリパラーメータの型が合わない場合、ここでエラーハンドリングされる
+     *
+     *  例
+     *  - Intに変換できるStringを要求しているのに、"1"等ではなく、"ああ"等でリクエストされた時
+     */
+    @ExceptionHandler(value = [MethodArgumentTypeMismatchException::class])
+    fun onMethodArgumentTypeMismatchException(e: MethodArgumentTypeMismatchException): ResponseEntity<GenericErrorModel> {
+        return ResponseEntity(
+            GenericErrorModel(
+                GenericErrorModelErrors(
+                    body = listOf(
+                        "クエリパラメータ: ${e.name}が不正です(${e.requiredType}への型変換に失敗しました)"
+                    )
+                )
+            ),
+            HttpStatus.UNPROCESSABLE_ENTITY
+        )
+    }
+
     /**
      * JSONのパースやMappingに失敗した場合のエラーハンドリング
      *

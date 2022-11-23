@@ -501,6 +501,15 @@ paths:
         results. Auth is optional
       operationId: GetArticles
       parameters:
+        #
+        # 自前追加
+        #
+        - name: Authorization
+          in: header
+          description: セッション用JWT
+          required: false
+          schema:
+            $ref: '#/components/securitySchemes/Token'
         - name: tag
           in: query
           description: Filter by tag

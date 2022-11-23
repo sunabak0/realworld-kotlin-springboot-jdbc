@@ -6,6 +6,7 @@ import arrow.core.Some
 import arrow.core.getOrHandle
 import arrow.core.handleError
 import arrow.core.none
+import arrow.core.toOption
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.controller.ArticlesApi
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModel
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModelErrors
@@ -15,8 +16,6 @@ import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Profile
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.SingleArticleResponse
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.UpdateArticleRequest
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
-import com.example.realworldkotlinspringbootjdbc.presentation.response.Articles
-import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeMyErrorListForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.RealworldAuthenticationUseCaseUnauthorizedException
 import com.example.realworldkotlinspringbootjdbc.usecase.article.CreateArticleUseCase
@@ -27,14 +26,12 @@ import com.example.realworldkotlinspringbootjdbc.usecase.article.ShowArticleUseC
 import com.example.realworldkotlinspringbootjdbc.usecase.article.UpdateCreatedArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.shared.RealworldAuthenticationUseCase
 import com.example.realworldkotlinspringbootjdbc.util.MyAuth
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestHeader
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.time.ZoneOffset
 
@@ -50,99 +47,86 @@ class ArticleController(
     val feed: FeedUseCase,
 ) : ArticlesApi {
 
-    /**
-     *
-     * 作成済み記事のフィルタ
-     *
-     * 例(成功/失敗)
-     * $ curl -X GET --header 'Content-Type: application/json' 'http://localhost:8080/api/articles/' | jq '.'
-     * $ curl -X GET --header 'Content-Type: application/json' 'http://localhost:8080/api/articles/?tag=lisp' | jq '.'
-     * $ curl -X GET --header 'Content-Type: application/json' 'http://localhost:8080/api/articles/?tag=lisp&limit=2' | jq '.'
-     *
-     */
-    @GetMapping("/articles")
-    fun filter(
-        @RequestHeader("Authorization") rawAuthorizationHeader: String? = null,
-        @RequestParam(name = "tag", required = false) tag: String? = null,
-        @RequestParam(name = "author", required = false) author: String? = null,
-        @RequestParam(name = "favorited", required = false) favoritedByUsername: String? = null,
-        @RequestParam(name = "limit", required = false) limit: String? = null,
-        @RequestParam(name = "offset", required = false) offset: String? = null,
-    ): ResponseEntity<String> {
-        val optionalCurrentUser = myAuth.authorize(rawAuthorizationHeader).fold(
+    override fun getArticles(
+        authorization: String?,
+        tag: String?,
+        author: String?,
+        favorited: String?,
+        limit: Int,
+        offset: Int
+    ): ResponseEntity<MultipleArticlesResponse> {
+        /**
+         * authorizationが
+         *   - 無い(null) -> None
+         *   - 有る -> 認証 -> 成功 -> Some<RegisteredUser>
+         *   - 有る -> 認証 -> 失敗 -> 例外スロー
+         */
+        val currentUser = authorization.toOption().fold(
             { none() },
-            { Some(it) }
+            {
+                realworldAuthenticationUseCase.execute(it)
+                    .getOrHandle { e -> throw RealworldAuthenticationUseCaseUnauthorizedException(e) }
+                    .toOption()
+            }
         )
-        return when (
-            val useCaseResult = filterCreatedArticle.execute(
-                tag,
-                author,
-                favoritedByUsername,
-                limit,
-                offset,
-                optionalCurrentUser
-            )
-        ) {
-            /**
-             * フィルタ失敗
-             */
-            is Left -> when (val useCaseError = useCaseResult.value) {
-                /**
-                 * 原因: フィルタパラメータのバリデーションエラー
-                 */
-                is FilterCreatedArticleUseCase.Error.FilterParametersValidationErrors -> ResponseEntity(
-                    serializeMyErrorListForResponseBody(useCaseError.errors),
-                    HttpStatus.valueOf(422)
-                )
-                /**
-                 * 原因: ユーザーがいなかった
-                 * TODO: UseCase 的にありえないので、ここのエラーハンドリングは要検討
-                 */
-                is FilterCreatedArticleUseCase.Error.NotFoundUser -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody("ユーザー登録されていませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                    HttpStatus.valueOf(404)
-                )
-                /**
-                 * 原因: offset値がフィルタ後の作成済み記事の数を超えている
-                 */
-                is FilterCreatedArticleUseCase.Error.OffsetOverCreatedArticlesCountError -> ResponseEntity(
-                    serializeUnexpectedErrorForResponseBody(
-                        """
-                        offset値がフィルタした結果の作成済み記事の数を超えています(offset=${useCaseError.filterParameters.offset}, articlesCount=${useCaseError.articlesCount})
-                        """.trimIndent()
-                    ), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                    HttpStatus.valueOf(422)
-                )
-            }
-            /**
-             * フィルタ成功
-             */
-            is Right -> {
-                ResponseEntity(
-                    ObjectMapper().writeValueAsString(
-                        Articles(
-                            articlesCount = useCaseResult.value.articlesCount,
-                            articles = useCaseResult.value.articles.map {
-                                Article(
-                                    title = it.article.title.value,
-                                    slug = it.article.slug.value,
-                                    body = it.article.body.value,
-                                    createdAt = it.article.createdAt,
-                                    updatedAt = it.article.updatedAt,
-                                    description = it.article.description.value,
-                                    tagList = it.article.tagList.map { tag -> tag.value },
-                                    authorId = it.author.userId.value,
-                                    favorited = it.article.favorited,
-                                    favoritesCount = it.article.favoritesCount,
-                                )
-                            }
+
+        val filteredCreatedArticles = filterCreatedArticle.execute(
+            tag = tag,
+            author = author,
+            favoritedByUsername = favorited,
+            limit = limit,
+            offset = offset,
+            currentUser = currentUser
+        ).getOrHandle { throw FilterCreatedArticleUseCaseErrorException(it) }
+
+        return ResponseEntity(
+            MultipleArticlesResponse(
+                articlesCount = filteredCreatedArticles.articlesCount,
+                articles = filteredCreatedArticles.articles.map {
+                    com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Article(
+                        slug = it.article.slug.value,
+                        title = it.article.title.value,
+                        description = it.article.description.value,
+                        body = it.article.body.value,
+                        tagList = it.article.tagList.map { tag -> tag.value },
+                        createdAt = it.article.createdAt.toInstant().atOffset(ZoneOffset.UTC),
+                        updatedAt = it.article.updatedAt.toInstant().atOffset(ZoneOffset.UTC),
+                        favorited = it.article.favorited,
+                        favoritesCount = it.article.favoritesCount,
+                        author = Profile(
+                            username = it.author.username.value,
+                            bio = it.author.bio.value,
+                            image = it.author.image.value,
+                            following = it.author.following,
                         )
-                    ),
-                    HttpStatus.valueOf(200)
-                )
-            }
-        }
+                    )
+                }
+            ),
+            HttpStatus.OK
+        )
     }
+
+    data class FilterCreatedArticleUseCaseErrorException(val error: FilterCreatedArticleUseCase.Error) : Exception()
+
+    @ExceptionHandler(value = [FilterCreatedArticleUseCaseErrorException::class])
+    fun onFilterCreatedArticleUseCaseErrorException(e: FilterCreatedArticleUseCaseErrorException): ResponseEntity<GenericErrorModel> =
+        when (val errorContents = e.error) {
+            is FilterCreatedArticleUseCase.Error.FilterParametersValidationErrors -> ResponseEntity(
+                GenericErrorModel(errors = GenericErrorModelErrors(body = errorContents.errors.map { it.message })),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+            is FilterCreatedArticleUseCase.Error.NotFoundUser -> throw UnsupportedOperationException("ありえない")
+            is FilterCreatedArticleUseCase.Error.OffsetOverCreatedArticlesCountError -> ResponseEntity(
+                GenericErrorModel(
+                    errors = GenericErrorModelErrors(
+                        body = listOf(
+                            "offset値がフィルタした結果の作成済み記事の数を超えています(offset=${errorContents.filterParameters.offset}, articlesCount=${errorContents.articlesCount})"
+                        )
+                    )
+                ),
+                HttpStatus.UNPROCESSABLE_ENTITY
+            )
+        }
 
     override fun createArticle(
         authorization: String,

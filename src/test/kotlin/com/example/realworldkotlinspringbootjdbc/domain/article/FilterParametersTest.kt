@@ -12,7 +12,6 @@ import net.jqwik.api.ArbitrarySupplier
 import net.jqwik.api.ForAll
 import net.jqwik.api.From
 import net.jqwik.api.Property
-import net.jqwik.api.constraints.AlphaChars
 import net.jqwik.api.constraints.WithNull
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -32,8 +31,6 @@ class FilterParametersTest {
                 tag = null,
                 author = null,
                 favoritedByUsername = null,
-                limit = null,
-                offset = null
             )
 
             /**
@@ -65,11 +62,9 @@ class FilterParametersTest {
              * - tag: String?
              * - author: String?
              * - favoritedByUsername: String?
-             * - limit: 有効範囲内のString
-             * - offset: 有効範囲内のString
+             * - limit: 有効範囲内のInt
+             * - offset: 有効範囲内のInt
              */
-            val limit = validLimit.toString()
-            val offset = validOffset.toString()
 
             /**
              * when:
@@ -78,8 +73,8 @@ class FilterParametersTest {
                 tag = tag,
                 author = author,
                 favoritedByUsername = favoritedByUsername,
-                limit = limit,
-                offset = offset
+                limit = validLimit,
+                offset = validOffset
             )
 
             /**
@@ -99,49 +94,13 @@ class FilterParametersTest {
         }
 
         @Property
-        fun `準正常系-引数limit,offsetがバリデーションエラーを起こす場合、その旨を表現するエラーのリストが戻り値になる`(
-            @ForAll @AlphaChars limit: String,
-            @ForAll @AlphaChars offset: String,
-        ) {
-            /**
-             * given:
-             * - limit: アルファベット(Intに変換できない)
-             * - offset: アルファベット(Intに変換できない)
-             */
-
-            /**
-             * when:
-             */
-            val actual = FilterParameters.new(
-                tag = null,
-                author = null,
-                favoritedByUsername = null,
-                limit = limit,
-                offset = offset
-            )
-
-            /**
-             * then:
-             */
-            val expected = nonEmptyListOf(
-                FilterParameters.ValidationError.LimitError.FailedConvertToInteger(limit),
-                FilterParameters.ValidationError.OffsetError.FailedConvertToInteger(offset)
-            ).invalid()
-            assertThat(actual).isEqualTo(expected)
-        }
-
-        @Property
         fun `準正常系-引数limitが有効範囲外の場合、その旨を表現するエラーのリストが戻り値になる`(
             @ForAll @From(supplier = UnderLimitMinimum::class) underLimitMinimum: Int,
             @ForAll @From(supplier = OverLimitMaximum::class) overLimitMaximum: Int,
         ) {
             /**
              * given:
-             * - 下限値未満のlimit
-             * - 上限値超過のlimit
              */
-            val underLimitMinimumString = underLimitMinimum.toString()
-            val overLimitMaximumString = overLimitMaximum.toString()
 
             /**
              * when:
@@ -150,15 +109,13 @@ class FilterParametersTest {
                 tag = null,
                 author = null,
                 favoritedByUsername = null,
-                limit = underLimitMinimumString,
-                offset = null
+                limit = underLimitMinimum,
             )
             val actualOverLimitMaximum = FilterParameters.new(
                 tag = null,
                 author = null,
                 favoritedByUsername = null,
-                limit = overLimitMaximumString,
-                offset = null
+                limit = overLimitMaximum,
             )
 
             /**
@@ -180,9 +137,7 @@ class FilterParametersTest {
         ) {
             /**
              * given:
-             * - 下限値未満のoffset
              */
-            val underOffsetMinimumString = underOffsetMinimum.toString()
 
             /**
              * when:
@@ -191,8 +146,7 @@ class FilterParametersTest {
                 tag = null,
                 author = null,
                 favoritedByUsername = null,
-                limit = null,
-                offset = underOffsetMinimumString
+                offset = underOffsetMinimum
             )
 
             /**
