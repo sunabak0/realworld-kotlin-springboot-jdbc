@@ -1,7 +1,5 @@
 package com.example.realworldkotlinspringbootjdbc.presentation
 
-import arrow.core.Either.Left
-import arrow.core.Either.Right
 import arrow.core.Some
 import arrow.core.getOrHandle
 import arrow.core.handleError
@@ -16,7 +14,6 @@ import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Profile
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.SingleArticleResponse
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.UpdateArticleRequest
 import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
-import com.example.realworldkotlinspringbootjdbc.presentation.response.serializeUnexpectedErrorForResponseBody
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.RealworldAuthenticationUseCaseUnauthorizedException
 import com.example.realworldkotlinspringbootjdbc.usecase.article.CreateArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.DeleteCreatedArticleUseCase
@@ -29,9 +26,6 @@ import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
 import java.time.ZoneOffset
 
@@ -242,96 +236,65 @@ class ArticleController(
             )
         }
 
-    @GetMapping("/articles/{slug}")
-    fun show(
-        @RequestHeader("Authorization") rawAuthorizationHeader: String?,
-        @PathVariable("slug") slug: String?
-    ): ResponseEntity<String> {
-        return when (val authorizeResult = myAuth.authorize(rawAuthorizationHeader)) {
-            /**
-             * JWT 認証 失敗
-             */
-            is Left -> when (val showArticleResult = showArticle.execute(slug)) {
-                /**
-                 * 記事取得 失敗
-                 */
-                is Left -> when (showArticleResult.value) {
-                    /**
-                     * 原因: slug に該当する記事が見つからなかった
-                     */
-                    is ShowArticleUseCase.Error.NotFoundArticleBySlug -> ResponseEntity(
-                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                        HttpStatus.valueOf(404)
-                    )
-                    /**
-                     * 原因: バリデーションエラー
-                     */
-                    is ShowArticleUseCase.Error.ValidationErrors -> ResponseEntity(
-                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                        HttpStatus.valueOf(404)
-                    )
-                    /**
-                     * 原因: ユーザーがいなかった
-                     * TODO: UseCase 的にありえないので、ここのエラーハンドリングは要検討
-                     */
-                    is ShowArticleUseCase.Error.NotFoundUser -> ResponseEntity(
-                        serializeUnexpectedErrorForResponseBody("ユーザー登録されていませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                        HttpStatus.valueOf(404)
-                    )
-                }
-                /**
-                 * 記事取得 成功
-                 */
-                is Right -> {
-                    ResponseEntity(
-                        Article.from(showArticleResult.value).serializeWithRootName(),
-                        HttpStatus.valueOf(200),
-                    )
-                }
+    override fun getArticle(slug: String, authorization: String?): ResponseEntity<SingleArticleResponse> {
+        /**
+         * authorizationが
+         *   - 無い(null) -> None
+         *   - 有る -> 認証 -> 成功 -> Some<RegisteredUser>
+         *   - 有る -> 認証 -> 失敗 -> None
+         */
+        val currentUser = authorization.toOption().fold(
+            { none() },
+            {
+                realworldAuthenticationUseCase.execute(it).fold(
+                    { none() },
+                    { user -> Some(user) }
+                )
             }
+        )
 
-            /**
-             * JWT 認証 成功
-             */
-            is Right -> when (val showArticleResult = showArticle.execute(slug, Some(authorizeResult.value))) {
-                /**
-                 * 記事取得 失敗
-                 */
-                is Left -> when (showArticleResult.value) {
-                    /**
-                     * 原因: slug に該当する記事が見つからなかった
-                     */
-                    is ShowArticleUseCase.Error.NotFoundArticleBySlug -> ResponseEntity(
-                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                        HttpStatus.valueOf(404)
+        val createdArticleWithAuthor = showArticle.execute(slug, currentUser)
+            .getOrHandle { throw ShowArticleUseCaseErrorException(it) }
+
+        return ResponseEntity(
+            SingleArticleResponse(
+                article = com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Article(
+                    slug = createdArticleWithAuthor.article.slug.value,
+                    title = createdArticleWithAuthor.article.title.value,
+                    description = createdArticleWithAuthor.article.description.value,
+                    body = createdArticleWithAuthor.article.body.value,
+                    tagList = createdArticleWithAuthor.article.tagList.map { tag -> tag.value },
+                    createdAt = createdArticleWithAuthor.article.createdAt.toInstant().atOffset(ZoneOffset.UTC),
+                    updatedAt = createdArticleWithAuthor.article.updatedAt.toInstant().atOffset(ZoneOffset.UTC),
+                    favorited = createdArticleWithAuthor.article.favorited,
+                    favoritesCount = createdArticleWithAuthor.article.favoritesCount,
+                    author = Profile(
+                        username = createdArticleWithAuthor.author.username.value,
+                        bio = createdArticleWithAuthor.author.bio.value,
+                        image = createdArticleWithAuthor.author.image.value,
+                        following = createdArticleWithAuthor.author.following,
                     )
-                    /**
-                     * 原因: バリデーションエラー
-                     */
-                    is ShowArticleUseCase.Error.ValidationErrors -> ResponseEntity(
-                        serializeUnexpectedErrorForResponseBody("記事が見つかりませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                        HttpStatus.valueOf(404)
-                    )
-                    /**
-                     * 原因: ユーザーがいなかった
-                     */
-                    is ShowArticleUseCase.Error.NotFoundUser -> ResponseEntity(
-                        serializeUnexpectedErrorForResponseBody("ユーザー登録されていませんでした"), // TODO: serializeUnexpectedErrorForResponseBodyをやめる
-                        HttpStatus.valueOf(404)
-                    )
-                }
-                /**
-                 * 記事取得 成功
-                 */
-                is Right -> {
-                    ResponseEntity(
-                        Article.from(showArticleResult.value).serializeWithRootName(),
-                        HttpStatus.valueOf(200),
-                    )
-                }
-            }
-        }
+                )
+            ),
+            HttpStatus.OK
+        )
     }
+
+    data class ShowArticleUseCaseErrorException(val error: ShowArticleUseCase.Error) : Exception()
+
+    @ExceptionHandler(value = [ShowArticleUseCaseErrorException::class])
+    fun onShowArticleUseCaseErrorException(e: ShowArticleUseCaseErrorException): ResponseEntity<GenericErrorModel> =
+        when (e.error) {
+            is ShowArticleUseCase.Error.NotFoundArticleBySlug -> ResponseEntity(
+                GenericErrorModel(errors = GenericErrorModelErrors(body = listOf("記事が見つかりません"))),
+                HttpStatus.NOT_FOUND
+            )
+            is ShowArticleUseCase.Error.NotFoundUser -> throw UnsupportedOperationException("起こることは想定していないエラーです")
+            is ShowArticleUseCase.Error.ValidationErrors -> ResponseEntity(
+                GenericErrorModel(errors = GenericErrorModelErrors(body = listOf("記事が見つかりません"))),
+                HttpStatus.NOT_FOUND
+            )
+        }
 
     override fun updateArticle(
         authorization: String,
