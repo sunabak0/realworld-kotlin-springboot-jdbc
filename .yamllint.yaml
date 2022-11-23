@@ -1,0 +1,20 @@
+#
+# yamllintの設定
+#
+# - Default configuration
+#   - https://yamllint.readthedocs.io/en/stable/configuration.html#default-configuration
+#
+---
+
+extends: default
+
+rules:
+  line-length:
+    max: 120  # default: 80
+    level: error
+
+#
+# 無視するPATH
+#
+ignore: |
+  src/test/resources/datasets/yml/
