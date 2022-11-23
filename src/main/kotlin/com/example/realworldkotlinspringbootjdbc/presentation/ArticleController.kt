@@ -74,8 +74,8 @@ class ArticleController(
             tag = tag,
             author = author,
             favoritedByUsername = favorited,
-            limit = limit.toString(),
-            offset = offset.toString(),
+            limit = limit,
+            offset = offset,
             currentUser = currentUser
         ).getOrHandle { throw FilterCreatedArticleUseCaseErrorException(it) }
 

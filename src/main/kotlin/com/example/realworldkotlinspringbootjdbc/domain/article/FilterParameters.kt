@@ -2,7 +2,6 @@ package com.example.realworldkotlinspringbootjdbc.domain.article
 
 import arrow.core.Option
 import arrow.core.ValidatedNel
-import arrow.core.invalid
 import arrow.core.invalidNel
 import arrow.core.validNel
 import arrow.core.zip
@@ -61,47 +60,21 @@ interface FilterParameters {
             tag: String? = null,
             author: String? = null,
             favoritedByUsername: String? = null,
-            limit: String? = null,
-            offset: String? = null,
+            limit: Int = ValidationError.LimitError.DEFAULT,
+            offset: Int = ValidationError.OffsetError.DEFAULT,
         ): ValidatedNel<ValidationError, FilterParameters> {
-            val convertToValidatedLimit: (String?) -> ValidatedNel<ValidationError, Int> = { input ->
-                Option.fromNullable(input).fold(
-                    { ValidationError.LimitError.DEFAULT.validNel() },
-                    { str ->
-                        Option.fromNullable(str.toIntOrNull()).fold(
-                            { ValidationError.LimitError.FailedConvertToInteger(str).invalidNel() },
-                            { it.validNel() }
-                        ).fold(
-                            { it.invalid() },
-                            {
-                                when {
-                                    it < ValidationError.LimitError.MINIMUM -> ValidationError.LimitError.RequireMinimumOrOver(it).invalidNel()
-                                    it > ValidationError.LimitError.MAXIMUM -> ValidationError.LimitError.RequireMaximumOrUnder(it).invalidNel()
-                                    else -> it.validNel()
-                                }
-                            }
-                        )
-                    }
-                )
+            val convertToValidatedLimit: (Int) -> ValidatedNel<ValidationError, Int> = {
+                when {
+                    it < ValidationError.LimitError.MINIMUM -> ValidationError.LimitError.RequireMinimumOrOver(it).invalidNel()
+                    it > ValidationError.LimitError.MAXIMUM -> ValidationError.LimitError.RequireMaximumOrUnder(it).invalidNel()
+                    else -> it.validNel()
+                }
             }
-            val convertToValidatedOffset: (String?) -> ValidatedNel<ValidationError, Int> = { input ->
-                Option.fromNullable(input).fold(
-                    { ValidationError.OffsetError.DEFAULT.validNel() },
-                    { str ->
-                        Option.fromNullable(str.toIntOrNull()).fold(
-                            { ValidationError.OffsetError.FailedConvertToInteger(str).invalidNel() },
-                            { it.validNel() }
-                        ).fold(
-                            { it.invalid() },
-                            {
-                                when {
-                                    it < ValidationError.OffsetError.MINIMUM -> ValidationError.OffsetError.RequireMinimumOrOver(it).invalidNel()
-                                    else -> it.validNel()
-                                }
-                            }
-                        )
-                    }
-                )
+            val convertToValidatedOffset: (Int) -> ValidatedNel<ValidationError, Int> = {
+                when {
+                    it < ValidationError.OffsetError.MINIMUM -> ValidationError.OffsetError.RequireMinimumOrOver(it).invalidNel()
+                    else -> it.validNel()
+                }
             }
 
             /**
@@ -133,9 +106,6 @@ interface FilterParameters {
                 const val MAXIMUM = 100
             }
             override val key: String get() = LimitError::class.simpleName.toString()
-            data class FailedConvertToInteger(val value: String) : LimitError {
-                override val message: String get() = "数値に変換できる数字にしてください"
-            }
             data class RequireMinimumOrOver(val value: Int) : LimitError {
                 override val message: String get() = "${MINIMUM}以上である必要があります"
             }
@@ -151,9 +121,6 @@ interface FilterParameters {
                 // const val MAXIMUM = Int.MAX_VALUE
             }
             override val key: String get() = LimitError::class.simpleName.toString()
-            data class FailedConvertToInteger(val value: String) : LimitError {
-                override val message: String get() = "数値に変換できる数字にしてください"
-            }
             data class RequireMinimumOrOver(val value: Int) : LimitError {
                 override val message: String get() = "${MINIMUM}以上である必要があります"
             }

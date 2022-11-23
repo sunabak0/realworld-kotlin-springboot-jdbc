@@ -48,8 +48,8 @@ interface FilterCreatedArticleUseCase {
         tag: String? = null,
         author: String? = null,
         favoritedByUsername: String? = null,
-        limit: String? = null,
-        offset: String? = null,
+        limit: Int,
+        offset: Int,
         currentUser: Option<RegisteredUser> = none()
     ): Either<Error, FilteredCreatedArticleList> = throw NotImplementedError()
 
@@ -91,8 +91,8 @@ class FilterCreatedArticleUseCaseImpl(
         tag: String?,
         author: String?,
         favoritedByUsername: String?,
-        limit: String?,
-        offset: String?,
+        limit: Int,
+        offset: Int,
         currentUser: Option<RegisteredUser>
     ): Either<FilterCreatedArticleUseCase.Error, FilterCreatedArticleUseCase.FilteredCreatedArticleList> {
         /**
