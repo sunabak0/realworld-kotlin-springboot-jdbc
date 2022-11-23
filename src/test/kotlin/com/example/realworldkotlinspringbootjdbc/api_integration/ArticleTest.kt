@@ -92,7 +92,12 @@ class ArticleTest {
                             "scala",
                             "kotlin"
                          ],
-                         "authorId":1,
+                         "author": {
+                             "username":"paul-graham",
+                             "bio":"Lisper",
+                             "image":"",
+                             "following":false
+                         },
                          "favorited":false,
                          "favoritesCount":1
                       },
@@ -106,7 +111,12 @@ class ArticleTest {
                          "tagList":[
                             "kotlin"
                          ],
-                         "authorId":1,
+                         "author": {
+                             "username":"paul-graham",
+                             "bio":"Lisper",
+                             "image":"",
+                             "following":false
+                         },
                          "favorited":false,
                          "favoritesCount":1
                       }
@@ -120,12 +130,12 @@ class ArticleTest {
                 CustomComparator(
                     JSONCompareMode.NON_EXTENSIBLE,
                     Customization("articles[*].createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualCreatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                     Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualUpdatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
@@ -181,7 +191,12 @@ class ArticleTest {
                             "scala",
                             "kotlin"
                          ],
-                         "authorId":1,
+                         "author": {
+                             "username":"paul-graham",
+                             "bio":"Lisper",
+                             "image":"",
+                             "following":false
+                         },
                          "favorited":false,
                          "favoritesCount":1
                       },
@@ -193,7 +208,12 @@ class ArticleTest {
                          "updatedAt": "2022-01-01T00:00:00.000Z",
                          "description":"dummy-description",
                          "tagList":[],
-                         "authorId":2,
+                         "author": {
+                             "username":"松本行弘",
+                             "bio":"Rubyを作った",
+                             "image":"",
+                             "following":false
+                         },
                          "favorited":false,
                          "favoritesCount":2
                       }
@@ -207,12 +227,12 @@ class ArticleTest {
                 CustomComparator(
                     JSONCompareMode.NON_EXTENSIBLE,
                     Customization("articles[*].createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualCreatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                     Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualUpdatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
@@ -268,7 +288,12 @@ class ArticleTest {
                             "scala",
                             "kotlin"
                          ],
-                         "authorId":1,
+                         "author": {
+                             "username":"paul-graham",
+                             "bio":"Lisper",
+                             "image":"",
+                             "following":false
+                         },
                          "favorited":false,
                          "favoritesCount":1
                       },
@@ -282,7 +307,12 @@ class ArticleTest {
                          "tagList":[
                             "kotlin"
                          ],
-                         "authorId":1,
+                         "author": {
+                             "username":"paul-graham",
+                             "bio":"Lisper",
+                             "image":"",
+                             "following":false
+                         },
                          "favorited":false,
                          "favoritesCount":1
                       }
@@ -296,12 +326,12 @@ class ArticleTest {
                 CustomComparator(
                     JSONCompareMode.NON_EXTENSIBLE,
                     Customization("articles[*].createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualCreatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                     Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualUpdatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
@@ -361,7 +391,12 @@ class ArticleTest {
                             "scala",
                             "kotlin"
                          ],
-                         "authorId": 1,
+                         "author": {
+                             "username":"paul-graham",
+                             "bio":"Lisper",
+                             "image":"",
+                             "following":false
+                         },
                          "favorited": false,
                          "favoritesCount": 1
                       }
@@ -375,12 +410,12 @@ class ArticleTest {
                 CustomComparator(
                     JSONCompareMode.NON_EXTENSIBLE,
                     Customization("articles[*].createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualCreatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                     Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualUpdatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
@@ -440,7 +475,12 @@ class ArticleTest {
                             "scala",
                             "kotlin"
                          ],
-                         "authorId": 1,
+                         "author": {
+                             "username":"paul-graham",
+                             "bio":"Lisper",
+                             "image":"",
+                             "following":false
+                         },
                          "favorited": false,
                          "favoritesCount": 1
                       }
@@ -454,12 +494,12 @@ class ArticleTest {
                 CustomComparator(
                     JSONCompareMode.NON_EXTENSIBLE,
                     Customization("articles[*].createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualCreatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                     Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualUpdatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
@@ -612,7 +652,12 @@ class ArticleTest {
                          "tagList": [
                             "kotlin"
                          ],
-                         "authorId": 1,
+                         "author": {
+                             "username":"paul-graham",
+                             "bio":"Lisper",
+                             "image":"",
+                             "following":false
+                         },
                          "favorited": false,
                          "favoritesCount": 1
                       },
@@ -624,7 +669,12 @@ class ArticleTest {
                          "updatedAt": "2022-01-01T00:00:00.000Z",
                          "description": "dummy-description",
                          "tagList": [],
-                         "authorId": 2,
+                         "author": {
+                             "username":"松本行弘",
+                             "bio":"Rubyを作った",
+                             "image":"",
+                             "following":false
+                         },
                          "favorited": false,
                          "favoritesCount": 2
                       }
@@ -638,12 +688,12 @@ class ArticleTest {
                 CustomComparator(
                     JSONCompareMode.NON_EXTENSIBLE,
                     Customization("articles[*].createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualCreatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                     Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualUpdatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
@@ -698,7 +748,12 @@ class ArticleTest {
                          "tagList": [
                             "kotlin"
                          ],
-                         "authorId": 1,
+                         "author": {
+                             "username":"paul-graham",
+                             "bio":"Lisper",
+                             "image":"",
+                             "following":false
+                         },
                          "favorited": false,
                          "favoritesCount": 1
                       }
@@ -712,12 +767,12 @@ class ArticleTest {
                 CustomComparator(
                     JSONCompareMode.NON_EXTENSIBLE,
                     Customization("articles[*].createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualCreatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                     Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualUpdatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
@@ -763,18 +818,7 @@ class ArticleTest {
             val expectedResponseBody = """
                 {
                    "errors":{
-                      "body":[
-                         {
-                            "value": "数値に変換できない",
-                            "key": "LimitError",
-                            "message": "数値に変換できる数字にしてください"
-                         },
-                         {
-                            "value": -1,
-                            "key": "LimitError",
-                            "message": "0以上である必要があります"
-                         }
-                      ]
+                      "body":["クエリパラメータ: limitが不正です(intへの型変換に失敗しました)"]
                    }
                 }
             """.trimIndent()
@@ -894,7 +938,12 @@ class ArticleTest {
                             "scala",
                             "kotlin"
                          ],
-                         "authorId": 1,
+                         "author": {
+                             "username":"paul-graham",
+                             "bio":"Lisper",
+                             "image":"",
+                             "following":true
+                         },
                          "favorited": true,
                          "favoritesCount": 1
                       },
@@ -908,7 +957,12 @@ class ArticleTest {
                          "tagList":[
                             "kotlin"
                          ],
-                         "authorId": 1,
+                         "author": {
+                             "username":"paul-graham",
+                             "bio":"Lisper",
+                             "image":"",
+                             "following":true
+                         },
                          "favorited": false,
                          "favoritesCount": 1
                       },
@@ -920,7 +974,12 @@ class ArticleTest {
                          "updatedAt": "2022-01-01T00:00:00.000Z",
                          "description": "dummy-description",
                          "tagList": [],
-                         "authorId": 2,
+                         "author":{
+                            "username":"松本行弘",
+                            "bio":"Rubyを作った",
+                            "image":"",
+                            "following":false
+                         },
                          "favorited": true,
                          "favoritesCount": 2
                       }
@@ -934,12 +993,12 @@ class ArticleTest {
                 CustomComparator(
                     JSONCompareMode.NON_EXTENSIBLE,
                     Customization("articles[*].createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualCreatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                     Customization("articles[*].updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualUpdatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
