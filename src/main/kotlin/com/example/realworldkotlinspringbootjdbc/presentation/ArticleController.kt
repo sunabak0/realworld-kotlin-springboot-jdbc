@@ -22,7 +22,6 @@ import com.example.realworldkotlinspringbootjdbc.usecase.article.FilterCreatedAr
 import com.example.realworldkotlinspringbootjdbc.usecase.article.ShowArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.UpdateCreatedArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.shared.RealworldAuthenticationUseCase
-import com.example.realworldkotlinspringbootjdbc.util.MyAuth
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -31,7 +30,6 @@ import java.time.ZoneOffset
 
 @RestController
 class ArticleController(
-    val myAuth: MyAuth,
     val realworldAuthenticationUseCase: RealworldAuthenticationUseCase,
     val showArticle: ShowArticleUseCase,
     val filterCreatedArticle: FilterCreatedArticleUseCase,
