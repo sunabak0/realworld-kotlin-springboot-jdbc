@@ -601,6 +601,15 @@ paths:
       description: Get an article. Auth not required
       operationId: GetArticle
       parameters:
+        #
+        # 自前追加
+        #
+        - name: Authorization
+          in: header
+          description: セッション用JWT
+          required: false
+          schema:
+            $ref: '#/components/securitySchemes/Token'
         - name: slug
           in: path
           description: Slug of the article to get

@@ -1620,7 +1620,12 @@ class ArticleTest {
                       "updatedAt": "2022-01-01T00:00:00.000Z",
                       "description":"dummy-description",
                       "tagList":["kotlin"],
-                      "authorId":1,
+                      "author":{
+                          "username":"paul-graham",
+                          "bio":"Lisper",
+                          "image":"",
+                          "following":false
+                      },
                       "favorited":false,
                       "favoritesCount":1
                    }
@@ -1633,12 +1638,12 @@ class ArticleTest {
                 CustomComparator(
                     JSONCompareMode.NON_EXTENSIBLE,
                     Customization("article.createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualCreatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                     Customization("article.updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualUpdatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
@@ -1694,7 +1699,12 @@ class ArticleTest {
                       "updatedAt": "2022-01-01T00:00:00.000Z",
                       "description":"dummy-description",
                       "tagList":["kotlin"],
-                      "authorId":1,
+                      "author":{
+                          "username":"paul-graham",
+                          "bio":"Lisper",
+                          "image":"",
+                          "following":true
+                      },
                       "favorited":true,
                       "favoritesCount":1
                    }
@@ -1707,12 +1717,12 @@ class ArticleTest {
                 CustomComparator(
                     JSONCompareMode.NON_EXTENSIBLE,
                     Customization("article.createdAt") { actualCreatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualCreatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
                     Customization("article.updatedAt") { actualUpdatedAt, expectedDummy ->
-                        DatetimeVerificationHelper.expectIso8601UtcAndParsable(
+                        DatetimeVerificationHelper.expectIso8601UtcWithoutMillisecondAndParsable(
                             actualUpdatedAt
                         ) && expectedDummy == "2022-01-01T00:00:00.000Z"
                     },
@@ -1751,7 +1761,7 @@ class ArticleTest {
              */
             val expectedStatus = 404
             val expectedResponseBody = """
-                {"errors":{"body":["記事が見つかりませんでした"]}}
+                {"errors":{"body":["記事が見つかりません"]}}
             """.trimIndent()
             assertThat(actualStatus).isEqualTo(expectedStatus)
             JSONAssert.assertEquals(
@@ -1792,7 +1802,7 @@ class ArticleTest {
              */
             val expectedStatus = 404
             val expectedResponseBody = """
-                {"errors":{"body":["記事が見つかりませんでした"]}}
+                {"errors":{"body":["記事が見つかりません"]}}
             """.trimIndent()
             assertThat(actualStatus).isEqualTo(expectedStatus)
             JSONAssert.assertEquals(
