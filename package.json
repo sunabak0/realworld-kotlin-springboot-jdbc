@@ -1,0 +1,9 @@
+{
+  "version": "1.0.0",
+  "description": "用途: commitlint",
+  "license": "MIT",
+  "devDependencies": {
+    "@commitlint/cli": "^17.3.0",
+    "@commitlint/config-conventional": "^17.3.0"
+  }
+}

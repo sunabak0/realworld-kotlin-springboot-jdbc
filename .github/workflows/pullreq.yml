@@ -1,5 +1,5 @@
 #
-# Lint系をReviewdogに指摘してもらう
+# Lint系をReviewdogやgithub-commentに指摘してもらう
 #
 # タイミング
 # - PullRequest時
@@ -86,3 +86,42 @@ jobs:
           reporter: github-pr-review
           filter_mode: diff_context  # 差分のみ(default: added)
           fail_on_error: 'true'  # errorが出たら落ちる(default: 'false')
+
+  #
+  # git commit messageのlint(commitlint)
+  #
+  # 失敗したら、PRにNGな箇所をコメントされる
+  #
+  commitlint-and-github-comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # 0 を指定(全ての履歴を持ってくる)
+      - name: nodejsのセットアップ
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: 依存ライブラリのインストール
+        run: npm install
+      - name: github-commentをインストール
+        run: |
+          echo '---[ version ]'
+          GITHUB_COMMENT_VERSION=5.0.0
+          echo '---[ download ]'
+          curl -sSfL -o github-comment.tar.gz https://github.com/suzuki-shunsuke/github-comment/releases/download/v${GITHUB_COMMENT_VERSION}/github-comment_${GITHUB_COMMENT_VERSION}_linux_amd64.tar.gz
+          echo '---[ checksum: ファイル改ざんor壊れていないか ]'
+          echo 1da8cb9d52395018ec15f876347e204fe632c833baa1831ca36302dec1e0f97a  github-comment.tar.gz | sha256sum -c
+          echo '---[ unzip ]'
+          sudo tar -C /usr/bin -xzf ./github-comment.tar.gz
+          echo '---[ show version ]'
+          github-comment -v
+      - name: commitlint
+        run: |
+          echo '---[ 古いコメントを隠す ]'
+          github-comment hide -condition 'Comment.Body contains "ⓘ   Get help: https://"'
+          echo '---[ commitlint ]'
+          github-comment exec -- npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
