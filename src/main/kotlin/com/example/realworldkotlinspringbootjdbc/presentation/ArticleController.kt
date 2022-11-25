@@ -6,6 +6,7 @@ import arrow.core.handleError
 import arrow.core.none
 import arrow.core.toOption
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.controller.ArticlesApi
+import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Article
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModel
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.GenericErrorModelErrors
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.MultipleArticlesResponse
@@ -13,7 +14,6 @@ import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.NewArti
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Profile
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.SingleArticleResponse
 import com.example.realworldkotlinspringbootjdbc.openapi.generated.model.UpdateArticleRequest
-import com.example.realworldkotlinspringbootjdbc.presentation.response.Article
 import com.example.realworldkotlinspringbootjdbc.presentation.shared.RealworldAuthenticationUseCaseUnauthorizedException
 import com.example.realworldkotlinspringbootjdbc.usecase.article.CreateArticleUseCase
 import com.example.realworldkotlinspringbootjdbc.usecase.article.DeleteCreatedArticleUseCase
@@ -75,7 +75,7 @@ class ArticleController(
             MultipleArticlesResponse(
                 articlesCount = filteredCreatedArticles.articlesCount,
                 articles = filteredCreatedArticles.articles.map {
-                    com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Article(
+                    Article(
                         slug = it.article.slug.value,
                         title = it.article.title.value,
                         description = it.article.description.value,
@@ -137,7 +137,7 @@ class ArticleController(
 
         return ResponseEntity(
             SingleArticleResponse(
-                article = com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Article(
+                article = Article(
                     slug = createdArticleWithAuthor.article.slug.value,
                     title = createdArticleWithAuthor.article.title.value,
                     description = createdArticleWithAuthor.article.description.value,
@@ -187,7 +187,7 @@ class ArticleController(
         return ResponseEntity(
             MultipleArticlesResponse(
                 articles = feedCreatedArticles.articles.map {
-                    com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Article(
+                    Article(
                         slug = it.article.slug.value,
                         title = it.article.title.value,
                         description = it.article.description.value,
@@ -256,7 +256,7 @@ class ArticleController(
 
         return ResponseEntity(
             SingleArticleResponse(
-                article = com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Article(
+                article = Article(
                     slug = createdArticleWithAuthor.article.slug.value,
                     title = createdArticleWithAuthor.article.title.value,
                     description = createdArticleWithAuthor.article.description.value,
@@ -312,7 +312,7 @@ class ArticleController(
 
         return ResponseEntity(
             SingleArticleResponse(
-                article = com.example.realworldkotlinspringbootjdbc.openapi.generated.model.Article(
+                article = Article(
                     slug = updatedArticleWithAuthor.article.slug.value,
                     title = updatedArticleWithAuthor.article.title.value,
                     description = updatedArticleWithAuthor.article.description.value,
