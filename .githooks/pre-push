@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+#
+# githook pre-push
+#
+# 概要
+# - git push の直全に実行されるscript
+#
+
+echo 'Running make lint.for-commit-messages...'
+make lint.for-commit-messages
