@@ -1,0 +1,70 @@
+#
+# actions/labeler
+#
+# GitHub
+# - https://github.com/actions/labeler
+#
+# ラベルの重複は許容
+#
+
+#
+# dev-tool
+#
+# 開発ツール系
+#
+dev-tool:
+  - 'package.json'
+  - 'package-lock.json'
+  - 'config/detekt/*'
+  - 'Makefile'
+  - 'commitlint.config.js'
+
+#
+# ci-cd
+#
+# CI/CD系
+#
+ci-cd:
+  - '.github/*'
+
+#
+# document
+#
+# ドキュメント系
+#
+document:
+  - '*.md'
+  - '*.mdx'
+  - 'docs/*'
+
+#
+# presentation-layer
+#
+# プレゼンテーション層
+#
+presentation-layer:
+  - 'src/**/presentation/*'
+
+#
+# usecase-layer
+#
+# ユースケース層
+#
+usecase-layer:
+  - 'src/**/usecase/*'
+
+#
+# domain-layer
+#
+# ドメイン層
+#
+domain-layer:
+  - 'src/**/domain/*'
+
+#
+# infra-layer
+#
+# インフラ層
+#
+infra-layer:
+  - 'src/**/infra/*'

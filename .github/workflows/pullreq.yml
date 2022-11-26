@@ -125,3 +125,18 @@ jobs:
           github-comment exec -- npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  #
+  # labeler
+  #
+  # PullReq時、PRにラベルを付与
+  #
+  triage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: PRにラベルを付与
+        uses: actions/labeler@v4
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          sync-labels: true  # force push等で、途中で結局対象ではなくなったら、そのラベルを削除
