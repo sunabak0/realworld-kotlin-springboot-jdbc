@@ -1,0 +1,61 @@
+{
+  "filters": {
+    //
+    // コメントでtextlintのdisableができるようにする
+    //
+    // https://github.com/textlint/textlint-filter-rule-comments
+    //
+    // <!-- textlint-disable --> と <!-- textlint-enable --> で囲って利用する
+    //
+    "comments": true
+  },
+  "rules": {
+    //
+    // 技術文書向けのtextlintルールプリセット郡
+    //
+    // https://github.com/textlint-ja/textlint-rule-preset-ja-technical-writing
+    //
+    // ルール一覧
+    // - https://github.com/textlint-ja/textlint-rule-preset-ja-technical-writing#%E3%83%AB%E3%83%BC%E3%83%AB%E4%B8%80%E8%A6%A7
+    //
+    "preset-ja-technical-writing": true,
+
+    //
+    // リンクの周りを半角スペースで囲むかどうか(default: 両方false)
+    //
+    // https://github.com/textlint-ja/textlint-rule-preset-ja-spacing/tree/master/packages/textlint-rule-ja-space-around-link
+    //
+    "ja-space-around-link": {
+      "before": true,
+      "after": true
+    },
+
+    //
+    // 日本語周りにおけるスペースの有無を決定するtextlintルールプリセット郡
+    //
+    // https://github.com/textlint-ja/textlint-rule-preset-ja-spacing
+    //
+    // ルール一覧
+    // - https://github.com/textlint-ja/textlint-rule-preset-ja-spacing#%E3%83%AB%E3%83%BC%E3%83%AB%E4%B8%80%E8%A6%A7
+    //
+    "preset-ja-spacing": {
+      //
+      // インラインコードの周りをスペースで囲むかどうか(default: 両方false)
+      //
+      // https://github.com/textlint-ja/textlint-rule-preset-ja-spacing/tree/master/packages/textlint-rule-ja-space-around-code
+      //
+      "ja-space-around-code": {
+        "before": true,
+        "after": true
+      },
+      //
+      // 半角文字と全角文字にスペースを入れるかどうか(default: "never", 入れない)
+      //
+      // https://github.com/textlint-ja/textlint-rule-preset-ja-spacing
+      //
+      "ja-space-between-half-and-full-width": {
+        "space": "always"
+      }
+    }
+  }
+}

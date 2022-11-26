@@ -1,0 +1,28 @@
+#
+# textlint の設定
+#
+# 用途
+# - github の PR のタイトル
+# - github の PR の内容
+# - git の commit message
+#
+# .textlintrcとほぼ同じにすること
+#
+---
+filters:
+  comments: true
+rules:
+  ja-space-around-link:
+    after: true
+    before: true
+  preset-ja-spacing:
+    ja-space-around-code:
+      after: true
+      before: true
+    ja-space-between-half-and-full-width:
+      space: always
+  preset-ja-technical-writing:
+    #
+    # 末尾の句読点を OFF にする
+    #
+    ja-no-mixed-period: false

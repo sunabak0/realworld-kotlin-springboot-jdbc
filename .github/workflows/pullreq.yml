@@ -166,3 +166,59 @@ jobs:
         uses: actions/checkout@v3
       - name: actionlint
         uses: reviewdog/action-actionlint@v1
+
+  #
+  # textlint
+  #
+  # pullrequestにtextlintをかける(texlint)
+  #
+  textlint-pr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v3
+      - name: nodejsのセットアップ
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: 依存ライブラリのインストール
+        run: npm install
+      - name: github-commentをインストール
+        run: |
+          echo '---[ version ]'
+          GITHUB_COMMENT_VERSION=5.0.0
+          echo '---[ download ]'
+          curl -sSfL -o github-comment.tar.gz https://github.com/suzuki-shunsuke/github-comment/releases/download/v${GITHUB_COMMENT_VERSION}/github-comment_${GITHUB_COMMENT_VERSION}_linux_amd64.tar.gz
+          echo '---[ checksum: ファイル改ざんor壊れていないか ]'
+          echo 1da8cb9d52395018ec15f876347e204fe632c833baa1831ca36302dec1e0f97a  github-comment.tar.gz | sha256sum -c
+          echo '---[ unzip ]'
+          sudo tar -C /usr/bin -xzf ./github-comment.tar.gz
+          echo '---[ show version ]'
+          github-comment -v
+      - name: PRのタイトルに対してtextlint
+        run: |
+          echo '---[ 古いコメントを隠す ]'
+          github-comment hide -condition 'Comment.Body contains "npx textlint /tmp/PULL_REQUEST_TITLE.md"'
+          echo '---[ PR_TITLE を Markdown に出力 ]'
+          printf "<!-- textlint-disable ja-technical-writing/ja-no-mixed-period -->\n\n" > /tmp/PULL_REQUEST_TITLE.md
+          echo "$PR_TITLE" >> /tmp/PULL_REQUEST_TITLE.md
+          printf "\n<!-- textlint-enable ja-technical-writing/ja-no-mixed-period -->\n" >> /tmp/PULL_REQUEST_TITLE.md
+          echo '---[ PR_TITLE に対してtextlint ]'
+          github-comment exec -- npx textlint /tmp/PULL_REQUEST_TITLE.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+      - name: PRの内容に対してtextlint
+        run: |
+          echo '---[ 古いコメントを隠す ]'
+          github-comment hide -condition 'Comment.Body contains "npx textlint /tmp/PULL_REQUEST_BODY.md"'
+          echo '---[ PR_BODY を Markdown に出力 ]'
+          echo "$PR_BODY" > /tmp/PULL_REQUEST_BODY.md
+          echo '---[ DEBUG ]'
+          cat /tmp/PULL_REQUEST_BODY.md
+          echo '---[ PR_BODY に対してtextlint ]'
+          github-comment exec -- npx textlint /tmp/PULL_REQUEST_BODY.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_BODY: ${{ github.event.pull_request.body }}
