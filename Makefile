@@ -61,6 +61,10 @@ lint.for-yaml: ## lint for yaml
 lint.for-commit-message: ## lint for commit message(必須: npm install)
 	@npx commitlint --from $$(git log -n 1 --pretty=%H main) --to $$(git log -n 1 --pretty=%H) && echo '🎉Good commit messages🎉'
 
+.PHONY: lint.for-github-action
+lint.for-github-action: ## lint for github action
+	docker run --rm --mount type=bind,source=${PWD}/,target=/repo --workdir /repo rhysd/actionlint:latest -color
+
 .PHONY: docs.generate-db-docs-schemaspy
 docs.generate-db-docs-schemaspy: ## schemaspyでDB用のドキュメントを作成、表示する(gitに含めない)
 	mkdir -p ./tmp/db-drivers/

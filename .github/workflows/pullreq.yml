@@ -38,6 +38,15 @@ name: PR用 Lint Reviewdog
 #
 
 #
+# reviewdog/action-actionlint
+#
+# URL
+#   - https://github.com/reviewdog/action-actionlint
+# 概要
+#   - actionlintの結果をreviewdogで指摘
+#
+
+#
 # detektの結果をreviewdogに食わせて、指摘箇所にコメントをするようにする
 #
 jobs:
@@ -140,3 +149,17 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           sync-labels: true  # force push等で、途中で結局対象ではなくなったら、そのラベルを削除
+
+  #
+  # actionlint
+  #
+  # GitHub Actionのlint(actionlint)
+  #
+  actionlint-and-reviewdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v3
+      - name: actionlint
+        uses: reviewdog/action-actionlint@v1
