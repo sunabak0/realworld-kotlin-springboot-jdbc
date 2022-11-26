@@ -1,0 +1,22 @@
+#
+# PRの作成者を Assignees に追加
+#
+# タイミング
+# - PRを作成した時 only
+#
+---
+
+name: Assign author for PR
+
+on:
+  pull_request:
+    types: [ opened ]
+
+jobs:
+  assign:
+    if: github.actor != 'dependabot[bot]' || github.actor != 'renovate[bot]'
+    name: Assign author
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR作成者にアサインする
+        uses: technote-space/assign-author@v1
