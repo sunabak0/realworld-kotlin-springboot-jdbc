@@ -97,11 +97,11 @@ jobs:
           fail_on_error: 'true'  # errorが出たら落ちる(default: 'false')
 
   #
-  # git commit messageのlint(commitlint)
+  # git commit messages に lint
   #
-  # 失敗したら、PRにNGな箇所をコメントされる
+  # 失敗したら、 PR にコメントされる
   #
-  commitlint-and-github-comment:
+  commitlint-and-textlint-for-commit-messages:
     runs-on: ubuntu-latest
     steps:
       - name: リポジトリのチェックアウト
@@ -126,17 +126,17 @@ jobs:
           sudo tar -C /usr/bin -xzf ./github-comment.tar.gz
           echo '---[ show version ]'
           github-comment -v
-      - name: commitlint
-        run: |
-          echo '---[ 古いコメントを隠す ]'
-          github-comment hide -condition 'Comment.Body contains "ⓘ   Get help: https://"'
-          echo '---[ PR title に対してcommitlint ]'
-          github-comment exec -- echo "$PR_TITLE" | npx commitlint --verbose
-          echo '---[ commitlint ]'
-          github-comment exec -- npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+      - name: 古いコメントを削除
+        run: github-comment hide -condition 'Comment.Body contains "textlint commit messages"'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
+      - name: make lint.for-commit-messages
+        run: github-comment exec -- make lint.for-commit-messages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FROM_COMMIT_ID: ${{ github.event.pull_request.base.sha }}
+          TO_COMMIT_ID: ${{ github.event.pull_request.head.sha }}
+          CURRENT_BRANCH_NAME: ${{ github.head_ref }}
 
   #
   # labeler
@@ -215,7 +215,7 @@ jobs:
           github-comment hide -condition 'Comment.Body contains "npx textlint /tmp/PULL_REQUEST_BODY.md"'
           echo '---[ PR_BODY を Markdown に出力 ]'
           echo "$PR_BODY" > /tmp/PULL_REQUEST_BODY.md
-          echo '---[ DEBUG ]'
+          echo '---[ PR_BODY に対してtextlint ]'
           cat /tmp/PULL_REQUEST_BODY.md
           echo '---[ PR_BODY に対してtextlint ]'
           github-comment exec -- npx textlint /tmp/PULL_REQUEST_BODY.md
