@@ -65,16 +65,9 @@ lint.for-commit-messages: ## lint for commit messages(必須: npm install)
 lint.for-github-action: ## lint for github action
 	docker run --rm --mount type=bind,source=${PWD}/,target=/repo --workdir /repo rhysd/actionlint:latest -color
 
-.PHONY: lint.for-current-branch-pr
-lint.for-current-branch-pr: ## lint for current branch pull request(必須: gh, jq, npm install)
-	$(eval PR_NUMBER := $(shell gh pr view --json 'number' | jq -r '.number'))
-	@rm -rf tmp/PR_$(PR_NUMBER)
-	@mkdir -p tmp/PR_$(PR_NUMBER) tmp/PR_$(PR_NUMBER).bk
-	@echo "<!-- textlint-disable ja-technical-writing/ja-no-mixed-period -->\n" > tmp/PR_$(PR_NUMBER)/TITLE.md
-	@gh pr view --json 'title' | jq '.title' >> tmp/PR_$(PR_NUMBER)/TITLE.md
-	@echo "<!-- textlint-enable ja-technical-writing/ja-no-mixed-period -->" > tmp/PR_$(PR_NUMBER)/TITLE.md
-	@gh pr view --json 'body' | jq -r '.body' | sed 's/\r//g' > tmp/PR_$(PR_NUMBER)/BODY.md
-	@npx textlint tmp/PR_$(PR_NUMBER)/*.md || echo "このコマンドを実行してみてください\n cp -rf tmp/PR_$(PR_NUMBER) tmp/PR_$(PR_NUMBER).bk; npx textlint --fix tmp/PR_$(PR_NUMBER)/*.md"
+.PHONY: lint.for-current-branch-pullrequest
+lint.for-current-branch-pullrequest: ## lint for current branch pull request(必須: gh, jq, npm install)
+	@bash dev-tool/scripts/lint-current-branch-pullrequest.sh
 
 .PHONY: lint.for-shell
 lint.for-shell: ## lint for shellscript

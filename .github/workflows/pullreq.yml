@@ -196,29 +196,13 @@ jobs:
           sudo tar -C /usr/bin -xzf ./github-comment.tar.gz
           echo '---[ show version ]'
           github-comment -v
+      - name: 古いコメントを削除
+        run: github-comment hide -condition 'Comment.Body contains "npx textlint /tmp/PULL_REQUEST_TITLE.md"'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: PRのタイトルに対してtextlint
-        run: |
-          echo '---[ 古いコメントを隠す ]'
-          github-comment hide -condition 'Comment.Body contains "npx textlint /tmp/PULL_REQUEST_TITLE.md"'
-          echo '---[ PR_TITLE を Markdown に出力 ]'
-          printf "<!-- textlint-disable ja-technical-writing/ja-no-mixed-period -->\n\n" > /tmp/PULL_REQUEST_TITLE.md
-          echo "$PR_TITLE" >> /tmp/PULL_REQUEST_TITLE.md
-          printf "\n<!-- textlint-enable ja-technical-writing/ja-no-mixed-period -->\n" >> /tmp/PULL_REQUEST_TITLE.md
-          echo '---[ PR_TITLE に対してtextlint ]'
-          github-comment exec -- npx textlint /tmp/PULL_REQUEST_TITLE.md
+        run: make lint.for-current-branch-pullrequest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_TITLE: ${{ github.event.pull_request.title }}
-      - name: PRの内容に対してtextlint
-        run: |
-          echo '---[ 古いコメントを隠す ]'
-          github-comment hide -condition 'Comment.Body contains "npx textlint /tmp/PULL_REQUEST_BODY.md"'
-          echo '---[ PR_BODY を Markdown に出力 ]'
-          echo "$PR_BODY" > /tmp/PULL_REQUEST_BODY.md
-          echo '---[ PR_BODY に対してtextlint ]'
-          cat /tmp/PULL_REQUEST_BODY.md
-          echo '---[ PR_BODY に対してtextlint ]'
-          github-comment exec -- npx textlint /tmp/PULL_REQUEST_BODY.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_BODY: ${{ github.event.pull_request.body }}
