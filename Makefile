@@ -57,6 +57,10 @@ lint: ## lint
 lint.commit-msgs: ## git commit messages を lint
 	@bash scripts/lint-git-commit-messages.sh
 
+.PHONY: lint.pr
+lint.pr: ## GitHub の PR を lint
+	@bash scripts/lint-current-branch-pull-request.sh
+
 .PHONY: lint.for-yaml
 lint.for-yaml: ## lint for yaml
 	docker run --rm -it --mount type=bind,source=${PWD}/,target=/code/ pipelinecomponents/yamllint yamllint .
