@@ -49,3 +49,9 @@ out/
 # 適当なやつをDLする時に利用する
 #
 tmp/
+
+#
+# node_modules
+# npm install した時に、ライブラリはここに入る
+#
+node_modules/

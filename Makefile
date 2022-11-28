@@ -1,3 +1,7 @@
+.PHONY: setup
+setup: ## 開発環境のセットアップ
+	@bash scripts/setup.sh
+
 .PHONY: up
 up: ## サーバー起動
 	./gradlew bootRun
@@ -52,6 +56,14 @@ fmt: ## format
 .PHONY: lint
 lint: ## lint
 	./gradlew detekt
+
+.PHONY: lint.commit-msgs
+lint.commit-msgs: ## git commit messages を lint
+	@bash scripts/lint-git-commit-messages.sh
+
+.PHONY: lint.pr
+lint.pr: ## GitHub の PR を lint
+	@bash scripts/lint-current-branch-pull-request.sh
 
 .PHONY: lint.for-yaml
 lint.for-yaml: ## lint for yaml
