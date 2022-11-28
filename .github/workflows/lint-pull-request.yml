@@ -1,0 +1,44 @@
+---
+
+name: Lint PR
+
+#
+# 'on' にしている理由
+# yamllintで怒られるため
+#
+# 参考: https://github.com/adrienverge/yamllint/issues/430
+#
+'on':
+  pull_request:
+
+jobs:
+  lint-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v3
+      - name: nodejsのセットアップ
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: 依存ライブラリのインストール
+        run: npm install
+      - name: github-commentをインストール
+        run: |
+          curl -sSfL -o github-comment.tar.gz https://github.com/suzuki-shunsuke/github-comment/releases/download/v${GITHUB_COMMENT_VERSION}/github-comment_${GITHUB_COMMENT_VERSION}_linux_amd64.tar.gz
+          echo 1da8cb9d52395018ec15f876347e204fe632c833baa1831ca36302dec1e0f97a  github-comment.tar.gz | sha256sum -c
+          sudo tar -C /usr/bin -xzf ./github-comment.tar.gz
+        env:
+          GITHUB_COMMENT_VERSION: 5.0.0
+      - name: github-comment のバージョン確認
+        run: github-comment -v
+      - name: 古いコメントを削除
+        run: github-comment hide -condition 'Comment.Body contains "Lint PR"'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: PR に対して lint
+        run: github-comment exec -- make lint.pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
