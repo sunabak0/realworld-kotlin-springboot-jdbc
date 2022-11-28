@@ -9,9 +9,7 @@
 extends: default
 
 rules:
-  line-length:
-    max: 120  # default: 80
-    level: error
+  line-length: disable  ## default: enable
 
 #
 # 無視するPATH
