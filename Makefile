@@ -53,6 +53,10 @@ fmt: ## format
 lint: ## lint
 	./gradlew detekt
 
+.PHONY: lint.commit-msgs
+lint.commit-msgs: ## git commit messages を lint
+	@bash scripts/lint-git-commit-messages.sh
+
 .PHONY: lint.for-yaml
 lint.for-yaml: ## lint for yaml
 	docker run --rm -it --mount type=bind,source=${PWD}/,target=/code/ pipelinecomponents/yamllint yamllint .
